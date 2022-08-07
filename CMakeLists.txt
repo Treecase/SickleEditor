@@ -55,7 +55,7 @@ configure_file(
 )
 
 add_executable(sickle "${SRC}" "${IMGUI_SRC}")
-target_compile_features(sickle PRIVATE cxx_std_11)
+target_compile_features(sickle PRIVATE cxx_std_17)
 set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 

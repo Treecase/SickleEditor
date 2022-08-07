@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "SoundPlayer.hpp"
 #include "TextureViewer.hpp"
 #include "load_model.hpp"
 #include "glUtils/glUtil.hpp"
@@ -51,10 +52,6 @@
 #define INITIAL_WINDOW_WIDTH 640
 #define INITIAL_WINDOW_HEIGHT 480
 
-// The type of app to run.
-// TODO: Do this at runtime.
-#define APP_TYPE TextureViewer
-
 
 /** Callback to print OpenGL debug messages. */
 void opengl_debug_message_callback(
@@ -74,7 +71,7 @@ void opengl_debug_message_callback(
 /** SDL initialization. */
 void init_SDL()
 {
-    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     // Set OpenGL context version and profile.
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, SE_GL_VERSION_MAJOR);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, SE_GL_VERSION_MINOR);
@@ -115,10 +112,13 @@ void init_OpenGL()
 /** Main program body. */
 int run(int argc, char *argv[])
 {
-    APP_TYPE app{};
+    SoundPlayer snd{};
+    TextureViewer app{};
     // Handle command-line args.
+    snd.handleArgs(argc, argv);
     app.handleArgs(argc, argv);
     // Load non-GL app data.
+    snd.loadData();
     app.loadData();
 
 
@@ -149,6 +149,7 @@ int run(int argc, char *argv[])
 
 
     // Load app data requiring a GL context.
+    snd.loadGL();
     app.loadGL();
 
 
@@ -183,6 +184,7 @@ int run(int argc, char *argv[])
             }
 
             // App event handling.
+            snd.input(&event);
             app.input(&event);
         }
 
@@ -190,8 +192,25 @@ int run(int argc, char *argv[])
         ImGui_ImplSDL2_NewFrame();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
+        ImGui::BeginMainMenuBar();
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Exit"))
+                running = false;
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Windows"))
+        {
+            if (ImGui::MenuItem("Sound Player"))
+                snd.ui_visible = true;
+            if (ImGui::MenuItem("Texture Viewer"))
+                app.ui_visible = true;
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
         ImGui::ShowMetricsWindow();
         // Update app UI.
+        snd.drawUI();
         app.drawUI();
         ImGui::EndFrame();
 
@@ -200,6 +219,7 @@ int run(int argc, char *argv[])
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Render non-UI app visuals.
+        snd.drawGL();
         app.drawGL();
         // Render the UI.
         ImGui::Render();
