@@ -40,13 +40,13 @@ set(SRC
     src/glUtils/VertexArray.cpp
 )
 set(IMGUI_SRC
-    "externals/imgui/backends/imgui_impl_sdl.cpp"
-    "externals/imgui/backends/imgui_impl_opengl3.cpp"
-    "externals/imgui/imgui.cpp"
-    "externals/imgui/imgui_demo.cpp"
-    "externals/imgui/imgui_draw.cpp"
-    "externals/imgui/imgui_tables.cpp"
-    "externals/imgui/imgui_widgets.cpp"
+    extern/imgui/backends/imgui_impl_sdl.cpp
+    extern/imgui/backends/imgui_impl_opengl3.cpp
+    extern/imgui/imgui.cpp
+    extern/imgui/imgui_demo.cpp
+    extern/imgui/imgui_draw.cpp
+    extern/imgui/imgui_tables.cpp
+    extern/imgui/imgui_widgets.cpp
 )
 
 configure_file(
@@ -62,8 +62,8 @@ target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 
 target_include_directories(sickle
     PRIVATE
-    "externals/imgui/"
-    "externals/imgui/backends"
+    extern/imgui/
+    extern/imgui/backends
 )
 
 if(MSVC)
@@ -84,9 +84,7 @@ if(MSVC)
 else()
     target_compile_options(sickle PRIVATE -Wall -Wextra -g)
     find_package(SDL2 REQUIRED)
-    target_link_libraries(sickle SDL2::SDL2)
     find_package(GLEW REQUIRED)
-    target_link_libraries(sickle GLEW::GLEW)
     find_package(glm REQUIRED)
-    target_link_libraries(sickle glm::glm)
+    target_link_libraries(sickle PRIVATE SDL2::SDL2 GLEW::GLEW glm::glm)
 endif()
