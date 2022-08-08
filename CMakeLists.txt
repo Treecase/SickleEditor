@@ -86,5 +86,11 @@ else()
     find_package(SDL2 REQUIRED)
     find_package(GLEW REQUIRED)
     find_package(glm REQUIRED)
-    target_link_libraries(sickle PRIVATE SDL2::SDL2 GLEW::GLEW glm::glm)
+    target_link_libraries(sickle PRIVATE
+        SDL2::SDL2
+        GLEW::GLEW
+        glm::glm
+        GL
+        ${CMAKE_DL_LIBS}
+    )
 endif()
