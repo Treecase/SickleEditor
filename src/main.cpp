@@ -16,10 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "SoundPlayer.hpp"
-#include "TextureViewer.hpp"
-#include "load_model.hpp"
-#include "glUtils/glUtil.hpp"
+#include "App.hpp"
+#include "common.hpp"
 
 #include <GL/glew.h>
 #include <imgui.h>
@@ -28,11 +26,8 @@
 #include <SDL.h>
 
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <stdexcept>
-#include <unordered_map>
-#include <vector>
+#include <string>
 
 // Name of main function depends on platform.
 #ifdef _WIN32
@@ -51,6 +46,8 @@
 
 #define INITIAL_WINDOW_WIDTH 640
 #define INITIAL_WINDOW_HEIGHT 480
+
+#define APP_TITLE "Sickle Editor"
 
 
 /** Callback to print OpenGL debug messages. */
@@ -109,17 +106,52 @@ void init_OpenGL()
 }
 
 
+/** Set app config from command-line arguments. */
+Config handle_args(int argc, char *argv[])
+{
+    Config cfg{};
+    for (int i = 1; i < argc; ++i)
+    {
+        if (strcmp(argv[i], "--version") == 0)
+        {
+            std::cout << SE_CANON_NAME << " " << SE_VERSION << "\n" <<
+                "Copyright (C) 2022 Trevor Last\n"
+                "License GPLv3+: GNU GPL version 3 or later "
+                    "<https://gnu.org/licenses/gpl.html>\n"
+                "This is free software: you are free to change and "
+                    "redistribute it.\n"
+                "There is NO WARRANTY, to the extent permitted by law.\n";
+            exit(0);
+        }
+        else if (strcmp(argv[i], "--help") == 0)
+        {
+            std::cout <<
+                "Usage: " << argv[0] << " GAMEDIR\n"
+                "Open-source GoldSrc editor.\n"
+                "\n"
+                "  --help\tdisplay this help and exit\n"
+                "  --version\toutput version information and exit\n"
+                "\n"
+                "Report bugs to: "
+                    "https://github.com/Treecase/SickleEditor/issues\n"
+                "pkg home page: https://github.com/Treecase/SickleEditor\n";
+            exit(0);
+        }
+    }
+    if (argc < 2)
+    {
+        throw std::runtime_error{"Game directory required!"};
+    }
+    cfg.game_dir = argv[1];
+    return cfg;
+}
+
+
 /** Main program body. */
 int run(int argc, char *argv[])
 {
-    SoundPlayer snd{};
-    TextureViewer app{};
     // Handle command-line args.
-    snd.handleArgs(argc, argv);
-    app.handleArgs(argc, argv);
-    // Load non-GL app data.
-    snd.loadData();
-    app.loadData();
+    auto config = handle_args(argc, argv);
 
 
     /* ===[ Graphics Initialization ]=== */
@@ -127,7 +159,7 @@ int run(int argc, char *argv[])
     int width = INITIAL_WINDOW_WIDTH,
         height = INITIAL_WINDOW_HEIGHT;
     SDL_Window *window = SDL_CreateWindow(
-        app.title.c_str(),
+        APP_TITLE,
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         width, height,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
@@ -148,13 +180,12 @@ int run(int argc, char *argv[])
         "0");
 
 
-    // Load app data requiring a GL context.
-    snd.loadGL();
-    app.loadGL();
+    // Create the app.
+    App app{config};
 
 
     /* ===[ Main Loop ]=== */
-    for (bool running = true; running; )
+    while (app.running)
     {
         /* ===[ Event Handling ]=== */
         for (SDL_Event event; SDL_PollEvent(&event); )
@@ -171,7 +202,7 @@ int run(int argc, char *argv[])
             switch (event.type)
             {
             case SDL_QUIT:
-                running = false;
+                app.running = false;
                 break;
             case SDL_WINDOWEVENT:
                 if (event.window.event == SDL_WINDOWEVENT_RESIZED)
@@ -184,7 +215,6 @@ int run(int argc, char *argv[])
             }
 
             // App event handling.
-            snd.input(&event);
             app.input(&event);
         }
 
@@ -192,25 +222,7 @@ int run(int argc, char *argv[])
         ImGui_ImplSDL2_NewFrame();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
-        ImGui::BeginMainMenuBar();
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("Exit"))
-                running = false;
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Windows"))
-        {
-            if (ImGui::MenuItem("Sound Player"))
-                snd.ui_visible = true;
-            if (ImGui::MenuItem("Texture Viewer"))
-                app.ui_visible = true;
-            ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
-        ImGui::ShowMetricsWindow();
         // Update app UI.
-        snd.drawUI();
         app.drawUI();
         ImGui::EndFrame();
 
@@ -219,7 +231,6 @@ int run(int argc, char *argv[])
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Render non-UI app visuals.
-        snd.drawGL();
         app.drawGL();
         // Render the UI.
         ImGui::Render();

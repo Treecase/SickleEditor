@@ -1,5 +1,5 @@
 /**
- * TextureViewer.hpp - MDL texture viewer app.
+ * TextureViewer.hpp - MDL texture viewer module.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,9 @@
 #ifndef _TEXTUREVIEWER_HPP
 #define _TEXTUREVIEWER_HPP
 
-#include "load_model.hpp"
+#include "common.hpp"
 #include "glUtils/glUtil.hpp"
+#include "load_model.hpp"
 #include "ui_helpers.hpp"
 #include "version.hpp"
 
@@ -31,6 +32,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+
+
+#define MIN(a, b) ((a) < (b)? (a) : (b))
 
 
 /** Convert from MDL texture format to an OpenGL texture object. */
@@ -50,19 +54,20 @@ GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
     {
         for (int x = 0; x < resized_w; ++x)
         {
+            // TODO: clean this up
             // The x,y coordinates of the samples.
-            int x1 = ((x + 0.25) / (float)resized_w) * texture.w;
-            int x2 = ((x + 0.75) / (float)resized_w) * texture.w;
-            int y1 = ((y + 0.25) / (float)resized_h) * texture.h;
-            int y2 = ((y + 0.75) / (float)resized_h) * texture.h;
-            // Point to the palette values of the samples.
-            uint8_t const *samples[4] = {
-                texture.palette + texture.data[y1*texture.w + x1] * 3,
-                texture.palette + texture.data[y1*texture.w + x2] * 3,
-                texture.palette + texture.data[y2*texture.w + x1] * 3,
-                texture.palette + texture.data[y2*texture.w + x2] * 3
+            int x1 = MIN(((x+0.25)/(float)resized_w) * texture.w, texture.w-1);
+            int x2 = MIN(((x+0.75)/(float)resized_w) * texture.w, texture.w-1);
+            int y1 = MIN(((y+0.25)/(float)resized_h) * texture.h, texture.h-1);
+            int y2 = MIN(((y+0.75)/(float)resized_h) * texture.h, texture.h-1);
+            // RGB triples of the sampled pixels.
+            std::array<uint8_t, 3> samples[4] = {
+                texture.palette[texture.data[y1*texture.w + x1]],
+                texture.palette[texture.data[y1*texture.w + x2]],
+                texture.palette[texture.data[y2*texture.w + x1]],
+                texture.palette[texture.data[y2*texture.w + x2]]
             };
-            // RGB value of the averaged samples.
+            // Averaged RGB value of the samples.
             int averages[3] = {
                 (samples[0][0]+samples[1][0]+samples[2][0]+samples[3][0])/4,
                 (samples[0][1]+samples[1][1]+samples[2][1]+samples[3][1])/4,
@@ -95,120 +100,88 @@ private:
     // Screenquad vertex data.
     static std::vector<GLfloat> const _sqv;
     // Screenquad shader.
-    std::shared_ptr<GLUtil::Program> _shader;
+    GLUtil::Program _shader;
     // Screenquad VAO.
-    std::shared_ptr<GLUtil::VertexArray> _vao;
+    GLUtil::VertexArray _vao;
+    // Loaded MDLs.
+    std::unordered_map<std::filesystem::path, MDL::Model> _models;
+    // Map of MDLs loaded to a list of their associated GL textures.
+    std::unordered_map<std::filesystem::path, std::vector<GLUtil::Texture>>
+        _textures;
+    // Path to currently displayed model.
+    std::filesystem::path _selected_model;
+    // Index of currently displayed texture.
+    int _current_texture;
+    Config &_cfg;
+
+    void _loadSelectedModel_MDL()
+    {
+        try
+        {
+            _models.at(_selected_model);
+            return;
+        }
+        catch (std::out_of_range const &)
+        {
+        }
+        _models[_selected_model] = MDL::load_mdl(_selected_model.string());
+    }
+    void _loadSelectedModel_GL()
+    {
+        try
+        {
+            _textures.at(_selected_model).at(_current_texture);
+            return;
+        }
+        catch (std::out_of_range const &)
+        {
+        }
+        _textures[_selected_model] = std::vector<GLUtil::Texture>{};
+        for (auto const &t : _models[_selected_model].textures)
+        {
+            _textures[_selected_model].push_back(texture2GLTexture(t));
+        }
+    }
+    void _loadSelectedModel()
+    {
+        _loadSelectedModel_MDL();
+        _loadSelectedModel_GL();
+    }
 
 public:
     // App title.
     std::string title;
-    // Loaded MDLs.
-    std::unordered_map<std::string, MDL::Model> models{};
-    // Map of MDLs loaded to a list of their associated GL textures.
-    std::unordered_map<std::string, std::vector<GLUtil::Texture>> model_textures;
-    // MDL filenames to load.
-    struct AppConfig
-    {
-        std::string game_dir;
-    } config;
-    // Path to currently displayed model.
-    std::string selected_model;
-    // Index of currently displayed texture.
-    int current_texture;
     bool ui_visible;
 
 
-    TextureViewer()
-    :   _shader{nullptr}
-    ,   _vao{nullptr}
-    ,   title{"Texture Viewer"}
-    ,   models{}
-    ,   model_textures{}
-    ,   config{}
-    ,   selected_model{""}
-    ,   current_texture{0}
-    ,   ui_visible{false}
-    {
-        models[selected_model] = MDL::Model{"<none>", {{"ajsdal", 1, 1, (uint8_t *)malloc(1), {0}}}};
-    }
-
-    /** Configure app from command-line arguments. */
-    void handleArgs(int argc, char *argv[])
-    {
-        for (int i = 1; i < argc; ++i)
-        {
-            if (strcmp(argv[i], "--version") == 0)
-            {
-                std::cout << SE_CANON_NAME << " " << SE_VERSION << "\n" <<
-                    "Copyright (C) 2022 Trevor Last\n"
-                    "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>\n"
-                    "This is free software: you are free to change and redistribute it.\n"
-                    "There is NO WARRANTY, to the extent permitted by law.\n";
-                exit(0);
-            }
-            else if (strcmp(argv[i], "--help") == 0)
-            {
-                std::cout <<
-                    "Usage: " << argv[0] << " [MODEL]...\n"
-                    "\n"
-                    "  --help\tdisplay this help and exit\n"
-                    "  --version\toutput version information and exit\n"
-                    "\n"
-                    "Report bugs to: https://github.com/Treecase/Sickle/issues\n"
-                    "pkg home page: https://github.com/Treecase/Sickle\n";
-                exit(0);
-            }
-        }
-        // FIXME -- do this properly
-        config.game_dir = argv[1];
-    }
-
-    /** Load non-GL-context-requiring app data. */
-    void loadData()
-    {
-        for (auto entry : std::filesystem::directory_iterator(config.game_dir + "/valve/models"))
-        {
-            auto stem = entry.path().stem().string();
-            if (!entry.is_regular_file() || *(stem.end()-1) == 't' || *(stem.end()-2) == '0')
-                continue;
-            models[entry.path().string()] = MDL::load_mdl(entry.path().string());
-        }
-    }
-
-    /** Load app data which requires a GL context. */
-    void loadGL()
-    {
-        // Create screenquad shader program.
-        _shader.reset(new GLUtil::Program{
+    TextureViewer(Config &cfg)
+    :   _shader{
             {   GLUtil::shader_from_file(
                     "shaders/vertex.vert", GL_VERTEX_SHADER),
                 GLUtil::shader_from_file(
                     "shaders/fragment.frag", GL_FRAGMENT_SHADER)},
-            "ScreenQuadShader"});
-        // Create screenquad vao.
-        _vao.reset(new GLUtil::VertexArray{"ScreenQuadVAO"});
-        _vao->bind();
+            "ScreenQuadShader"}
+    ,   _vao{"ScreenQuadVAO"}
+    ,   _models{{"", {"<none>", {{"<none>", 1, 1, {0}, {0}}}}}}
+    ,   _textures{{"", {texture2GLTexture(_models[""].textures[0])}}}
+    ,   _selected_model{""}
+    ,   _current_texture{0}
+    ,   _cfg{cfg}
+    ,   title{"Texture Viewer"}
+    ,   ui_visible{false}
+    {
+        _vao.bind();
         // Screenquad vbo.
         GLUtil::Buffer vbo{GL_ARRAY_BUFFER, "ScreenQuadVBO"};
         vbo.bind();
         vbo.buffer(GL_STATIC_DRAW, _sqv);
         // Positions array.
-        _vao->enableVertexAttribArray(0, 3, GL_FLOAT, 5 * sizeof(GLfloat));
+        _vao.enableVertexAttribArray(0, 3, GL_FLOAT, 5 * sizeof(GLfloat));
         // UV array.
-        _vao->enableVertexAttribArray(
+        _vao.enableVertexAttribArray(
             1, 2, GL_FLOAT, 5 * sizeof(GLfloat), 3 * sizeof(GLfloat));
         vbo.unbind();
-        _vao->unbind();
-
-        // Generate textures from the MDL.
-        for (auto path_mdl : models)
-        {
-            model_textures[path_mdl.first] = std::vector<GLUtil::Texture>{};
-            for (auto tex : path_mdl.second.textures)
-            {
-                model_textures[path_mdl.first].push_back(texture2GLTexture(tex));
-            }
-        }
+        _vao.unbind();
     }
 
     /** Handle user input. */
@@ -222,9 +195,11 @@ public:
         if (!ui_visible)
             return;
 
-        auto model_name = selected_model.empty()? "<none>" : models[selected_model].name;
-        auto textures = model_textures[selected_model];
-        auto tex = textures[current_texture];
+        _loadSelectedModel();
+
+        auto const &model_name = _models[_selected_model].name;
+        auto const &mdl_tex = _models[_selected_model].textures[_current_texture];
+        auto const &tex = _textures[_selected_model][_current_texture];
         int tex_w, tex_h;
         tex.bind();
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tex_w);
@@ -235,42 +210,34 @@ public:
         {
             ImGui::TextUnformatted(model_name.c_str());
             ImGui::SliderInt(
-                "Texture",
-                &current_texture,
-                0, textures.size()-1,
-                "%d", ImGuiSliderFlags_AlwaysClamp);
+                "Texture", &_current_texture, 0,
+                _textures[_selected_model].size() - 1, "%d",
+                ImGuiSliderFlags_AlwaysClamp);
+            ImGui::TextUnformatted(mdl_tex.name.c_str());
             ImGui::TextUnformatted(
-                models[selected_model].textures[current_texture].name.c_str());
-            ImGui::TextUnformatted((
-                "Originally "
-                + std::to_string(
-                    models[selected_model].textures[current_texture].w
-                )
-                + "x"
-                + std::to_string(
-                    models[selected_model].textures[current_texture].h)).c_str());
-            ImGui::TextUnformatted((
-                "Sampled to " + std::to_string(tex_w) + "x"
-                + std::to_string(tex_h)).c_str());
+                (   "Originally " + std::to_string(mdl_tex.w) + "x"
+                    + std::to_string(mdl_tex.h)).c_str());
+            ImGui::TextUnformatted(
+                (   "Sampled to " + std::to_string(tex_w) + "x"
+                    + std::to_string(tex_h)).c_str());
             ImGui::Image((void*)(intptr_t)tex.id(), ImVec2(tex_w, tex_h));
             ImGui::Separator();
             if (ImGui::BeginChild("ModelTree"))
             {
                 if (ImGui::TreeNode("valve/models"))
                 {
-                    std::filesystem::path mdl{selected_model};
-                    if (ImGui::DirectoryTree(config.game_dir + "/valve/models", &mdl, [](auto p){return *(p.stem().string().end()-1) != 't' && *(p.stem().string().end()-2) != '0';}))
+                    if (ImGui::DirectoryTree(
+                            _cfg.game_dir.string() + "/valve/models",
+                            &_selected_model,
+                            [](std::filesystem::path const &p){
+                                return (
+                                    *(p.stem().string().end() - 1) != 't'
+                                    && *(p.stem().string().end() - 2) != '0'
+                                    && p.extension() == ".mdl"
+                                );
+                            }))
                     {
-                        current_texture = 0;
-                    }
-                    try
-                    {
-                        models.at(mdl.string());
-                        selected_model = mdl.string();
-                    }
-                    catch(std::exception const &e)
-                    {
-                        std::cout << "invalid mdl " << mdl.string() << "\n";
+                        _current_texture = 0;
                     }
                     ImGui::TreePop();
                 }
@@ -283,15 +250,18 @@ public:
     /** Draw non-UI app visuals. */
     void drawGL()
     {
-        if (selected_model.empty())
+        if (_selected_model.empty())
             return;
+
+        _loadSelectedModel();
+
         // Draw screen.
-        _shader->use();
-        _vao->bind();
+        _shader.use();
+        _vao.bind();
         glActiveTexture(GL_TEXTURE0);
-        auto tex = model_textures[selected_model][current_texture];
+        auto const &tex = _textures[_selected_model][_current_texture];
         tex.bind();
-        _shader->setUniformS("tex", 0);
+        _shader.setUniformS("tex", 0);
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)(_sqv.size() / 5));
     }
 };

@@ -1,5 +1,5 @@
 /**
- * load_model.hpp - Load .mdl files.
+ * common.hpp - Sickle common data.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,37 +16,16 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _LOAD_MODEL
-#define _LOAD_MODEL
+#ifndef _COMMON_HPP
+#define _COMMON_HPP
 
-#include <array>
-#include <string>
-#include <vector>
-
-#include <cstdint>
+#include <filesystem>
 
 
-namespace MDL
+/** App config. */
+struct Config
 {
-/** MDL Texture data. */
-struct Texture
-{
-    std::string name;
-    int w, h;
-    std::vector<uint8_t> data;
-    std::array<std::array<uint8_t, 3>, 256> palette;
+    std::filesystem::path game_dir;
 };
-
-/** Loaded MDL data. */
-struct Model
-{
-    std::string name;
-    std::vector<Texture> textures;
-};
-
-
-/** Load a .mdl file. */
-Model load_mdl(std::string const &path);
-}
 
 #endif

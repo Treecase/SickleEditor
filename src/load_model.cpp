@@ -20,7 +20,6 @@
 
 #include <vector>
 #include <fstream>
-#include <iostream> // temp
 
 #include <cstdint>
 #include <cstring>
@@ -182,10 +181,15 @@ MDL::Texture _load_texture(std::istream &f, Header &hdr, uint32_t texture)
     result.name = std::string{tex.name};
     result.w = tex.width;
     result.h = tex.height;
-    result.data = new uint8_t[tex.width * tex.height];
+    auto const buf = new char[tex.width * tex.height];
     f.seekg(tex.index);
-    f.read((char *)result.data, tex.width * tex.height);
-    f.read((char *)result.palette, 256 * 3);
+    f.read(buf, tex.width * tex.height);
+    f.read((char *)result.palette.data(), 256 * 3);
+
+    result.data.reserve(tex.width * tex.height);
+    for (size_t i = 0; i < tex.width * tex.height; ++i)
+        result.data.push_back(buf[i]);
+    delete[] buf;
 
     return result;
 }
@@ -222,7 +226,9 @@ MDL::Model MDL::load_mdl(std::string const &path)
     {
         auto texmdl = path.substr(0, path.length()-4) + "t.mdl";
         auto submdl = load_mdl(texmdl);
-        result.textures.insert(result.textures.end(), submdl.textures.begin(), submdl.textures.end());
+        result.textures.insert(
+            result.textures.end(),
+            submdl.textures.begin(), submdl.textures.end());
     }
 
     return result;

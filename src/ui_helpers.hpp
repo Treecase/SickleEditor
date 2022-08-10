@@ -23,44 +23,53 @@
 
 #include <filesystem>
 #include <functional>
-#include <string>
+#include <set>
 
 
 namespace ImGui
 {
     /** Recursively draw a directory structure with ImGui TreeNodes. */
     bool DirectoryTree(
-        std::string path, std::filesystem::path *selected,
-        std::function<bool(std::filesystem::path)> filter)
+        std::filesystem::path const &path, std::filesystem::path *selected,
+        std::function<bool(std::filesystem::path)> const &filter=
+            [](std::filesystem::path const &){return true;})
     {
+        // There are two things we want from our display here--entries must be
+        // sorted, and directories must be at the top. To achieve this, we use
+        // two std::sets (which sort automatically). One has directories, one
+        // with regular files. Once these are populated, we simply display the
+        // directories before the files.
+        std::set<std::filesystem::path> subdirs{};
+        std::set<std::filesystem::path> files{};
         bool result = false;
-        for (auto entry : std::filesystem::directory_iterator(path))
+        for (auto const &entry : std::filesystem::directory_iterator(path))
         {
             if (entry.is_directory())
             {
-                if (TreeNode(entry.path().filename().string().c_str()))
-                {
-                    DirectoryTree(entry.path().string(), selected, filter);
-                    TreePop();
-                }
+                subdirs.insert(entry.path());
             }
             else if (entry.is_regular_file() && filter(entry.path()))
             {
-                if (ImGui::Selectable(entry.path().filename().string().c_str()))
-                {
-                    *selected = entry.path().string();
-                    result = true;
-                }
+                files.insert(entry.path());
+            }
+        }
+        for (auto const &subdir : subdirs)
+        {
+            if (TreeNode(subdir.filename().string().c_str()))
+            {
+                result = result || DirectoryTree(subdir, selected, filter);
+                TreePop();
+            }
+        }
+        for (auto const &file : files)
+        {
+            if (ImGui::Selectable(file.filename().string().c_str()))
+            {
+                *selected = file;
+                result = true;
             }
         }
         return result;
-    }
-    bool DirectoryTree(std::string path, std::filesystem::path *selected)
-    {
-        return DirectoryTree(
-            path,
-            selected,
-            [](std::filesystem::path p){return true;});
     }
 }
 

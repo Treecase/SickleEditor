@@ -1,5 +1,5 @@
 /**
- * SoundPlayer.hpp - WAV sound player app.
+ * SoundPlayer.hpp - WAV sound player module.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,9 @@
 #ifndef _SOUNDPLAYER_HPP
 #define _SOUNDPLAYER_HPP
 
-#include "load_model.hpp"
+#include "common.hpp"
 #include "glUtils/glUtil.hpp"
+#include "load_model.hpp"
 #include "ui_helpers.hpp"
 #include "version.hpp"
 
@@ -45,7 +46,8 @@ SDL_AudioDeviceID _play_sound(SDL_AudioDeviceID dev, char const *path)
     Uint8 *buf;
     if (SDL_LoadWAV(path, &want, &buf, &len) == nullptr)
     {
-        throw std::runtime_error{"Failed to load WAV: " + std::string{SDL_GetError()}};
+        throw std::runtime_error{
+            "Failed to load WAV: " + std::string{SDL_GetError()}};
     }
 
     // Open new audio device.
@@ -53,12 +55,14 @@ SDL_AudioDeviceID _play_sound(SDL_AudioDeviceID dev, char const *path)
     dev = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
     if (dev == 0)
     {
-        throw std::runtime_error{"Failed to open audio: " + std::string{SDL_GetError()}};
+        throw std::runtime_error{
+            "Failed to open audio: " + std::string{SDL_GetError()}};
     }
     // Play the audio.
     if (SDL_QueueAudio(dev, buf, len) == -1)
     {
-        throw std::runtime_error{"Failed to queue audio: " + std::string{SDL_GetError()}};
+        throw std::runtime_error{
+            "Failed to queue audio: " + std::string{SDL_GetError()}};
     }
     SDL_FreeWAV(buf);
     SDL_PauseAudioDevice(dev, 0);
@@ -71,27 +75,23 @@ class SoundPlayer
 {
 private:
     SDL_AudioDeviceID _device;
+    // Currently selected sound.
+    std::filesystem::path _selected_sound;
+    std::string _error;
+    Config &_cfg;
 
 public:
     // App title.
     std::string title;
-    // MDL filenames to load.
-    struct AppConfig
-    {
-        std::string game_dir;
-    } config;
-    // Currently selected sound.
-    std::filesystem::path selected_sound;
-    std::string error;
     bool ui_visible;
 
 
-    SoundPlayer()
+    SoundPlayer(Config &cfg)
     :   _device{0}
+    ,   _selected_sound{}
+    ,   _error{""}
+    ,   _cfg{cfg}
     ,   title{"Sound Player"}
-    ,   config{}
-    ,   selected_sound{}
-    ,   error{""}
     ,   ui_visible{false}
     {
     }
@@ -99,47 +99,6 @@ public:
     ~SoundPlayer()
     {
         SDL_CloseAudioDevice(_device);
-    }
-
-    /** Configure app from command-line arguments. */
-    void handleArgs(int argc, char *argv[])
-    {
-        for (int i = 1; i < argc; ++i)
-        {
-            if (strcmp(argv[i], "--version") == 0)
-            {
-                std::cout << SE_CANON_NAME << " " << SE_VERSION << "\n" <<
-                    "Copyright (C) 2022 Trevor Last\n"
-                    "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>\n"
-                    "This is free software: you are free to change and redistribute it.\n"
-                    "There is NO WARRANTY, to the extent permitted by law.\n";
-                exit(0);
-            }
-            else if (strcmp(argv[i], "--help") == 0)
-            {
-                std::cout <<
-                    "Usage: " << argv[0] << " [MODEL]...\n"
-                    "\n"
-                    "  --help\tdisplay this help and exit\n"
-                    "  --version\toutput version information and exit\n"
-                    "\n"
-                    "Report bugs to: https://github.com/Treecase/Sickle/issues\n"
-                    "pkg home page: https://github.com/Treecase/Sickle\n";
-                exit(0);
-            }
-        }
-        // FIXME -- do this properly
-        config.game_dir = argv[1];
-    }
-
-    /** Load non-GL-context-requiring app data. */
-    void loadData()
-    {
-    }
-
-    /** Load app data which requires a GL context. */
-    void loadGL()
-    {
     }
 
     /** Handle user input. */
@@ -155,18 +114,23 @@ public:
 
         if (ImGui::Begin(title.c_str(), &ui_visible))
         {
-            ImGui::TextUnformatted(("Playing: " + (selected_sound.empty()? "<none>" : selected_sound.filename().string())).c_str());
+            ImGui::TextUnformatted(
+                ("Playing: " + (
+                    _selected_sound.empty()
+                        ? "<none>"
+                        : _selected_sound.filename().string())).c_str());
             if (ImGui::Button("Play"))
             {
                 try
                 {
-                    _device = _play_sound(_device, selected_sound.string().c_str());
-                    error = "";
+                    _device = _play_sound(
+                        _device, _selected_sound.string().c_str());
+                    _error = "";
                 }
                 catch (std::runtime_error const &e)
                 {
                     _device = 0;
-                    error = e.what();
+                    _error = e.what();
                 }
             }
             ImGui::SameLine();
@@ -174,24 +138,24 @@ public:
             {
                 SDL_PauseAudioDevice(_device, 1);
             }
-            ImGui::TextUnformatted(error.c_str());
+            ImGui::TextUnformatted(_error.c_str());
             ImGui::Separator();
             if (ImGui::BeginChild("SoundTree"))
             {
                 if (ImGui::TreeNode("valve/sound"))
                 {
-                    ImGui::DirectoryTree(config.game_dir + "/valve/sound", &selected_sound, [](std::filesystem::path p){return p.extension() == ".wav";});
+                    ImGui::DirectoryTree(
+                        _cfg.game_dir.string() + "/valve/sound",
+                        &_selected_sound,
+                        [](std::filesystem::path const &p){
+                            return p.extension() == ".wav";
+                        });
                     ImGui::TreePop();
                 }
             }
             ImGui::EndChild();
         }
         ImGui::End();
-    }
-
-    /** Draw non-UI app visuals. */
-    void drawGL()
-    {
     }
 };
 
