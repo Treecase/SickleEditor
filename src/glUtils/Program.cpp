@@ -108,6 +108,12 @@ void GLUtil::Program::setUniform(std::string uniform, glm::vec4 value) const
     glUniform4fv(_getUniformLocation(uniform), 1, glm::value_ptr(value));
 }
 
+void GLUtil::Program::setUniform(std::string uniform, glm::mat4 value) const
+{
+    glUniformMatrix4fv(
+        _getUniformLocation(uniform), 1, GL_FALSE, glm::value_ptr(value));
+}
+
 
 GLint GLUtil::Program::_getUniformLocation(std::string uniform) const
 {

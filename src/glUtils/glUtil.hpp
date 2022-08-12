@@ -74,6 +74,8 @@ public:
     void setUniform(std::string uniform, glm::vec3 value) const;
     /** Set a vec4 uniform. */
     void setUniform(std::string uniform, glm::vec4 value) const;
+    /** Set a mat4 uniform. */
+    void setUniform(std::string uniform, glm::mat4 value) const;
     /**
      * Set a uniform, without throwing exceptions. Return an error message on
      * failure, otherwise an empty string.
