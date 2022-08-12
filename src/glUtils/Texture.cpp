@@ -24,7 +24,7 @@
 /** Deleter for Texture objects. (For use with shared_ptr and co.) */
 void _texture_delete(GLuint *texture)
 {
-    glDeleteBuffers(1, texture);
+    glDeleteTextures(1, texture);
     delete texture;
 }
 
