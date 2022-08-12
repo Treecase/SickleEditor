@@ -21,63 +21,24 @@
 
 #include "common.hpp"
 #include "glUtils/glUtil.hpp"
-#include "load_model.hpp"
-#include "ui_helpers.hpp"
-#include "version.hpp"
 
 #include <GL/glew.h>
-#include <imgui.h>
 #include <SDL.h>
 
 #include <filesystem>
-#include <iostream>
-
-
-/** Play a WAV file. */
-SDL_AudioDeviceID _play_sound(SDL_AudioDeviceID dev, char const *path)
-{
-    // Close previously playing audio device.
-    SDL_CloseAudioDevice(dev);
-
-    // Load WAV data.
-    SDL_AudioSpec want;
-    SDL_zero(want);
-    Uint32 len;
-    Uint8 *buf;
-    if (SDL_LoadWAV(path, &want, &buf, &len) == nullptr)
-    {
-        throw std::runtime_error{
-            "Failed to load WAV: " + std::string{SDL_GetError()}};
-    }
-
-    // Open new audio device.
-    SDL_AudioSpec have;
-    dev = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
-    if (dev == 0)
-    {
-        throw std::runtime_error{
-            "Failed to open audio: " + std::string{SDL_GetError()}};
-    }
-    // Play the audio.
-    if (SDL_QueueAudio(dev, buf, len) == -1)
-    {
-        throw std::runtime_error{
-            "Failed to queue audio: " + std::string{SDL_GetError()}};
-    }
-    SDL_FreeWAV(buf);
-    SDL_PauseAudioDevice(dev, 0);
-    return dev;
-}
 
 
 /** Plays WAV files. */
 class SoundPlayer
 {
 private:
+    // Currently playing sound device.
     SDL_AudioDeviceID _device;
     // Currently selected sound.
     std::filesystem::path _selected_sound;
+    // Error string for player failures.
     std::string _error;
+    // Reference to app config.
     Config &_cfg;
 
 public:
@@ -86,77 +47,14 @@ public:
     bool ui_visible;
 
 
-    SoundPlayer(Config &cfg)
-    :   _device{0}
-    ,   _selected_sound{}
-    ,   _error{""}
-    ,   _cfg{cfg}
-    ,   title{"Sound Player"}
-    ,   ui_visible{false}
-    {
-    }
-
-    ~SoundPlayer()
-    {
-        SDL_CloseAudioDevice(_device);
-    }
+    SoundPlayer(Config &cfg);
+    ~SoundPlayer();
 
     /** Handle user input. */
-    void input(SDL_Event const *event)
-    {
-    }
+    void input(SDL_Event const *event);
 
     /** Draw the app's UI. */
-    void drawUI()
-    {
-        if (!ui_visible)
-            return;
-
-        if (ImGui::Begin(title.c_str(), &ui_visible))
-        {
-            ImGui::TextUnformatted(
-                ("Playing: " + (
-                    _selected_sound.empty()
-                        ? "<none>"
-                        : _selected_sound.filename().string())).c_str());
-            if (ImGui::Button("Play"))
-            {
-                try
-                {
-                    _device = _play_sound(
-                        _device, _selected_sound.string().c_str());
-                    _error = "";
-                }
-                catch (std::runtime_error const &e)
-                {
-                    _device = 0;
-                    _error = e.what();
-                }
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Stop"))
-            {
-                SDL_PauseAudioDevice(_device, 1);
-            }
-            ImGui::TextUnformatted(_error.c_str());
-            ImGui::Separator();
-            if (ImGui::BeginChild("SoundTree"))
-            {
-                if (ImGui::TreeNode("valve/sound"))
-                {
-                    ImGui::DirectoryTree(
-                        _cfg.game_dir.string() + "/valve/sound",
-                        &_selected_sound,
-                        [](std::filesystem::path const &p){
-                            return p.extension() == ".wav";
-                        });
-                    ImGui::TreePop();
-                }
-            }
-            ImGui::EndChild();
-        }
-        ImGui::End();
-    }
+    void drawUI();
 };
 
 #endif

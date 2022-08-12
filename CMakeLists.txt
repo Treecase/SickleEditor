@@ -38,8 +38,13 @@ configure_file(
 add_executable(sickle)
 target_sources(sickle PRIVATE
     src/main.cpp
+    src/App.cpp
     src/load_model.cpp
     src/mdl2gl.cpp
+    src/ModelViewer.cpp
+    src/SoundPlayer.cpp
+    src/TextureViewer.cpp
+    src/ui_helpers.cpp
 )
 target_sources(sickle PRIVATE
     FILE_SET HEADERS

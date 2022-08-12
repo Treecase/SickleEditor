@@ -23,7 +23,6 @@
 
 #include <filesystem>
 #include <functional>
-#include <set>
 
 
 namespace ImGui
@@ -32,45 +31,7 @@ namespace ImGui
     bool DirectoryTree(
         std::filesystem::path const &path, std::filesystem::path *selected,
         std::function<bool(std::filesystem::path)> const &filter=
-            [](std::filesystem::path const &){return true;})
-    {
-        // There are two things we want from our display here--entries must be
-        // sorted, and directories must be at the top. To achieve this, we use
-        // two std::sets (which sort automatically). One has directories, one
-        // with regular files. Once these are populated, we simply display the
-        // directories before the files.
-        std::set<std::filesystem::path> subdirs{};
-        std::set<std::filesystem::path> files{};
-        bool result = false;
-        for (auto const &entry : std::filesystem::directory_iterator(path))
-        {
-            if (entry.is_directory())
-            {
-                subdirs.insert(entry.path());
-            }
-            else if (entry.is_regular_file() && filter(entry.path()))
-            {
-                files.insert(entry.path());
-            }
-        }
-        for (auto const &subdir : subdirs)
-        {
-            if (TreeNode(subdir.filename().string().c_str()))
-            {
-                result = result || DirectoryTree(subdir, selected, filter);
-                TreePop();
-            }
-        }
-        for (auto const &file : files)
-        {
-            if (ImGui::Selectable(file.filename().string().c_str()))
-            {
-                *selected = file;
-                result = true;
-            }
-        }
-        return result;
-    }
+            [](std::filesystem::path const &){return true;});
 }
 
 #endif

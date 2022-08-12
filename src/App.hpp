@@ -23,10 +23,7 @@
 #include "ModelViewer.hpp"
 #include "SoundPlayer.hpp"
 #include "TextureViewer.hpp"
-#include "version.hpp"
 
-#include <GL/glew.h>
-#include <imgui.h>
 #include <SDL.h>
 
 
@@ -43,57 +40,16 @@ public:
     bool running;
 
 
-    App(Config &cfg)
-    :   _modelViewer{cfg}
-    ,   _soundPlayer{cfg}
-    ,   _textureViewer{cfg}
-    ,   _cfg{cfg}
-    ,   running{true}
-    {
-    }
+    App(Config &cfg);
 
     /** Handle user input. */
-    void input(SDL_Event const *event)
-    {
-        _modelViewer.input(event);
-        _soundPlayer.input(event);
-        _textureViewer.input(event);
-    }
+    void input(SDL_Event const *event);
 
     /** Draw the app's UI. */
-    void drawUI()
-    {
-        ImGui::BeginMainMenuBar();
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("Exit"))
-                running = false;
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Windows"))
-        {
-            if (ImGui::MenuItem("Model Viewer"))
-                _modelViewer.ui_visible = true;
-            if (ImGui::MenuItem("Sound Player"))
-                _soundPlayer.ui_visible = true;
-            if (ImGui::MenuItem("Texture Viewer"))
-                _textureViewer.ui_visible = true;
-            ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
-        ImGui::ShowMetricsWindow();
-
-        _modelViewer.drawUI();
-        _soundPlayer.drawUI();
-        _textureViewer.drawUI();
-    }
+    void drawUI();
 
     /** Draw non-UI app visuals. */
-    void drawGL()
-    {
-        _modelViewer.drawGL();
-        // _textureViewer.drawGL();
-    }
+    void drawGL();
 };
 
 #endif

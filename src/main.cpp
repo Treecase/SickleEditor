@@ -18,6 +18,7 @@
 
 #include "App.hpp"
 #include "common.hpp"
+#include "version.hpp"
 
 #include <GL/glew.h>
 #include <imgui.h>
