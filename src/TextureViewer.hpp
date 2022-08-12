@@ -22,6 +22,7 @@
 #include "common.hpp"
 #include "glUtils/glUtil.hpp"
 #include "load_model.hpp"
+#include "mdl2gl.hpp"
 #include "ui_helpers.hpp"
 #include "version.hpp"
 
@@ -32,65 +33,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-
-
-#define MIN(a, b) ((a) < (b)? (a) : (b))
-
-
-/** Convert from MDL texture format to an OpenGL texture object. */
-GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
-{
-    // Calculate resized power-of-two dimensions.
-    int resized_w = texture.w > 256? 256 : 1;
-    int resized_h = texture.h > 256? 256 : 1;
-    for (; resized_w < texture.w && resized_w < 256; resized_w *= 2)
-        ;
-    for (; resized_h < texture.h && resized_h < 256; resized_h *= 2)
-        ;
-
-    // Generate the resized texture.
-    auto unpaletted = new GLubyte[resized_w * resized_h * 4];
-    for (int y = 0; y < resized_h; ++y)
-    {
-        for (int x = 0; x < resized_w; ++x)
-        {
-            // TODO: clean this up
-            // The x,y coordinates of the samples.
-            int x1 = MIN(((x+0.25)/(float)resized_w) * texture.w, texture.w-1);
-            int x2 = MIN(((x+0.75)/(float)resized_w) * texture.w, texture.w-1);
-            int y1 = MIN(((y+0.25)/(float)resized_h) * texture.h, texture.h-1);
-            int y2 = MIN(((y+0.75)/(float)resized_h) * texture.h, texture.h-1);
-            // RGB triples of the sampled pixels.
-            std::array<uint8_t, 3> samples[4] = {
-                texture.palette[texture.data[y1*texture.w + x1]],
-                texture.palette[texture.data[y1*texture.w + x2]],
-                texture.palette[texture.data[y2*texture.w + x1]],
-                texture.palette[texture.data[y2*texture.w + x2]]
-            };
-            // Averaged RGB value of the samples.
-            int averages[3] = {
-                (samples[0][0]+samples[1][0]+samples[2][0]+samples[3][0])/4,
-                (samples[0][1]+samples[1][1]+samples[2][1]+samples[3][1])/4,
-                (samples[0][2]+samples[1][2]+samples[2][2]+samples[3][2])/4,
-            };
-            int offset = (y * resized_w + x) * 4;
-            unpaletted[offset+0] = averages[0];
-            unpaletted[offset+1] = averages[1];
-            unpaletted[offset+2] = averages[2];
-            unpaletted[offset+3] = 0xFF;
-        }
-    }
-
-    // Create the GL texture.
-    GLUtil::Texture t{GL_TEXTURE_2D, texture.name};
-    t.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    t.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(
-        t.type(), 0, GL_RGBA, resized_w, resized_h, 0, GL_RGBA,
-        GL_UNSIGNED_BYTE, unpaletted);
-    delete[] unpaletted;
-    return t;
-}
 
 
 /** Displays Textures contained in a .MDL file. */
@@ -195,8 +137,6 @@ public:
         if (!ui_visible)
             return;
 
-        _loadSelectedModel();
-
         auto const &model_name = _models[_selected_model].name;
         auto const &mdl_tex = _models[_selected_model].textures[_current_texture];
         auto const &tex = _textures[_selected_model][_current_texture];
@@ -238,6 +178,7 @@ public:
                             }))
                     {
                         _current_texture = 0;
+                        _loadSelectedModel();
                     }
                     ImGui::TreePop();
                 }
@@ -252,8 +193,6 @@ public:
     {
         if (_selected_model.empty())
             return;
-
-        _loadSelectedModel();
 
         // Draw screen.
         _shader.use();

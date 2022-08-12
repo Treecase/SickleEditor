@@ -20,6 +20,7 @@
 #define _APP_HPP
 
 #include "common.hpp"
+#include "ModelViewer.hpp"
 #include "SoundPlayer.hpp"
 #include "TextureViewer.hpp"
 #include "version.hpp"
@@ -33,6 +34,7 @@
 class App
 {
 private:
+    ModelViewer _modelViewer;
     SoundPlayer _soundPlayer;
     TextureViewer _textureViewer;
     Config &_cfg;
@@ -42,7 +44,8 @@ public:
 
 
     App(Config &cfg)
-    :   _soundPlayer{cfg}
+    :   _modelViewer{cfg}
+    ,   _soundPlayer{cfg}
     ,   _textureViewer{cfg}
     ,   _cfg{cfg}
     ,   running{true}
@@ -52,6 +55,7 @@ public:
     /** Handle user input. */
     void input(SDL_Event const *event)
     {
+        _modelViewer.input(event);
         _soundPlayer.input(event);
         _textureViewer.input(event);
     }
@@ -68,6 +72,8 @@ public:
         }
         if (ImGui::BeginMenu("Windows"))
         {
+            if (ImGui::MenuItem("Model Viewer"))
+                _modelViewer.ui_visible = true;
             if (ImGui::MenuItem("Sound Player"))
                 _soundPlayer.ui_visible = true;
             if (ImGui::MenuItem("Texture Viewer"))
@@ -77,6 +83,7 @@ public:
         ImGui::EndMainMenuBar();
         ImGui::ShowMetricsWindow();
 
+        _modelViewer.drawUI();
         _soundPlayer.drawUI();
         _textureViewer.drawUI();
     }
@@ -84,7 +91,8 @@ public:
     /** Draw non-UI app visuals. */
     void drawGL()
     {
-        _textureViewer.drawGL();
+        _modelViewer.drawGL();
+        // _textureViewer.drawGL();
     }
 };
 

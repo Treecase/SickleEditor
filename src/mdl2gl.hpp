@@ -1,5 +1,5 @@
 /**
- * common.hpp - Sickle common data.
+ * mdl2gl.hpp - Convert loaded MDL data into OpenGL objects.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _COMMON_HPP
-#define _COMMON_HPP
+#ifndef _MDL2GL_HPP
+#define _MDL2GL_HPP
 
-#include <filesystem>
+#include "glUtils/glUtil.hpp"
+#include "load_model.hpp"
 
 
-/** App config. */
-struct Config
-{
-    std::filesystem::path game_dir;
-    int *window_width,
-        *window_height;
-};
+/** Convert from MDL texture format to an OpenGL texture object. */
+GLUtil::Texture texture2GLTexture(MDL::Texture const &texture);
 
 #endif

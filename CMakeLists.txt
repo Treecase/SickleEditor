@@ -39,11 +39,7 @@ add_executable(sickle)
 target_sources(sickle PRIVATE
     src/main.cpp
     src/load_model.cpp
-    src/glUtils/Buffer.cpp
-    src/glUtils/Program.cpp
-    src/glUtils/Shader.cpp
-    src/glUtils/Texture.cpp
-    src/glUtils/VertexArray.cpp
+    src/mdl2gl.cpp
 )
 target_sources(sickle PRIVATE
     FILE_SET HEADERS
@@ -51,15 +47,29 @@ target_sources(sickle PRIVATE
         src/App.hpp
         src/common.hpp
         src/load_model.hpp
+        src/mdl2gl.hpp
+        src/ModelViewer.hpp
         src/SoundPlayer.hpp
         src/TextureViewer.hpp
         src/ui_helpers.hpp
-
 )
 target_compile_features(sickle PRIVATE cxx_std_17)
 set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 
+
+add_library(glUtil OBJECT)
+target_sources(glUtil PRIVATE
+    src/glUtils/Buffer.cpp
+    src/glUtils/Program.cpp
+    src/glUtils/Shader.cpp
+    src/glUtils/Texture.cpp
+    src/glUtils/VertexArray.cpp
+)
+target_compile_features(glUtil PRIVATE cxx_std_17)
+set_target_properties(glUtil PROPERTIES CXX_EXTENSIONS OFF)
+target_include_directories(glUtil PUBLIC src/glUtils)
+target_link_libraries(sickle PRIVATE glUtil)
 
 add_library(imgui OBJECT)
 target_sources(imgui PRIVATE

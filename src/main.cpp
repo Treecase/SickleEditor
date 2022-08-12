@@ -181,6 +181,8 @@ int run(int argc, char *argv[])
 
 
     // Create the app.
+    config.window_width = &width;
+    config.window_height = &height;
     App app{config};
 
 
@@ -224,7 +226,6 @@ int run(int argc, char *argv[])
         ImGui::NewFrame();
         // Update app UI.
         app.drawUI();
-        ImGui::EndFrame();
 
         /* ===[ Update Screen ]=== */
         // Clear screen.
