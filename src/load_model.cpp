@@ -18,8 +18,9 @@
 
 #include "load_model.hpp"
 
-#include <vector>
 #include <fstream>
+#include <unordered_map>
+#include <vector>
 
 #include <cstdint>
 #include <cstring>
@@ -27,7 +28,7 @@
 
 typedef float vec3[3];
 
-struct Header
+struct M_Header
 {
     char id[4];
     uint32_t version;
@@ -82,42 +83,12 @@ struct Header
     uint32_t transitionindex;
 };
 
-struct Bone
+struct M_BodyPart
 {
-    char name[32];
-    int parent;
-    int flags;
-    int bonecontroller[6];
-    float value[6];
-    float scale[6];
-};
-
-struct BoneController
-{
-    int bone;
-    int type;
-    float start;
-    float end;
-    int rest;
-    int index;
-};
-
-struct Hitbox
-{
-    // TODO
-};
-
-struct Seq
-{
-    // TODO
-};
-
-struct SeqGroup
-{
-    char label[32];
     char name[64];
-    void *cache;
-    int data;
+    uint32_t nummodels;
+    uint32_t base;
+    uint32_t modelindex;
 };
 
 struct M_Texture
@@ -129,62 +100,59 @@ struct M_Texture
     uint32_t index;
 };
 
-struct Skin
-{
-    // TODO
-};
-
-struct BodyPart
+struct M_Model
 {
     char name[64];
-    int nummodels;
-    int base;
-    int modelindex;
+    uint32_t type;
+    float boundingradius;
+    uint32_t nummesh;
+    uint32_t meshindex;
+    uint32_t numverts;
+    uint32_t vertinfoindex;
+    uint32_t vertindex;
+    uint32_t numnorms;
+    uint32_t norminfoindex;
+    uint32_t normindex;
+    uint32_t numgroups;
+    uint32_t groupindex;
 };
 
-struct Attachment
+struct M_Mesh
 {
-    char name[32];
-    int type;
-    int bone;
-    vec3 org;
-    vec3 vectors[3];
+    uint32_t numtris;
+    uint32_t triindex;
+    uint32_t skinref;
+    uint32_t numnorms;
+    uint32_t normindex;
+};
+
+struct LoadContext
+{
+    std::ifstream f;
+    M_Header hdr;
 };
 
 
-/** Read a data section. */
-template<typename T>
-std::vector<T> read_data(std::ifstream &f, uint32_t count, uint32_t index)
-{
-    std::vector<T> result{count};
-    f.seekg(index);
-    for (uint32_t i = 0; i < count; ++i)
-    {
-        f.read((char *)&result[i], sizeof(T));
-    }
-    return result;
-}
-
-
-MDL::Texture _load_texture(std::istream &f, Header &hdr, uint32_t texture)
+/** Load a texture. */
+MDL::Texture _load_texture(LoadContext &con, uint32_t texture)
 {
     MDL::Texture result{};
 
     M_Texture tex;
-    f.seekg(hdr.textureindex + 80*texture);
-    f.read((char *)&tex.name, 64);
-    f.read((char *)&tex.flags, 4);
-    f.read((char *)&tex.width, 4);
-    f.read((char *)&tex.height, 4);
-    f.read((char *)&tex.index, 4);
+    con.f.seekg(con.hdr.textureindex + 80 * texture);
+    con.f.read((char *)&tex.name, 64);
+    con.f.read((char *)&tex.flags, 4);
+    con.f.read((char *)&tex.width, 4);
+    con.f.read((char *)&tex.height, 4);
+    con.f.read((char *)&tex.index, 4);
 
     result.name = std::string{tex.name};
     result.w = tex.width;
     result.h = tex.height;
     auto const buf = new char[tex.width * tex.height];
-    f.seekg(tex.index);
-    f.read(buf, tex.width * tex.height);
-    f.read((char *)result.palette.data(), 256 * 3);
+    con.f.seekg(tex.index);
+    con.f.read(buf, tex.width * tex.height);
+    con.f.read((char *)result.palette.data(), 256 * 3);
 
     result.data.reserve(tex.width * tex.height);
     for (size_t i = 0; i < tex.width * tex.height; ++i)
@@ -194,42 +162,157 @@ MDL::Texture _load_texture(std::istream &f, Header &hdr, uint32_t texture)
     return result;
 }
 
+/** Load a Mesh's tricmds from .mdl data. */
+void _load_mesh_tricmds(LoadContext &con, M_Mesh &mesh, MDL::Mesh &msh)
+{
+    struct M_Vertex
+    {
+        uint16_t modelposition;
+        uint16_t modellight;
+        uint16_t uv_s,
+                 uv_t;
+    };
+    con.f.seekg(mesh.triindex);
+
+    int16_t numverts;
+    con.f.read((char*)&numverts, 2);
+    int16_t n = numverts < 0? -numverts : numverts;
+
+    while (n != 0)
+    {
+        MDL::Tricmd tri;
+        for (int16_t j = 0; j < n; ++j)
+        {
+            M_Vertex vertex;
+            con.f.read((char*)&vertex.modelposition, 2);
+            con.f.read((char*)&vertex.modellight, 2);
+            con.f.read((char*)&vertex.uv_s, 2);
+            con.f.read((char*)&vertex.uv_t, 2);
+            tri.vertices.push_back({
+                vertex.modelposition, vertex.modellight,
+                vertex.uv_s, vertex.uv_t});
+        }
+        tri.mode = numverts < 0;
+        msh.tricmds.push_back(tri);
+
+        con.f.read((char*)&numverts, 2);
+        n = numverts < 0? -numverts : numverts;
+    }
+}
+
+/** Load a Model's Meshes from .mdl data. */
+void _load_model_meshes(LoadContext &con, M_Model &model, MDL::MDLModel &mdl)
+{
+    for (uint32_t i = 0; i < model.nummesh; ++i)
+    {
+        M_Mesh mesh;
+        con.f.seekg(model.meshindex + 20 * i);
+        con.f.read((char*)&mesh.numtris, 4);
+        con.f.read((char*)&mesh.triindex, 4);
+        con.f.read((char*)&mesh.skinref, 4);
+        con.f.read((char*)&mesh.numnorms, 4);
+        con.f.read((char*)&mesh.normindex, 4);
+        mdl.meshes.push_back({});
+        _load_mesh_tricmds(con, mesh, mdl.meshes.at(i));
+    }
+}
+
+/** Load a Model's vertices from .mdl data. */
+void _load_model_vertices(LoadContext &con, M_Model &model, MDL::MDLModel &mdl)
+{
+    con.f.seekg(model.vertindex);
+    for (uint32_t i = 0; i < model.numverts; ++i)
+    {
+        mdl.vertices.push_back({0.0f, 0.0f, 0.0f});
+        auto &vertex = mdl.vertices[i];
+        con.f.read((char*)&vertex.x, 4);
+        con.f.read((char*)&vertex.y, 4);
+        con.f.read((char*)&vertex.z, 4);
+    }
+}
+
+/** Load a BodyPart's Models from .mdl data. */
+void _load_bodypart_models(LoadContext &con, M_BodyPart &bodypart, MDL::BodyPart &bp)
+{
+    for (uint32_t mdli = 0; mdli < bodypart.nummodels; ++mdli)
+    {
+        M_Model model{};
+        con.f.seekg(bodypart.modelindex + 112 * mdli);
+        con.f.read(model.name, 64);
+        con.f.read((char*)&model.type, 4);
+        con.f.read((char*)&model.boundingradius, 4);
+        con.f.read((char*)&model.nummesh, 4);
+        con.f.read((char*)&model.meshindex, 4);
+        con.f.read((char*)&model.numverts, 4);
+        con.f.read((char*)&model.vertinfoindex, 4);
+        con.f.read((char*)&model.vertindex, 4);
+        con.f.read((char*)&model.numnorms, 4);
+        con.f.read((char*)&model.norminfoindex, 4);
+        con.f.read((char*)&model.normindex, 4);
+        con.f.read((char*)&model.numgroups, 4);
+        con.f.read((char*)&model.groupindex, 4);
+        bp.models.push_back({model.name, {}, {}});
+        _load_model_meshes(con, model, bp.models.at(mdli));
+        _load_model_vertices(con, model, bp.models.at(mdli));
+    }
+}
+
+/** Load BodyParts from .mdl data. */
+void _load_bodyparts(LoadContext &con, MDL::Model &result)
+{
+    for (uint32_t bpi = 0; bpi < con.hdr.numbodyparts; ++bpi)
+    {
+        M_BodyPart bodypart{};
+        con.f.seekg(con.hdr.bodypartindex + 76 * bpi);
+        con.f.read(bodypart.name, 64);
+        con.f.read((char*)&bodypart.nummodels, 4);
+        con.f.read((char*)&bodypart.base, 4);
+        con.f.read((char*)&bodypart.modelindex, 4);
+        result.bodyparts.push_back({bodypart.name, {}});
+        _load_bodypart_models(con, bodypart, result.bodyparts.at(bpi));
+    }
+}
+
 
 MDL::Model MDL::load_mdl(std::string const &path)
 {
     MDL::Model result{};
 
-    std::ifstream f{path, std::ios::in | std::ios::binary};
-    if (!f.is_open())
+    LoadContext con{std::ifstream{path, std::ios::in | std::ios::binary}, {}};
+
+    con.f.exceptions(std::ifstream::failbit); // temp, enable exception throwing
+    if (!con.f.is_open())
     {
         throw std::runtime_error{"Failed to open '" + path + "'"};
     }
 
     // Read header.
-    Header header{};
-    f.read((char *)&header, 244);
-    if (strncmp(header.id, "IDST", 4) != 0)
+    con.f.read((char *)&con.hdr, 244);
+    if (strncmp(con.hdr.id, "IDST", 4) != 0)
     {
-        fprintf(stderr, "Bad ID %.4s\n", (char*)&header.id);
+        fprintf(stderr, "Bad ID %.4s\n", (char*)&con.hdr.id);
     }
-    result.name = std::string{header.name};
+    result.name = std::string{con.hdr.name};
 
-    for (uint32_t i = 0; i < header.numtextures; ++i)
+    // Load external texture data.
+    if (con.hdr.numtextures == 0)
     {
-        result.textures.push_back(_load_texture(f, header, i));
+        auto t = load_mdl(path.substr(0, path.length() - 4) + "t.mdl");
+        for (auto const &t : t.textures)
+            result.textures.push_back(t);
     }
 
-    f.close();
 
-    /* ===[ Post Load ]=== */
-    if (header.numtextures == 0)
+    // Read Textures.
+    for (uint32_t i = 0; i < con.hdr.numtextures; ++i)
     {
-        auto texmdl = path.substr(0, path.length()-4) + "t.mdl";
-        auto submdl = load_mdl(texmdl);
-        result.textures.insert(
-            result.textures.end(),
-            submdl.textures.begin(), submdl.textures.end());
+        result.textures.push_back(_load_texture(con, i));
     }
+
+    // Read bodyparts hierarchy.
+    _load_bodyparts(con, result);
+
+    con.f.close();
 
     return result;
 }

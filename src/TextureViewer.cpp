@@ -33,7 +33,7 @@ TextureViewer::TextureViewer(Config &cfg)
                 "shaders/fragment.frag", GL_FRAGMENT_SHADER)},
         "ScreenQuadShader"}
 ,   _vao{"ScreenQuadVAO"}
-,   _models{{"", {"<none>", {{"<none>", 1, 1, {0}, {0}}}}}}
+,   _models{{"", {"<none>", {}, {{"<none>", 1, 1, {0}, {0}}}}}}
 ,   _textures{{"", {texture2GLTexture(_models[""].textures[0])}}}
 ,   _selected_model{""}
 ,   _current_texture{0}

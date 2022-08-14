@@ -17,7 +17,6 @@
  */
 
 #include "ModelViewer.hpp"
-#include "mdl2gl.hpp"
 #include "ui_helpers.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -28,7 +27,7 @@
 #define CLAMP(x, min, max) ((x) < (min)? (min) : (x) > (max)? (max) : (x))
 
 #define MOUSE_SENSITIVITY 0.5f
-#define MIN_ZOOM 0.1f
+#define MIN_ZOOM 0.5f
 #define MIN_FOV 30.0f
 #define MAX_FOV 90.0f
 
@@ -40,35 +39,64 @@ ModelViewer::ModelViewer(Config &cfg)
         GLUtil::shader_from_file(
             "shaders/model.frag", GL_FRAGMENT_SHADER)},
         "ModelShader"}
-,   _vao{"ModelVAO"}
-,   _model{"<none>", {{"<none>", 1, 1, {0}, {0xff, 0xff, 0xff}}}}
+,   _model{"<none>", {}, {{"<none>", 2, 2, {0,1,2,3}, {0xff,0,0, 0,0xff,0, 0,0,0xff, 0xff,0xff,0xff}}}}
+,   _glmodel{
+        {6},
+        {(void*)0},
+        {
+            {   //       positions    texcoords       vertexcolors
+                //   x     y     z      s     t      r     g     b
+                // { 1.0f, 1.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f, 1.0f}, // tl
+                // { 1.0f,-1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f, 1.0f}, // bl
+                // {-1.0f, 1.0f, 0.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f}, // tr
+                // {-1.0f,-1.0f, 0.0f,  1.0f, 1.0f,  1.0f, 1.0f, 1.0f}, // br
+                { 1.0f, 1.0f, 0.0f,     0,    0,  1.0f, 1.0f, 1.0f}, // tl
+                { 1.0f,-1.0f, 0.0f,     0,    1,  1.0f, 1.0f, 1.0f}, // bl
+                {-1.0f, 1.0f, 0.0f,     1,    0,  1.0f, 1.0f, 1.0f}, // tr
+                {-1.0f,-1.0f, 0.0f,     1,    1,  1.0f, 1.0f, 1.0f}, // br
+            },
+            {   0,1,2, // Top left tri
+                2,1,3, // Bottom right tri
+            }
+        },
+        {nullptr},
+        {nullptr},
+        {nullptr},
+    }
 ,   _textures{texture2GLTexture(_model.textures[0])}
 ,   _selected{""}
 ,   _cfg{cfg}
 ,   _camera{{0.0f, 0.0f}, 2.0f, 70.0f}
+,   _wireframe{false}
 ,   _modelM{glm::identity<glm::mat4>()}
-,   _projectionM{glm::perspective(
-        glm::radians(_camera.fov),
-        *cfg.window_width / (float)*cfg.window_height,
-        0.1f, 100.0f)}
+,   _scale{1.0f}
 ,   title{"Model Viewer"}
 ,   ui_visible{false}
 {
-    _vao.bind();
-    // Model vbo.
-    GLUtil::Buffer vbo{GL_ARRAY_BUFFER, "ModelVBO"};
-    vbo.bind();
-    vbo.buffer(GL_STATIC_DRAW, _modelVertices);
+    _glmodel.vao.reset(new GLUtil::VertexArray{"ModelVAO"});
+    _glmodel.vao->bind();
+
+    _glmodel.vbo.reset(new GLUtil::Buffer{GL_ARRAY_BUFFER, "ModelVBO"});
+    _glmodel.vbo->bind();
+    _glmodel.vbo->buffer(GL_STATIC_DRAW, _glmodel.meshData.vertices);
+
+    _glmodel.ebo.reset(new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, "ModelEBO"});
+    _glmodel.ebo->bind();
+    _glmodel.ebo->buffer(GL_STATIC_DRAW, _glmodel.meshData.indices);
+
     // Positions array.
-    _vao.enableVertexAttribArray(0, 3, GL_FLOAT, 8 * sizeof(GLfloat));
+    _glmodel.vao->enableVertexAttribArray(
+        0, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, x));
     // UV array.
-    _vao.enableVertexAttribArray(
-        1, 2, GL_FLOAT, 8 * sizeof(GLfloat), 3 * sizeof(GLfloat));
+    _glmodel.vao->enableVertexAttribArray(
+        1, 2, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, s));
     // Vertex Color array.
-    _vao.enableVertexAttribArray(
-        2, 3, GL_FLOAT, 8 * sizeof(GLfloat), 5 * sizeof(GLfloat));
-    vbo.unbind();
-    _vao.unbind();
+    _glmodel.vao->enableVertexAttribArray(
+        2, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, r));
+
+    _glmodel.ebo->unbind();
+    _glmodel.vbo->unbind();
+    _glmodel.vao->unbind();
 }
 
 void ModelViewer::input(SDL_Event const *event)
@@ -101,10 +129,6 @@ void ModelViewer::input(SDL_Event const *event)
         {
             _camera.fov -= MOUSE_SENSITIVITY * event->wheel.y;
             _camera.fov = CLAMP(_camera.fov, MIN_FOV, MAX_FOV);
-            _projectionM = glm::perspective(
-                glm::radians(_camera.fov),
-                *_cfg.window_width / (float)*_cfg.window_height,
-                0.1f, 100.0f);
         }
         break;}
     case SDL_KEYDOWN:{
@@ -134,6 +158,7 @@ void ModelViewer::drawUI()
         ImGui::TextUnformatted(
             (   "Yaw: "
                 + std::to_string(glm::degrees(_camera.angle.x))).c_str());
+        ImGui::DragFloat("Scale", &_scale, 0.005f, 0.0f, FLT_MAX);
         ImGui::Separator();
         if (ImGui::BeginChild("ModelTree"))
         {
@@ -172,17 +197,26 @@ void ModelViewer::drawGL()
         _camera.angle.x,
         up);
 
+    // Setup projection matrix.
+    auto projectionMatrix = glm::perspective(
+        glm::radians(_camera.fov),
+        *_cfg.window_width / (float)*_cfg.window_height,
+        0.1f, 1000.0f);
+
+    auto modelMatrix = glm::scale(_modelM, glm::vec3{_scale});
+
     // Draw model.
     _shader.use();
-    _vao.bind();
+    _glmodel.vao->bind();
+    _glmodel.ebo->bind();
     glActiveTexture(GL_TEXTURE0);
     auto const &tex = _textures[0];
     tex.bind();
-    _shader.setUniformS("model", _modelM);
+    _shader.setUniformS("model", modelMatrix);
     _shader.setUniformS("view", viewMatrix);
-    _shader.setUniformS("projection", _projectionM);
+    _shader.setUniformS("projection", projectionMatrix);
     _shader.setUniformS("tex", 0);
-    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)_modelVertices.size());
+    glMultiDrawElements(GL_TRIANGLES, _glmodel.count.data(), GL_UNSIGNED_INT, _glmodel.indices.data(), _glmodel.count.size());
 }
 
 
@@ -192,4 +226,5 @@ void ModelViewer::_loadSelectedModel()
     _textures.clear();
     for (auto const &t : _model.textures)
         _textures.push_back(texture2GLTexture(t));
+    _glmodel = model2vao(_model);
 }

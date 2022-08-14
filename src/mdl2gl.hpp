@@ -23,7 +23,35 @@
 #include "load_model.hpp"
 
 
+/** Format for buffered vertex data. */
+struct VertexDef
+{
+    GLfloat x, y, z;    // Position
+    GLfloat s, t;       // UV
+    GLfloat r, g, b;    // Vertex color
+};
+
+struct MeshDef
+{
+    std::vector<VertexDef> vertices;
+    std::vector<GLuint> indices;
+};
+
+struct ModelDef
+{
+    std::vector<GLsizei> count;
+    std::vector<void *> indices;
+    MeshDef meshData;
+
+    std::shared_ptr<GLUtil::VertexArray> vao;
+    std::shared_ptr<GLUtil::Buffer> vbo, ebo;
+};
+
+
 /** Convert from MDL texture format to an OpenGL texture object. */
 GLUtil::Texture texture2GLTexture(MDL::Texture const &texture);
+
+/** Convert from MDL Model format to an OpenGL VAO. */
+ModelDef model2vao(MDL::Model const &model);
 
 #endif

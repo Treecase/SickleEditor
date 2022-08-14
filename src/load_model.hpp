@@ -28,6 +28,12 @@
 
 namespace MDL
 {
+struct Vec3
+{
+    float x, y, z;
+};
+
+
 /** MDL Texture data. */
 struct Texture
 {
@@ -37,10 +43,48 @@ struct Texture
     std::array<std::array<uint8_t, 3>, 256> palette;
 };
 
+/** MDL Vertex. */
+struct Vertex
+{
+    int position_index;
+    int light_index;
+    int uv_s,
+        uv_t;
+};
+
+/** MDL Tricmds. */
+struct Tricmd
+{
+    bool mode; // true = triangle fan, false = triangle strip
+    std::vector<Vertex> vertices;
+};
+
+/** MDL Mesh. */
+struct Mesh
+{
+    std::vector<Tricmd> tricmds;
+};
+
+/** MDL Model. */
+struct MDLModel
+{
+    std::string name;
+    std::vector<Mesh> meshes;
+    std::vector<Vec3> vertices;
+};
+
+/** MDL BodyPart. */
+struct BodyPart
+{
+    std::string name;
+    std::vector<MDLModel> models;
+};
+
 /** Loaded MDL data. */
 struct Model
 {
     std::string name;
+    std::vector<BodyPart> bodyparts;
     std::vector<Texture> textures;
 };
 

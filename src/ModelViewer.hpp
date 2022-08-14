@@ -22,6 +22,7 @@
 #include "common.hpp"
 #include "glUtils/glUtil.hpp"
 #include "load_model.hpp"
+#include "mdl2gl.hpp"
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -35,35 +36,15 @@
 class ModelViewer
 {
 private:
-    /** Vertex info. */
-    struct VertDef {
-        GLfloat x, y, z;    // Position
-        GLfloat s, t;       // UV
-        GLfloat r, g, b;    // Vertex color
-    };
-
     // Shader.
     GLUtil::Program _shader;
-    // Model VAO.
-    GLUtil::VertexArray _vao;
 
     // Loaded MDL.
     MDL::Model _model;
+    // Model GL data.
+    ModelDef _glmodel;
     // List of loaded MDL's associated GL textures.
     std::vector<GLUtil::Texture> _textures;
-    // Loaded MDL's vertices.
-    std::vector<VertDef> _modelVertices{
-        //   positions  texcoords    vertexcolors
-        //   x      y     z      s     t      r     g     b
-        // Top left tri
-        { 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f, 1.0f}, // tl
-        {-1.0f,  1.0f, 0.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f}, // tr
-        { 1.0f, -1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f, 1.0f}, // bl
-        // Bottom right tri
-        {-1.0f,  1.0f, 0.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f}, // tr
-        {-1.0f, -1.0f, 0.0f,  1.0f, 1.0f,  1.0f, 1.0f, 1.0f}, // br
-        { 1.0f, -1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f, 1.0f}, // bl
-    };
     // Path to loaded MDL.
     std::filesystem::path _selected;
 
@@ -78,12 +59,12 @@ private:
     } _camera;
 
     // Wireframe display toggle.
-    bool _wireframe = false;
+    bool _wireframe;
 
     // Model matrix.
     glm::mat4 _modelM;
-    // Projection matrix.
-    glm::mat4 _projectionM;
+    // Model scaling.
+    GLfloat _scale;
 
     /** Called when _selected is updated. */
     void _loadSelectedModel();

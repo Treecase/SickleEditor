@@ -104,6 +104,9 @@ void init_OpenGL()
     }
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(opengl_debug_message_callback, nullptr);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glEnable(GL_DEPTH_TEST);
 }
 
 
@@ -263,6 +266,7 @@ int MAIN(int argc, char *argv[])
     init_SDL();
 
     // Run the program.
+#if 0
     try
     {
         r = run(argc, argv);
@@ -273,6 +277,9 @@ int MAIN(int argc, char *argv[])
             SDL_MESSAGEBOX_ERROR, "Error", e.what(), nullptr);
         std::cerr << "FATAL: " << e.what() << std::endl;
     }
+#else
+    r = run(argc, argv);
+#endif
 
     // Global cleanup.
     SDL_Quit();

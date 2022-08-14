@@ -77,3 +77,103 @@ GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
     t.unbind();
     return t;
 }
+
+// Convert MDL model vertex data to a GL-friendly format.
+MeshDef model2mesh(MDL::MDLModel const &model)
+{
+    MeshDef out{};
+
+    // VBO data
+    for (auto const &vertex : model.vertices)
+    {
+        out.vertices.push_back({
+            vertex.x, vertex.y, vertex.z,
+            0.0f, 0.0f,
+            1.0f, 1.0f, 1.0f});
+    }
+
+    // EBO data
+    for (auto const &mesh : model.meshes)
+    {
+        for (auto const &tricmd : mesh.tricmds)
+        {
+            if (tricmd.mode)
+            {
+                // Triangle fan.
+                for (size_t i = 1; i < tricmd.vertices.size()-1; i++)
+                {
+                    auto const &a = tricmd.vertices[0];
+                    auto const &b = tricmd.vertices[i+1];
+                    auto const &c = tricmd.vertices[i];
+                    out.indices.push_back(a.position_index);
+                    out.indices.push_back(b.position_index);
+                    out.indices.push_back(c.position_index);
+                }
+            }
+            else
+            {
+                // Triangle strip.
+                for (size_t i = 0; i < tricmd.vertices.size()-2; ++i)
+                {
+                    auto const &a = tricmd.vertices[i+0];
+                    auto const &b = tricmd.vertices[i % 2 == 0? i+2 : i+1];
+                    auto const &c = tricmd.vertices[i % 2 == 0? i+1 : i+2];
+                    out.indices.push_back(a.position_index);
+                    out.indices.push_back(b.position_index);
+                    out.indices.push_back(c.position_index);
+                }
+            }
+        }
+    }
+    return out;
+}
+
+ModelDef model2vao(MDL::Model const &model)
+{
+    ModelDef out{};
+
+    for (auto const &bodypart : model.bodyparts)
+    {
+        auto mesh = model2mesh(bodypart.models[0]);
+
+        out.count.push_back(mesh.indices.size());
+        out.indices.push_back((void*)out.meshData.indices.size());
+
+        out.meshData.vertices.insert(
+            out.meshData.vertices.end(),
+            mesh.vertices.begin(), mesh.vertices.end());
+        out.meshData.indices.insert(
+            out.meshData.indices.end(),
+            mesh.indices.begin(), mesh.indices.end());
+    }
+
+    // Create the VAO.
+    out.vao.reset(new GLUtil::VertexArray{model.name + "VAO"});
+    out.vao->bind();
+
+    // Buffer the vertex data.
+    out.vbo.reset(new GLUtil::Buffer{GL_ARRAY_BUFFER, model.name + "VBO"});
+    out.vbo->bind();
+    out.vbo->buffer(GL_STATIC_DRAW, out.meshData.vertices);
+
+    // Buffer the index data.
+    out.ebo.reset(
+        new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, model.name + "EBO"});
+    out.ebo->bind();
+    out.ebo->buffer(GL_STATIC_DRAW, out.meshData.indices);
+
+    // Populate vertex positions array.
+    out.vao->enableVertexAttribArray(
+        0, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, x));
+    // Populate vertex UV array.
+    out.vao->enableVertexAttribArray(
+        1, 2, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, s));
+    // Populate vertex color array.
+    out.vao->enableVertexAttribArray(
+        2, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, r));
+
+    out.ebo->unbind();
+    out.vbo->unbind();
+    out.vao->unbind();
+    return out;
+}
