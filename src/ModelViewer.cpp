@@ -33,7 +33,8 @@
 
 
 ModelViewer::ModelViewer(Config &cfg)
-:   _shader{{
+:   Module{cfg, "Model Viewer", false}
+,   _shader{{
         GLUtil::shader_from_file(
             "shaders/model.vert", GL_VERTEX_SHADER),
         GLUtil::shader_from_file(
@@ -64,13 +65,10 @@ ModelViewer::ModelViewer(Config &cfg)
 ,   _glmodel{}
 ,   _textures{}
 ,   _selected{""}
-,   _cfg{cfg}
 ,   _camera{{0.0f, 0.0f}, 2.0f, 70.0f}
 ,   _wireframe{false}
 ,   _modelM{glm::identity<glm::mat4>()}
 ,   _scale{1.0f}
-,   title{"Model Viewer"}
-,   ui_visible{false}
 {
     _loadModel();
 }
@@ -125,7 +123,7 @@ void ModelViewer::drawUI()
 
     if (ImGui::Begin(title.c_str(), &ui_visible))
     {
-        ImGui::TextUnformatted(("Model: " + _selected.string()).c_str());
+        ImGui::TextUnformatted(("Model: " + _model.name).c_str());
         ImGui::TextUnformatted(
             ("FOV: " + std::to_string(_camera.fov)).c_str());
         ImGui::TextUnformatted(

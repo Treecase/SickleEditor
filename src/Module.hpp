@@ -1,5 +1,5 @@
 /**
- * SoundPlayer.hpp - WAV sound player module.
+ * Module.hpp - Abstract module class.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,42 +16,43 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _SOUNDPLAYER_HPP
-#define _SOUNDPLAYER_HPP
+#ifndef _MODULE_HPP
+#define _MODULE_HPP
 
 #include "common.hpp"
-#include "glUtils/glUtil.hpp"
-#include "Module.hpp"
 
-#include <GL/glew.h>
 #include <SDL.h>
 
-#include <filesystem>
 
-
-/** Plays WAV files. */
-class SoundPlayer : public Module
+/** Abstract Module class. */
+class Module
 {
-private:
-    // Currently playing sound device.
-    SDL_AudioDeviceID _device;
-    // Currently selected sound.
-    std::filesystem::path _selected_sound;
-    // Error string for player failures.
-    std::string _error;
+protected:
+    // Reference to app config.
+    Config &_cfg;
 
 public:
-    SoundPlayer(Config &cfg);
-    ~SoundPlayer();
+    // Module title.
+    std::string title;
+    // Is the UI visible?
+    bool ui_visible;
+
+
+    Module(Config &cfg, std::string const &title, bool visible)
+    :   _cfg{cfg}
+    ,   title{title}
+    ,   ui_visible{visible}
+    {}
+
 
     /** Handle user input. */
-    void input(SDL_Event const *event) override;
+    virtual void input(SDL_Event const *event)=0;
 
-    /** Draw the player's UI. */
-    void drawUI() override;
+    /** Draw the app's UI. */
+    virtual void drawUI()=0;
 
-    /** Does nothing. */
-    void drawGL() override {};
+    /** Draw non-UI app visuals. */
+    virtual void drawGL()=0;
 };
 
 #endif

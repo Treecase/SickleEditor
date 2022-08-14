@@ -26,14 +26,20 @@
 
 #include <SDL.h>
 
+#include <set>
+
 
 /** Main app class. */
 class App
 {
 private:
-    ModelViewer _modelViewer;
-    SoundPlayer _soundPlayer;
-    TextureViewer _textureViewer;
+    struct ModuleComparer
+    {   bool operator()(
+            std::shared_ptr<Module> const &a,
+            std::shared_ptr<Module> const &b) const
+        {return a->title < b->title;}
+    };
+    std::set<std::shared_ptr<Module>, ModuleComparer> _modules;
     Config &_cfg;
 
 public:

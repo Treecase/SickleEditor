@@ -22,6 +22,7 @@
 #include "common.hpp"
 #include "glUtils/glUtil.hpp"
 #include "load_model.hpp"
+#include "Module.hpp"
 
 #include <GL/glew.h>
 #include <SDL.h>
@@ -31,7 +32,7 @@
 
 
 /** Displays Textures contained in a .MDL file. */
-class TextureViewer
+class TextureViewer: public Module
 {
 private:
     // Screenquad vertex data.
@@ -52,29 +53,21 @@ private:
     // Index of currently displayed texture.
     int _current_texture;
 
-    // Reference to app config.
-    Config &_cfg;
-
     void _loadSelectedModel_MDL();
     void _loadSelectedModel_GL();
     void _loadSelectedModel();
 
 public:
-    // App title.
-    std::string title;
-    bool ui_visible;
-
-
     TextureViewer(Config &cfg);
 
     /** Handle user input. */
-    void input(SDL_Event const *event);
+    void input(SDL_Event const *event) override;
 
     /** Draw the app's UI. */
-    void drawUI();
+    void drawUI() override;
 
-    /** Draw non-UI app visuals. */
-    void drawGL();
+    /** Does nothing. */
+    void drawGL() override {};
 };
 
 #endif

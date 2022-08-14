@@ -23,6 +23,7 @@
 #include "glUtils/glUtil.hpp"
 #include "load_model.hpp"
 #include "mdl2gl.hpp"
+#include "Module.hpp"
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -33,7 +34,7 @@
 
 
 /** Displays Models contained in a .MDL file. */
-class ModelViewer
+class ModelViewer : public Module
 {
 private:
     // Shader.
@@ -47,9 +48,6 @@ private:
     std::vector<GLUtil::Texture> _textures;
     // Path to loaded MDL.
     std::filesystem::path _selected;
-
-    // Reference to app config.
-    Config &_cfg;
 
     // Orbiting camera.
     struct Camera {
@@ -71,22 +69,16 @@ private:
     void _loadModel();
 
 public:
-    // App title.
-    std::string title;
-    // Is the UI visible?
-    bool ui_visible;
-
-
     ModelViewer(Config &cfg);
 
     /** Handle user input. */
-    void input(SDL_Event const *event);
+    void input(SDL_Event const *event) override;
 
     /** Draw the app's UI. */
-    void drawUI();
+    void drawUI() override;
 
     /** Draw non-UI app visuals. */
-    void drawGL();
+    void drawGL() override;
 };
 
 #endif

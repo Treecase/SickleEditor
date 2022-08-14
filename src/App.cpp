@@ -22,9 +22,11 @@
 
 
 App::App(Config &cfg)
-:   _modelViewer{cfg}
-,   _soundPlayer{cfg}
-,   _textureViewer{cfg}
+:   _modules{
+        std::shared_ptr<Module>{new ModelViewer{cfg}},
+        std::shared_ptr<Module>{new SoundPlayer{cfg}},
+        std::shared_ptr<Module>{new TextureViewer{cfg}},
+    }
 ,   _cfg{cfg}
 ,   running{true}
 {
@@ -32,9 +34,8 @@ App::App(Config &cfg)
 
 void App::input(SDL_Event const *event)
 {
-    _modelViewer.input(event);
-    _soundPlayer.input(event);
-    _textureViewer.input(event);
+    for (auto &module : _modules)
+        module->input(event);
 }
 
 void App::drawUI()
@@ -48,23 +49,20 @@ void App::drawUI()
     }
     if (ImGui::BeginMenu("Windows"))
     {
-        if (ImGui::MenuItem("Model Viewer"))
-            _modelViewer.ui_visible = true;
-        if (ImGui::MenuItem("Sound Player"))
-            _soundPlayer.ui_visible = true;
-        if (ImGui::MenuItem("Texture Viewer"))
-            _textureViewer.ui_visible = true;
+        for (auto &module : _modules)
+            if (ImGui::MenuItem(module->title.c_str()))
+                module->ui_visible = true;
         ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
     ImGui::ShowMetricsWindow();
 
-    _modelViewer.drawUI();
-    _soundPlayer.drawUI();
-    _textureViewer.drawUI();
+    for (auto &module : _modules)
+        module->drawUI();
 }
 
 void App::drawGL()
 {
-    _modelViewer.drawGL();
+    for (auto &module : _modules)
+        module->drawGL();
 }

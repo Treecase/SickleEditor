@@ -26,7 +26,8 @@
 
 
 TextureViewer::TextureViewer(Config &cfg)
-:   _shader{
+:   Module{cfg, "Texture Viewer", false}
+,   _shader{
         {   GLUtil::shader_from_file(
                 "shaders/vertex.vert", GL_VERTEX_SHADER),
             GLUtil::shader_from_file(
@@ -37,9 +38,6 @@ TextureViewer::TextureViewer(Config &cfg)
 ,   _textures{{"", {texture2GLTexture(_models[""].textures[0])}}}
 ,   _selected_model{""}
 ,   _current_texture{0}
-,   _cfg{cfg}
-,   title{"Texture Viewer"}
-,   ui_visible{false}
 {
     _vao.bind();
     // Screenquad vbo.
@@ -113,21 +111,6 @@ void TextureViewer::drawUI()
         ImGui::EndChild();
     }
     ImGui::End();
-}
-
-void TextureViewer::drawGL()
-{
-    if (_selected_model.empty())
-        return;
-
-    // Draw screen.
-    _shader.use();
-    _vao.bind();
-    glActiveTexture(GL_TEXTURE0);
-    auto const &tex = _textures[_selected_model][_current_texture];
-    tex.bind();
-    _shader.setUniformS("tex", 0);
-    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)(_sqv.size() / 5));
 }
 
 
