@@ -68,6 +68,7 @@ private:
 
     /** Called when _selected is updated. */
     void _loadSelectedModel();
+    void _loadModel(MDL::Model const &mdl);
 
 public:
     // App title.

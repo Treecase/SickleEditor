@@ -39,31 +39,30 @@ ModelViewer::ModelViewer(Config &cfg)
         GLUtil::shader_from_file(
             "shaders/model.frag", GL_FRAGMENT_SHADER)},
         "ModelShader"}
-,   _model{"<none>", {}, {{"<none>", 2, 2, {0,1,2,3}, {0xff,0,0, 0,0xff,0, 0,0,0xff, 0xff,0xff,0xff}}}}
-,   _glmodel{
-        {6},
-        {(void*)0},
-        {
-            {   //       positions    texcoords       vertexcolors
-                //   x     y     z      s     t      r     g     b
-                // { 1.0f, 1.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f, 1.0f}, // tl
-                // { 1.0f,-1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f, 1.0f}, // bl
-                // {-1.0f, 1.0f, 0.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f}, // tr
-                // {-1.0f,-1.0f, 0.0f,  1.0f, 1.0f,  1.0f, 1.0f, 1.0f}, // br
-                { 1.0f, 1.0f, 0.0f,     0,    0,  1.0f, 1.0f, 1.0f}, // tl
-                { 1.0f,-1.0f, 0.0f,     0,    1,  1.0f, 1.0f, 1.0f}, // bl
-                {-1.0f, 1.0f, 0.0f,     1,    0,  1.0f, 1.0f, 1.0f}, // tr
-                {-1.0f,-1.0f, 0.0f,     1,    1,  1.0f, 1.0f, 1.0f}, // br
-            },
-            {   0,1,2, // Top left tri
-                2,1,3, // Bottom right tri
-            }
-        },
-        {nullptr},
-        {nullptr},
-        {nullptr},
+,   _model{
+        "<none>",
+        {   {   "QuadBodyPart",
+                {   {   "QuadModel",
+                        {   {   {   {   false,
+                                        {   {3, 0, 1,1},
+                                            {1, 0, 0,1},
+                                            {2, 0, 1,0},
+                                            {0, 0, 0,0}}}}}},
+                        {   { 1.0f, 1.0f, 0.0f}, // tl
+                            { 1.0f,-1.0f, 0.0f}, // bl
+                            {-1.0f, 1.0f, 0.0f}, // tr
+                            {-1.0f,-1.0f, 0.0f}  // br
+                        }}}}},
+        {   {   "<none>",
+                2, 2,
+                {0,1,2,3},
+                {   0xff,0x00,0x00,
+                    0x00,0xff,0x00,
+                    0x00,0x00,0xff,
+                    0xff,0xff,0xff}}}
     }
-,   _textures{texture2GLTexture(_model.textures[0])}
+,   _glmodel{}
+,   _textures{}
 ,   _selected{""}
 ,   _cfg{cfg}
 ,   _camera{{0.0f, 0.0f}, 2.0f, 70.0f}
@@ -73,30 +72,7 @@ ModelViewer::ModelViewer(Config &cfg)
 ,   title{"Model Viewer"}
 ,   ui_visible{false}
 {
-    _glmodel.vao.reset(new GLUtil::VertexArray{"ModelVAO"});
-    _glmodel.vao->bind();
-
-    _glmodel.vbo.reset(new GLUtil::Buffer{GL_ARRAY_BUFFER, "ModelVBO"});
-    _glmodel.vbo->bind();
-    _glmodel.vbo->buffer(GL_STATIC_DRAW, _glmodel.meshData.vertices);
-
-    _glmodel.ebo.reset(new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, "ModelEBO"});
-    _glmodel.ebo->bind();
-    _glmodel.ebo->buffer(GL_STATIC_DRAW, _glmodel.meshData.indices);
-
-    // Positions array.
-    _glmodel.vao->enableVertexAttribArray(
-        0, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, x));
-    // UV array.
-    _glmodel.vao->enableVertexAttribArray(
-        1, 2, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, s));
-    // Vertex Color array.
-    _glmodel.vao->enableVertexAttribArray(
-        2, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, r));
-
-    _glmodel.ebo->unbind();
-    _glmodel.vbo->unbind();
-    _glmodel.vao->unbind();
+    _loadModel(_model);
 }
 
 void ModelViewer::input(SDL_Event const *event)
@@ -223,8 +199,12 @@ void ModelViewer::drawGL()
 void ModelViewer::_loadSelectedModel()
 {
     _model = MDL::load_mdl(_selected.string());
+}
+
+void ModelViewer::_loadModel(MDL::Model const &mdl)
+{
     _textures.clear();
-    for (auto const &t : _model.textures)
+    for (auto const &t : mdl.textures)
         _textures.push_back(texture2GLTexture(t));
-    _glmodel = model2vao(_model);
+    _glmodel = model2vao(mdl);
 }

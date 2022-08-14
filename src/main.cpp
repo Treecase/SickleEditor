@@ -266,7 +266,7 @@ int MAIN(int argc, char *argv[])
     init_SDL();
 
     // Run the program.
-#if 0
+#if 1
     try
     {
         r = run(argc, argv);

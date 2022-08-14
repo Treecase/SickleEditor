@@ -224,7 +224,7 @@ void _load_model_vertices(LoadContext &con, M_Model &model, MDL::MDLModel &mdl)
     for (uint32_t i = 0; i < model.numverts; ++i)
     {
         mdl.vertices.push_back({0.0f, 0.0f, 0.0f});
-        auto &vertex = mdl.vertices[i];
+        auto &vertex = mdl.vertices.at(i);
         con.f.read((char*)&vertex.x, 4);
         con.f.read((char*)&vertex.y, 4);
         con.f.read((char*)&vertex.z, 4);
@@ -234,10 +234,10 @@ void _load_model_vertices(LoadContext &con, M_Model &model, MDL::MDLModel &mdl)
 /** Load a BodyPart's Models from .mdl data. */
 void _load_bodypart_models(LoadContext &con, M_BodyPart &bodypart, MDL::BodyPart &bp)
 {
-    for (uint32_t mdli = 0; mdli < bodypart.nummodels; ++mdli)
+    for (uint32_t i = 0; i < bodypart.nummodels; ++i)
     {
         M_Model model{};
-        con.f.seekg(bodypart.modelindex + 112 * mdli);
+        con.f.seekg(bodypart.modelindex + 112 * i);
         con.f.read(model.name, 64);
         con.f.read((char*)&model.type, 4);
         con.f.read((char*)&model.boundingradius, 4);
@@ -252,24 +252,24 @@ void _load_bodypart_models(LoadContext &con, M_BodyPart &bodypart, MDL::BodyPart
         con.f.read((char*)&model.numgroups, 4);
         con.f.read((char*)&model.groupindex, 4);
         bp.models.push_back({model.name, {}, {}});
-        _load_model_meshes(con, model, bp.models.at(mdli));
-        _load_model_vertices(con, model, bp.models.at(mdli));
+        _load_model_meshes(con, model, bp.models.at(i));
+        _load_model_vertices(con, model, bp.models.at(i));
     }
 }
 
 /** Load BodyParts from .mdl data. */
 void _load_bodyparts(LoadContext &con, MDL::Model &result)
 {
-    for (uint32_t bpi = 0; bpi < con.hdr.numbodyparts; ++bpi)
+    for (uint32_t i = 0; i < con.hdr.numbodyparts; ++i)
     {
         M_BodyPart bodypart{};
-        con.f.seekg(con.hdr.bodypartindex + 76 * bpi);
+        con.f.seekg(con.hdr.bodypartindex + 76 * i);
         con.f.read(bodypart.name, 64);
         con.f.read((char*)&bodypart.nummodels, 4);
         con.f.read((char*)&bodypart.base, 4);
         con.f.read((char*)&bodypart.modelindex, 4);
         result.bodyparts.push_back({bodypart.name, {}});
-        _load_bodypart_models(con, bodypart, result.bodyparts.at(bpi));
+        _load_bodypart_models(con, bodypart, result.bodyparts.at(i));
     }
 }
 

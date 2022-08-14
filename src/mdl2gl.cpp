@@ -44,12 +44,19 @@ GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
             int x2 = min(((x+0.75)/(float)resized_w)*texture.w, texture.w-1.0);
             int y1 = min(((y+0.25)/(float)resized_h)*texture.h, texture.h-1.0);
             int y2 = min(((y+0.75)/(float)resized_h)*texture.h, texture.h-1.0);
+            // Palette indices of the sampled pixels.
+            uint8_t indices[4] = {
+                texture.data.at(y1*texture.w + x1),
+                texture.data.at(y1*texture.w + x2),
+                texture.data.at(y2*texture.w + x1),
+                texture.data.at(y2*texture.w + x2)
+            };
             // RGB triples of the sampled pixels.
             std::array<uint8_t, 3> samples[4] = {
-                texture.palette[texture.data[y1*texture.w + x1]],
-                texture.palette[texture.data[y1*texture.w + x2]],
-                texture.palette[texture.data[y2*texture.w + x1]],
-                texture.palette[texture.data[y2*texture.w + x2]]
+                texture.palette.at(indices[0]),
+                texture.palette.at(indices[1]),
+                texture.palette.at(indices[2]),
+                texture.palette.at(indices[3])
             };
             // Averaged RGB value of the samples.
             int averages[3] = {
@@ -102,9 +109,9 @@ MeshDef model2mesh(MDL::MDLModel const &model)
                 // Triangle fan.
                 for (size_t i = 1; i < tricmd.vertices.size()-1; i++)
                 {
-                    auto const &a = tricmd.vertices[0];
-                    auto const &b = tricmd.vertices[i+1];
-                    auto const &c = tricmd.vertices[i];
+                    auto const &a = tricmd.vertices.at(0);
+                    auto const &b = tricmd.vertices.at(i+1);
+                    auto const &c = tricmd.vertices.at(i);
                     out.indices.push_back(a.position_index);
                     out.indices.push_back(b.position_index);
                     out.indices.push_back(c.position_index);
@@ -115,9 +122,9 @@ MeshDef model2mesh(MDL::MDLModel const &model)
                 // Triangle strip.
                 for (size_t i = 0; i < tricmd.vertices.size()-2; ++i)
                 {
-                    auto const &a = tricmd.vertices[i+0];
-                    auto const &b = tricmd.vertices[i % 2 == 0? i+2 : i+1];
-                    auto const &c = tricmd.vertices[i % 2 == 0? i+1 : i+2];
+                    auto const &a = tricmd.vertices.at(i);
+                    auto const &b = tricmd.vertices.at(i % 2 == 0? i+2 : i+1);
+                    auto const &c = tricmd.vertices.at(i % 2 == 0? i+1 : i+2);
                     out.indices.push_back(a.position_index);
                     out.indices.push_back(b.position_index);
                     out.indices.push_back(c.position_index);
