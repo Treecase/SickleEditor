@@ -72,7 +72,7 @@ ModelViewer::ModelViewer(Config &cfg)
 ,   title{"Model Viewer"}
 ,   ui_visible{false}
 {
-    _loadModel(_model);
+    _loadModel();
 }
 
 void ModelViewer::input(SDL_Event const *event)
@@ -199,12 +199,13 @@ void ModelViewer::drawGL()
 void ModelViewer::_loadSelectedModel()
 {
     _model = MDL::load_mdl(_selected.string());
+    _loadModel();
 }
 
-void ModelViewer::_loadModel(MDL::Model const &mdl)
+void ModelViewer::_loadModel()
 {
     _textures.clear();
-    for (auto const &t : mdl.textures)
+    for (auto const &t : _model.textures)
         _textures.push_back(texture2GLTexture(t));
-    _glmodel = model2vao(mdl);
+    _glmodel = model2vao(_model);
 }
