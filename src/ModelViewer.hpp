@@ -59,8 +59,10 @@ private:
     // Wireframe display toggle.
     bool _wireframe;
 
-    // Model matrix.
-    glm::mat4 _modelM;
+    // Model translation.
+    GLfloat _translation[3];
+    // Model rotation.
+    GLfloat _rotation[3];
     // Model scaling.
     GLfloat _scale;
 

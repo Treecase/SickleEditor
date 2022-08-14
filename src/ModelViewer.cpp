@@ -67,7 +67,8 @@ ModelViewer::ModelViewer(Config &cfg)
 ,   _selected{""}
 ,   _camera{{0.0f, 0.0f}, 2.0f, 70.0f}
 ,   _wireframe{false}
-,   _modelM{glm::identity<glm::mat4>()}
+,   _translation{0.0f}
+,   _rotation{0.0f}
 ,   _scale{1.0f}
 {
     _loadModel();
@@ -124,15 +125,26 @@ void ModelViewer::drawUI()
     if (ImGui::Begin(title.c_str(), &ui_visible))
     {
         ImGui::TextUnformatted(("Model: " + _model.name).c_str());
-        ImGui::TextUnformatted(
-            ("FOV: " + std::to_string(_camera.fov)).c_str());
-        ImGui::TextUnformatted(
-            (   "Pitch: "
-                + std::to_string(glm::degrees(_camera.angle.y))).c_str());
-        ImGui::TextUnformatted(
-            (   "Yaw: "
-                + std::to_string(glm::degrees(_camera.angle.x))).c_str());
-        ImGui::DragFloat("Scale", &_scale, 0.005f, 0.0f, FLT_MAX);
+        ImGui::SliderFloat("FOV", &_camera.fov, MIN_FOV, MAX_FOV);
+        ImGui::Value("Pitch", glm::degrees(_camera.angle.y));
+        ImGui::Value("Yaw", glm::degrees(_camera.angle.x));
+        if (ImGui::CollapsingHeader("Model Transform"))
+        {
+            if (ImGui::Button("Reset"))
+            {
+                memset(_translation, 0.0f, 3*sizeof(GLfloat));
+                memset(_rotation, 0.0f, 3*sizeof(GLfloat));
+                _scale = 1.0f;
+            }
+            ImGui::DragFloat3("Translation", _translation, 0.01f);
+            if (ImGui::DragFloat3("Rotation", _rotation, 0.5f))
+            {
+                _rotation[0] = fmod(_rotation[0], 360.0f);
+                _rotation[1] = fmod(_rotation[1], 360.0f);
+                _rotation[2] = fmod(_rotation[2], 360.0f);
+            }
+            ImGui::DragFloat("Scale", &_scale, 0.005f, 0.0f, FLT_MAX);
+        }
         ImGui::Separator();
         if (ImGui::BeginChild("ModelTree"))
         {
@@ -177,7 +189,27 @@ void ModelViewer::drawGL()
         *_cfg.window_width / (float)*_cfg.window_height,
         0.1f, 1000.0f);
 
-    auto modelMatrix = glm::scale(_modelM, glm::vec3{_scale});
+    // TODO: rotation's a bit weird?
+    auto modelMatrix =
+        glm::rotate(
+            glm::rotate(
+                glm::rotate(
+                    glm::scale(
+                        glm::translate(
+                            glm::identity<glm::mat4>(),
+                            glm::vec3{-_translation[0], _translation[1], _translation[2]}
+                        ),
+                        glm::vec3{_scale}
+                    ),
+                    glm::radians(_rotation[1]),
+                    glm::vec3{0.0f, 1.0f, 0.0f}
+                ),
+                glm::radians(_rotation[2]),
+                glm::vec3{0.0f, 0.0f, 1.0f}
+            ),
+            glm::radians(_rotation[0]),
+            glm::vec3{1.0f, 0.0f, 0.0f}
+    );
 
     // Draw model.
     _shader.use();
