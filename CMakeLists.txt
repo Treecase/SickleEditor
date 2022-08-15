@@ -46,18 +46,6 @@ target_sources(sickle PRIVATE
     src/TextureViewer.cpp
     src/ui_helpers.cpp
 )
-target_sources(sickle PRIVATE
-    FILE_SET HEADERS
-    FILES
-        src/App.hpp
-        src/common.hpp
-        src/load_model.hpp
-        src/mdl2gl.hpp
-        src/ModelViewer.hpp
-        src/SoundPlayer.hpp
-        src/TextureViewer.hpp
-        src/ui_helpers.hpp
-)
 target_compile_features(sickle PRIVATE cxx_std_17)
 set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
@@ -109,6 +97,15 @@ if(MSVC)
         "../externals/SDL2-2.0.22/lib/x64/SDL2"
         OpenGL32
         "../externals/glew-2.2.0/lib/Release/x64/glew32"
+    )
+    target_include_directories(glUtil
+        PRIVATE
+        "externals/glew-2.2.0/include"
+        "externals/glm"
+    )
+    target_include_directories(imgui
+        PRIVATE
+        "externals/SDL2-2.0.22/include"
     )
     target_link_libraries(imgui PRIVATE
         "../externals/SDL2-2.0.22/lib/x64/SDL2main"

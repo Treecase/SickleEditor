@@ -44,12 +44,11 @@ private:
     GLUtil::VertexArray _vao;
 
     // Loaded MDLs.
-    std::unordered_map<std::filesystem::path, MDL::Model> _models;
+    std::unordered_map<std::string, MDL::Model> _models;
     // Map of MDLs loaded to a list of their associated GL textures.
-    std::unordered_map<std::filesystem::path, std::vector<GLUtil::Texture>>
-        _textures;
+    std::unordered_map<std::string, std::vector<GLUtil::Texture>> _textures;
     // Path to currently displayed model.
-    std::filesystem::path _selected_model;
+    std::string _selected_model;
     // Index of currently displayed texture.
     int _current_texture;
 

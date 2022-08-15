@@ -91,9 +91,10 @@ void TextureViewer::drawUI()
         {
             if (ImGui::TreeNode("valve/models"))
             {
+                std::filesystem::path p{_selected_model};
                 if (ImGui::DirectoryTree(
                         _cfg.game_dir.string() + "/valve/models",
-                        &_selected_model,
+                        &p,
                         [](std::filesystem::path const &p){
                             return (
                                 *(p.stem().string().end() - 1) != 't'
@@ -102,6 +103,7 @@ void TextureViewer::drawUI()
                             );
                         }))
                 {
+                    _selected_model = std::filesystem::canonical(p).string();
                     _current_texture = 0;
                     _loadSelectedModel();
                 }
@@ -124,7 +126,7 @@ void TextureViewer::_loadSelectedModel_MDL()
     catch (std::out_of_range const &)
     {
     }
-    _models[_selected_model] = MDL::load_mdl(_selected_model.string());
+    _models[_selected_model] = MDL::load_mdl(_selected_model);
 }
 
 void TextureViewer::_loadSelectedModel_GL()
