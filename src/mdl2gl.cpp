@@ -21,6 +21,34 @@
 
 template<typename T> T min(T a, T b) {return a < b? a : b;}
 
+#include <unordered_map>
+
+
+// Used by model2mesh, so MDL::Vertex can be used in unordered_map.
+namespace MDL
+{
+    bool operator==(MDL::Vertex const &lhs, MDL::Vertex const &rhs)
+    {
+        return (
+            lhs.position_index == rhs.position_index
+            // && lhs.light_index == rhs.light_index
+            && lhs.uv_s == rhs.uv_s
+            && lhs.uv_t == rhs.uv_t);
+    }
+}
+// Used by model2mesh, so MDL::Vertex can be used in unordered_map.
+template<>
+struct std::hash<MDL::Vertex>
+{
+    size_t operator()(MDL::Vertex const &v) const noexcept
+    {
+        return (
+            std::hash<int>{}(v.position_index)
+            // ^ std::hash<int>{}(v.light_index)
+            ^ std::hash<int>{}(v.uv_s)
+            ^ std::hash<int>{}(v.uv_t));
+    }
+};
 
 GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
 {
@@ -85,19 +113,36 @@ GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
     return t;
 }
 
+/**
+ * Add a vertex to `mesh`. If `v` is already in `verts`, the stored index from
+ * there is used, otherwise it is pushed to `mesh`'s vertices vector.
+ */
+void addVertex(
+    MeshDef &mesh, std::unordered_map<MDL::Vertex, GLuint> &verts,
+    MDL::MDLModel const &model, MDL::Vertex const &v)
+{
+    GLuint n = 0;
+    try
+    {
+        n = verts.at(v);
+    }
+    catch (std::out_of_range const &)
+    {
+        auto p = model.vertices.at(v.position_index);
+        n = verts[v] = mesh.vertices.size();
+        mesh.vertices.push_back({
+            p.x, p.y, p.z,
+            v.uv_s, v.uv_t,
+            1.0f, 1.0f, 1.0f});
+    }
+    mesh.indices.push_back(n);
+}
+
 // Convert MDL model vertex data to a GL-friendly format.
 MeshDef model2mesh(MDL::MDLModel const &model)
 {
     MeshDef out{};
-
-    // VBO data
-    for (auto const &vertex : model.vertices)
-    {
-        out.vertices.push_back({
-            vertex.x, vertex.y, vertex.z,
-            0.0f, 0.0f,
-            1.0f, 1.0f, 1.0f});
-    }
+    std::unordered_map<MDL::Vertex, GLuint> vert_idxs{};
 
     // EBO data
     for (auto const &mesh : model.meshes)
@@ -112,9 +157,9 @@ MeshDef model2mesh(MDL::MDLModel const &model)
                     auto const &a = tricmd.vertices.at(0);
                     auto const &b = tricmd.vertices.at(i+1);
                     auto const &c = tricmd.vertices.at(i);
-                    out.indices.push_back(a.position_index);
-                    out.indices.push_back(b.position_index);
-                    out.indices.push_back(c.position_index);
+                    addVertex(out, vert_idxs, model, a);
+                    addVertex(out, vert_idxs, model, b);
+                    addVertex(out, vert_idxs, model, c);
                 }
             }
             else
@@ -125,9 +170,9 @@ MeshDef model2mesh(MDL::MDLModel const &model)
                     auto const &a = tricmd.vertices.at(i);
                     auto const &b = tricmd.vertices.at(i % 2 == 0? i+2 : i+1);
                     auto const &c = tricmd.vertices.at(i % 2 == 0? i+1 : i+2);
-                    out.indices.push_back(a.position_index);
-                    out.indices.push_back(b.position_index);
-                    out.indices.push_back(c.position_index);
+                    addVertex(out, vert_idxs, model, a);
+                    addVertex(out, vert_idxs, model, b);
+                    addVertex(out, vert_idxs, model, c);
                 }
             }
         }

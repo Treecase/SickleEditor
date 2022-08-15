@@ -27,7 +27,7 @@
 struct VertexDef
 {
     GLfloat x, y, z;    // Position
-    GLfloat s, t;       // UV
+    GLint s, t;         // UV
     GLfloat r, g, b;    // Vertex color
 };
 
