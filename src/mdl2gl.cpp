@@ -18,37 +18,158 @@
 
 #include "mdl2gl.hpp"
 
-
-template<typename T> T min(T a, T b) {return a < b? a : b;}
-
 #include <unordered_map>
 
 
-// Used by model2mesh, so MDL::Vertex can be used in unordered_map.
-namespace MDL
+template<typename T> T min(T a, T b) {return a < b? a : b;}
+
+
+/** Used by MDL2GL, so VertexDef can be used in unordered_map. */
+bool operator==(VertexDef const &lhs, VertexDef const &rhs)
 {
-    bool operator==(MDL::Vertex const &lhs, MDL::Vertex const &rhs)
-    {
-        return (
-            lhs.position_index == rhs.position_index
-            // && lhs.light_index == rhs.light_index
-            && lhs.uv_s == rhs.uv_s
-            && lhs.uv_t == rhs.uv_t);
-    }
+    return (
+        lhs.x == rhs.x
+        && lhs.y == rhs.y
+        && lhs.z == rhs.z
+        && lhs.s == rhs.s
+        && lhs.t == rhs.t
+        && lhs.r == rhs.r
+        && lhs.g == rhs.g
+        && lhs.b == rhs.b
+    );
 }
-// Used by model2mesh, so MDL::Vertex can be used in unordered_map.
+
+/** Used by MDL2GL, so VertexDef can be used in unordered_map. */
 template<>
-struct std::hash<MDL::Vertex>
+struct std::hash<VertexDef>
 {
-    size_t operator()(MDL::Vertex const &v) const noexcept
+    size_t operator()(VertexDef const &v) const noexcept
     {
         return (
-            std::hash<int>{}(v.position_index)
-            // ^ std::hash<int>{}(v.light_index)
-            ^ std::hash<int>{}(v.uv_s)
-            ^ std::hash<int>{}(v.uv_t));
+            std::hash<GLfloat>{}(v.x)
+            ^ std::hash<GLfloat>{}(v.y)
+            ^ std::hash<GLfloat>{}(v.z)
+            ^ std::hash<GLint>{}(v.s)
+            ^ std::hash<GLint>{}(v.t)
+            ^ std::hash<GLfloat>{}(v.r)
+            ^ std::hash<GLfloat>{}(v.g)
+            ^ std::hash<GLfloat>{}(v.b)
+        );
     }
 };
+
+/** Converts MDL::Model data to GL ready format. */
+class MDL2GL
+{
+private:
+    /* VBO/EBO data. */
+    // Vertex definitions. (position, uvs, etc.)
+    std::vector<VertexDef> _vboData;
+    // Reference the vertices in _vboData to define the actual triangles of the
+    // model.
+    std::vector<GLuint> _eboData;
+
+    // Instead of having to search through _vboData directly to check if a
+    // vertex already exists, this maps its index directly for quick lookup.
+    std::unordered_map<VertexDef, GLuint> _vertIdx;
+
+    /* glDrawElements data. */
+    // Contains the number of vertices in each mesh.
+    std::vector<GLsizei> _count;
+    // Contains the offset into _eboData for the first vertex of each mesh.
+    std::vector<void*> _indices;
+
+    /**
+     * If v refers to a vertex already in _vboData, the vertex is added by
+     * pushing its index to _eboData. If v is not already in _vboData, then it
+     * is added to _vboData, and that new index is pushed to _eboData.
+     */
+    void addVertex(std::vector<MDL::Vec3> const &vertices, MDL::Vertex const &v)
+    {
+        auto p = vertices.at(v.position_index);
+        VertexDef vd{
+            p.x, p.y, p.z,
+            v.uv_s, v.uv_t,
+            1.0f, 1.0f, 1.0f
+        };
+        GLuint n = 0;
+        try
+        {
+            n = _vertIdx.at(vd);
+        }
+        catch (std::out_of_range const &)
+        {
+            n = _vertIdx[vd] = _vboData.size();
+            _vboData.push_back(vd);
+        }
+        n = _vertIdx[vd] = _vboData.size();
+        _vboData.push_back(vd);
+        _eboData.push_back(n);
+    }
+
+    /** Add a Mesh's vertices to the GL data. */
+    void _mesh(MDL::Mesh const &mesh, std::vector<MDL::Vec3> const &vertices)
+    {
+        size_t preCount = _eboData.size();
+        _indices.push_back((void*)(preCount * sizeof(GLuint)));
+        for (auto const &tricmd : mesh.tricmds)
+        {
+            if (tricmd.mode)
+            {
+                // Triangle fan.
+                for (size_t i = 1; i < tricmd.vertices.size()-1; i++)
+                {
+                    auto const &a = tricmd.vertices.at(0);
+                    auto const &b = tricmd.vertices.at(i+1);
+                    auto const &c = tricmd.vertices.at(i);
+                    addVertex(vertices, a);
+                    addVertex(vertices, b);
+                    addVertex(vertices, c);
+                }
+            }
+            else
+            {
+                // Triangle strip.
+                for (size_t i = 0; i < tricmd.vertices.size()-2; ++i)
+                {
+                    auto const &a = tricmd.vertices.at(i);
+                    auto const &b = tricmd.vertices.at(i % 2 == 0? i+2 : i+1);
+                    auto const &c = tricmd.vertices.at(i % 2 == 0? i+1 : i+2);
+                    addVertex(vertices, a);
+                    addVertex(vertices, b);
+                    addVertex(vertices, c);
+                }
+            }
+        }
+        _count.push_back(_eboData.size() - preCount);
+    }
+
+    /** Add all the meshes from an MDLModel to the GL data. */
+    void _model(MDL::MDLModel const &model)
+    {
+        for (auto &mesh : model.meshes)
+            _mesh(mesh, model.vertices);
+    }
+
+public:
+    MDL2GL(MDL::Model const &model)
+    :   _vboData{}
+    ,   _eboData{}
+    ,   _vertIdx{}
+    ,   _count{}
+    ,   _indices{}
+    {
+        for (auto const &bodypart : model.bodyparts)
+            for (auto const &mdlmodel : bodypart.models)
+                _model(mdlmodel);
+    }
+
+    auto getVBO() const {return _vboData;}
+    auto getEBO() const {return _eboData;}
+    auto getCount() const {return _count;}
+    auto getIndices() const {return _indices;}
+};
+
 
 GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
 {
@@ -113,91 +234,13 @@ GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
     return t;
 }
 
-/**
- * Add a vertex to `mesh`. If `v` is already in `verts`, the stored index from
- * there is used, otherwise it is pushed to `mesh`'s vertices vector.
- */
-void addVertex(
-    MeshDef &mesh, std::unordered_map<MDL::Vertex, GLuint> &verts,
-    MDL::MDLModel const &model, MDL::Vertex const &v)
+GLMDL model2vao(MDL::Model const &model)
 {
-    GLuint n = 0;
-    try
-    {
-        n = verts.at(v);
-    }
-    catch (std::out_of_range const &)
-    {
-        auto p = model.vertices.at(v.position_index);
-        n = verts[v] = mesh.vertices.size();
-        mesh.vertices.push_back({
-            p.x, p.y, p.z,
-            v.uv_s, v.uv_t,
-            1.0f, 1.0f, 1.0f});
-    }
-    mesh.indices.push_back(n);
-}
+    MDL2GL glmdl{model};
+    GLMDL out{};
 
-// Convert MDL model vertex data to a GL-friendly format.
-MeshDef model2mesh(MDL::MDLModel const &model)
-{
-    MeshDef out{};
-    std::unordered_map<MDL::Vertex, GLuint> vert_idxs{};
-
-    // EBO data
-    for (auto const &mesh : model.meshes)
-    {
-        for (auto const &tricmd : mesh.tricmds)
-        {
-            if (tricmd.mode)
-            {
-                // Triangle fan.
-                for (size_t i = 1; i < tricmd.vertices.size()-1; i++)
-                {
-                    auto const &a = tricmd.vertices.at(0);
-                    auto const &b = tricmd.vertices.at(i+1);
-                    auto const &c = tricmd.vertices.at(i);
-                    addVertex(out, vert_idxs, model, a);
-                    addVertex(out, vert_idxs, model, b);
-                    addVertex(out, vert_idxs, model, c);
-                }
-            }
-            else
-            {
-                // Triangle strip.
-                for (size_t i = 0; i < tricmd.vertices.size()-2; ++i)
-                {
-                    auto const &a = tricmd.vertices.at(i);
-                    auto const &b = tricmd.vertices.at(i % 2 == 0? i+2 : i+1);
-                    auto const &c = tricmd.vertices.at(i % 2 == 0? i+1 : i+2);
-                    addVertex(out, vert_idxs, model, a);
-                    addVertex(out, vert_idxs, model, b);
-                    addVertex(out, vert_idxs, model, c);
-                }
-            }
-        }
-    }
-    return out;
-}
-
-ModelDef model2vao(MDL::Model const &model)
-{
-    ModelDef out{};
-
-    for (auto const &bodypart : model.bodyparts)
-    {
-        auto mesh = model2mesh(bodypart.models[0]);
-
-        out.count.push_back(mesh.indices.size());
-        out.indices.push_back((void*)out.meshData.indices.size());
-
-        out.meshData.vertices.insert(
-            out.meshData.vertices.end(),
-            mesh.vertices.begin(), mesh.vertices.end());
-        out.meshData.indices.insert(
-            out.meshData.indices.end(),
-            mesh.indices.begin(), mesh.indices.end());
-    }
+    out.count = glmdl.getCount();
+    out.indices = glmdl.getIndices();
 
     // Create the VAO.
     out.vao.reset(new GLUtil::VertexArray{model.name + "VAO"});
@@ -206,13 +249,13 @@ ModelDef model2vao(MDL::Model const &model)
     // Buffer the vertex data.
     out.vbo.reset(new GLUtil::Buffer{GL_ARRAY_BUFFER, model.name + "VBO"});
     out.vbo->bind();
-    out.vbo->buffer(GL_STATIC_DRAW, out.meshData.vertices);
+    out.vbo->buffer(GL_STATIC_DRAW, glmdl.getVBO());
 
     // Buffer the index data.
     out.ebo.reset(
         new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, model.name + "EBO"});
     out.ebo->bind();
-    out.ebo->buffer(GL_STATIC_DRAW, out.meshData.indices);
+    out.ebo->buffer(GL_STATIC_DRAW, glmdl.getEBO());
 
     // Populate vertex positions array.
     out.vao->enableVertexAttribArray(
@@ -227,5 +270,6 @@ ModelDef model2vao(MDL::Model const &model)
     out.ebo->unbind();
     out.vbo->unbind();
     out.vao->unbind();
+
     return out;
 }

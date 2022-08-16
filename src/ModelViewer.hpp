@@ -43,7 +43,7 @@ private:
     // Loaded MDL.
     MDL::Model _model;
     // Model GL data.
-    ModelDef _glmodel;
+    GLMDL _glmodel;
     // List of loaded MDL's associated GL textures.
     std::vector<GLUtil::Texture> _textures;
     // Path to loaded MDL.

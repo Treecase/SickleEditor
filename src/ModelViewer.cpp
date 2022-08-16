@@ -154,10 +154,7 @@ void ModelViewer::drawUI()
                     _cfg.game_dir.string() + "/valve/models",
                     &_selected,
                     [](std::filesystem::path const &p){
-                        return (
-                            *(p.stem().string().end() - 1) != 't'
-                            && *(p.stem().string().end() - 2) != '0'
-                            && p.extension() == ".mdl");
+                        return p.extension() == ".mdl";
                     }))
                 {
                     _loadSelectedModel();

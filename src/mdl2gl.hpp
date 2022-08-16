@@ -33,16 +33,22 @@ struct VertexDef
 
 struct MeshDef
 {
+    // VBO data.
     std::vector<VertexDef> vertices;
+    // EBO data.
     std::vector<GLuint> indices;
 };
 
 struct ModelDef
 {
+    // Model meshes.
+    std::vector<MeshDef> meshes;
+};
+
+struct GLMDL
+{
     std::vector<GLsizei> count;
     std::vector<void *> indices;
-    MeshDef meshData;
-
     std::shared_ptr<GLUtil::VertexArray> vao;
     std::shared_ptr<GLUtil::Buffer> vbo, ebo;
 };
@@ -52,6 +58,6 @@ struct ModelDef
 GLUtil::Texture texture2GLTexture(MDL::Texture const &texture);
 
 /** Convert from MDL Model format to an OpenGL VAO. */
-ModelDef model2vao(MDL::Model const &model);
+GLMDL model2vao(MDL::Model const &model);
 
 #endif
