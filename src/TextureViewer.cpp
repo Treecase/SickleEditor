@@ -1,5 +1,5 @@
 /**
- * TextureViewer.hpp - MDL texture viewer module.
+ * TextureViewer.cpp - MDL texture viewer module.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify

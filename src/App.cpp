@@ -1,5 +1,5 @@
 /**
- * App.hpp - Main app class.
+ * App.cpp - Main app class.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify

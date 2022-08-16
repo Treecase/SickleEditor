@@ -1,5 +1,5 @@
 /**
- * load_model.hpp - Load .mdl files.
+ * load_model.cpp - Load .mdl files.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
