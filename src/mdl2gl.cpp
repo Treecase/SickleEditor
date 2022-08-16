@@ -49,8 +49,8 @@ struct std::hash<VertexDef>
             std::hash<GLfloat>{}(v.x)
             ^ std::hash<GLfloat>{}(v.y)
             ^ std::hash<GLfloat>{}(v.z)
-            ^ std::hash<GLint>{}(v.s)
-            ^ std::hash<GLint>{}(v.t)
+            ^ std::hash<GLfloat>{}(v.s)
+            ^ std::hash<GLfloat>{}(v.t)
             ^ std::hash<GLfloat>{}(v.r)
             ^ std::hash<GLfloat>{}(v.g)
             ^ std::hash<GLfloat>{}(v.b)
@@ -78,18 +78,24 @@ private:
     std::vector<GLsizei> _count;
     // Contains the offset into _eboData for the first vertex of each mesh.
     std::vector<void*> _indices;
+    // Texture index for each mesh.
+    std::vector<size_t> _textureIndices;
+
+    MDL::Model const &_modelData;
 
     /**
      * If v refers to a vertex already in _vboData, the vertex is added by
      * pushing its index to _eboData. If v is not already in _vboData, then it
      * is added to _vboData, and that new index is pushed to _eboData.
      */
-    void addVertex(std::vector<MDL::Vec3> const &vertices, MDL::Vertex const &v)
+    void addVertex(
+        std::vector<MDL::Vec3> const &vertices, MDL::Vertex const &v,
+        MDL::Texture const &texture)
     {
         auto p = vertices.at(v.position_index);
         VertexDef vd{
             p.x, p.y, p.z,
-            v.uv_s, v.uv_t,
+            v.uv_s / (float)(texture.w-1), v.uv_t / (float)(texture.h-1),
             1.0f, 1.0f, 1.0f
         };
         GLuint n = 0;
@@ -110,6 +116,9 @@ private:
     /** Add a Mesh's vertices to the GL data. */
     void _mesh(MDL::Mesh const &mesh, std::vector<MDL::Vec3> const &vertices)
     {
+        auto texIdx = _modelData.skinref.at(mesh.skinref);
+        auto texture = _modelData.textures.at(texIdx);
+        _textureIndices.push_back(texIdx);
         size_t preCount = _eboData.size();
         _indices.push_back((void*)(preCount * sizeof(GLuint)));
         for (auto const &tricmd : mesh.tricmds)
@@ -122,9 +131,9 @@ private:
                     auto const &a = tricmd.vertices.at(0);
                     auto const &b = tricmd.vertices.at(i+1);
                     auto const &c = tricmd.vertices.at(i);
-                    addVertex(vertices, a);
-                    addVertex(vertices, b);
-                    addVertex(vertices, c);
+                    addVertex(vertices, a, texture);
+                    addVertex(vertices, b, texture);
+                    addVertex(vertices, c, texture);
                 }
             }
             else
@@ -135,9 +144,9 @@ private:
                     auto const &a = tricmd.vertices.at(i);
                     auto const &b = tricmd.vertices.at(i % 2 == 0? i+2 : i+1);
                     auto const &c = tricmd.vertices.at(i % 2 == 0? i+1 : i+2);
-                    addVertex(vertices, a);
-                    addVertex(vertices, b);
-                    addVertex(vertices, c);
+                    addVertex(vertices, a, texture);
+                    addVertex(vertices, b, texture);
+                    addVertex(vertices, c, texture);
                 }
             }
         }
@@ -158,6 +167,8 @@ public:
     ,   _vertIdx{}
     ,   _count{}
     ,   _indices{}
+    ,   _textureIndices{}
+    ,   _modelData{model}
     {
         for (auto const &bodypart : model.bodyparts)
             for (auto const &mdlmodel : bodypart.models)
@@ -168,6 +179,7 @@ public:
     auto getEBO() const {return _eboData;}
     auto getCount() const {return _count;}
     auto getIndices() const {return _indices;}
+    auto getTextureIndices() const {return _textureIndices;}
 };
 
 
@@ -241,6 +253,7 @@ GLMDL model2vao(MDL::Model const &model)
 
     out.count = glmdl.getCount();
     out.indices = glmdl.getIndices();
+    out.texture = glmdl.getTextureIndices();
 
     // Create the VAO.
     out.vao.reset(new GLUtil::VertexArray{model.name + "VAO"});

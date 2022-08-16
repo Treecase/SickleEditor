@@ -63,6 +63,7 @@ struct Tricmd
 struct Mesh
 {
     std::vector<Tricmd> tricmds;
+    uint16_t skinref;
 };
 
 /** MDL Model. */
@@ -86,6 +87,7 @@ struct Model
     std::string name;
     std::vector<BodyPart> bodyparts;
     std::vector<Texture> textures;
+    std::vector<uint16_t> skinref;
 };
 
 

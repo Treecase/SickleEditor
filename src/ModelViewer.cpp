@@ -42,25 +42,37 @@ ModelViewer::ModelViewer(Config &cfg)
         "ModelShader"}
 ,   _model{
         "<none>",
-        {   {   "QuadBodyPart",
-                {   {   "QuadModel",
-                        {   {   {   {   false,
-                                        {   {3, 0, 1,1},
+        {   // bodyparts
+            {   "QuadBodyPart",
+                {   // models
+                    {   "QuadModel",
+                        {   // meshes
+                            {   {   // tricmds
+                                    {   false,
+                                        {   // vertices
+                                            {3, 0, 1,1},
                                             {1, 0, 0,1},
                                             {2, 0, 1,0},
-                                            {0, 0, 0,0}}}}}},
-                        {   { 1.0f, 1.0f, 0.0f}, // tl
+                                            {0, 0, 0,0}}}},
+                                0}
+                        },
+                        {   // vertices
+                            { 1.0f, 1.0f, 0.0f}, // tl
                             { 1.0f,-1.0f, 0.0f}, // bl
                             {-1.0f, 1.0f, 0.0f}, // tr
                             {-1.0f,-1.0f, 0.0f}  // br
                         }}}}},
-        {   {   "<none>",
+        {   // textures
+            {   "<none>",
                 2, 2,
                 {0,1,2,3},
                 {   0xff,0x00,0x00,
                     0x00,0xff,0x00,
                     0x00,0x00,0xff,
-                    0xff,0xff,0xff}}}
+                    0xff,0xff,0xff}}},
+        {   // skinref
+            0
+        }
     }
 ,   _glmodel{}
 ,   _textures{}
@@ -219,7 +231,15 @@ void ModelViewer::drawGL()
     _shader.setUniformS("view", viewMatrix);
     _shader.setUniformS("projection", projectionMatrix);
     _shader.setUniformS("tex", 0);
+#if 0
     glMultiDrawElements(GL_TRIANGLES, _glmodel.count.data(), GL_UNSIGNED_INT, _glmodel.indices.data(), _glmodel.count.size());
+#else
+    for (size_t i = 0; i < _glmodel.count.size(); ++i)
+    {
+        _textures.at(_glmodel.texture.at(i)).bind();
+        glDrawElements(GL_TRIANGLES, _glmodel.count.at(i), GL_UNSIGNED_INT, _glmodel.indices.at(i));
+    }
+#endif
 }
 
 

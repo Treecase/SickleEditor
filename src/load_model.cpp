@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <cassert> // temp
 
 
 typedef float vec3[3];
@@ -206,6 +207,7 @@ private:
             _f.read((char*)&mesh.normindex, 4);
             model->meshes.push_back({});
             _loadMeshTricmds(&mesh, &model->meshes[i]);
+            model->meshes[i].skinref = mesh.skinref;
         }
     }
 
@@ -255,6 +257,14 @@ private:
             _f.seekg(_hdr.textureindex + 80 * i);
             _result.textures.push_back(_loadTextureDirect(_f, i));
         }
+        // Read skinrefs
+        _f.seekg(_hdr.skinindex);
+        for (uint32_t i = 0; i < _hdr.numskinref; ++i)
+        {
+            uint16_t s;
+            _f.read((char*)&s, 2);
+            _result.skinref.push_back(s);
+        }
     }
 
     /** Load textures from external MDL. */
@@ -270,6 +280,14 @@ private:
         {
             tf.seekg(thdr.textureindex + 80 * i);
             _result.textures.push_back(_loadTextureDirect(tf, i));
+        }
+        // Read skinrefs
+        tf.seekg(thdr.skinindex);
+        for (uint32_t i = 0; i < thdr.numskinref; ++i)
+        {
+            uint16_t s;
+            tf.read((char*)&s, 2);
+            _result.skinref.push_back(s);
         }
         tf.close();
     }

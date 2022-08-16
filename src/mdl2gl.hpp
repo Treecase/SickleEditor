@@ -27,7 +27,7 @@
 struct VertexDef
 {
     GLfloat x, y, z;    // Position
-    GLint s, t;         // UV
+    GLfloat s, t;       // UV
     GLfloat r, g, b;    // Vertex color
 };
 
@@ -49,6 +49,7 @@ struct GLMDL
 {
     std::vector<GLsizei> count;
     std::vector<void *> indices;
+    std::vector<size_t> texture;
     std::shared_ptr<GLUtil::VertexArray> vao;
     std::shared_ptr<GLUtil::Buffer> vbo, ebo;
 };
