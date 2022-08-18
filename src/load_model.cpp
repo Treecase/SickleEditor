@@ -255,7 +255,7 @@ private:
         for (uint32_t i = 0; i < _hdr.numtextures; ++i)
         {
             _f.seekg(_hdr.textureindex + 80 * i);
-            _result.textures.push_back(_loadTextureDirect(_f, i));
+            _result.textures.push_back(_loadTextureDirect(_f));
         }
         // Read skinrefs
         _f.seekg(_hdr.skinindex);
@@ -279,7 +279,7 @@ private:
         for (uint32_t i = 0; i < thdr.numtextures; ++i)
         {
             tf.seekg(thdr.textureindex + 80 * i);
-            _result.textures.push_back(_loadTextureDirect(tf, i));
+            _result.textures.push_back(_loadTextureDirect(tf));
         }
         // Read skinrefs
         tf.seekg(thdr.skinindex);
@@ -293,7 +293,7 @@ private:
     }
 
     /** Load a texture. */
-    MDL::Texture _loadTextureDirect(std::ifstream &f, uint32_t texture)
+    MDL::Texture _loadTextureDirect(std::ifstream &f)
     {
         MDL::Texture result{};
         M_Texture tex;

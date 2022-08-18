@@ -17,6 +17,8 @@
  */
 
 #include "App.hpp"
+#include "ui_helpers.hpp"
+#include "version.hpp"
 
 #include <imgui.h>
 
@@ -28,6 +30,7 @@ App::App(Config &cfg)
         std::shared_ptr<Module>{new TextureViewer{cfg}},
     }
 ,   _cfg{cfg}
+,   _aboutWindowShown{false}
 ,   running{true}
 {
 }
@@ -40,9 +43,14 @@ void App::input(SDL_Event const *event)
 
 void App::drawUI()
 {
+    bool fpopen = false;
+
+    // Main menu bar.
     ImGui::BeginMainMenuBar();
     if (ImGui::BeginMenu("File"))
     {
+        if (ImGui::MenuItem("Game Directory"))
+            fpopen = true;
         if (ImGui::MenuItem("Exit"))
             running = false;
         ImGui::EndMenu();
@@ -54,9 +62,35 @@ void App::drawUI()
                 module->ui_visible = true;
         ImGui::EndMenu();
     }
+    if (ImGui::BeginMenu("Help"))
+    {
+        if (ImGui::MenuItem("About"))
+            _aboutWindowShown = true;
+        ImGui::EndMenu();
+    }
     ImGui::EndMainMenuBar();
     ImGui::ShowMetricsWindow();
 
+    // File picker (activated by File>Game Directory).
+    ImGui::FilePicker("File Picker", &_cfg.game_dir);
+    if (fpopen)
+        ImGui::OpenPopup("File Picker");
+
+    // About Window (activated by Help>About).
+    if (_aboutWindowShown)
+    {
+        if (ImGui::Begin("About##Help/About", &_aboutWindowShown))
+        {
+            ImGui::TextWrapped(SE_CANON_NAME " " SE_VERSION);
+            ImGui::NewLine();
+            ImGui::TextWrapped("Copyright (C) 2022 Trevor Last");
+            if (ImGui::Button("Close"))
+                _aboutWindowShown = false;
+        }
+        ImGui::End();
+    }
+
+    // Draw modules.
     for (auto &module : _modules)
         module->drawUI();
 }

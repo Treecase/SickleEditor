@@ -41,6 +41,7 @@ private:
     };
     std::set<std::shared_ptr<Module>, ModuleComparer> _modules;
     Config &_cfg;
+    bool _aboutWindowShown;
 
 public:
     bool running;

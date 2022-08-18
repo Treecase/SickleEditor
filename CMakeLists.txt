@@ -68,6 +68,7 @@ add_library(imgui OBJECT)
 target_sources(imgui PRIVATE
     extern/imgui/backends/imgui_impl_sdl.cpp
     extern/imgui/backends/imgui_impl_opengl3.cpp
+    extern/imgui/misc/cpp/imgui_stdlib.cpp
     extern/imgui/imgui.cpp
     extern/imgui/imgui_demo.cpp
     extern/imgui/imgui_draw.cpp

@@ -34,7 +34,41 @@ TextureViewer::TextureViewer(Config &cfg)
                 "shaders/fragment.frag", GL_FRAGMENT_SHADER)},
         "ScreenQuadShader"}
 ,   _vao{"ScreenQuadVAO"}
-,   _models{{"", {"<none>", {}, {{"<none>", 1, 1, {0}, {0}}}}}}
+,   _models{
+        {   "",
+            {   "<none>",
+                {   // bodyparts
+                    {   "QuadBodyPart",
+                        {   // models
+                            {   "QuadModel",
+                                {   // meshes
+                                    {   {   // tricmds
+                                            {   false,
+                                                {   // vertices
+                                                    {3, 0, 1,1},
+                                                    {1, 0, 0,1},
+                                                    {2, 0, 1,0},
+                                                    {0, 0, 0,0}}}},
+                                        0}
+                                },
+                                {   // vertices
+                                    { 1.0f, 1.0f, 0.0f}, // tl
+                                    { 1.0f,-1.0f, 0.0f}, // bl
+                                    {-1.0f, 1.0f, 0.0f}, // tr
+                                    {-1.0f,-1.0f, 0.0f}  // br
+                                }}}}},
+                {   // textures
+                    {   "<none>",
+                        2, 2,
+                        {0,1,2,3},
+                        {   0xff,0x00,0x00,
+                            0x00,0xff,0x00,
+                            0x00,0x00,0xff,
+                            0xff,0xff,0xff}}},
+                {   // skinref
+                    0
+                }}}
+    }
 ,   _textures{{"", {texture2GLTexture(_models[""].textures[0])}}}
 ,   _selected_model{""}
 ,   _current_texture{0}
@@ -96,11 +130,23 @@ void TextureViewer::drawUI()
                         _cfg.game_dir.string() + "/valve/models",
                         &p,
                         [](std::filesystem::path const &p){
-                            return (
-                                *(p.stem().string().end() - 1) != 't'
-                                && *(p.stem().string().end() - 2) != '0'
-                                && p.extension() == ".mdl"
-                            );
+                            return p.extension() == ".mdl";
+                        }))
+                {
+                    _selected_model = std::filesystem::canonical(p).string();
+                    _current_texture = 0;
+                    _loadSelectedModel();
+                }
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("valve_hd/models"))
+            {
+                std::filesystem::path p{_selected_model};
+                if (ImGui::DirectoryTree(
+                        _cfg.game_dir.string() + "/valve_hd/models",
+                        &p,
+                        [](std::filesystem::path const &p){
+                            return p.extension() == ".mdl";
                         }))
                 {
                     _selected_model = std::filesystem::canonical(p).string();

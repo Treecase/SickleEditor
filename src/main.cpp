@@ -143,10 +143,9 @@ Config handle_args(int argc, char *argv[])
         }
     }
     if (argc < 2)
-    {
-        throw std::runtime_error{"Game directory required!"};
-    }
-    cfg.game_dir = argv[1];
+        cfg.game_dir = "/";
+    else
+        cfg.game_dir = argv[1];
     return cfg;
 }
 

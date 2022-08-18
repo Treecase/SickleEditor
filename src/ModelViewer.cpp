@@ -173,6 +173,19 @@ void ModelViewer::drawUI()
                 }
                 ImGui::TreePop();
             }
+            if (ImGui::TreeNode("valve_hd/models"))
+            {
+                if (ImGui::DirectoryTree(
+                    _cfg.game_dir.string() + "/valve_hd/models",
+                    &_selected,
+                    [](std::filesystem::path const &p){
+                        return p.extension() == ".mdl";
+                    }))
+                {
+                    _loadSelectedModel();
+                }
+                ImGui::TreePop();
+            }
         }
         ImGui::EndChild();
     }

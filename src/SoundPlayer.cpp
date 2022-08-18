@@ -123,6 +123,16 @@ void SoundPlayer::drawUI()
                     });
                 ImGui::TreePop();
             }
+            if (ImGui::TreeNode("valve_hd/sound"))
+            {
+                ImGui::DirectoryTree(
+                    _cfg.game_dir.string() + "/valve_hd/sound",
+                    &_selected_sound,
+                    [](std::filesystem::path const &p){
+                        return p.extension() == ".wav";
+                    });
+                ImGui::TreePop();
+            }
         }
         ImGui::EndChild();
     }

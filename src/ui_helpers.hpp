@@ -32,6 +32,9 @@ namespace ImGui
         std::filesystem::path const &path, std::filesystem::path *selected,
         std::function<bool(std::filesystem::path)> const &filter=
             [](std::filesystem::path const &){return true;});
+
+    /** File picker popup modal. Returns true when the path has been updated. */
+    bool FilePicker(char const *name, std::filesystem::path *path);
 }
 
 #endif
