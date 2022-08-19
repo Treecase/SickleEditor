@@ -17,6 +17,10 @@
  */
 
 #include "App.hpp"
+#include "MapViewer.hpp"
+#include "ModelViewer.hpp"
+#include "SoundPlayer.hpp"
+#include "TextureViewer.hpp"
 #include "ui_helpers.hpp"
 #include "version.hpp"
 
@@ -28,6 +32,7 @@ App::App(Config &cfg)
         std::shared_ptr<Module>{new ModelViewer{cfg}},
         std::shared_ptr<Module>{new SoundPlayer{cfg}},
         std::shared_ptr<Module>{new TextureViewer{cfg}},
+        std::shared_ptr<Module>{new MapViewer{cfg}},
     }
 ,   _cfg{cfg}
 ,   _aboutWindowShown{false}

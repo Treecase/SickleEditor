@@ -1,5 +1,5 @@
 /**
- * App.hpp - Main app class.
+ * load_bsp.hpp - Load .bsp files.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,45 +16,23 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _APP_HPP
-#define _APP_HPP
+#ifndef _LOAD_BSP
+#define _LOAD_BSP
 
-#include "common.hpp"
-#include "Module.hpp"
-
-#include <SDL.h>
-
-#include <set>
+#include <string>
 
 
-/** Main app class. */
-class App
+namespace BSP
 {
-private:
-    struct ModuleComparer
-    {   bool operator()(
-            std::shared_ptr<Module> const &a,
-            std::shared_ptr<Module> const &b) const
-        {return a->title < b->title;}
+    /** Loaded .bsp data. */
+    struct BSP
+    {
+        int v;
     };
-    std::set<std::shared_ptr<Module>, ModuleComparer> _modules;
-    Config &_cfg;
-    bool _aboutWindowShown;
 
-public:
-    bool running;
-
-
-    App(Config &cfg);
-
-    /** Handle user input. */
-    void input(SDL_Event const *event);
-
-    /** Draw the app's UI. */
-    void drawUI();
-
-    /** Draw non-UI app visuals. */
-    void drawGL();
-};
+    /** Load a .bsp file. */
+    BSP load_bsp(std::string const &path);
+}
 
 #endif
+
