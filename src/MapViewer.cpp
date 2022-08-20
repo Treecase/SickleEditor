@@ -213,15 +213,5 @@ void MapViewer::drawGL()
 
 void MapViewer::_loadSelectedMap()
 {
-    BSP::load_bsp(_selected.string());
-    // _model = MDL::load_mdl(_selected.string());
-    // _loadMap();
-}
-
-void MapViewer::_loadMap()
-{
-    // _textures.clear();
-    // for (auto const &t : _model.textures)
-    //     _textures.push_back(texture2GLTexture(t));
-    // _glmodel = model2vao(_model);
+    _map = BSP::load_bsp(_selected.string());
 }

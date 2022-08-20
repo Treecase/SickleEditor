@@ -1,5 +1,5 @@
 /**
- * load_bsp.hpp - Load .bsp files.
+ * entitiesLump.hpp - Parse the .bsp Entities lump.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,34 +16,18 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _LOAD_BSP
-#define _LOAD_BSP
+#ifndef _ENTITIES_LUMP_HPP
+#define _ENTITIES_LUMP_HPP
 
-#include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 
-namespace BSP
-{
-    struct Texture
-    {
-        std::string name;
-        size_t width, height;
-        std::shared_ptr<uint8_t> tex1; // full size mipmap
-        std::shared_ptr<uint8_t> tex2; // half size mipmap
-        std::shared_ptr<uint8_t> tex4; // quarter size mipmap
-        std::shared_ptr<uint8_t> tex8; // eighth size mipmap
-    };
+typedef std::unordered_map<std::string, std::string> Entity;
 
-    /** Loaded .bsp data. */
-    struct BSP
-    {
-        std::vector<Texture> textures;
-    };
 
-    /** Load a .bsp file. */
-    BSP load_bsp(std::string const &path);
-}
+/** Parse a .bsp's Entities lump. */
+std::vector<Entity> parse_entities(std::string const &buf);
 
 #endif

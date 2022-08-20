@@ -17,6 +17,7 @@
  */
 
 #include "load_bsp.hpp"
+#include "entitiesLump.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -46,6 +47,24 @@ enum LumpIndices
     Surfedges = 13,
     Models = 14,
     LumpCount = 15
+};
+
+size_t LumpMaxSize[] = {
+    1024,       // Entities
+    32767,      // Planes
+    0x200000,   // Textures
+    65535,      // Vertexes
+    0x200000,   // Visibility
+    32767,      // Nodes
+    8192,       // TexInfo
+    65535,      // Faces
+    0x200000,   // Lighting
+    32767,      // ClipNodes
+    8192,       // Leafs
+    65535,      // MarkSurfaces
+    256000,     // Edges
+    512000,     // SurfEdges
+    400         // Models
 };
 
 struct M_Lump
@@ -151,6 +170,96 @@ std::vector<T> readLump(std::istream &f, M_Lump const &lumpdef)
     return lumpdata;
 }
 
+/** Extract Textures from the Textures lump. */
+std::vector<BSP::Texture> extract_textures(std::vector<uint8_t> const &lump)
+{
+    std::vector<BSP::Texture> out{};
+
+    size_t lumpidx = 0;
+    auto lptr = lump.data();
+
+    // mipheader_t
+    // .numtex
+    int32_t numtex;
+    memcpy(&numtex, lptr + lumpidx, 4);
+    lumpidx += 4;
+    // .offset
+    std::vector<int32_t> offset{};
+    offset.reserve(numtex);
+    for (int i = 0; i < numtex; ++i)
+    {
+        int32_t o;
+        memcpy(&o, lptr + lumpidx, 4);
+        lumpidx += 4;
+        offset.push_back(o);
+    }
+
+    for (auto const &o : offset)
+    {
+        lumpidx = o;
+
+        // miptex_t
+        // .name
+        BSP::Texture t{};
+        char name[16];
+        memcpy(name, lptr + lumpidx, 16);
+        t.name = name;
+        lumpidx += 16;
+        // .width
+        uint32_t width;
+        memcpy(&width, lptr + lumpidx, 4);
+        t.width = width;
+        lumpidx += 4;
+        // .height
+        uint32_t height;
+        memcpy(&height, lptr + lumpidx, 4);
+        t.height = height;
+        lumpidx += 4;
+        // .offset1
+        uint32_t offset1;
+        memcpy(&offset1, lptr + lumpidx, 4);
+        lumpidx += 4;
+        // .offset2
+        uint32_t offset2;
+        memcpy(&offset2, lptr + lumpidx, 4);
+        lumpidx += 4;
+        // .offset4
+        uint32_t offset4;
+        memcpy(&offset4, lptr + lumpidx, 4);
+        lumpidx += 4;
+        // .offset8
+        uint32_t offset8;
+        memcpy(&offset8, lptr + lumpidx, 4);
+
+        // load full size texture
+        lumpidx = o + offset1;
+        auto tex = new uint8_t[t.width * t.height];
+        memcpy(tex, lptr + lumpidx, t.width * t.height);
+        t.tex1.reset(tex);
+
+        // load half size texture
+        lumpidx = o + offset2;
+        tex = new uint8_t[t.width/2 * t.height/2];
+        memcpy(tex, lptr + lumpidx, t.width/2 * t.height/2);
+        t.tex2.reset(tex);
+
+        // load quarter size texture
+        lumpidx = o + offset4;
+        tex = new uint8_t[t.width/4 * t.height/4];
+        memcpy(tex, lptr + lumpidx, t.width/4 * t.height/4);
+        t.tex4.reset(tex);
+
+        // load eighth size texture
+        lumpidx = o + offset8;
+        tex = new uint8_t[t.width/8 * t.height/8];
+        memcpy(tex, lptr + lumpidx, t.width/8 * t.height/8);
+        t.tex8.reset(tex);
+
+        out.push_back(t);
+    }
+    return out;
+}
+
 
 /** Load a .bsp file. */
 BSP::BSP BSP::load_bsp(std::string const &path)
@@ -171,9 +280,9 @@ BSP::BSP BSP::load_bsp(std::string const &path)
             + ", only 30 is supported"};
 
     // Read lumps
-    auto entities = readLump<uint8_t>(f, hdr.lumps[LumpIndices::Entities]);
+    auto entity_data = readLump<uint8_t>(f, hdr.lumps[LumpIndices::Entities]);
     auto planes = readLump<M_Plane>(f, hdr.lumps[LumpIndices::Planes]);
-    auto textures = readLump<uint8_t>(f, hdr.lumps[LumpIndices::Textures]);
+    auto texture_data = readLump<uint8_t>(f, hdr.lumps[LumpIndices::Textures]);
     auto vertexes = readLump<M_Vertex>(f, hdr.lumps[LumpIndices::Vertexes]);
     auto visibility = readLump<uint8_t>(f, hdr.lumps[LumpIndices::Visibility]);
     auto nodes = readLump<M_Node>(f, hdr.lumps[LumpIndices::Nodes]);
@@ -186,6 +295,9 @@ BSP::BSP BSP::load_bsp(std::string const &path)
     auto edges = readLump<M_Edge>(f, hdr.lumps[LumpIndices::Edges]);
     auto surfedges = readLump<uint32_t>(f, hdr.lumps[LumpIndices::Surfedges]);
     auto models = readLump<M_Model>(f, hdr.lumps[LumpIndices::Models]);
+
+    auto entities = parse_entities(std::string{(char*)entity_data.data()});
+    auto textures = extract_textures(texture_data);
 
     std::cout << "Entities: " << entities.size() << "\n";
     std::cout << "Planes: " << planes.size() << "\n";
@@ -203,7 +315,23 @@ BSP::BSP BSP::load_bsp(std::string const &path)
     std::cout << "Surfedges: " << surfedges.size() << "\n";
     std::cout << "Models: " << models.size() << "\n";
 
+    assert(entities.size() < LumpMaxSize[LumpIndices::Entities]);
+    assert(planes.size() < LumpMaxSize[LumpIndices::Planes]);
+    assert(textures.size() < LumpMaxSize[LumpIndices::Textures]);
+    assert(vertexes.size() < LumpMaxSize[LumpIndices::Vertexes]);
+    // assert(visibility.size() < LumpMaxSize[LumpIndices::Visibility]);
+    assert(nodes.size() < LumpMaxSize[LumpIndices::Nodes]);
+    assert(texinfo.size() < LumpMaxSize[LumpIndices::Texinfo]);
+    assert(faces.size() < LumpMaxSize[LumpIndices::Faces]);
+    // assert(lighting.size() < LumpMaxSize[LumpIndices::Lighting]);
+    assert(clipnodes.size() < LumpMaxSize[LumpIndices::Clipnodes]);
+    assert(leafs.size() < LumpMaxSize[LumpIndices::Leafs]);
+    assert(marksurfaces.size() < LumpMaxSize[LumpIndices::Marksurfaces]);
+    assert(edges.size() < LumpMaxSize[LumpIndices::Edges]);
+    assert(surfedges.size() < LumpMaxSize[LumpIndices::Surfedges]);
+    assert(models.size() < LumpMaxSize[LumpIndices::Models]);
+
     f.close();
 
-    return BSP{0};
+    return BSP{textures};
 }

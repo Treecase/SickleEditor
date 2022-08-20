@@ -38,6 +38,8 @@ private:
     // Shader.
     GLUtil::Program _shader;
 
+    // Loaded map.
+    BSP::BSP _map;
     // Path to loaded map.
     std::filesystem::path _selected;
 

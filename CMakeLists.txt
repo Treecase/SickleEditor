@@ -39,6 +39,7 @@ add_executable(sickle)
 target_sources(sickle PRIVATE
     src/main.cpp
     src/App.cpp
+    src/entitiesLump.cpp
     src/load_bsp.cpp
     src/load_model.cpp
     src/MapViewer.cpp
