@@ -95,27 +95,27 @@ void ModelViewer::input(SDL_Event const *event)
         if (event->motion.state & SDL_BUTTON_MMASK)
         {
             _camera.angle.x = fmod(
-                _camera.angle.x + glm::radians<GLfloat>(event->motion.xrel),
+                _camera.angle.x + glm::radians((GLfloat)event->motion.xrel),
                 glm::two_pi<GLfloat>());
             _camera.angle.y = fmod(
-                _camera.angle.y + glm::radians<GLfloat>(event->motion.yrel),
+                _camera.angle.y + glm::radians((GLfloat)event->motion.yrel),
                 glm::two_pi<GLfloat>());
         }
         break;}
     case SDL_MOUSEWHEEL:{
         auto modstate = SDL_GetModState();
+        // Scroll with ALT pressed to change FOV.
+        if (modstate & KMOD_ALT)
+        {
+            _camera.fov -= MOUSE_SENSITIVITY * event->wheel.y;
+            _camera.fov = CLAMP(_camera.fov, MIN_FOV, MAX_FOV);
+        }
         // Scroll with nothing pressed to zoom.
-        if (modstate == 0)
+        else
         {
             _camera.zoom -= MOUSE_SENSITIVITY * event->wheel.y;
             if (_camera.zoom < MIN_ZOOM)
                 _camera.zoom = MIN_ZOOM;
-        }
-        // Scroll with ALT pressed to change FOV.
-        else if (modstate & KMOD_ALT)
-        {
-            _camera.fov -= MOUSE_SENSITIVITY * event->wheel.y;
-            _camera.fov = CLAMP(_camera.fov, MIN_FOV, MAX_FOV);
         }
         break;}
     case SDL_KEYDOWN:{
@@ -140,12 +140,13 @@ void ModelViewer::drawUI()
         ImGui::SliderFloat("FOV", &_camera.fov, MIN_FOV, MAX_FOV);
         ImGui::Value("Pitch", glm::degrees(_camera.angle.y));
         ImGui::Value("Yaw", glm::degrees(_camera.angle.x));
+        ImGui::Value("Zoom", _camera.zoom);
         if (ImGui::CollapsingHeader("Model Transform"))
         {
             if (ImGui::Button("Reset"))
             {
-                memset(_translation, 0.0f, 3*sizeof(GLfloat));
-                memset(_rotation, 0.0f, 3*sizeof(GLfloat));
+                memset(_translation, 0, 3*sizeof(GLfloat));
+                memset(_rotation, 0, 3*sizeof(GLfloat));
                 _scale = 1.0f;
             }
             ImGui::DragFloat3("Translation", _translation, 0.01f);
