@@ -20,7 +20,7 @@
 #define _SOUNDPLAYER_HPP
 
 #include "common.hpp"
-#include "glUtils/glUtil.hpp"
+#include "glUtil.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>

@@ -19,7 +19,7 @@
 #ifndef _MDL2GL_HPP
 #define _MDL2GL_HPP
 
-#include "glUtils/glUtil.hpp"
+#include "glUtil.hpp"
 #include "load_model.hpp"
 
 

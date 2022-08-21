@@ -37,13 +37,13 @@ configure_file(
 
 add_executable(sickle)
 target_sources(sickle PRIVATE
-    src/main.cpp
+    src/bsp/entities_lump.cpp
+    src/bsp/load_bsp.cpp
+    src/mdl/load_model.cpp
+    src/mdl/mdl2gl.cpp
     src/App.cpp
-    src/entitiesLump.cpp
-    src/load_bsp.cpp
-    src/load_model.cpp
+    src/main.cpp
     src/MapViewer.cpp
-    src/mdl2gl.cpp
     src/ModelViewer.cpp
     src/SoundPlayer.cpp
     src/TextureViewer.cpp

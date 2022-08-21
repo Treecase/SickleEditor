@@ -1,5 +1,5 @@
 /**
- * entitiesLump.cpp - Parse the .bsp Entities lump.
+ * entities_lump.cpp - Parse the .bsp Entities lump.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "entitiesLump.hpp"
+#include "entities_lump.hpp"
 
 #include <stdexcept>
 

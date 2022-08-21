@@ -17,12 +17,10 @@
  */
 
 #include "load_bsp.hpp"
-#include "entitiesLump.hpp"
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <vector>
 
 #include <cassert> // temp
 #include <cstdint>

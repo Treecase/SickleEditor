@@ -20,7 +20,7 @@
 #ifndef _LOAD_BSP
 #define _LOAD_BSP
 
-#include "entitiesLump.hpp"
+#include "entities_lump.hpp"
 
 #include <memory>
 #include <string>

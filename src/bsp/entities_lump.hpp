@@ -1,5 +1,5 @@
 /**
- * entitiesLump.hpp - Parse the .bsp Entities lump.
+ * entities_lump.hpp - Parse the .bsp Entities lump.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify

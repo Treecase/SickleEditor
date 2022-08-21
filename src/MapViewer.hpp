@@ -20,8 +20,8 @@
 #define _MAPVIEWER_HPP
 
 #include "common.hpp"
-#include "glUtils/glUtil.hpp"
-#include "load_bsp.hpp"
+#include "glUtil.hpp"
+#include "bsp/load_bsp.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>
