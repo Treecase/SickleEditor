@@ -40,15 +40,15 @@ MapViewer::MapViewer(Config &cfg)
         GLUtil::shader_from_file(
             "shaders/model.frag", GL_FRAGMENT_SHADER)},
         "MapShader"}
-// ,   _selected{""}
-,   _selected{cfg.game_dir.string() + "/valve/maps/c0a0.bsp"}
+,   _vao{nullptr}
+,   _mapVerticesCount{0}
+,   _selected{""}
 ,   _camera{{0.0f, 0.0f}, 2.0f, 70.0f}
 ,   _wireframe{false}
 ,   _translation{0.0f, 0.0f, 0.0f}
-,   _rotation{0.0f, 0.0f, 0.0f}
-,   _scale{1.0f}
+,   _rotation{-90.0f, 0.0f, 0.0f}
+,   _scale{0.005f}
 {
-    // _loadMap();
     _loadSelectedMap();
 }
 
@@ -61,27 +61,27 @@ void MapViewer::input(SDL_Event const *event)
         if (event->motion.state & SDL_BUTTON_MMASK)
         {
             _camera.angle.x = fmod(
-                _camera.angle.x + glm::radians<GLfloat>(event->motion.xrel),
+                _camera.angle.x + glm::radians((GLfloat)event->motion.xrel),
                 glm::two_pi<GLfloat>());
             _camera.angle.y = fmod(
-                _camera.angle.y + glm::radians<GLfloat>(event->motion.yrel),
+                _camera.angle.y + glm::radians((GLfloat)event->motion.yrel),
                 glm::two_pi<GLfloat>());
         }
         break;}
     case SDL_MOUSEWHEEL:{
         auto modstate = SDL_GetModState();
+        // Scroll with ALT pressed to change FOV.
+        if (modstate & KMOD_ALT)
+        {
+            _camera.fov -= MOUSE_SENSITIVITY * event->wheel.y;
+            _camera.fov = CLAMP(_camera.fov, MIN_FOV, MAX_FOV);
+        }
         // Scroll with nothing pressed to zoom.
-        if (modstate == 0)
+        else
         {
             _camera.zoom -= MOUSE_SENSITIVITY * event->wheel.y;
             if (_camera.zoom < MIN_ZOOM)
                 _camera.zoom = MIN_ZOOM;
-        }
-        // Scroll with ALT pressed to change FOV.
-        else if (modstate & KMOD_ALT)
-        {
-            _camera.fov -= MOUSE_SENSITIVITY * event->wheel.y;
-            _camera.fov = CLAMP(_camera.fov, MIN_FOV, MAX_FOV);
         }
         break;}
     case SDL_KEYDOWN:{
@@ -103,6 +103,7 @@ void MapViewer::drawUI()
     if (ImGui::Begin(title.c_str(), &ui_visible))
     {
         ImGui::TextUnformatted(("Map: " + _selected.string()).c_str());
+        ImGui::DragFloat("Zoom", &_camera.zoom, 1.0f, MIN_ZOOM, FLT_MAX);
         ImGui::SliderFloat("FOV", &_camera.fov, MIN_FOV, MAX_FOV);
         ImGui::Value("Pitch", glm::degrees(_camera.angle.y));
         ImGui::Value("Yaw", glm::degrees(_camera.angle.x));
@@ -110,8 +111,8 @@ void MapViewer::drawUI()
         {
             if (ImGui::Button("Reset"))
             {
-                memset(_translation, 0.0f, 3*sizeof(GLfloat));
-                memset(_rotation, 0.0f, 3*sizeof(GLfloat));
+                memset(_translation, 0, 3*sizeof(GLfloat));
+                memset(_rotation, 0, 3*sizeof(GLfloat));
                 _scale = 1.0f;
             }
             ImGui::DragFloat3("Translation", _translation, 0.01f);
@@ -147,7 +148,6 @@ void MapViewer::drawUI()
 
 void MapViewer::drawGL()
 {
-#if 0
     // Setup view matrix.
     glm::vec3 pos{0.0f, 0.0f, -_camera.zoom};
     glm::vec3 up{0.0f, 1.0f, 0.0f};
@@ -189,29 +189,96 @@ void MapViewer::drawGL()
 
     // Draw model.
     _shader.use();
-    _glmodel.vao->bind();
-    _glmodel.ebo->bind();
-    glActiveTexture(GL_TEXTURE0);
-    auto const &tex = _textures[0];
-    tex.bind();
+    _vao->bind();
+    _ebo->bind();
+    // glActiveTexture(GL_TEXTURE0);
+    // auto const &tex = _textures[0];
+    // tex.bind();
     _shader.setUniformS("model", modelMatrix);
     _shader.setUniformS("view", viewMatrix);
     _shader.setUniformS("projection", projectionMatrix);
-    _shader.setUniformS("tex", 0);
-#if 0
-    glMultiDrawElements(GL_TRIANGLES, _glmodel.count.data(), GL_UNSIGNED_INT, _glmodel.indices.data(), _glmodel.count.size());
-#else
-    for (size_t i = 0; i < _glmodel.count.size(); ++i)
-    {
-        _textures.at(_glmodel.texture.at(i)).bind();
-        glDrawElements(GL_TRIANGLES, _glmodel.count.at(i), GL_UNSIGNED_INT, _glmodel.indices.at(i));
-    }
-#endif
-#endif
+    // _shader.setUniformS("tex", 0);
+
+    glEnable(GL_PRIMITIVE_RESTART);
+    glPrimitiveRestartIndex(-1);
+    glDrawElements(
+        GL_TRIANGLE_FAN,
+        _mapVerticesCount,
+        GL_UNSIGNED_INT,
+        (void *)0
+    );
 }
 
 
 void MapViewer::_loadSelectedMap()
 {
-    _map = BSP::load_bsp(_selected.string());
+    struct VertexDef
+    {
+        GLfloat x, y, z;
+        GLfloat s, t;
+        GLfloat r, g, b;
+    };
+    std::vector<VertexDef> vertices{};
+    std::vector<GLuint> indices{};
+
+    if (!_selected.empty())
+    {
+        _map = BSP::load_bsp(_selected.string());
+        for (auto const &v : _map.vertices)
+            vertices.push_back({v.x, v.y, v.z, 0.0f,0.0f, 1.0f,1.0f,1.0f});
+
+        for (auto const &leaf : _map.leaves)
+        {
+            if (leaf.type != -1)
+                continue;
+            for (
+                auto marksurface = leaf.marksurface;
+                marksurface < leaf.marksurface + leaf.marksurface_num;
+                ++marksurface)
+            {
+                auto face_idx = _map.marksurfaces.at(marksurface);
+                auto const face = _map.faces.at(face_idx);
+                for (
+                    auto se = face.surfedge;
+                    se < face.surfedge + face.surfedge_num;
+                    ++se)
+                {
+                    auto ledge = _map.surfedges.at(se);
+                    bool reversed = ledge < 0;
+                    auto edge_idx = reversed? -ledge : ledge;
+                    auto const &edge = _map.edges.at(edge_idx);
+
+                    auto a = reversed? edge.end : edge.start;
+                    auto b = reversed? edge.start : edge.end;
+
+                    indices.push_back((GLuint)a);
+                    indices.push_back((GLuint)b);
+                }
+                indices.push_back(-1);
+            }
+        }
+    }
+
+    _mapVerticesCount = indices.size();
+    _vao.reset(new GLUtil::VertexArray{"mapVAO"});
+    _vao->bind();
+
+    GLUtil::Buffer vbo{GL_ARRAY_BUFFER, "mapVBO"};
+    vbo.bind();
+    vbo.buffer(GL_STATIC_DRAW, vertices);
+
+    _ebo.reset(new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, "mapEBO"});
+    _ebo->bind();
+    _ebo->buffer(GL_STATIC_DRAW, indices);
+
+    _vao->enableVertexAttribArray(
+        0, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, x));
+    _vao->enableVertexAttribArray(
+        1, 2, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, s));
+    _vao->enableVertexAttribArray(
+        2, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, r));
+
+    _ebo->unbind();
+    vbo.unbind();
+    _vao->unbind();
 }

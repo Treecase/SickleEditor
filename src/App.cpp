@@ -34,6 +34,7 @@ App::App(Config &cfg)
         std::shared_ptr<Module>{new TextureViewer{cfg}},
         std::shared_ptr<Module>{new MapViewer{cfg}},
     }
+,   _activeGLDisplay{nullptr}
 ,   _cfg{cfg}
 ,   _aboutWindowShown{false}
 ,   running{true}
@@ -58,6 +59,15 @@ void App::drawUI()
             fpopen = true;
         if (ImGui::MenuItem("Exit"))
             running = false;
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("View"))
+    {
+        if (ImGui::MenuItem("<none>"))
+            _activeGLDisplay = nullptr;
+        for (auto &module : _modules)
+            if (ImGui::MenuItem(module->title.c_str()))
+                _activeGLDisplay = module.get();
         ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Windows"))
@@ -102,6 +112,6 @@ void App::drawUI()
 
 void App::drawGL()
 {
-    for (auto &module : _modules)
-        module->drawGL();
+    if (_activeGLDisplay != nullptr)
+        _activeGLDisplay->drawGL();
 }

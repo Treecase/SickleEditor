@@ -37,6 +37,10 @@ class MapViewer : public Module
 private:
     // Shader.
     GLUtil::Program _shader;
+    // Map vertices.
+    std::shared_ptr<GLUtil::VertexArray> _vao;
+    std::shared_ptr<GLUtil::Buffer> _ebo;
+    GLsizei _mapVerticesCount;
 
     // Loaded map.
     BSP::BSP _map;
