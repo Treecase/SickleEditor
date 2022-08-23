@@ -37,6 +37,7 @@ configure_file(
 
 add_executable(sickle)
 target_sources(sickle PRIVATE
+    src/bsp/bsp2gl.cpp
     src/bsp/entities_lump.cpp
     src/bsp/load_bsp.cpp
     src/mdl/load_model.cpp

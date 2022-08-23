@@ -21,6 +21,7 @@
 
 #include "common.hpp"
 #include "glUtil.hpp"
+#include "bsp/bsp2gl.hpp"
 #include "bsp/load_bsp.hpp"
 #include "Module.hpp"
 
@@ -37,13 +38,11 @@ class MapViewer : public Module
 private:
     // Shader.
     GLUtil::Program _shader;
-    // Map vertices.
-    std::shared_ptr<GLUtil::VertexArray> _vao;
-    std::shared_ptr<GLUtil::Buffer> _ebo;
-    GLsizei _mapVerticesCount;
 
     // Loaded map.
     BSP::BSP _map;
+    // GL map.
+    GLBSP _glbsp;
     // Path to loaded map.
     std::filesystem::path _selected;
 

@@ -36,12 +36,12 @@ MapViewer::MapViewer(Config &cfg)
 :   Module{cfg, "Map Viewer", false}
 ,   _shader{{
         GLUtil::shader_from_file(
-            "shaders/model.vert", GL_VERTEX_SHADER),
+            "shaders/map.vert", GL_VERTEX_SHADER),
         GLUtil::shader_from_file(
-            "shaders/model.frag", GL_FRAGMENT_SHADER)},
+            "shaders/map.frag", GL_FRAGMENT_SHADER)},
         "MapShader"}
-,   _vao{nullptr}
-,   _mapVerticesCount{0}
+,   _map{}
+,   _glbsp{}
 ,   _selected{""}
 ,   _camera{{0.0f, 0.0f}, 2.0f, 70.0f}
 ,   _wireframe{false}
@@ -49,7 +49,7 @@ MapViewer::MapViewer(Config &cfg)
 ,   _rotation{-90.0f, 0.0f, 0.0f}
 ,   _scale{0.005f}
 {
-    _loadSelectedMap();
+    _loadMap();
 }
 
 void MapViewer::input(SDL_Event const *event)
@@ -189,8 +189,8 @@ void MapViewer::drawGL()
 
     // Draw model.
     _shader.use();
-    _vao->bind();
-    _ebo->bind();
+    _glbsp.vao->bind();
+    _glbsp.ebo->bind();
     // glActiveTexture(GL_TEXTURE0);
     // auto const &tex = _textures[0];
     // tex.bind();
@@ -203,7 +203,7 @@ void MapViewer::drawGL()
     glPrimitiveRestartIndex(-1);
     glDrawElements(
         GL_TRIANGLE_FAN,
-        _mapVerticesCount,
+        _glbsp.indices.size(),
         GL_UNSIGNED_INT,
         (void *)0
     );
@@ -212,73 +212,36 @@ void MapViewer::drawGL()
 
 void MapViewer::_loadSelectedMap()
 {
-    struct VertexDef
-    {
-        GLfloat x, y, z;
-        GLfloat s, t;
-        GLfloat r, g, b;
-    };
-    std::vector<VertexDef> vertices{};
-    std::vector<GLuint> indices{};
-
     if (!_selected.empty())
-    {
         _map = BSP::load_bsp(_selected.string());
-        for (auto const &v : _map.vertices)
-            vertices.push_back({v.x, v.y, v.z, 0.0f,0.0f, 1.0f,1.0f,1.0f});
+    _loadMap();
+}
 
-        for (auto const &leaf : _map.leaves)
-        {
-            if (leaf.type != -1)
-                continue;
-            for (
-                auto marksurface = leaf.marksurface;
-                marksurface < leaf.marksurface + leaf.marksurface_num;
-                ++marksurface)
-            {
-                auto face_idx = _map.marksurfaces.at(marksurface);
-                auto const face = _map.faces.at(face_idx);
-                for (
-                    auto se = face.surfedge;
-                    se < face.surfedge + face.surfedge_num;
-                    ++se)
-                {
-                    auto ledge = _map.surfedges.at(se);
-                    bool reversed = ledge < 0;
-                    auto edge_idx = reversed? -ledge : ledge;
-                    auto const &edge = _map.edges.at(edge_idx);
-
-                    auto a = reversed? edge.end : edge.start;
-                    auto b = reversed? edge.start : edge.end;
-
-                    indices.push_back((GLuint)a);
-                    indices.push_back((GLuint)b);
-                }
-                indices.push_back(-1);
-            }
-        }
+void MapViewer::_loadMap()
+{
+    if (_selected.empty())
+    {
+        _glbsp = GLBSP{
+            {},
+            {},
+            std::shared_ptr<GLUtil::VertexArray>{
+                new GLUtil::VertexArray{"mapVAO"}},
+            std::shared_ptr<GLUtil::Buffer>{
+                new GLUtil::Buffer{GL_ARRAY_BUFFER, "mapVBO"}},
+            std::shared_ptr<GLUtil::Buffer>{
+                new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, "mapEBO"}}
+        };
+        _glbsp.vao->enableVertexAttribArray(
+            0, 3, GL_FLOAT, sizeof(BSPVertexDef), offsetof(BSPVertexDef, x));
+        _glbsp.vao->enableVertexAttribArray(
+            1, 2, GL_FLOAT, sizeof(BSPVertexDef), offsetof(BSPVertexDef, s));
+        _glbsp.ebo->unbind();
+        _glbsp.vbo->unbind();
+        _glbsp.vao->unbind();
+        return;
     }
-
-    _mapVerticesCount = indices.size();
-    _vao.reset(new GLUtil::VertexArray{"mapVAO"});
-    _vao->bind();
-
-    GLUtil::Buffer vbo{GL_ARRAY_BUFFER, "mapVBO"};
-    vbo.bind();
-    vbo.buffer(GL_STATIC_DRAW, vertices);
-
-    _ebo.reset(new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, "mapEBO"});
-    _ebo->bind();
-    _ebo->buffer(GL_STATIC_DRAW, indices);
-
-    _vao->enableVertexAttribArray(
-        0, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, x));
-    _vao->enableVertexAttribArray(
-        1, 2, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, s));
-    _vao->enableVertexAttribArray(
-        2, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, r));
-
-    _ebo->unbind();
-    vbo.unbind();
-    _vao->unbind();
+    else
+    {
+        _glbsp = bsp2gl(_map);
+    }
 }

@@ -37,8 +37,8 @@ private:
             std::shared_ptr<Module> const &b) const
         {return a->title < b->title;}
     };
-    Module *_activeGLDisplay;
     std::set<std::shared_ptr<Module>, ModuleComparer> _modules;
+    Module *_activeGLDisplay;
     Config &_cfg;
     bool _aboutWindowShown;
 
