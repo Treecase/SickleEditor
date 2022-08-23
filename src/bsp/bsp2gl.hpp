@@ -42,4 +42,7 @@ struct GLBSP
 /** Convert from .bsp to an OpenGL format. */
 GLBSP bsp2gl(BSP::BSP const &bsp);
 
+/** Get textures from .bsp data. */
+GLUtil::Texture getBSPTextures(BSP::BSP const &bsp);
+
 #endif

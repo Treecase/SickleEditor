@@ -42,6 +42,7 @@ MapViewer::MapViewer(Config &cfg)
         "MapShader"}
 ,   _map{}
 ,   _glbsp{}
+,   _textures{}
 ,   _selected{""}
 ,   _camera{{0.0f, 0.0f}, 2.0f, 70.0f}
 ,   _wireframe{false}
@@ -102,7 +103,7 @@ void MapViewer::drawUI()
 
     if (ImGui::Begin(title.c_str(), &ui_visible))
     {
-        ImGui::TextUnformatted(("Map: " + _selected.string()).c_str());
+        ImGui::TextUnformatted(("Map: " + _selected.filename().string()).c_str());
         ImGui::DragFloat("Zoom", &_camera.zoom, 1.0f, MIN_ZOOM, FLT_MAX);
         ImGui::SliderFloat("FOV", &_camera.fov, MIN_FOV, MAX_FOV);
         ImGui::Value("Pitch", glm::degrees(_camera.angle.y));
@@ -148,6 +149,9 @@ void MapViewer::drawUI()
 
 void MapViewer::drawGL()
 {
+    if (_selected.empty())
+        return;
+
     // Setup view matrix.
     glm::vec3 pos{0.0f, 0.0f, -_camera.zoom};
     glm::vec3 up{0.0f, 1.0f, 0.0f};
@@ -191,13 +195,12 @@ void MapViewer::drawGL()
     _shader.use();
     _glbsp.vao->bind();
     _glbsp.ebo->bind();
-    // glActiveTexture(GL_TEXTURE0);
-    // auto const &tex = _textures[0];
-    // tex.bind();
+    glActiveTexture(GL_TEXTURE0);
+    _textures[0].bind();
     _shader.setUniformS("model", modelMatrix);
     _shader.setUniformS("view", viewMatrix);
     _shader.setUniformS("projection", projectionMatrix);
-    // _shader.setUniformS("tex", 0);
+    _shader.setUniformS("tex", 0);
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(-1);
@@ -243,5 +246,7 @@ void MapViewer::_loadMap()
     else
     {
         _glbsp = bsp2gl(_map);
+        _textures.clear();
+        _textures.push_back(getBSPTextures(_map));
     }
 }

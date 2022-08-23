@@ -76,68 +76,6 @@ struct M_Header
     M_Lump lumps[LumpIndices::LumpCount];
 };
 
-#define MAX_MAP_HULLS 4
-struct M_Model
-{
-    float mins[3], maxs[3];
-    float origin[3];
-    int32_t headnode[MAX_MAP_HULLS];
-    int32_t visleafs;
-    int32_t firstface, numfaces;
-};
-
-#define NUM_AMBIENTS 4
-struct M_Leaf
-{
-    int32_t contents;
-    int32_t visofs;
-    int16_t mins[3];
-    int16_t maxs[3];
-    uint16_t firstmarksurface;
-    uint16_t nummarksurface;
-    uint8_t ambient_level[NUM_AMBIENTS];
-};
-
-struct M_Node
-{
-    int32_t planenum;
-    uint16_t children[2];
-    int16_t mins[3];
-    int16_t maxs[3];
-    uint16_t firstface;
-    uint16_t numfaces;
-};
-
-struct M_TexInfo
-{
-    float vecs[2][4];
-    int32_t miptex;
-    int32_t flags;
-};
-
-struct M_ClipNode
-{
-    int32_t planenum;
-    int16_t children[2];
-};
-
-#define MAXLIGHTMAPS 4
-struct M_Face
-{
-    int16_t planenum;
-    int16_t side;
-    int32_t firstedge;
-    int16_t numedges;
-    int16_t texinfo;
-    uint8_t styles[MAXLIGHTMAPS];
-    int32_t lightofs;
-};
-
-struct M_Edge
-{
-    uint16_t v[2];
-};
-
 
 /** Read a lump from .bsp data. */
 template<typename T>
@@ -249,8 +187,6 @@ std::vector<BSP::Texture> extract_textures(std::vector<uint8_t> const &lump)
 /** Load a .bsp file. */
 BSP::BSP BSP::load_bsp(std::string const &path)
 {
-    std::cout << "LoadBSP: " << path << "\n";
-
     std::ifstream f{path, std::ios::in | std::ios::binary};
     if (!f.is_open())
         throw std::runtime_error{"Failed to open '" + path + "'"};
@@ -258,7 +194,6 @@ BSP::BSP BSP::load_bsp(std::string const &path)
     // Read header
     M_Header hdr;
     f.read((char*)&hdr, 124);
-    std::cout << "Header version: " << hdr.version << "\n";
     if (hdr.version != 30)
         throw std::runtime_error{
             path + " is version " + std::to_string(hdr.version)
@@ -270,16 +205,16 @@ BSP::BSP BSP::load_bsp(std::string const &path)
     auto texture_data = readLump<uint8_t>(f, hdr.lumps[LumpIndices::Textures]);
     auto vertexes = readLump<Vertex>(f, hdr.lumps[LumpIndices::Vertexes]);
     auto visibility = readLump<uint8_t>(f, hdr.lumps[LumpIndices::Visibility]);
-    auto nodes = readLump<M_Node>(f, hdr.lumps[LumpIndices::Nodes]);
-    auto texinfo = readLump<M_TexInfo>(f, hdr.lumps[LumpIndices::Texinfo]);
-    auto faces = readLump<M_Face>(f, hdr.lumps[LumpIndices::Faces]);
+    auto nodes = readLump<Node>(f, hdr.lumps[LumpIndices::Nodes]);
+    auto texinfo = readLump<TexInfo>(f, hdr.lumps[LumpIndices::Texinfo]);
+    auto faces = readLump<Face>(f, hdr.lumps[LumpIndices::Faces]);
     auto lighting = readLump<uint8_t>(f, hdr.lumps[LumpIndices::Lighting]);
-    auto clipnodes = readLump<M_ClipNode>(f, hdr.lumps[LumpIndices::Clipnodes]);
-    auto leafs = readLump<M_Leaf>(f, hdr.lumps[LumpIndices::Leafs]);
+    auto clipnodes = readLump<ClipNode>(f, hdr.lumps[LumpIndices::Clipnodes]);
+    auto leafs = readLump<Leaf>(f, hdr.lumps[LumpIndices::Leafs]);
     auto marksurfaces = readLump<uint16_t>(f, hdr.lumps[LumpIndices::Marksurfaces]);
-    auto edges = readLump<M_Edge>(f, hdr.lumps[LumpIndices::Edges]);
+    auto edges = readLump<Edge>(f, hdr.lumps[LumpIndices::Edges]);
     auto surfedges = readLump<int32_t>(f, hdr.lumps[LumpIndices::Surfedges]);
-    auto models = readLump<M_Model>(f, hdr.lumps[LumpIndices::Models]);
+    auto models = readLump<Model>(f, hdr.lumps[LumpIndices::Models]);
 
     auto entities = parse_entities(std::string{(char*)entity_data.data()});
     auto textures = extract_textures(texture_data);
@@ -303,120 +238,21 @@ BSP::BSP BSP::load_bsp(std::string const &path)
     assert(surfedges.size() < LumpMaxSize[LumpIndices::Surfedges]);
     assert(models.size() < LumpMaxSize[LumpIndices::Models]);
 
-    // Convert from on-disk representations to in-memory representations.
-    std::vector<TexInfo> out_texinfo{};
-    for (auto const &ti : texinfo)
-    {
-        out_texinfo.push_back({
-            {ti.vecs[0][0], ti.vecs[0][1], ti.vecs[0][2]},
-            ti.vecs[0][3],
-            {ti.vecs[1][0], ti.vecs[1][1], ti.vecs[1][2]},
-            ti.vecs[1][3],
-            &textures[ti.miptex],
-            ti.flags? true : false
-        });
-    }
-    std::vector<Face> out_faces{};
-    for (auto const &f : faces)
-    {
-        out_faces.push_back({
-            &planes[f.planenum],
-            f.side != 0,
-            (size_t)f.firstedge,
-            (size_t)f.numedges,
-            &out_texinfo[f.texinfo],
-            {f.styles[0], f.styles[1], f.styles[2], f.styles[3]},
-            f.lightofs
-        });
-    }
-    std::vector<Node> out_nodes{};
-    for (auto const &n : nodes)
-    {
-        out_nodes.push_back({
-            &planes[n.planenum],
-            n.children[0],
-            n.children[1],
-            {
-                {n.mins[0], n.mins[1], n.mins[2]},
-                {n.maxs[0], n.maxs[1], n.maxs[2]}
-            },
-            &out_faces[n.firstface],
-            n.numfaces
-        });
-    }
-    std::vector<ClipNode> out_clipnodes{};
-    for (auto const &cn : clipnodes)
-    {
-        out_clipnodes.push_back({
-            &planes[cn.planenum], cn.children[0], cn.children[1]});
-    }
-
-#if 0
-    std::vector<Face *> out_marksurfaces{};
-    for (auto const &m : marksurfaces)
-        out_marksurfaces.push_back(&out_faces[m]);
-#else
-    auto out_marksurfaces = marksurfaces;
-#endif
-
-    std::vector<Leaf> out_leafs{};
-    for (auto const &l : leafs)
-    {
-        out_leafs.push_back({
-            l.contents,
-            l.visofs == -1? nullptr : &visibility[l.visofs],
-            {
-                {l.mins[0], l.mins[1], l.mins[2]},
-                {l.maxs[0], l.maxs[1], l.maxs[2]}
-            },
-            // &out_marksurfaces[l.firstmarksurface],
-            l.firstmarksurface,
-            l.nummarksurface,
-            {l.ambient_level[0], l.ambient_level[1], l.ambient_level[2], l.ambient_level[3]}
-        });
-    }
-
-#if 0
-    std::vector<Edge> out_edges{};
-    for (auto const &e : edges)
-        out_edges.push_back({&vertexes[e.v[0]], &vertexes[e.v[1]]});
-#else
-    std::vector<Edge> out_edges{};
-    for (auto const &e : edges)
-        out_edges.push_back({e.v[0], e.v[1]});
-#endif
-
-    std::vector<Model> out_models{};
-    for (auto const &m : models)
-    {
-        out_models.push_back({
-            {
-                {m.mins[0], m.mins[1], m.mins[2]},
-                {m.maxs[0], m.maxs[1], m.maxs[2]}
-            },
-            {m.origin[0], m.origin[1], m.origin[2]},
-            {m.headnode[0], m.headnode[1], m.headnode[2], m.headnode[3]},
-            m.visleafs,
-            &out_faces[m.firstface],
-            m.numfaces
-        });
-    }
-
     return BSP{
         entities,
         planes,
         textures,
         vertexes,
         visibility,
-        out_nodes,
-        out_texinfo,
-        out_faces,
+        nodes,
+        texinfo,
+        faces,
         lighting,
-        out_clipnodes,
-        out_leafs,
-        out_marksurfaces,
-        out_edges,
+        clipnodes,
+        leafs,
+        marksurfaces,
+        edges,
         surfedges,
-        out_models
+        models
     };
 }

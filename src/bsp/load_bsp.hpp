@@ -15,7 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-// TODO: don't use pointers in the structs
 
 #ifndef _LOAD_BSP
 #define _LOAD_BSP
@@ -60,8 +59,8 @@ namespace BSP
         float sDist;
         vec3 tVector;
         float tDist;
-        Texture *texture; // pointer into textures
-        bool animated;
+        int32_t texture; // pointer into textures
+        int32_t flags;
     };
 
     /** BSP split plane. */
@@ -81,17 +80,17 @@ namespace BSP
     /** Map edge. */
     struct Edge
     {
-        size_t start, end; // pointers into vertices
+        uint16_t start, end; // pointers into vertices
     };
 
     /** Map polygon. */
     struct Face
     {
-        Plane *plane; // pointer into planes
-        bool side;
-        size_t surfedge; // pointer into surfedges
-        size_t surfedge_num;
-        TexInfo *texinfo; // pointer into texinfo
+        uint16_t plane; // pointer into planes
+        uint16_t side;
+        int32_t surfedge; // pointer into surfedges
+        uint16_t surfedge_num;
+        uint16_t texinfo; // pointer into texinfo
         uint8_t styles[4];
         int32_t lightmap;
     };
@@ -99,17 +98,17 @@ namespace BSP
     /** BSP Node. */
     struct Node
     {
-        Plane *plane; // pointer into planes
+        uint32_t plane; // pointer into planes
         uint16_t front, back;
         BBoxShort box;
-        Face *face; // pointer into faces
+        uint16_t face; // pointer into faces
         uint16_t face_num;
     };
 
     /** ClipNode. */
     struct ClipNode
     {
-        Plane *plane;
+        uint32_t plane; // pointer into planes
         int16_t front, back;
     };
 
@@ -117,10 +116,10 @@ namespace BSP
     struct Leaf
     {
         int32_t type;
-        uint8_t *vislist; // pointer into visibility
+        int32_t vislist; // pointer into visibility
         BBoxShort bbox;
-        size_t marksurface; // pointer into marksurfaces
-        size_t marksurface_num;
+        uint16_t marksurface; // pointer into marksurfaces
+        uint16_t marksurface_num;
         uint8_t ambient_level[4];
     };
 
@@ -131,7 +130,7 @@ namespace BSP
         vec3 origin;
         int32_t node_id[4];
         int32_t numleafs;
-        Face *face; // pointer into faces
+        int32_t face; // pointer into faces
         int32_t numfaces;
     };
 
