@@ -108,8 +108,6 @@ private:
             n = _vertIdx[vd] = _vboData.size();
             _vboData.push_back(vd);
         }
-        n = _vertIdx[vd] = _vboData.size();
-        _vboData.push_back(vd);
         _eboData.push_back(n);
     }
 
