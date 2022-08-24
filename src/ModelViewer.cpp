@@ -33,7 +33,7 @@
 
 
 ModelViewer::ModelViewer(Config &cfg)
-:   Module{cfg, "Model Viewer", false}
+:   Module{cfg, "Model Viewer", false, false}
 ,   _shader{{
         GLUtil::shader_from_file(
             "shaders/model.vert", GL_VERTEX_SHADER),
@@ -88,6 +88,8 @@ ModelViewer::ModelViewer(Config &cfg)
 
 void ModelViewer::input(SDL_Event const *event)
 {
+    if (!gl_visible)
+        return;
     switch (event->type)
     {
     case SDL_MOUSEMOTION:{

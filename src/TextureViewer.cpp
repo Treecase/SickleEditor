@@ -26,7 +26,7 @@
 
 
 TextureViewer::TextureViewer(Config &cfg)
-:   Module{cfg, "Texture Viewer", false}
+:   Module{cfg, "Texture Viewer", false, false}
 ,   _shader{
         {   GLUtil::shader_from_file(
                 "shaders/vertex.vert", GL_VERTEX_SHADER),

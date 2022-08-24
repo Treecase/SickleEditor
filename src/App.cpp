@@ -67,7 +67,12 @@ void App::drawUI()
             _activeGLDisplay = nullptr;
         for (auto &module : _modules)
             if (ImGui::MenuItem(module->title.c_str()))
+            {
+                if (_activeGLDisplay)
+                    _activeGLDisplay->gl_visible = false;
                 _activeGLDisplay = module.get();
+                _activeGLDisplay->gl_visible = true;
+            }
         ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Windows"))

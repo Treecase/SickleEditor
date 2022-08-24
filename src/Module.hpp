@@ -36,12 +36,15 @@ public:
     std::string title;
     // Is the UI visible?
     bool ui_visible;
+    // Is the GL being rendered?
+    bool gl_visible;
 
 
-    Module(Config &cfg, std::string const &title, bool visible)
+    Module(Config &cfg, std::string const &title, bool visible, bool glrender)
     :   _cfg{cfg}
     ,   title{title}
     ,   ui_visible{visible}
+    ,   gl_visible{glrender}
     {}
 
 

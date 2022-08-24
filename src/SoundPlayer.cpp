@@ -62,7 +62,7 @@ SDL_AudioDeviceID _play_sound(SDL_AudioDeviceID dev, char const *path)
 
 
 SoundPlayer::SoundPlayer(Config &cfg)
-:   Module{cfg, "Sound Player", false}
+:   Module{cfg, "Sound Player", false, false}
 ,   _device{0}
 ,   _selected_sound{}
 ,   _error{""}

@@ -33,7 +33,7 @@
 
 
 MapViewer::MapViewer(Config &cfg)
-:   Module{cfg, "Map Viewer", false}
+:   Module{cfg, "Map Viewer", false, false}
 ,   _shader{{
         GLUtil::shader_from_file(
             "shaders/map.vert", GL_VERTEX_SHADER),
