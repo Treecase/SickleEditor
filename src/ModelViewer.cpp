@@ -195,7 +195,7 @@ void ModelViewer::drawUI()
     ImGui::End();
 }
 
-void ModelViewer::drawGL()
+void ModelViewer::drawGL(float deltaT)
 {
     // Setup view matrix.
     glm::vec3 pos{0.0f, 0.0f, -_camera.zoom};

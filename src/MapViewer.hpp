@@ -48,11 +48,12 @@ private:
     // Path to loaded map.
     std::filesystem::path _selected;
 
-    // Orbiting camera.
+    // First-person camera.
     struct Camera {
+        glm::vec3 pos;      // Position
         glm::vec2 angle;    // x/y angle
-        GLfloat zoom;       // Distance from origin
         GLfloat fov;        // FOV
+        GLfloat speed;      // Movement speed
     } _camera;
 
     // Wireframe display toggle.
@@ -79,7 +80,7 @@ public:
     void drawUI() override;
 
     /** Draw non-UI module visuals. */
-    void drawGL() override;
+    void drawGL(float deltaT) override;
 };
 
 #endif

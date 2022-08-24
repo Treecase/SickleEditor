@@ -115,8 +115,8 @@ void App::drawUI()
         module->drawUI();
 }
 
-void App::drawGL()
+void App::drawGL(float deltaT)
 {
     if (_activeGLDisplay != nullptr)
-        _activeGLDisplay->drawGL();
+        _activeGLDisplay->drawGL(deltaT);
 }

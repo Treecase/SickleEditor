@@ -190,6 +190,7 @@ int run(int argc, char *argv[])
 
 
     /* ===[ Main Loop ]=== */
+    auto lastFrame = SDL_GetTicks64();
     while (app.running)
     {
         /* ===[ Event Handling ]=== */
@@ -235,7 +236,9 @@ int run(int argc, char *argv[])
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Render non-UI app visuals.
-        app.drawGL();
+        auto now = SDL_GetTicks64();
+        app.drawGL((now - lastFrame) / 1000.0f);
+        lastFrame = now;
         // Render the UI.
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

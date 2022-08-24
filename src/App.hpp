@@ -55,7 +55,7 @@ public:
     void drawUI();
 
     /** Draw non-UI app visuals. */
-    void drawGL();
+    void drawGL(float deltaT);
 };
 
 #endif

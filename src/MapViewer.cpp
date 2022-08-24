@@ -21,6 +21,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <imgui.h>
 
 
@@ -30,6 +31,7 @@
 #define MIN_ZOOM 0.5f
 #define MIN_FOV 30.0f
 #define MAX_FOV 90.0f
+#define SHIFT_MULTIPLIER 2.0f
 
 
 MapViewer::MapViewer(Config &cfg)
@@ -40,11 +42,16 @@ MapViewer::MapViewer(Config &cfg)
         GLUtil::shader_from_file(
             "shaders/map.frag", GL_FRAGMENT_SHADER)},
         "MapShader"}
-,   _map{}
+,   _map{
+        {},
+        {},
+        // temp: need at least 1 texture for bsp2gl
+        {{   "mapDefault", 0, 0, nullptr, nullptr, nullptr, nullptr}}
+    }
 ,   _glbsp{}
 ,   _textures{}
 ,   _selected{""}
-,   _camera{{0.0f, 0.0f}, 2.0f, 70.0f}
+,   _camera{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 70.0f, 1.0f}
 ,   _wireframe{false}
 ,   _translation{0.0f, 0.0f, 0.0f}
 ,   _rotation{-90.0f, 0.0f, 0.0f}
@@ -64,9 +71,11 @@ void MapViewer::input(SDL_Event const *event)
             _camera.angle.x = fmod(
                 _camera.angle.x + glm::radians((GLfloat)event->motion.xrel),
                 glm::two_pi<GLfloat>());
-            _camera.angle.y = fmod(
+            _camera.angle.y = CLAMP(
                 _camera.angle.y + glm::radians((GLfloat)event->motion.yrel),
-                glm::two_pi<GLfloat>());
+                -glm::radians(89.0f),
+                glm::radians(89.0f)
+            );
         }
         break;}
     case SDL_MOUSEWHEEL:{
@@ -76,13 +85,6 @@ void MapViewer::input(SDL_Event const *event)
         {
             _camera.fov -= MOUSE_SENSITIVITY * event->wheel.y;
             _camera.fov = CLAMP(_camera.fov, MIN_FOV, MAX_FOV);
-        }
-        // Scroll with nothing pressed to zoom.
-        else
-        {
-            _camera.zoom -= MOUSE_SENSITIVITY * event->wheel.y;
-            if (_camera.zoom < MIN_ZOOM)
-                _camera.zoom = MIN_ZOOM;
         }
         break;}
     case SDL_KEYDOWN:{
@@ -103,11 +105,18 @@ void MapViewer::drawUI()
 
     if (ImGui::Begin(title.c_str(), &ui_visible))
     {
-        ImGui::TextUnformatted(("Map: " + _selected.filename().string()).c_str());
-        ImGui::DragFloat("Zoom", &_camera.zoom, 1.0f, MIN_ZOOM, FLT_MAX);
-        ImGui::SliderFloat("FOV", &_camera.fov, MIN_FOV, MAX_FOV);
-        ImGui::Value("Pitch", glm::degrees(_camera.angle.y));
-        ImGui::Value("Yaw", glm::degrees(_camera.angle.x));
+        ImGui::TextUnformatted((
+            "Map: "
+            + (_selected.empty()? "<none>" : _selected.filename().string())
+            ).c_str());
+        if (ImGui::CollapsingHeader("Camera"))
+        {
+            ImGui::SliderFloat("FOV", &_camera.fov, MIN_FOV, MAX_FOV);
+            ImGui::DragFloat("Speed", &_camera.speed, 0.1f, 0.0f, FLT_MAX);
+            ImGui::Text("Pos: %.3f %.3f %.3f", _camera.pos.x, _camera.pos.y, _camera.pos.z);
+            ImGui::Value("Pitch", glm::degrees(_camera.angle.y));
+            ImGui::Value("Yaw", glm::degrees(_camera.angle.x));
+        }
         if (ImGui::CollapsingHeader("Map Transform"))
         {
             if (ImGui::Button("Reset"))
@@ -147,21 +156,44 @@ void MapViewer::drawUI()
     ImGui::End();
 }
 
-void MapViewer::drawGL()
+void MapViewer::drawGL(float deltaT)
 {
     if (_selected.empty())
         return;
 
-    // Setup view matrix.
-    glm::vec3 pos{0.0f, 0.0f, -_camera.zoom};
+    /* ===[ Camera Vectors ]=== */
+    // Camera space cardinal directions.
     glm::vec3 up{0.0f, 1.0f, 0.0f};
-    auto viewMatrix = glm::rotate(
-        glm::rotate(
-            glm::lookAt(pos, glm::vec3{0.0f}, up),
-            _camera.angle.y,
-            glm::cross(up, pos)),
-        _camera.angle.x,
-        up);
+    glm::vec3 lookDir{
+        -glm::sin(_camera.angle.x), 0.0f, glm::cos(_camera.angle.x)};
+    glm::vec3 side = glm::cross(up, lookDir);
+    lookDir = glm::rotate(lookDir, _camera.angle.y, side);
+
+    // Get keyboard state.
+    auto keyState = SDL_GetKeyboardState(nullptr);
+    auto modState = SDL_GetModState();
+    auto shift = (modState & KMOD_SHIFT) != 0;
+
+    glm::vec3 movement_factor{
+        keyState[SDL_SCANCODE_D] - keyState[SDL_SCANCODE_A],
+        keyState[SDL_SCANCODE_Q] - keyState[SDL_SCANCODE_E],
+        keyState[SDL_SCANCODE_W] - keyState[SDL_SCANCODE_S]};
+    glm::vec3 movement_delta = (
+        - movement_factor.x * side
+        + glm::vec3{0.0f, movement_factor.y, 0.0f}
+        + movement_factor.z * lookDir);
+    // Move the camera.
+    if (glm::length(movement_delta) > 0.0f)
+    {
+        _camera.pos += (
+            deltaT
+            * (shift? SHIFT_MULTIPLIER : 1.0f)
+            * _camera.speed
+            * glm::normalize(movement_delta));
+    }
+
+    // Setup view matrix.
+    auto viewMatrix = glm::lookAt(_camera.pos, _camera.pos + lookDir, up);
 
     // Setup projection matrix.
     auto projectionMatrix = glm::perspective(
@@ -206,47 +238,21 @@ void MapViewer::drawGL()
     glPrimitiveRestartIndex(-1);
     glDrawElements(
         GL_TRIANGLE_FAN,
-        _glbsp.indices.size(),
+        (GLsizei)_glbsp.indices.size(),
         GL_UNSIGNED_INT,
-        (void *)0
-    );
+        (void *)0);
 }
 
 
 void MapViewer::_loadSelectedMap()
 {
-    if (!_selected.empty())
-        _map = BSP::load_bsp(_selected.string());
+    _map = BSP::load_bsp(_selected.string());
     _loadMap();
 }
 
 void MapViewer::_loadMap()
 {
-    if (_selected.empty())
-    {
-        _glbsp = GLBSP{
-            {},
-            {},
-            std::shared_ptr<GLUtil::VertexArray>{
-                new GLUtil::VertexArray{"mapVAO"}},
-            std::shared_ptr<GLUtil::Buffer>{
-                new GLUtil::Buffer{GL_ARRAY_BUFFER, "mapVBO"}},
-            std::shared_ptr<GLUtil::Buffer>{
-                new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, "mapEBO"}}
-        };
-        _glbsp.vao->enableVertexAttribArray(
-            0, 3, GL_FLOAT, sizeof(BSPVertexDef), offsetof(BSPVertexDef, x));
-        _glbsp.vao->enableVertexAttribArray(
-            1, 2, GL_FLOAT, sizeof(BSPVertexDef), offsetof(BSPVertexDef, s));
-        _glbsp.ebo->unbind();
-        _glbsp.vbo->unbind();
-        _glbsp.vao->unbind();
-        return;
-    }
-    else
-    {
-        _glbsp = bsp2gl(_map);
-        _textures.clear();
-        _textures.push_back(getBSPTextures(_map));
-    }
+    _glbsp = bsp2gl(_map);
+    _textures.clear();
+    _textures.push_back(getBSPTextures(_map));
 }

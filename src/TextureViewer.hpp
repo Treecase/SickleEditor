@@ -66,7 +66,7 @@ public:
     void drawUI() override;
 
     /** Does nothing. */
-    void drawGL() override {};
+    void drawGL(float deltaT) override {};
 };
 
 #endif

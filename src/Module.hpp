@@ -55,7 +55,7 @@ public:
     virtual void drawUI()=0;
 
     /** Draw non-UI app visuals. */
-    virtual void drawGL()=0;
+    virtual void drawGL(float deltaT)=0;
 };
 
 #endif

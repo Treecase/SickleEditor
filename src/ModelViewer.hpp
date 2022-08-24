@@ -80,7 +80,7 @@ public:
     void drawUI() override;
 
     /** Draw non-UI app visuals. */
-    void drawGL() override;
+    void drawGL(float deltaT) override;
 };
 
 #endif
