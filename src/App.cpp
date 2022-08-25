@@ -23,6 +23,7 @@
 #include "TextureViewer.hpp"
 #include "ui_helpers.hpp"
 #include "version.hpp"
+#include "WADTextureViewer.hpp"
 
 #include <imgui.h>
 
@@ -33,6 +34,7 @@ App::App(Config &cfg)
         std::shared_ptr<Module>{new SoundPlayer{cfg}},
         std::shared_ptr<Module>{new TextureViewer{cfg}},
         std::shared_ptr<Module>{new MapViewer{cfg}},
+        std::shared_ptr<Module>{new WADTextureViewer{cfg}},
     }
 ,   _activeGLDisplay{nullptr}
 ,   _cfg{cfg}

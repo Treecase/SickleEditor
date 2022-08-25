@@ -21,28 +21,36 @@
 
 #include "glUtil.hpp"
 #include "load_bsp.hpp"
+#include "../wad/load_wad.hpp"
+
+#include <array>
 
 
-/** Format for buffered vertex data. */
-struct BSPVertexDef
+namespace BSP
 {
-    GLfloat x, y, z;    // Position
-    GLfloat s, t;       // UV
-};
+    /** Format for buffered vertex data. */
+    struct VertexDef
+    {
+        GLfloat x, y, z;    // Position
+        GLfloat s, t;       // UV
+    };
 
-struct GLBSP
-{
-    std::vector<BSPVertexDef> vertices;
-    std::vector<GLuint> indices;
-    std::shared_ptr<GLUtil::VertexArray> vao;
-    std::shared_ptr<GLUtil::Buffer> vbo, ebo;
-};
+    struct GLBSP
+    {
+        std::vector<VertexDef> vertices;
+        std::vector<GLuint> indices;
+        std::shared_ptr<GLUtil::VertexArray> vao;
+        std::shared_ptr<GLUtil::Buffer> vbo, ebo;
+    };
+
+    typedef std::array<std::array<uint8_t, 3>, 256> Palette;
 
 
-/** Convert from .bsp to an OpenGL format. */
-GLBSP bsp2gl(BSP::BSP const &bsp);
+    /** Convert from .bsp to an OpenGL format. */
+    GLBSP bsp2gl(BSP const &bsp, WAD::WAD const &wad);
 
-/** Get textures from .bsp data. */
-GLUtil::Texture getBSPTextures(BSP::BSP const &bsp);
+    /** Get textures from .bsp data. */
+    std::vector<GLUtil::Texture> getTextures(BSP const &bsp, WAD::WAD const &wad);
+}
 
 #endif

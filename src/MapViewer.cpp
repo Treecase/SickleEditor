@@ -50,6 +50,7 @@ MapViewer::MapViewer(Config &cfg)
     }
 ,   _glbsp{}
 ,   _textures{}
+,   _textureIndex{}
 ,   _selected{""}
 ,   _camera{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 70.0f, 1.0f}
 ,   _wireframe{false}
@@ -109,6 +110,7 @@ void MapViewer::drawUI()
             "Map: "
             + (_selected.empty()? "<none>" : _selected.filename().string())
             ).c_str());
+        ImGui::SliderInt("Texture", &_textureIndex, 0, _textures.size()-1);
         if (ImGui::CollapsingHeader("Camera"))
         {
             ImGui::SliderFloat("FOV", &_camera.fov, MIN_FOV, MAX_FOV);
@@ -147,6 +149,7 @@ void MapViewer::drawUI()
                     }))
                 {
                     _loadSelectedMap();
+                    _textureIndex = 0;
                 }
                 ImGui::TreePop();
             }
@@ -228,7 +231,7 @@ void MapViewer::drawGL(float deltaT)
     _glbsp.vao->bind();
     _glbsp.ebo->bind();
     glActiveTexture(GL_TEXTURE0);
-    _textures[0].bind();
+    _textures[_textureIndex].bind();
     _shader.setUniformS("model", modelMatrix);
     _shader.setUniformS("view", viewMatrix);
     _shader.setUniformS("projection", projectionMatrix);
@@ -252,7 +255,9 @@ void MapViewer::_loadSelectedMap()
 
 void MapViewer::_loadMap()
 {
-    _glbsp = bsp2gl(_map);
-    _textures.clear();
-    _textures.push_back(getBSPTextures(_map));
+    auto filename = _cfg.game_dir.string() + "/valve/halflife.wad";
+    auto wad = WAD::load(filename);
+
+    _glbsp = BSP::bsp2gl(_map, wad);
+    _textures = BSP::getTextures(_map, wad);
 }

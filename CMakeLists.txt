@@ -42,6 +42,7 @@ target_sources(sickle PRIVATE
     src/bsp/load_bsp.cpp
     src/mdl/load_model.cpp
     src/mdl/mdl2gl.cpp
+    src/wad/load_wad.cpp
     src/App.cpp
     src/main.cpp
     src/MapViewer.cpp
@@ -49,6 +50,7 @@ target_sources(sickle PRIVATE
     src/SoundPlayer.cpp
     src/TextureViewer.cpp
     src/ui_helpers.cpp
+    src/WADTextureViewer.cpp
 )
 target_compile_features(sickle PRIVATE cxx_std_17)
 set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)

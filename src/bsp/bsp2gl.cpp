@@ -18,26 +18,30 @@
 
 #include "bsp2gl.hpp"
 
+#include <algorithm>
+
 #define TEXTURE_SCALING 0.01f
 
 
-/** So BSPVertexDef can be used in unordered_map. */
-bool operator==(BSPVertexDef const &lhs, BSPVertexDef const &rhs)
-{
-    return (
-        lhs.x == rhs.x
-        && lhs.y == rhs.y
-        && lhs.z == rhs.z
-        && lhs.s == rhs.s
-        && lhs.t == rhs.t
-    );
+namespace BSP {
+    /** So VertexDef can be used in unordered_map. */
+    bool operator==(VertexDef const &lhs, VertexDef const &rhs)
+    {
+        return (
+            lhs.x == rhs.x
+            && lhs.y == rhs.y
+            && lhs.z == rhs.z
+            && lhs.s == rhs.s
+            && lhs.t == rhs.t
+        );
+    }
 }
 
 /** So BSPVertexDef can be used in unordered_map. */
 template<>
-struct std::hash<BSPVertexDef>
+struct std::hash<BSP::VertexDef>
 {
-    size_t operator()(BSPVertexDef const &v) const noexcept
+    size_t operator()(BSP::VertexDef const &v) const noexcept
     {
         return (
             std::hash<GLfloat>{}(v.x)
@@ -49,12 +53,27 @@ struct std::hash<BSPVertexDef>
     }
 };
 
+/** Convert BSP paletted texture data to RGBA format. */
+uint8_t *_depalettize(uint8_t *data, size_t pixels, BSP::Palette const &palette)
+{
+    auto rgba = new uint8_t[pixels * 4];
+    for (size_t i = 0, j = 0; i < pixels; ++i, j += 4)
+    {
+        auto color = palette[data[i]];
+        rgba[j+0] = color[0];
+        rgba[j+1] = color[1];
+        rgba[j+2] = color[2];
+        rgba[j+3] = 0xff;
+    }
+    return rgba;
+}
+
 
 class BSP2GL_Context
 {
 private:
-    std::unordered_map<BSPVertexDef, size_t> _vertIdx{};
-    std::vector<BSPVertexDef> _vboData;
+    std::unordered_map<BSP::VertexDef, size_t> _vertIdx{};
+    std::vector<BSP::VertexDef> _vboData;
     std::vector<GLuint> _eboData;
 
 
@@ -67,7 +86,7 @@ public:
     }
 
 
-    void addVertex(BSPVertexDef const &v)
+    void addVertex(BSP::VertexDef const &v)
     {
         GLuint n = 0;
         try
@@ -92,7 +111,7 @@ public:
 };
 
 
-GLBSP bsp2gl(BSP::BSP const &bsp)
+BSP::GLBSP BSP::bsp2gl(BSP const &bsp, WAD::WAD const &wad)
 {
     BSP2GL_Context context{};
 
@@ -167,9 +186,9 @@ GLBSP bsp2gl(BSP::BSP const &bsp)
     out.ebo->buffer(GL_STATIC_DRAW, out.indices);
 
     out.vao->enableVertexAttribArray(
-        0, 3, GL_FLOAT, sizeof(BSPVertexDef), offsetof(BSPVertexDef, x));
+        0, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, x));
     out.vao->enableVertexAttribArray(
-        1, 2, GL_FLOAT, sizeof(BSPVertexDef), offsetof(BSPVertexDef, s));
+        1, 2, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, s));
 
     out.ebo->unbind();
     out.vbo->unbind();
@@ -178,29 +197,73 @@ GLBSP bsp2gl(BSP::BSP const &bsp)
     return out;
 }
 
-GLUtil::Texture getBSPTextures(BSP::BSP const &bsp)
+std::vector<GLUtil::Texture> BSP::getTextures(BSP const &bsp, WAD::WAD const &wad)
 {
-    auto bsptex = bsp.textures[0];
-    GLUtil::Texture t{GL_TEXTURE_2D, "bspTexture"};
-    t.bind();
-    t.setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    t.setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    t.setParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
-    t.setParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
-    t.setParameter(GL_TEXTURE_BASE_LEVEL, 0);
-    t.setParameter(GL_TEXTURE_MAX_LEVEL, 3);
-    glTexImage2D(
-        t.type(), 0, GL_RED, bsptex.width, bsptex.height, 0, GL_RED,
-        GL_UNSIGNED_BYTE, bsptex.tex1.get());
-    glTexImage2D(
-        t.type(), 1, GL_RED, bsptex.width/2, bsptex.height/2, 0, GL_RED,
-        GL_UNSIGNED_BYTE, bsptex.tex2.get());
-    glTexImage2D(
-        t.type(), 2, GL_RED, bsptex.width/4, bsptex.height/4, 0, GL_RED,
-        GL_UNSIGNED_BYTE, bsptex.tex4.get());
-    glTexImage2D(
-        t.type(), 3, GL_RED, bsptex.width/8, bsptex.height/8, 0, GL_RED,
-        GL_UNSIGNED_BYTE, bsptex.tex8.get());
-    t.unbind();
-    return t;
+    std::vector<GLUtil::Texture> out{};
+    for (auto const &bsptex : bsp.textures)
+    {
+        Palette palette{};
+        bool found = false;
+        for (auto const &lump : wad.directory)
+        {
+            auto tmp = bsptex.name;
+            std::transform(tmp.begin(), tmp.end(), tmp.begin(), [](auto c){return std::toupper(c);});
+            if (lump.name == tmp)
+            {
+                memcpy(palette.data(), lump.data.data()+16, 768);
+                found = true;
+                break;
+            }
+        }
+        // assert(found);
+
+        out.emplace_back(GL_TEXTURE_2D, bsptex.name);
+        auto &t = out[out.size() - 1];
+
+        t.bind();
+        t.setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        t.setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        t.setParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+        t.setParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+        t.setParameter(GL_TEXTURE_BASE_LEVEL, 0);
+        t.setParameter(GL_TEXTURE_MAX_LEVEL, 3);
+
+        auto tdat = _depalettize(
+            bsptex.tex1.get(),
+            bsptex.width * bsptex.height,
+            palette);
+        glTexImage2D(
+            t.type(), 0, GL_RGBA, bsptex.width, bsptex.height, 0, GL_RGBA,
+            GL_UNSIGNED_BYTE, tdat);
+        delete[] tdat;
+
+        tdat = _depalettize(
+            bsptex.tex2.get(),
+            (bsptex.width/2) * (bsptex.height/2),
+            palette);
+        glTexImage2D(
+            t.type(), 1, GL_RGBA, bsptex.width/2, bsptex.height/2, 0, GL_RGBA,
+            GL_UNSIGNED_BYTE, tdat);
+        delete[] tdat;
+
+        tdat = _depalettize(
+            bsptex.tex4.get(),
+            (bsptex.width/4) * (bsptex.height/4),
+            palette);
+        glTexImage2D(
+            t.type(), 2, GL_RGBA, bsptex.width/4, bsptex.height/4, 0, GL_RGBA,
+            GL_UNSIGNED_BYTE, tdat);
+        delete[] tdat;
+
+        tdat = _depalettize(
+            bsptex.tex8.get(),
+            (bsptex.width/8) * (bsptex.height/8),
+            palette);
+        glTexImage2D(
+            t.type(), 3, GL_RGBA, bsptex.width/8, bsptex.height/8, 0, GL_RGBA,
+            GL_UNSIGNED_BYTE, tdat);
+        delete[] tdat;
+        t.unbind();
+    }
+    return out;
 }
