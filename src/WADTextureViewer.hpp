@@ -43,7 +43,6 @@ private:
     std::filesystem::path _selected;
     // Index of currently displayed texture.
     int _current_texture;
-    int _paletteoffset;
 
     void _loadSelected();
     void _loadSelected_GL();

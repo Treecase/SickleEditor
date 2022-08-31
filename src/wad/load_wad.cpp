@@ -21,6 +21,8 @@
 #include <fstream>
 #include <vector>
 
+#include <cstring>
+
 
 struct M_Header
 {

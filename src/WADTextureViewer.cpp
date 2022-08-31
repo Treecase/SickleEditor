@@ -17,6 +17,7 @@
  */
 
 #include "WADTextureViewer.hpp"
+#include "wad/lumps.hpp"
 #include "ui_helpers.hpp"
 
 #include <imgui.h>
@@ -30,7 +31,6 @@ WADTextureViewer::WADTextureViewer(Config &cfg)
 ,   _wad{}
 ,   _selected{""}
 ,   _current_texture{0}
-,   _paletteoffset{0}
 {
     _loadSelected_GL();
 }
@@ -61,8 +61,6 @@ void WADTextureViewer::drawUI()
             ImGui::Value("Height", tex_h);
             ImGui::Image((void*)(intptr_t)tex.id(), ImVec2(tex_w, tex_h));
         }
-        if (ImGui::SliderInt("Palette Offset", &_paletteoffset, 0, 836))
-            _loadSelected_GL();
         ImGui::Separator();
         if (ImGui::BeginChild("ModelTree"))
         {
@@ -93,8 +91,6 @@ void WADTextureViewer::_loadSelected()
     _loadSelected_GL();
 }
 
-#include <fstream>
-
 void WADTextureViewer::_loadSelected_GL()
 {
     _textures.clear();
@@ -103,32 +99,24 @@ void WADTextureViewer::_loadSelected_GL()
         if (lump.type != 0x43)
             continue;
 
-        auto const ptr = lump.data.data();
-        char name[16];
-        uint32_t w, h;
-        memcpy(name, ptr, 16);
-        memcpy(&w, ptr + 16, 4);
-        memcpy(&h, ptr + 20, 4);
-        uint32_t ptrs[4];
-        memcpy(ptrs, ptr + 24, 4 * 4);
+        auto tex = WAD::readTexLump(lump);
 
-        auto depaletted = new uint8_t[w * h * 4];
-        for (size_t i = 0, j = 0; i < w * h; ++i, j += 4)
+        auto depaletted = new uint8_t[tex.width * tex.height * 4];
+        for (size_t i = 0, j = 0; i < tex.width * tex.height; ++i, j += 4)
         {
-            auto pixel = (ptr + ptrs[0])[i];
-            auto const palette = ptr + ptrs[3] + _paletteoffset;
-            depaletted[j+0] = (palette+pixel)[2];
-            depaletted[j+1] = (palette+pixel)[1];
-            depaletted[j+2] = (palette+pixel)[0];
+            auto pixel = tex.tex1[i];
+            depaletted[j+0] = tex.palette[pixel][0];
+            depaletted[j+1] = tex.palette[pixel][1];
+            depaletted[j+2] = tex.palette[pixel][2];
             depaletted[j+3] = 0xff;
         }
 
-        GLUtil::Texture t{GL_TEXTURE_2D, name};
+        GLUtil::Texture t{GL_TEXTURE_2D, tex.name};
         t.bind();
         t.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         t.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexImage2D(
-            t.type(), 0, GL_RGBA, w, h, 0, GL_RGBA,
+            t.type(), 0, GL_RGBA, tex.width, tex.height, 0, GL_RGBA,
             GL_UNSIGNED_BYTE, depaletted);
         t.unbind();
         delete[] depaletted;

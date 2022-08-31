@@ -43,14 +43,12 @@ namespace BSP
         std::shared_ptr<GLUtil::Buffer> vbo, ebo;
     };
 
-    typedef std::array<std::array<uint8_t, 3>, 256> Palette;
-
 
     /** Convert from .bsp to an OpenGL format. */
-    GLBSP bsp2gl(BSP const &bsp, WAD::WAD const &wad);
+    GLBSP bsp2gl(BSP const &bsp);
 
     /** Get textures from .bsp data. */
-    std::vector<GLUtil::Texture> getTextures(BSP const &bsp, WAD::WAD const &wad);
+    std::vector<GLUtil::Texture> getTextures(BSP const &bsp, std::string const &game_dir);
 }
 
 #endif

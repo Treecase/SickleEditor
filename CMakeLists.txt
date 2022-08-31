@@ -43,6 +43,7 @@ target_sources(sickle PRIVATE
     src/mdl/load_model.cpp
     src/mdl/mdl2gl.cpp
     src/wad/load_wad.cpp
+    src/wad/lumps.cpp
     src/App.cpp
     src/main.cpp
     src/MapViewer.cpp

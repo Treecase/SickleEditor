@@ -42,12 +42,7 @@ MapViewer::MapViewer(Config &cfg)
         GLUtil::shader_from_file(
             "shaders/map.frag", GL_FRAGMENT_SHADER)},
         "MapShader"}
-,   _map{
-        {},
-        {},
-        // temp: need at least 1 texture for bsp2gl
-        {{   "mapDefault", 0, 0, nullptr, nullptr, nullptr, nullptr}}
-    }
+,   _map{}
 ,   _glbsp{}
 ,   _textures{}
 ,   _textureIndex{}
@@ -255,9 +250,6 @@ void MapViewer::_loadSelectedMap()
 
 void MapViewer::_loadMap()
 {
-    auto filename = _cfg.game_dir.string() + "/valve/halflife.wad";
-    auto wad = WAD::load(filename);
-
-    _glbsp = BSP::bsp2gl(_map, wad);
-    _textures = BSP::getTextures(_map, wad);
+    _glbsp = BSP::bsp2gl(_map);
+    _textures = BSP::getTextures(_map, _cfg.game_dir);
 }

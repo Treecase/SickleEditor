@@ -17,8 +17,11 @@
  */
 
 #include "bsp2gl.hpp"
+#include "../wad/lumps.hpp"
 
 #include <algorithm>
+
+#include <cstring>
 
 #define TEXTURE_SCALING 0.01f
 
@@ -54,18 +57,25 @@ struct std::hash<BSP::VertexDef>
 };
 
 /** Convert BSP paletted texture data to RGBA format. */
-uint8_t *_depalettize(uint8_t *data, size_t pixels, BSP::Palette const &palette)
+std::vector<uint8_t *> depalettize(WAD::TexLump const &lump)
 {
-    auto rgba = new uint8_t[pixels * 4];
-    for (size_t i = 0, j = 0; i < pixels; ++i, j += 4)
+    std::vector<uint8_t *> rgba_textures{};
+
+    auto const textures = {lump.tex1, lump.tex2, lump.tex4, lump.tex8};
+    for (auto const &tex : textures)
     {
-        auto color = palette[data[i]];
-        rgba[j+0] = color[0];
-        rgba[j+1] = color[1];
-        rgba[j+2] = color[2];
-        rgba[j+3] = 0xff;
+        auto rgba = new uint8_t[tex.size() * 4];
+        for (size_t i = 0, j = 0; i < tex.size(); ++i, j += 4)
+        {
+            auto color = lump.palette[tex[i]];
+            rgba[j+0] = color[0];
+            rgba[j+1] = color[1];
+            rgba[j+2] = color[2];
+            rgba[j+3] = 0xff;
+        }
+        rgba_textures.push_back(rgba);
     }
-    return rgba;
+    return rgba_textures;
 }
 
 
@@ -111,7 +121,7 @@ public:
 };
 
 
-BSP::GLBSP BSP::bsp2gl(BSP const &bsp, WAD::WAD const &wad)
+BSP::GLBSP BSP::bsp2gl(BSP const &bsp)
 {
     BSP2GL_Context context{};
 
@@ -197,27 +207,47 @@ BSP::GLBSP BSP::bsp2gl(BSP const &bsp, WAD::WAD const &wad)
     return out;
 }
 
-std::vector<GLUtil::Texture> BSP::getTextures(BSP const &bsp, WAD::WAD const &wad)
+static std::vector<WAD::WAD> BSP_wads;
+
+std::vector<GLUtil::Texture> BSP::getTextures(
+    BSP const &bsp, std::string const &game_dir)
 {
+    if (BSP_wads.empty())
+    {
+        BSP_wads.push_back(WAD::load(game_dir + "/valve/halflife.wad"));
+        BSP_wads.push_back(WAD::load(game_dir + "/valve/liquids.wad"));
+        BSP_wads.push_back(WAD::load(game_dir + "/valve/xeno.wad"));
+        BSP_wads.push_back(WAD::load(game_dir + "/valve/decals.wad"));
+        BSP_wads.push_back(WAD::load(game_dir + "/valve/spraypaint.wad"));
+    }
+
     std::vector<GLUtil::Texture> out{};
     for (auto const &bsptex : bsp.textures)
     {
-        Palette palette{};
-        bool found = false;
-        for (auto const &lump : wad.directory)
+        WAD::TexLump tex{};
+        // TODO: Use a map instead of looping through everything
+        for (auto const &wad : BSP_wads)
         {
-            auto tmp = bsptex.name;
-            std::transform(tmp.begin(), tmp.end(), tmp.begin(), [](auto c){return std::toupper(c);});
-            if (lump.name == tmp)
+            for (auto const &lump : wad.directory)
             {
-                memcpy(palette.data(), lump.data.data()+16, 768);
-                found = true;
-                break;
+                if (lump.type != 0x43)
+                    continue;
+
+                // Just grab the name real quick...
+                char name[16];
+                memcpy(name, lump.data.data(), 16);
+
+                if (strncmp(name, bsptex.name.c_str(), 16) == 0)
+                {
+                    // Only read the whole lump if it's the one we need.
+                    tex = WAD::readTexLump(lump);
+                    goto done_search;
+                }
             }
         }
-        // assert(found);
+done_search:
 
-        out.emplace_back(GL_TEXTURE_2D, bsptex.name);
+        out.emplace_back(GL_TEXTURE_2D, tex.name);
         auto &t = out[out.size() - 1];
 
         t.bind();
@@ -228,41 +258,13 @@ std::vector<GLUtil::Texture> BSP::getTextures(BSP const &bsp, WAD::WAD const &wa
         t.setParameter(GL_TEXTURE_BASE_LEVEL, 0);
         t.setParameter(GL_TEXTURE_MAX_LEVEL, 3);
 
-        auto tdat = _depalettize(
-            bsptex.tex1.get(),
-            bsptex.width * bsptex.height,
-            palette);
-        glTexImage2D(
-            t.type(), 0, GL_RGBA, bsptex.width, bsptex.height, 0, GL_RGBA,
-            GL_UNSIGNED_BYTE, tdat);
-        delete[] tdat;
-
-        tdat = _depalettize(
-            bsptex.tex2.get(),
-            (bsptex.width/2) * (bsptex.height/2),
-            palette);
-        glTexImage2D(
-            t.type(), 1, GL_RGBA, bsptex.width/2, bsptex.height/2, 0, GL_RGBA,
-            GL_UNSIGNED_BYTE, tdat);
-        delete[] tdat;
-
-        tdat = _depalettize(
-            bsptex.tex4.get(),
-            (bsptex.width/4) * (bsptex.height/4),
-            palette);
-        glTexImage2D(
-            t.type(), 2, GL_RGBA, bsptex.width/4, bsptex.height/4, 0, GL_RGBA,
-            GL_UNSIGNED_BYTE, tdat);
-        delete[] tdat;
-
-        tdat = _depalettize(
-            bsptex.tex8.get(),
-            (bsptex.width/8) * (bsptex.height/8),
-            palette);
-        glTexImage2D(
-            t.type(), 3, GL_RGBA, bsptex.width/8, bsptex.height/8, 0, GL_RGBA,
-            GL_UNSIGNED_BYTE, tdat);
-        delete[] tdat;
+        auto mipmaps = depalettize(tex);
+        for (size_t i = 0; i < mipmaps.size(); ++i)
+        {
+            GLsizei scale = pow(2, i);
+            glTexImage2D(t.type(), i, GL_RGBA, tex.width/scale, bsptex.height/scale, 0, GL_RGBA, GL_UNSIGNED_BYTE, mipmaps[i]);
+            delete[] mipmaps[i];
+        }
         t.unbind();
     }
     return out;
