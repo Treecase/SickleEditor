@@ -35,10 +35,16 @@ namespace BSP
         GLfloat s, t;       // UV
     };
 
+    struct Mesh
+    {
+        size_t tex_idx;
+        GLsizei count;
+        void *indices;
+    };
+
     struct GLBSP
     {
-        std::vector<VertexDef> vertices;
-        std::vector<GLuint> indices;
+        std::vector<Mesh> meshes;
         std::shared_ptr<GLUtil::VertexArray> vao;
         std::shared_ptr<GLUtil::Buffer> vbo, ebo;
     };

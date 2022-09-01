@@ -96,7 +96,7 @@ public:
     }
 
 
-    void addVertex(BSP::VertexDef const &v)
+    GLuint addVertex(BSP::VertexDef const &v)
     {
         GLuint n = 0;
         try
@@ -109,11 +109,13 @@ public:
             _vboData.push_back(v);
         }
         _eboData.push_back(n);
+        return n;
     }
 
-    void newFace()
+    GLuint newFace()
     {
         _eboData.push_back(-1);
+        return -1;
     }
 
     auto getVBO() const {return _vboData;}
@@ -124,6 +126,7 @@ public:
 BSP::GLBSP BSP::bsp2gl(BSP const &bsp)
 {
     BSP2GL_Context context{};
+    std::vector<std::vector<GLuint>> eboDatas{bsp.textures.size()};
 
     // Descend the BSP tree.
     for (auto const &leaf : bsp.leaves)
@@ -138,10 +141,13 @@ BSP::GLBSP BSP::bsp2gl(BSP const &bsp)
             auto face_idx = bsp.marksurfaces.at(marksurface);
             auto const face = bsp.faces.at(face_idx);
             auto texinfo = bsp.texinfo[face.texinfo];
+            auto tex_idx = texinfo.texture;
+            auto texture = bsp.textures[tex_idx];
             auto svec = texinfo.sVector;
             auto tvec = texinfo.tVector;
             glm::vec3 sv{svec[0], svec[1], svec[2]};
             glm::vec3 tv{tvec[0], tvec[1], tvec[2]};
+            auto &eboData = eboDatas.at(tex_idx);
             // Surfedges are sorted to be clockwise, but we render
             // counter-clockwise, so we must reverse the order.
             for (
@@ -165,35 +171,43 @@ BSP::GLBSP BSP::bsp2gl(BSP const &bsp)
                 glm::vec3 bpos{bv.x, bv.y, bv.z};
 
                 glm::vec2 auv{
-                    glm::dot(apos, sv) + texinfo.sDist,
-                    glm::dot(apos, tv) + texinfo.tDist};
+                    (glm::dot(apos, sv) + texinfo.sDist) / texture.width,
+                    (glm::dot(apos, tv) + texinfo.tDist) / texture.height};
                 glm::vec2 buv{
-                    glm::dot(bpos, sv) + texinfo.sDist,
-                    glm::dot(bpos, tv) + texinfo.tDist};
-                auv *= TEXTURE_SCALING;
-                buv *= TEXTURE_SCALING;
+                    (glm::dot(bpos, sv) + texinfo.sDist) / texture.width,
+                    (glm::dot(bpos, tv) + texinfo.tDist) / texture.height};
 
-                context.addVertex({av.x, av.y, av.z, auv.s, auv.t});
-                context.addVertex({bv.x, bv.y, bv.z, buv.s, buv.t});
+                eboData.push_back(context.addVertex({av.x, av.y, av.z, auv.s, auv.t}));
+                eboData.push_back(context.addVertex({bv.x, bv.y, bv.z, buv.s, buv.t}));
             }
-            context.newFace();
+            eboData.push_back(context.newFace());
         }
     }
 
     GLBSP out{};
-    out.vertices = context.getVBO();
-    out.indices = context.getEBO();
+    std::vector<VertexDef> vboData = context.getVBO();
+    std::vector<GLuint> eboData{};
+    for (size_t i = 0; i < eboDatas.size(); ++i)
+    {
+        auto const &ebo = eboDatas[i];
+        out.meshes.push_back({
+            i,
+            (GLsizei)ebo.size(),
+            (void *)(eboData.size() * sizeof(GLuint))
+        });
+        eboData.insert(eboData.end(), ebo.cbegin(), ebo.cend());
+    }
 
     out.vao.reset(new GLUtil::VertexArray{"mapVAO"});
     out.vao->bind();
 
     out.vbo.reset(new GLUtil::Buffer{GL_ARRAY_BUFFER, "mapVBO"});
     out.vbo->bind();
-    out.vbo->buffer(GL_STATIC_DRAW, out.vertices);
+    out.vbo->buffer(GL_STATIC_DRAW, vboData);
 
     out.ebo.reset(new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, "mapEBO"});
     out.ebo->bind();
-    out.ebo->buffer(GL_STATIC_DRAW, out.indices);
+    out.ebo->buffer(GL_STATIC_DRAW, eboData);
 
     out.vao->enableVertexAttribArray(
         0, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, x));
@@ -245,6 +259,7 @@ std::vector<GLUtil::Texture> BSP::getTextures(
                 }
             }
         }
+        std::cerr << "Failed to find texture '" + bsptex.name + "'\n";
 done_search:
 
         out.emplace_back(GL_TEXTURE_2D, tex.name);

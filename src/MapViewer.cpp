@@ -45,9 +45,8 @@ MapViewer::MapViewer(Config &cfg)
 ,   _map{}
 ,   _glbsp{}
 ,   _textures{}
-,   _textureIndex{}
 ,   _selected{""}
-,   _camera{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 70.0f, 1.0f}
+,   _camera{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 70.0f, 5.0f}
 ,   _wireframe{false}
 ,   _translation{0.0f, 0.0f, 0.0f}
 ,   _rotation{-90.0f, 0.0f, 0.0f}
@@ -105,7 +104,6 @@ void MapViewer::drawUI()
             "Map: "
             + (_selected.empty()? "<none>" : _selected.filename().string())
             ).c_str());
-        ImGui::SliderInt("Texture", &_textureIndex, 0, _textures.size()-1);
         if (ImGui::CollapsingHeader("Camera"))
         {
             ImGui::SliderFloat("FOV", &_camera.fov, MIN_FOV, MAX_FOV);
@@ -144,7 +142,6 @@ void MapViewer::drawUI()
                     }))
                 {
                     _loadSelectedMap();
-                    _textureIndex = 0;
                 }
                 ImGui::TreePop();
             }
@@ -226,7 +223,6 @@ void MapViewer::drawGL(float deltaT)
     _glbsp.vao->bind();
     _glbsp.ebo->bind();
     glActiveTexture(GL_TEXTURE0);
-    _textures[_textureIndex].bind();
     _shader.setUniformS("model", modelMatrix);
     _shader.setUniformS("view", viewMatrix);
     _shader.setUniformS("projection", projectionMatrix);
@@ -234,11 +230,12 @@ void MapViewer::drawGL(float deltaT)
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(-1);
-    glDrawElements(
-        GL_TRIANGLE_FAN,
-        (GLsizei)_glbsp.indices.size(),
-        GL_UNSIGNED_INT,
-        (void *)0);
+    for (auto const &mesh : _glbsp.meshes)
+    {
+        _textures[mesh.tex_idx].bind();
+        glDrawElements(
+            GL_TRIANGLE_FAN, mesh.count, GL_UNSIGNED_INT, mesh.indices);
+    }
 }
 
 
