@@ -30,46 +30,13 @@ project(Sickle
     LANGUAGES CXX
 )
 
-configure_file(
-    "${PROJECT_SOURCE_DIR}/src/version.hpp.in"
-    "${PROJECT_BINARY_DIR}/include/version.hpp"
-)
-
 add_executable(sickle)
-target_sources(sickle PRIVATE
-    src/bsp/bsp2gl.cpp
-    src/bsp/entities_lump.cpp
-    src/bsp/load_bsp.cpp
-    src/mdl/load_model.cpp
-    src/mdl/mdl2gl.cpp
-    src/wad/load_wad.cpp
-    src/wad/lumps.cpp
-    src/App.cpp
-    src/main.cpp
-    src/MapViewer.cpp
-    src/ModelViewer.cpp
-    src/SoundPlayer.cpp
-    src/TextureViewer.cpp
-    src/ui_helpers.cpp
-    src/WADTextureViewer.cpp
-)
 target_compile_features(sickle PRIVATE cxx_std_17)
 set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 
+add_subdirectory(src)
 
-add_library(glUtil OBJECT)
-target_sources(glUtil PRIVATE
-    src/glUtils/Buffer.cpp
-    src/glUtils/Program.cpp
-    src/glUtils/Shader.cpp
-    src/glUtils/Texture.cpp
-    src/glUtils/VertexArray.cpp
-)
-target_compile_features(glUtil PRIVATE cxx_std_17)
-set_target_properties(glUtil PROPERTIES CXX_EXTENSIONS OFF)
-target_include_directories(glUtil PUBLIC src/glUtils)
-target_link_libraries(sickle PRIVATE glUtil)
 
 add_library(imgui OBJECT)
 target_sources(imgui PRIVATE
@@ -92,7 +59,6 @@ target_include_directories(imgui
 target_link_libraries(sickle PRIVATE imgui)
 
 if(MSVC)
-    target_compile_options(sickle PRIVATE /W3)
     target_include_directories(sickle
         PRIVATE
         "externals/glew-2.2.0/include"
@@ -106,11 +72,6 @@ if(MSVC)
         OpenGL32
         "../externals/glew-2.2.0/lib/Release/x64/glew32"
     )
-    target_include_directories(glUtil
-        PRIVATE
-        "externals/glew-2.2.0/include"
-        "externals/glm"
-    )
     target_include_directories(imgui
         PRIVATE
         "externals/SDL2-2.0.22/include"
@@ -120,7 +81,6 @@ if(MSVC)
         "../externals/SDL2-2.0.22/lib/x64/SDL2"
     )
 else()
-    target_compile_options(sickle PRIVATE -Wall -Wextra -g)
     find_package(SDL2 REQUIRED)
     find_package(GLEW REQUIRED)
     find_package(glm REQUIRED)
