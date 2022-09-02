@@ -35,23 +35,32 @@ namespace BSP
         GLfloat s, t;       // UV
     };
 
+    /** The lowest-level BSP GL object. */
     struct Mesh
     {
-        size_t tex_idx;
+        GLUtil::Texture tex;
         GLsizei count;
         void *indices;
     };
 
+    /** A model is made up of several Meshes. */
+    struct GLModel
+    {
+        glm::vec3 position;
+        std::vector<Mesh> meshes;
+    };
+
+    /** The BSP's GL representation. */
     struct GLBSP
     {
-        std::vector<Mesh> meshes;
+        std::vector<GLModel> models;
         std::shared_ptr<GLUtil::VertexArray> vao;
         std::shared_ptr<GLUtil::Buffer> vbo, ebo;
     };
 
 
     /** Convert from .bsp to an OpenGL format. */
-    GLBSP bsp2gl(BSP const &bsp);
+    GLBSP bsp2gl(BSP const &bsp, std::string const &game_dir);
 
     /** Get textures from .bsp data. */
     std::vector<GLUtil::Texture> getTextures(BSP const &bsp, std::string const &game_dir);

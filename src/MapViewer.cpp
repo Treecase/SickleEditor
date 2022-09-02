@@ -44,7 +44,6 @@ MapViewer::MapViewer(Config &cfg)
         "MapShader"}
 ,   _map{}
 ,   _glbsp{}
-,   _textures{}
 ,   _selected{""}
 ,   _camera{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 70.0f, 5.0f}
 ,   _wireframe{false}
@@ -196,45 +195,48 @@ void MapViewer::drawGL(float deltaT)
         *_cfg.window_width / (float)*_cfg.window_height,
         0.1f, 1000.0f);
 
-    // TODO: rotation's a bit weird?
-    auto modelMatrix =
-        glm::rotate(
-            glm::rotate(
-                glm::rotate(
-                    glm::scale(
-                        glm::translate(
-                            glm::identity<glm::mat4>(),
-                            glm::vec3{-_translation[0], _translation[1], _translation[2]}
-                        ),
-                        glm::vec3{_scale}
-                    ),
-                    glm::radians(_rotation[1]),
-                    glm::vec3{0.0f, 1.0f, 0.0f}
-                ),
-                glm::radians(_rotation[2]),
-                glm::vec3{0.0f, 0.0f, 1.0f}
-            ),
-            glm::radians(_rotation[0]),
-            glm::vec3{1.0f, 0.0f, 0.0f}
-    );
-
-    // Draw model.
+    // Draw models.
     _shader.use();
     _glbsp.vao->bind();
     _glbsp.ebo->bind();
     glActiveTexture(GL_TEXTURE0);
-    _shader.setUniformS("model", modelMatrix);
     _shader.setUniformS("view", viewMatrix);
     _shader.setUniformS("projection", projectionMatrix);
     _shader.setUniformS("tex", 0);
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(-1);
-    for (auto const &mesh : _glbsp.meshes)
+    for (auto const &model : _glbsp.models)
     {
-        _textures[mesh.tex_idx].bind();
-        glDrawElements(
-            GL_TRIANGLE_FAN, mesh.count, GL_UNSIGNED_INT, mesh.indices);
+        // TODO: rotation's a bit weird?
+        auto modelMatrix =
+            glm::rotate(
+                glm::rotate(
+                    glm::rotate(
+                        glm::scale(
+                            glm::translate(
+                                glm::identity<glm::mat4>(),
+                                model.position + glm::vec3{-_translation[0], _translation[1], _translation[2]}
+                            ),
+                            glm::vec3{_scale}
+                        ),
+                        glm::radians(_rotation[1]),
+                        glm::vec3{0.0f, 1.0f, 0.0f}
+                    ),
+                    glm::radians(_rotation[2]),
+                    glm::vec3{0.0f, 0.0f, 1.0f}
+                ),
+                glm::radians(_rotation[0]),
+                glm::vec3{1.0f, 0.0f, 0.0f}
+        );
+        _shader.setUniformS("model", modelMatrix);
+
+        for (auto const &mesh : model.meshes)
+        {
+            mesh.tex.bind();
+            glDrawElements(
+                GL_TRIANGLE_FAN, mesh.count, GL_UNSIGNED_INT, mesh.indices);
+        }
     }
 }
 
@@ -247,6 +249,5 @@ void MapViewer::_loadSelectedMap()
 
 void MapViewer::_loadMap()
 {
-    _glbsp = BSP::bsp2gl(_map);
-    _textures = BSP::getTextures(_map, _cfg.game_dir);
+    _glbsp = BSP::bsp2gl(_map, _cfg.game_dir.string());
 }

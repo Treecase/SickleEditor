@@ -43,8 +43,6 @@ private:
     BSP::BSP _map;
     // GL map.
     BSP::GLBSP _glbsp;
-    // GL map textures.
-    std::vector<GLUtil::Texture> _textures;
     // Path to loaded map.
     std::filesystem::path _selected;
 

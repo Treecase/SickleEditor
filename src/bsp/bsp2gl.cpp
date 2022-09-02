@@ -20,6 +20,7 @@
 #include "../wad/lumps.hpp"
 
 #include <algorithm>
+#include <deque>
 
 #include <cstring>
 
@@ -123,79 +124,136 @@ public:
 };
 
 
-BSP::GLBSP BSP::bsp2gl(BSP const &bsp)
+BSP::GLBSP BSP::bsp2gl(BSP const &bsp, std::string const &game_dir)
 {
-    BSP2GL_Context context{};
-    std::vector<std::vector<GLuint>> eboDatas{bsp.textures.size()};
-
-    // Descend the BSP tree.
-    for (auto const &leaf : bsp.leaves)
+    struct GLMeshData
     {
-        if (leaf.type != -1)
-            continue;
-        for (
-            auto marksurface = leaf.marksurface;
-            marksurface < leaf.marksurface + leaf.marksurface_num;
-            ++marksurface)
+        std::vector<GLuint> ebo;
+    };
+    struct GLModelData
+    {
+        glm::vec3 position;
+        // `meshes` has the same length as `bsp.textures`, since each mesh is
+        // associated with texture.
+        std::vector<GLMeshData> meshes;
+    };
+
+    // The Context collects VertexDefs into our VBO. This step is needed since
+    // the BSP's vertex list doesn't contain vertex UV data, which we need for
+    // the VBO.
+    BSP2GL_Context context{};
+
+    std::vector<GLModelData> models{};
+    models.reserve(bsp.models.size());
+
+    // Iterate over models in the map.
+    for (auto const &model : bsp.models)
+    {
+        GLModelData model_data{
+            {model.origin[0], model.origin[1], model.origin[2]},
+            std::vector<GLMeshData>{bsp.textures.size()}
+        };
+
+        // Depth-first descent of the BSP tree associated with the model,
+        // building a list of leaf nodes.
+        std::vector<Leaf> leaves{};
+        std::deque<uint16_t> stack{(uint16_t)model.node_id[0]};
+        while (!stack.empty())
         {
-            auto face_idx = bsp.marksurfaces.at(marksurface);
-            auto const face = bsp.faces.at(face_idx);
-            auto texinfo = bsp.texinfo[face.texinfo];
-            auto tex_idx = texinfo.texture;
-            auto texture = bsp.textures[tex_idx];
-            auto svec = texinfo.sVector;
-            auto tvec = texinfo.tVector;
-            glm::vec3 sv{svec[0], svec[1], svec[2]};
-            glm::vec3 tv{tvec[0], tvec[1], tvec[2]};
-            auto &eboData = eboDatas.at(tex_idx);
-            // Surfedges are sorted to be clockwise, but we render
-            // counter-clockwise, so we must reverse the order.
-            for (
-                size_t se = 0;
-                se < face.surfedge_num;
-                ++se)
-            {
-                auto se_idx = face.surfedge_num - se - 1;
-                auto ledge = bsp.surfedges.at(face.surfedge + se_idx);
-                bool reversed = ledge < 0;
-                auto edge_idx = reversed? -ledge : ledge;
-                auto const &edge = bsp.edges.at(edge_idx);
-
-                auto a = reversed? edge.start : edge.end;
-                auto b = reversed? edge.end : edge.start;
-
-                auto av = bsp.vertices[a];
-                auto bv = bsp.vertices[b];
-
-                glm::vec3 apos{av.x, av.y, av.z};
-                glm::vec3 bpos{bv.x, bv.y, bv.z};
-
-                glm::vec2 auv{
-                    (glm::dot(apos, sv) + texinfo.sDist) / texture.width,
-                    (glm::dot(apos, tv) + texinfo.tDist) / texture.height};
-                glm::vec2 buv{
-                    (glm::dot(bpos, sv) + texinfo.sDist) / texture.width,
-                    (glm::dot(bpos, tv) + texinfo.tDist) / texture.height};
-
-                eboData.push_back(context.addVertex({av.x, av.y, av.z, auv.s, auv.t}));
-                eboData.push_back(context.addVertex({bv.x, bv.y, bv.z, buv.s, buv.t}));
-            }
-            eboData.push_back(context.newFace());
+            auto node_idx = stack.back();
+            stack.pop_back();
+            auto const &node = bsp.nodes.at(node_idx);
+            // If the highest-order bit is 0, it's a Node child.
+            if ((node.front & 0x8000) == 0)
+                stack.push_back(node.front);
+            // If the highest-order bit is 1, it's a Leaf child.
+            else if (node.front != 65535)
+                leaves.push_back(bsp.leaves.at((uint16_t)~node.front));
+            // Same for back child.
+            if ((node.back & 0x8000) == 0)
+                stack.push_back(node.back);
+            else if (node.back != 65535)
+                leaves.push_back(bsp.leaves.at((uint16_t)~node.back));
         }
+
+        // Iterate over all the model's leaves, adding the vertices to the
+        // Context and creating Mesh EBOs.
+        for (auto const &leaf : leaves)
+        {
+            for (
+                auto marksurface = leaf.marksurface;
+                marksurface < leaf.marksurface + leaf.marksurface_num;
+                ++marksurface)
+            {
+                auto face_idx = bsp.marksurfaces.at(marksurface);
+                auto const &face = bsp.faces.at(face_idx);
+                auto const &texinfo = bsp.texinfo[face.texinfo];
+                auto tex_idx = texinfo.texture;
+                auto const &texture = bsp.textures[tex_idx];
+                auto svec = texinfo.sVector;
+                auto tvec = texinfo.tVector;
+                glm::vec3 sv{svec[0], svec[1], svec[2]};
+                glm::vec3 tv{tvec[0], tvec[1], tvec[2]};
+                auto &mesh = model_data.meshes.at(tex_idx);
+                // Surfedges are sorted to be clockwise, but we render
+                // counter-clockwise, so we must reverse the order.
+                for (
+                    size_t se = 0;
+                    se < face.surfedge_num;
+                    ++se)
+                {
+                    auto se_idx = face.surfedge_num - se - 1;
+                    auto ledge = bsp.surfedges.at(face.surfedge + se_idx);
+                    bool reversed = ledge < 0;
+                    auto edge_idx = reversed? -ledge : ledge;
+                    auto const &edge = bsp.edges.at(edge_idx);
+
+                    auto a = reversed? edge.start : edge.end;
+                    auto b = reversed? edge.end : edge.start;
+
+                    auto const &av = bsp.vertices[a];
+                    auto const &bv = bsp.vertices[b];
+
+                    glm::vec3 apos{av.x, av.y, av.z};
+                    glm::vec3 bpos{bv.x, bv.y, bv.z};
+
+                    glm::vec2 auv{
+                        (glm::dot(apos, sv) + texinfo.sDist) / texture.width,
+                        (glm::dot(apos, tv) + texinfo.tDist) / texture.height};
+                    glm::vec2 buv{
+                        (glm::dot(bpos, sv) + texinfo.sDist) / texture.width,
+                        (glm::dot(bpos, tv) + texinfo.tDist) / texture.height};
+
+                    mesh.ebo.push_back(context.addVertex({av.x, av.y, av.z, auv.s, auv.t}));
+                    mesh.ebo.push_back(context.addVertex({bv.x, bv.y, bv.z, buv.s, buv.t}));
+                }
+                mesh.ebo.push_back(context.newFace());
+            }
+        }
+        models.push_back(model_data);
     }
 
     GLBSP out{};
     std::vector<VertexDef> vboData = context.getVBO();
     std::vector<GLuint> eboData{};
-    for (size_t i = 0; i < eboDatas.size(); ++i)
+
+    // Now that we have all the vertices in the Context VBO, we can flatten our
+    // models' separate EBOs into one big one, which we'll actually send to GPU.
+    auto const textures = getTextures(bsp, game_dir);
+    for (auto const &model : models)
     {
-        auto const &ebo = eboDatas[i];
-        out.meshes.push_back({
-            i,
-            (GLsizei)ebo.size(),
-            (void *)(eboData.size() * sizeof(GLuint))
-        });
-        eboData.insert(eboData.end(), ebo.cbegin(), ebo.cend());
+        GLModel glmodel{};
+        for (size_t i = 0; i < model.meshes.size(); ++i)
+        {
+            auto const &mesh = model.meshes[i];
+            glmodel.meshes.push_back({
+                textures[i],
+                (GLsizei)mesh.ebo.size(),
+                (void *)(eboData.size() * sizeof(GLuint))
+            });
+            eboData.insert(eboData.end(), mesh.ebo.cbegin(), mesh.ebo.cend());
+        }
+        out.models.push_back(glmodel);
     }
 
     out.vao.reset(new GLUtil::VertexArray{"mapVAO"});
