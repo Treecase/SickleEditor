@@ -23,20 +23,21 @@ if(EXISTS "${LOC_PATH}")
     message(FATAL_ERROR "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles.")
 endif()
 
-
 project(Sickle
     VERSION 0.1.0
     DESCRIPTION "Open-Source GoldSrc Editor"
     LANGUAGES CXX
 )
 
+# Declare targets
 add_executable(sickle)
 target_compile_features(sickle PRIVATE cxx_std_17)
 set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 
-add_subdirectory(src)
-
+# Dependencies
+add_subdirectory(extern/glutils)
+target_link_libraries(sickle PRIVATE glutils::glutils)
 
 add_library(imgui OBJECT)
 target_sources(imgui PRIVATE
@@ -49,47 +50,61 @@ target_sources(imgui PRIVATE
     extern/imgui/imgui_tables.cpp
     extern/imgui/imgui_widgets.cpp
 )
-target_compile_features(imgui PRIVATE cxx_std_17)
-set_target_properties(imgui PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(imgui
     PUBLIC
     extern/imgui/
     extern/imgui/backends
 )
-target_link_libraries(sickle PRIVATE imgui)
 
 if(MSVC)
-    target_include_directories(sickle
-        PRIVATE
-        "externals/glew-2.2.0/include"
-        "externals/SDL2-2.0.22/include"
-        "externals/glm"
-    )
-    target_link_libraries(sickle
-        PRIVATE
-        "../externals/SDL2-2.0.22/lib/x64/SDL2main"
-        "../externals/SDL2-2.0.22/lib/x64/SDL2"
-        OpenGL32
-        "../externals/glew-2.2.0/lib/Release/x64/glew32"
-    )
-    target_include_directories(imgui
-        PRIVATE
-        "externals/SDL2-2.0.22/include"
-    )
-    target_link_libraries(imgui PRIVATE
-        "../externals/SDL2-2.0.22/lib/x64/SDL2main"
-        "../externals/SDL2-2.0.22/lib/x64/SDL2"
-    )
+    if(NOT TARGET SDL2::SDL2)
+        add_library(SDL2 INTERFACE)
+        target_include_directories(SDL2 INTERFACE externals/SDL2-2.0.22/include)
+        target_link_libraries(SDL2 INTERFACE
+            "${PROJECT_SOURCE_DIR}/externals/SDL2-2.0.22/lib/x64/SDL2main.lib"
+            "${PROJECT_SOURCE_DIR}/externals/SDL2-2.0.22/lib/x64/SDL2.lib"
+        )
+        add_library(SDL2::SDL2 ALIAS SDL2)
+    endif()
+
+    if(NOT TARGET GLEW::GLEW)
+        add_library(glew INTERFACE)
+        target_include_directories(glew INTERFACE externals/glew-2.2.0/include)
+        target_link_libraries(glew INTERFACE
+            externals/glew-2.2.0/lib/Release/x64/glew32
+        )
+        add_library(GLEW::GLEW ALIAS glew)
+    endif()
+
+    # TODO: use submodule
+    if(NOT TARGET glm::glm)
+        add_library(glm INTERFACE)
+        target_include_directories(glm INTERFACE externals/glm)
+        add_library(glm::glm ALIAS glm)
+    endif()
 else()
     find_package(SDL2 REQUIRED)
     find_package(GLEW REQUIRED)
     find_package(glm REQUIRED)
-    target_link_libraries(sickle PRIVATE
-        SDL2::SDL2
-        GLEW::GLEW
-        glm::glm
-        GL
-        ${CMAKE_DL_LIBS}
-    )
-    target_link_libraries(imgui PUBLIC SDL2::SDL2)
 endif()
+
+
+# Project sources
+add_subdirectory(src)
+
+
+# Linkage
+if(MSVC)
+    target_link_libraries(sickle PRIVATE OpenGL32)
+else()
+    target_link_libraries(sickle PRIVATE GL)
+endif()
+
+target_link_libraries(sickle PRIVATE
+    imgui
+    SDL2::SDL2
+    GLEW::GLEW
+    glm::glm
+    ${CMAKE_DL_LIBS}
+)
+target_link_libraries(imgui PUBLIC SDL2::SDL2)

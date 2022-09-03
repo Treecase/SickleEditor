@@ -13,24 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-configure_file(version.hpp.in "${PROJECT_BINARY_DIR}/include/version.hpp")
-
-target_sources(sickle PRIVATE
-    App.cpp
-    main.cpp
-    MapViewer.cpp
-    ModelViewer.cpp
-    SoundPlayer.cpp
-    TextureViewer.cpp
-    ui_helpers.cpp
-    WADTextureViewer.cpp
+add_library(bsp OBJECT
+    bsp2gl.cpp
+    entities_lump.cpp
+    load_bsp.cpp
 )
-
-add_subdirectory(bsp)
-target_link_libraries(sickle PRIVATE bsp)
-
-add_subdirectory(mdl)
-target_link_libraries(sickle PRIVATE mdl)
-
-add_subdirectory(wad)
-target_link_libraries(sickle PRIVATE wad)
+target_link_libraries(bsp PUBLIC glutils::glutils)

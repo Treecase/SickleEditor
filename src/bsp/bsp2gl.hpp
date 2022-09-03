@@ -19,9 +19,10 @@
 #ifndef _BSP2GL_HPP
 #define _BSP2GL_HPP
 
-#include "glUtil.hpp"
 #include "load_bsp.hpp"
 #include "../wad/load_wad.hpp"
+
+#include <glutils/glutils.hpp>
 
 #include <array>
 

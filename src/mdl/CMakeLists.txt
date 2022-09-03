@@ -13,20 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-add_library(glutil OBJECT
-    Buffer.cpp
-    Program.cpp
-    Shader.cpp
-    Texture.cpp
-    VertexArray.cpp
+add_library(mdl OBJECT
+    load_model.cpp
+    mdl2gl.cpp
 )
-target_include_directories(glutil PUBLIC .)
-
-if(MSVC)
-    target_include_directories(glutil
-        PRIVATE
-        "${PROJECT_SOURCE_DIR}/externals/glew-2.2.0/include"
-        "${PROJECT_SOURCE_DIR}/externals/glm"
-    )
-endif()
+target_link_libraries(mdl PUBLIC glutils::glutils)

@@ -20,13 +20,13 @@
 #define _MODELVIEWER_HPP
 
 #include "common.hpp"
-#include "glUtil.hpp"
 #include "mdl/load_model.hpp"
 #include "mdl/mdl2gl.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <glutils/glutils.hpp>
 #include <SDL.h>
 
 #include <filesystem>

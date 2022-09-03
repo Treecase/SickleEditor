@@ -19,8 +19,9 @@
 #ifndef _MDL2GL_HPP
 #define _MDL2GL_HPP
 
-#include "glUtil.hpp"
 #include "load_model.hpp"
+
+#include <glutils/glutils.hpp>
 
 
 /** Format for buffered vertex data. */

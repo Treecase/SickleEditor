@@ -20,13 +20,13 @@
 #define _MAPVIEWER_HPP
 
 #include "common.hpp"
-#include "glUtil.hpp"
 #include "bsp/bsp2gl.hpp"
 #include "bsp/load_bsp.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <glutils/glutils.hpp>
 #include <SDL.h>
 
 #include <filesystem>

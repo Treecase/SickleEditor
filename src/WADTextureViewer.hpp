@@ -20,11 +20,11 @@
 #define _WADTEXTUREVIEWER_HPP
 
 #include "common.hpp"
-#include "glUtil.hpp"
 #include "wad/load_wad.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>
+#include <glutils/glutils.hpp>
 #include <SDL.h>
 
 #include <unordered_map>
