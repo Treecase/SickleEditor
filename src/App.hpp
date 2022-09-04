@@ -21,13 +21,17 @@
 
 #include "common.hpp"
 #include "Module.hpp"
+#include "ui_helpers.hpp"
+#include "version.hpp"
 
+#include <imgui.h>
 #include <SDL.h>
 
 #include <set>
 
 
 /** Main app class. */
+template<class... Ts>
 class App
 {
 private:
@@ -46,16 +50,103 @@ public:
     bool running;
 
 
-    App(Config &cfg);
+    App(Config &cfg)
+    :   _modules{std::shared_ptr<Module>{new Ts{cfg}}...}
+    ,   _activeGLDisplay{nullptr}
+    ,   _cfg{cfg}
+    ,   _aboutWindowShown{false}
+    ,   running{true}
+    {
+        if (_modules.size() == 1)
+            _activeGLDisplay = (*_modules.cbegin()).get();
+    }
 
     /** Handle user input. */
-    void input(SDL_Event const *event);
+    void input(SDL_Event const *event)
+    {
+        for (auto &module : _modules)
+            module->input(event);
+    }
 
     /** Draw the app's UI. */
-    void drawUI();
+    void drawUI()
+    {
+        bool fpopen = false;
+
+        // Main menu bar.
+        ImGui::BeginMainMenuBar();
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Game Directory"))
+                fpopen = true;
+            if (ImGui::MenuItem("Exit"))
+                running = false;
+            ImGui::EndMenu();
+        }
+        if (_modules.size() != 1)
+        {
+            if (ImGui::BeginMenu("View"))
+            {
+                if (ImGui::MenuItem("<none>"))
+                    _activeGLDisplay = nullptr;
+                for (auto &module : _modules)
+                    if (ImGui::MenuItem(module->title.c_str()))
+                    {
+                        if (_activeGLDisplay)
+                            _activeGLDisplay->gl_visible = false;
+                        _activeGLDisplay = module.get();
+                        _activeGLDisplay->gl_visible = true;
+                    }
+                ImGui::EndMenu();
+            }
+        }
+        if (ImGui::BeginMenu("Windows"))
+        {
+            for (auto &module : _modules)
+                if (ImGui::MenuItem(module->title.c_str()))
+                    module->ui_visible = true;
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Help"))
+        {
+            if (ImGui::MenuItem("About"))
+                _aboutWindowShown = true;
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+        ImGui::ShowMetricsWindow();
+
+        // File picker (activated by File>Game Directory).
+        ImGui::FilePicker("File Picker", &_cfg.game_dir);
+        if (fpopen)
+            ImGui::OpenPopup("File Picker");
+
+        // About Window (activated by Help>About).
+        if (_aboutWindowShown)
+        {
+            if (ImGui::Begin("About##Help/About", &_aboutWindowShown))
+            {
+                ImGui::TextWrapped(SE_CANON_NAME " " SE_VERSION);
+                ImGui::NewLine();
+                ImGui::TextWrapped("Copyright (C) 2022 Trevor Last");
+                if (ImGui::Button("Close"))
+                    _aboutWindowShown = false;
+            }
+            ImGui::End();
+        }
+
+        // Draw modules.
+        for (auto &module : _modules)
+            module->drawUI();
+    }
+
 
     /** Draw non-UI app visuals. */
-    void drawGL(float deltaT);
+    void drawGL(float deltaT)
+    {
+        if (_activeGLDisplay != nullptr)
+            _activeGLDisplay->drawGL(deltaT);
+    }
 };
 
 #endif

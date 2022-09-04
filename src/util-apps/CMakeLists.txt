@@ -13,25 +13,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-configure_file(version.hpp.in "${PROJECT_BINARY_DIR}/include/version.hpp")
-
-target_sources(sickle PRIVATE
-    main.cpp
-    MapViewer.cpp
-    ModelViewer.cpp
-    SoundPlayer.cpp
-    TextureViewer.cpp
-    ui_helpers.cpp
-    WADTextureViewer.cpp
+add_executable(ListEntities
+    ListEntities.cpp
+    ../MapViewer.cpp
+    ../ui_helpers.cpp
 )
+target_compile_features(ListEntities PRIVATE cxx_std_17)
+set_target_properties(ListEntities PROPERTIES CXX_EXTENSIONS OFF)
+target_include_directories(ListEntities PRIVATE "${PROJECT_BINARY_DIR}/include")
 
-add_subdirectory(bsp)
-target_link_libraries(sickle PRIVATE bsp)
+# Linkage
+if(MSVC)
+    target_link_libraries(ListEntities PRIVATE OpenGL32)
+else()
+    target_link_libraries(ListEntities PRIVATE GL)
+endif()
 
-add_subdirectory(mdl)
-target_link_libraries(sickle PRIVATE mdl)
-
-add_subdirectory(wad)
-target_link_libraries(sickle PRIVATE wad)
-
-add_subdirectory(util-apps)
+target_link_libraries(ListEntities PRIVATE
+    imgui
+    bsp
+    wad
+    SDL2::SDL2
+    GLEW::GLEW
+    glm::glm
+    ${CMAKE_DL_LIBS}
+)
