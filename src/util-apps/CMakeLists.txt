@@ -38,3 +38,8 @@ target_link_libraries(ListEntities PRIVATE
     glm::glm
     ${CMAKE_DL_LIBS}
 )
+
+
+add_executable(PrintMap PrintMap.cpp)
+target_include_directories(PrintMap PRIVATE "${PROJECT_BINARY_DIR}/include")
+target_link_libraries(PrintMap PRIVATE map)
