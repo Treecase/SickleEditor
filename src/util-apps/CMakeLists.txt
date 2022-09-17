@@ -43,3 +43,7 @@ target_link_libraries(ListEntities PRIVATE
 add_executable(PrintMap PrintMap.cpp)
 target_include_directories(PrintMap PRIVATE "${PROJECT_BINARY_DIR}/include")
 target_link_libraries(PrintMap PRIVATE map)
+
+add_executable(LoadFGD LoadFGD.cpp)
+target_include_directories(LoadFGD PRIVATE "${PROJECT_BINARY_DIR}/include")
+target_link_libraries(LoadFGD PRIVATE fgd)
