@@ -17,13 +17,10 @@ configure_file(version.hpp.in "${PROJECT_BINARY_DIR}/include/version.hpp")
 
 target_sources(sickle PRIVATE
     main.cpp
-    MapViewer.cpp
-    ModelViewer.cpp
-    SoundPlayer.cpp
-    TextureViewer.cpp
     ui_helpers.cpp
-    WADTextureViewer.cpp
 )
+
+add_subdirectory(modules)
 
 add_subdirectory(bsp)
 target_link_libraries(sickle PRIVATE bsp)

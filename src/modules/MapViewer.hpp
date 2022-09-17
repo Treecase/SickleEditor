@@ -19,9 +19,9 @@
 #ifndef _MAPVIEWER_HPP
 #define _MAPVIEWER_HPP
 
-#include "common.hpp"
-#include "bsp/bsp2gl.hpp"
-#include "bsp/load_bsp.hpp"
+#include "../common.hpp"
+#include "../bsp/bsp2gl.hpp"
+#include "../bsp/load_bsp.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>

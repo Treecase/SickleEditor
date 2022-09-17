@@ -19,7 +19,7 @@
 #ifndef _MODULE_HPP
 #define _MODULE_HPP
 
-#include "common.hpp"
+#include "../common.hpp"
 
 #include <SDL.h>
 

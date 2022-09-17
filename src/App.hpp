@@ -20,7 +20,7 @@
 #define _APP_HPP
 
 #include "common.hpp"
-#include "Module.hpp"
+#include "modules/Module.hpp"
 #include "ui_helpers.hpp"
 #include "version.hpp"
 

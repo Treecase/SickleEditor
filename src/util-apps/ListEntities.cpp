@@ -18,8 +18,6 @@
 
 #include "../bsp/load_bsp.hpp"
 
-#include <GL/glew.h>
-
 #include <iostream>
 #include <string>
 #include <vector>

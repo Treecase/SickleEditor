@@ -17,8 +17,8 @@
  */
 
 #include "WADTextureViewer.hpp"
-#include "wad/lumps.hpp"
-#include "ui_helpers.hpp"
+#include "../wad/lumps.hpp"
+#include "../ui_helpers.hpp"
 
 #include <imgui.h>
 

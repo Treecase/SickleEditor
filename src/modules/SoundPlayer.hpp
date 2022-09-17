@@ -1,5 +1,5 @@
 /**
- * WADTextureViewer.hpp - WAD texture viewer module.
+ * SoundPlayer.hpp - WAV sound player module.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,44 +16,38 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _WADTEXTUREVIEWER_HPP
-#define _WADTEXTUREVIEWER_HPP
+#ifndef _SOUNDPLAYER_HPP
+#define _SOUNDPLAYER_HPP
 
-#include "common.hpp"
-#include "wad/load_wad.hpp"
+#include "../common.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>
 #include <glutils/glutils.hpp>
 #include <SDL.h>
 
-#include <unordered_map>
-#include <vector>
+#include <filesystem>
 
 
-/** Displays Textures contained in a .WAD file. */
-class WADTextureViewer: public Module
+/** Plays WAV files. */
+class SoundPlayer : public Module
 {
 private:
-    // GL Textures.
-    std::vector<GLUtil::Texture> _textures;
-    // Loaded WAD.
-    WAD::WAD _wad;
-    // Path to current WAD.
-    std::filesystem::path _selected;
-    // Index of currently displayed texture.
-    int _current_texture;
-
-    void _loadSelected();
-    void _loadSelected_GL();
+    // Currently playing sound device.
+    SDL_AudioDeviceID _device;
+    // Currently selected sound.
+    std::filesystem::path _selected_sound;
+    // Error string for player failures.
+    std::string _error;
 
 public:
-    WADTextureViewer(Config &cfg);
+    SoundPlayer(Config &cfg);
+    ~SoundPlayer();
 
     /** Handle user input. */
     void input(SDL_Event const *event) override;
 
-    /** Draw the app's UI. */
+    /** Draw the player's UI. */
     void drawUI() override;
 
     /** Does nothing. */

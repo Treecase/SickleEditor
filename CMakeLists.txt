@@ -29,32 +29,9 @@ project(Sickle
     LANGUAGES CXX
 )
 
-# Declare targets
-add_executable(sickle)
-target_compile_features(sickle PRIVATE cxx_std_17)
-set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
-target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 
 # Dependencies
 add_subdirectory(extern/glutils)
-target_link_libraries(sickle PRIVATE glutils::glutils)
-
-add_library(imgui OBJECT)
-target_sources(imgui PRIVATE
-    extern/imgui/backends/imgui_impl_sdl.cpp
-    extern/imgui/backends/imgui_impl_opengl3.cpp
-    extern/imgui/misc/cpp/imgui_stdlib.cpp
-    extern/imgui/imgui.cpp
-    extern/imgui/imgui_demo.cpp
-    extern/imgui/imgui_draw.cpp
-    extern/imgui/imgui_tables.cpp
-    extern/imgui/imgui_widgets.cpp
-)
-target_include_directories(imgui
-    PUBLIC
-    extern/imgui/
-    extern/imgui/backends
-)
 
 if(MSVC)
     if(NOT TARGET SDL2::SDL2)
@@ -88,6 +65,31 @@ else()
     find_package(glm REQUIRED)
 endif()
 
+add_library(imgui OBJECT)
+target_sources(imgui PRIVATE
+    extern/imgui/backends/imgui_impl_sdl.cpp
+    extern/imgui/backends/imgui_impl_opengl3.cpp
+    extern/imgui/misc/cpp/imgui_stdlib.cpp
+    extern/imgui/imgui.cpp
+    extern/imgui/imgui_demo.cpp
+    extern/imgui/imgui_draw.cpp
+    extern/imgui/imgui_tables.cpp
+    extern/imgui/imgui_widgets.cpp
+)
+target_include_directories(imgui
+    PUBLIC
+    extern/imgui/
+    extern/imgui/backends
+)
+target_link_libraries(imgui PUBLIC SDL2::SDL2)
+
+
+# Declare targets
+add_executable(sickle)
+target_compile_features(sickle PRIVATE cxx_std_17)
+set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
+target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
+
 
 # Project sources
 add_subdirectory(src)
@@ -105,6 +107,6 @@ target_link_libraries(sickle PRIVATE
     SDL2::SDL2
     GLEW::GLEW
     glm::glm
+    glutils::glutils
     ${CMAKE_DL_LIBS}
 )
-target_link_libraries(imgui PUBLIC SDL2::SDL2)

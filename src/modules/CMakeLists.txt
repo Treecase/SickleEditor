@@ -13,15 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-add_library(bsp OBJECT
-    bsp2gl.cpp
-    entities_lump.cpp
-    load_bsp.cpp
+target_sources(sickle PRIVATE
+    MapViewer.cpp
+    ModelViewer.cpp
+    SoundPlayer.cpp
+    TextureViewer.cpp
+    WADTextureViewer.cpp
 )
-target_link_libraries(bsp PUBLIC glutils::glutils GLEW::GLEW)
-# Linkage
-if(MSVC)
-    target_link_libraries(bsp PRIVATE OpenGL32)
-else()
-    target_link_libraries(bsp PRIVATE GL)
-endif()

@@ -13,31 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-add_executable(ListEntities
-    ListEntities.cpp
-    ../MapViewer.cpp
-    ../ui_helpers.cpp
-)
-target_compile_features(ListEntities PRIVATE cxx_std_17)
-set_target_properties(ListEntities PROPERTIES CXX_EXTENSIONS OFF)
+add_executable(ListEntities ListEntities.cpp)
 target_include_directories(ListEntities PRIVATE "${PROJECT_BINARY_DIR}/include")
-
-# Linkage
-if(MSVC)
-    target_link_libraries(ListEntities PRIVATE OpenGL32)
-else()
-    target_link_libraries(ListEntities PRIVATE GL)
-endif()
-
-target_link_libraries(ListEntities PRIVATE
-    imgui
-    bsp
-    wad
-    SDL2::SDL2
-    GLEW::GLEW
-    glm::glm
-    ${CMAKE_DL_LIBS}
-)
+target_link_libraries(ListEntities PRIVATE bsp wad)
 
 
 add_executable(PrintMap PrintMap.cpp)

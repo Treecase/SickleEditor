@@ -17,7 +17,7 @@
  */
 
 #include "ModelViewer.hpp"
-#include "ui_helpers.hpp"
+#include "../ui_helpers.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>

@@ -19,9 +19,9 @@
 #ifndef _MODELVIEWER_HPP
 #define _MODELVIEWER_HPP
 
-#include "common.hpp"
-#include "mdl/load_model.hpp"
-#include "mdl/mdl2gl.hpp"
+#include "../common.hpp"
+#include "../mdl/load_model.hpp"
+#include "../mdl/mdl2gl.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>

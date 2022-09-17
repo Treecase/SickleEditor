@@ -20,11 +20,11 @@
 #include "common.hpp"
 #include "version.hpp"
 
-#include "MapViewer.hpp"
-#include "ModelViewer.hpp"
-#include "SoundPlayer.hpp"
-#include "TextureViewer.hpp"
-#include "WADTextureViewer.hpp"
+#include "modules/MapViewer.hpp"
+#include "modules/ModelViewer.hpp"
+#include "modules/SoundPlayer.hpp"
+#include "modules/TextureViewer.hpp"
+#include "modules/WADTextureViewer.hpp"
 
 #include <GL/glew.h>
 #include <imgui.h>
