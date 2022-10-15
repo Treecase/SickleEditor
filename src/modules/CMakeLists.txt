@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 target_sources(sickle PRIVATE
+    BSPViewer.cpp
     MapViewer.cpp
     ModelViewer.cpp
     SoundPlayer.cpp

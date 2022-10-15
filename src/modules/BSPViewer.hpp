@@ -1,5 +1,5 @@
 /**
- * MapViewer.hpp - Map viewer module.
+ * BSPViewer.hpp - Map viewer module.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,13 +16,12 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _MAPVIEWER_HPP
-#define _MAPVIEWER_HPP
+#ifndef _BSPVIEWER_HPP
+#define _BSPVIEWER_HPP
 
 #include "../common.hpp"
-#include "../map/load_map.hpp"
-#include "../wad/load_wad.hpp"
-#include "../wad/lumps.hpp"
+#include "../bsp/bsp2gl.hpp"
+#include "../bsp/load_bsp.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>
@@ -33,61 +32,17 @@
 #include <filesystem>
 
 
-/** Wraps GLUtil's Texture, to keep some additional information we need. */
-struct MapTexture
-{
-    std::shared_ptr<GLUtil::Texture> texture;
-    int w, h;
-
-    MapTexture();
-    MapTexture(WAD::TexLump const &texlump);
-};
-
-/**
- * Lazy-loading texture manager. Grabbing all the textures from the WAD is
- * really slow, and we usually only need a few textures, so instead we only
- * load from WAD when we need to.
- */
-struct TextureManager
-{
-    std::unordered_map<std::string, WAD::Lump> lumps{};
-    std::unordered_map<std::string, MapTexture> textures;
-
-    TextureManager(WAD::WAD const &wad);
-    /** Same as `textures.at(key)`, unless this would fail, in which case
-     *  attempt to load the lump identified by `key` from the WAD. */
-    MapTexture &at(std::string const &key);
-};
-
-/** Displays .map files. */
-class MapViewer : public Module
+/** Displays BSP files. */
+class BSPViewer : public Module
 {
 private:
     // Shader.
     GLUtil::Program _shader;
 
     // Loaded map.
-    MAP::Map _map;
-    /** GL representation of a Brush Plane. */
-    struct GLPlane
-    {
-        GLUtil::Texture texture;
-        GLsizei count;
-        void *indices;
-    };
-    /** GL representation of a Brush. */
-    struct GLBrush
-    {
-        std::vector<GLPlane> planes;
-        GLUtil::VertexArray vao;
-        GLUtil::Buffer vbo, ebo;
-
-        GLBrush(
-            std::vector<GLPlane> const &planes,
-            std::vector<GLfloat> const &vbodata,
-            std::vector<GLuint> const &ebodata);
-    };
-    std::vector<std::shared_ptr<GLBrush>> _brushes;
+    BSP::BSP _map;
+    // GL map.
+    BSP::GLBSP _glbsp;
     // Path to loaded map.
     std::filesystem::path _selected;
 
@@ -109,13 +64,12 @@ private:
     // Map scaling.
     GLfloat _scale;
 
-    GLBrush *_brush2gl(MAP::Brush const &brush, TextureManager &textures);
     /** Called when _selected is updated. */
     void _loadSelectedMap();
     void _loadMap();
 
 public:
-    MapViewer(Config &cfg);
+    BSPViewer(Config &cfg);
 
     /** Handle user input. */
     void input(SDL_Event const *event) override;

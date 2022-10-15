@@ -20,6 +20,7 @@
 #include "common.hpp"
 #include "version.hpp"
 
+#include "modules/BSPViewer.hpp"
 #include "modules/MapViewer.hpp"
 #include "modules/ModelViewer.hpp"
 #include "modules/SoundPlayer.hpp"
@@ -131,12 +132,12 @@ Config handle_args(int argc, char *argv[])
                 "This is free software: you are free to change and "
                     "redistribute it.\n"
                 "There is NO WARRANTY, to the extent permitted by law.\n";
-            exit(0);
+            exit(EXIT_SUCCESS);
         }
         else if (strcmp(argv[i], "--help") == 0)
         {
             std::cout <<
-                "Usage: " << argv[0] << " GAMEDIR\n"
+                "Usage: " << argv[0] << " GAMEDEF.fgd MAPSDIR [GAMEDIR]\n"
                 "Open-source GoldSrc editor.\n"
                 "\n"
                 "  --help\tdisplay this help and exit\n"
@@ -145,13 +146,29 @@ Config handle_args(int argc, char *argv[])
                 "Report bugs to: "
                     "https://github.com/Treecase/SickleEditor/issues\n"
                 "pkg home page: https://github.com/Treecase/SickleEditor\n";
-            exit(0);
+            exit(EXIT_SUCCESS);
         }
     }
+    // TODO: these shouldn't error out
     if (argc < 2)
+    {
+        std::cerr << "No .fgd supplied!\n";
+        exit(EXIT_FAILURE);
+    }
+    else
+        cfg.game_def = argv[1];
+    if (argc < 3)
+    {
+        std::cerr << "No maps directory supplied!\n";
+        exit(EXIT_FAILURE);
+    }
+    else
+        cfg.maps_dir = argv[2];
+
+    if (argc < 4)
         cfg.game_dir = "/";
     else
-        cfg.game_dir = argv[1];
+        cfg.game_dir = argv[3];
     return cfg;
 }
 
@@ -193,10 +210,11 @@ int run(int argc, char *argv[])
     config.window_width = &width;
     config.window_height = &height;
     App<
+        BSPViewer,
+        MapViewer,
         ModelViewer,
         SoundPlayer,
         TextureViewer,
-        MapViewer,
         WADTextureViewer
     > app{config};
 

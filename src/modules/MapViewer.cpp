@@ -17,12 +17,17 @@
  */
 
 #include "MapViewer.hpp"
+#include "../fgd/fgd.hpp"
 #include "../ui_helpers.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <imgui.h>
+
+#include <iostream>
+#include <set>
+#include <unordered_set>
 
 
 #define CLAMP(x, min, max) ((x) < (min)? (min) : (x) > (max)? (max) : (x))
@@ -34,6 +39,291 @@
 #define SHIFT_MULTIPLIER 2.0f
 
 
+/** A Mesh, containing a texture name, vertex data, and element buffer data. */
+struct Mesh
+{
+    std::string tex;
+    std::vector<GLfloat> vbo{};
+    std::vector<GLuint> ebo{};
+};
+
+/** A Plane in 3D space. */
+struct Plane
+{
+    // 3 points used to define the plane.
+    std::array<glm::vec3, 3> points;
+    // Plane normal.
+    glm::vec3 normal;
+    // Coefficients for the general form plane equation (ax + by + cz + d = 0).
+    float a;
+    float b;
+    float c;
+    float d;
+
+    Plane(glm::vec3 const &a, glm::vec3 const &b, glm::vec3 const &c)
+    :   points{a, b, c}
+    ,   normal{glm::cross(b - a, c - a)}
+    ,   a{normal.x}
+    ,   b{normal.y}
+    ,   c{normal.z}
+    ,   d{-normal.x*a.x - normal.y*a.y - normal.z*a.z}
+    {
+    }
+
+    Plane(MAP::Plane const &p)
+    :   Plane{
+        {p.a[0], p.a[1], p.a[2]},
+        {p.b[0], p.b[1], p.b[2]},
+        {p.c[0], p.c[1], p.c[2]}}
+    {
+    }
+};
+
+/** std::hash template so glm::vec3 can be used in std::set and friends. */
+template<>
+struct std::hash<glm::vec3>
+{
+    std::size_t operator()(glm::vec3 const &vec) const noexcept
+    {
+        std::hash<float> const hashf{};
+        return hashf(vec.x) ^ hashf(vec.y) ^ hashf(vec.z);
+    }
+};
+
+/** Implements std::less interface to sort glm::vec3s counterclockwise. */
+struct VectorCounterClockwiseLess
+{
+    // Precalculated center of points to be compared.
+    static glm::vec3 center;
+    // Plane to compare in.
+    static Plane plane;
+    /** Sorts vertices counterclockwise. */
+    bool operator()(glm::vec3 const &a, glm::vec3 const &b) const
+    {
+        // x and y axes of the plane's basis.
+        auto const basis_x = plane.points[1] - plane.points[0];
+        auto const basis_y = plane.points[2] - plane.points[0];
+        // The basis_x axis acts as our 0 degree reference point.
+        // T = translated, N = normalized
+        auto const basisT = basis_x - center;
+        auto const basisTN = glm::normalize(basisT);
+        // Points to compare.
+        auto const aT = a - center;
+        auto const bT = b - center;
+        auto const aTN = glm::normalize(aT);
+        auto const bTN = glm::normalize(bT);
+        auto const an = glm::cross(basisTN, aTN);
+        auto const bn = glm::cross(basisTN, bTN);
+        // asin gives us an angle between 0 and 180 degrees, we need 0 to 360.
+        // To get 0-360, compare the direction of an (or bn) to the plane's
+        // normal. If it's in the same direction, add 180 degrees to access the
+        // 180 to 360 degree range.
+        auto atheta = glm::asin(glm::length(an));
+        auto btheta = glm::asin(glm::length(bn));
+        if (glm::dot(plane.normal, an) > 0.0f)
+            atheta += glm::pi<float>();
+        if (glm::dot(plane.normal, bn) > 0.0f)
+            btheta += glm::pi<float>();
+        // [ab][xy]len represents the length of a/b along the basis axes. (used
+        // as a tiebreaker if the angle is the same.)
+        auto const axlen = glm::dot(basis_x, aT);
+        auto const aylen = glm::dot(basis_y, aT);
+        auto const bxlen = glm::dot(basis_x, bT);
+        auto const bylen = glm::dot(basis_y, bT);
+        // Now we can compare the angle between a and b.
+        if (atheta != btheta)
+            return atheta < btheta;
+        else if (axlen != bxlen)
+            return axlen < bxlen;
+        else
+            return aylen < bylen;
+    }
+};
+
+glm::vec3 VectorCounterClockwiseLess::center{0.0f};
+Plane VectorCounterClockwiseLess::plane{
+    {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+
+
+/** Sort vertices counterclockwise. */
+auto _sort_vertices_counterclockwise(std::unordered_set<glm::vec3> const &vertices, Plane const &plane)
+{
+    glm::vec3 center{0.0f};
+    for (auto const &vertex : vertices)
+        center += vertex;
+    center /= vertices.size();
+    std::set<glm::vec3, VectorCounterClockwiseLess> sorted{};
+    // TODO: Better way to pass these in?
+    VectorCounterClockwiseLess::center = center;
+    VectorCounterClockwiseLess::plane = plane;
+    sorted.insert(vertices.cbegin(), vertices.cend());
+    assert(sorted.size() == vertices.size());
+    return sorted;
+}
+
+/** Create a Mesh from a Brush's Planes. */
+auto _mesh_from_planes(MAP::Brush const &brush, TextureManager &textures)
+{
+    std::vector<Mesh> meshes{};
+    for (auto const &p0 : brush.planes)
+    {
+        std::unordered_set<glm::vec3> points{};
+        Plane const pl0{p0};
+        for (auto const &p1 : brush.planes)
+        {
+            if (&p1 == &p0)
+                continue;
+            Plane const pl1{p1};
+            for (auto const &p2 : brush.planes)
+            {
+                if (&p2 == &p1 || &p2 == &p0)
+                    continue;
+                Plane const pl2{p2};
+                // Solve using Cramer's law.
+                glm::vec3 const a{pl0.a, pl1.a, pl2.a};
+                glm::vec3 const b{pl0.b, pl1.b, pl2.b};
+                glm::vec3 const c{pl0.c, pl1.c, pl2.c};
+                glm::vec3 const d{pl0.d, pl1.d, pl2.d};
+                auto D = glm::determinant(glm::mat3{a, b, c});
+                if (glm::epsilonEqual(glm::length(d), 0.0f, glm::epsilon<float>()))
+                {
+                    // Only solution is 0,0,0
+                    if (glm::epsilonEqual(D, 0.0f, glm::epsilon<float>()))
+                        points.emplace(0.0f, 0.0f, 0.0f);
+                    // Infinite solutions
+                    else
+                        ;
+                }
+                else
+                {
+                    // No unique solution
+                    if (glm::epsilonEqual(D, 0.0f, glm::epsilon<float>()))
+                        ;
+                    // Single solution
+                    else
+                        points.emplace(
+                            glm::determinant(glm::mat3{d, b, c}) / D,
+                            glm::determinant(glm::mat3{a, d, c}) / D,
+                            glm::determinant(glm::mat3{a, b, d}) / D);
+                }
+            }
+        }
+        // Create the mesh and add the points to it.
+        auto &mesh = meshes.emplace_back();
+        mesh.tex = p0.miptex;
+        for (auto const &point : _sort_vertices_counterclockwise(points, pl0))
+        {
+            // TODO: texcoord rotation
+            auto const s = glm::vec3{p0.offx[0], p0.offx[1], p0.offx[2]};
+            auto const t = glm::vec3{p0.offy[0], p0.offy[1], p0.offy[2]};
+            glm::vec2 const scale{p0.offx[3], p0.offy[3]};
+            auto const &texture = textures.at(p0.miptex);
+            mesh.vbo.insert(
+                mesh.vbo.end(),
+                {   point.x, point.y, point.z,
+                    (glm::dot(point, s) + scale.s) / (float)texture.w,
+                    (glm::dot(point, t) + scale.t) / (float)texture.h});
+            mesh.ebo.push_back(mesh.ebo.size());
+        }
+    }
+    return meshes;
+}
+
+/** Convert paletted texture data to RGBA format. */
+auto _texlump_depalettize(WAD::TexLump const &lump)
+{
+    std::array<std::vector<uint8_t>, 4> const textures{
+        lump.tex1, lump.tex2, lump.tex4, lump.tex8};
+    std::array<uint8_t *, 4> rgba_textures{};
+    for (size_t i = 0; i < rgba_textures.size(); ++i)
+    {
+        auto rgba = rgba_textures[i] = new uint8_t[textures[i].size() * 4];
+        for (size_t j = 0, k = 0; j < textures[i].size(); ++j, k += 4)
+        {
+            auto const &color = lump.palette[textures[i][j]];
+            memcpy(rgba + k, color.data(), 3);
+            rgba[k+3] = 0xff;
+        }
+    }
+    return rgba_textures;
+}
+
+
+/* ===[ MapTexture ]=== */
+MapTexture::MapTexture()
+:   texture{nullptr}
+,   w{0}
+,   h{0}
+{
+}
+
+MapTexture::MapTexture(WAD::TexLump const &texlump)
+:   texture{new GLUtil::Texture{GL_TEXTURE_2D, texlump.name}}
+,   w{(int)texlump.width}
+,   h{(int)texlump.height}
+{
+    texture->bind();
+    texture->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    texture->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    texture->setParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+    texture->setParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+    texture->setParameter(GL_TEXTURE_BASE_LEVEL, 0);
+    texture->setParameter(GL_TEXTURE_MAX_LEVEL, 3);
+    auto mipmaps = _texlump_depalettize(texlump);
+    for (size_t i = 0; i < mipmaps.size(); ++i)
+    {
+        GLsizei scale = pow(2, i);
+        glTexImage2D(texture->type(), i, GL_RGBA, texlump.width/scale, texlump.height/scale, 0, GL_RGBA, GL_UNSIGNED_BYTE, mipmaps[i]);
+        delete[] mipmaps[i];
+    }
+    texture->unbind();
+}
+
+
+/* ===[ TextureManager ]=== */
+TextureManager::TextureManager(WAD::WAD const &wad)
+:   lumps{}
+,   textures{}
+{
+    for (auto const &lump : wad.directory)
+        if (lump.type == 0x43)
+            lumps.emplace(lump.name, lump);
+}
+
+MapTexture &TextureManager::at(std::string const &key)
+{
+    try
+    {
+        return textures.at(key);
+    }
+    catch (std::out_of_range const &)
+    {
+        return textures[key] = MapTexture{WAD::readTexLump(lumps.at(key))};
+    }
+}
+
+
+/* ===[ MapViewer::GLBrush ]=== */
+MapViewer::GLBrush::GLBrush(std::vector<GLPlane> const &planes, std::vector<GLfloat> const &vbodata, std::vector<GLuint> const &ebodata)
+:   planes{planes}
+,   vao{"BrushVAO"}
+,   vbo{GL_ARRAY_BUFFER, "BrushVBO"}
+,   ebo{GL_ELEMENT_ARRAY_BUFFER, "BrushEBO"}
+{
+    vao.bind();
+    vbo.bind();
+    vbo.buffer(GL_STATIC_DRAW, vbodata);
+    ebo.bind();
+    ebo.buffer(GL_STATIC_DRAW, ebodata);
+    vao.enableVertexAttribArray(0, 3, GL_FLOAT, 5*sizeof(GLfloat), 0);
+    vao.enableVertexAttribArray(1, 2, GL_FLOAT, 5*sizeof(GLfloat), 3*sizeof(GLfloat));
+    ebo.unbind();
+    vbo.unbind();
+    vao.unbind();
+}
+
+
+/* ===[ MapViewer ]=== */
 MapViewer::MapViewer(Config &cfg)
 :   Module{cfg, "Map Viewer", false, false}
 ,   _shader{{
@@ -43,15 +333,15 @@ MapViewer::MapViewer(Config &cfg)
             "shaders/map.frag", GL_FRAGMENT_SHADER)},
         "MapShader"}
 ,   _map{}
-,   _glbsp{}
-,   _selected{""}
+,   _brushes{}
+,   _selected{cfg.maps_dir/"test.map"}
 ,   _camera{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 70.0f, 5.0f}
 ,   _wireframe{false}
 ,   _translation{0.0f, 0.0f, 0.0f}
-,   _rotation{-90.0f, 0.0f, 0.0f}
+,   _rotation{90.0f, 0.0f, 0.0f}
 ,   _scale{0.005f}
 {
-    _loadMap();
+    _loadSelectedMap();
 }
 
 void MapViewer::input(SDL_Event const *event)
@@ -134,10 +424,10 @@ void MapViewer::drawUI()
             if (ImGui::TreeNode("valve/maps"))
             {
                 if (ImGui::DirectoryTree(
-                    _cfg.game_dir.string() + "/valve/maps",
+                    _cfg.maps_dir,
                     &_selected,
                     [](std::filesystem::path const &p){
-                        return p.extension() == ".bsp";
+                        return p.extension() == ".map";
                     }))
                 {
                     _loadSelectedMap();
@@ -195,59 +485,91 @@ void MapViewer::drawGL(float deltaT)
         *_cfg.window_width / (float)*_cfg.window_height,
         0.1f, 1000.0f);
 
+    // TODO: rotation's a bit weird?
+    auto modelMatrix =
+        glm::rotate(
+            glm::rotate(
+                glm::rotate(
+                    glm::scale(
+                        glm::translate(
+                            glm::identity<glm::mat4>(),
+                            glm::vec3{-_translation[0], _translation[1], _translation[2]}
+                        ),
+                        glm::vec3{_scale}
+                    ),
+                    glm::radians(_rotation[1]),
+                    glm::vec3{0.0f, 1.0f, 0.0f}
+                ),
+                glm::radians(_rotation[2]),
+                glm::vec3{0.0f, 0.0f, 1.0f}
+            ),
+            glm::radians(_rotation[0]),
+            glm::vec3{1.0f, 0.0f, 0.0f}
+    );
+
     // Draw models.
     _shader.use();
-    _glbsp.vao->bind();
-    _glbsp.ebo->bind();
     glActiveTexture(GL_TEXTURE0);
     _shader.setUniformS("view", viewMatrix);
     _shader.setUniformS("projection", projectionMatrix);
     _shader.setUniformS("tex", 0);
+    _shader.setUniformS("model", modelMatrix);
 
-    glEnable(GL_PRIMITIVE_RESTART);
-    glPrimitiveRestartIndex(-1);
-    for (auto const &model : _glbsp.models)
+    for (auto const &brush : _brushes)
     {
-        // TODO: rotation's a bit weird?
-        auto modelMatrix =
-            glm::rotate(
-                glm::rotate(
-                    glm::rotate(
-                        glm::scale(
-                            glm::translate(
-                                glm::identity<glm::mat4>(),
-                                model.position + glm::vec3{-_translation[0], _translation[1], _translation[2]}
-                            ),
-                            glm::vec3{_scale}
-                        ),
-                        glm::radians(_rotation[1]),
-                        glm::vec3{0.0f, 1.0f, 0.0f}
-                    ),
-                    glm::radians(_rotation[2]),
-                    glm::vec3{0.0f, 0.0f, 1.0f}
-                ),
-                glm::radians(_rotation[0]),
-                glm::vec3{1.0f, 0.0f, 0.0f}
-        );
-        _shader.setUniformS("model", modelMatrix);
-
-        for (auto const &mesh : model.meshes)
+        brush->vao.bind();
+        brush->ebo.bind();
+        for (auto const &plane : brush->planes)
         {
-            mesh.tex.bind();
-            glDrawElements(
-                GL_TRIANGLE_FAN, mesh.count, GL_UNSIGNED_INT, mesh.indices);
+            plane.texture.bind();
+            glDrawElements(GL_TRIANGLE_STRIP, plane.count, GL_UNSIGNED_INT, plane.indices);
         }
     }
 }
 
 
+/** Transform map Brush to GL brush. */
+MapViewer::GLBrush *MapViewer::_brush2gl(MAP::Brush const &brush, TextureManager &textures)
+{
+    // Merge Plane mesh V/EBOs into Brush V/EBO.
+    std::vector<GLPlane> planes{};
+    std::vector<GLfloat> vbodata{};
+    std::vector<GLuint> ebodata{};
+    for (auto const &mesh : _mesh_from_planes(brush, textures))
+    {
+        planes.push_back({
+            *textures.at(mesh.tex).texture,
+            (GLsizei)mesh.ebo.size(),
+            (void *)(ebodata.size() * sizeof(GLuint))});
+        vbodata.insert(vbodata.end(), mesh.vbo.cbegin(), mesh.vbo.cend());
+        size_t const index = vbodata.size() / 5;
+        for (auto const &idx : mesh.ebo)
+            ebodata.push_back(index + idx);
+    }
+    return new GLBrush{planes, vbodata, ebodata};
+}
+
 void MapViewer::_loadSelectedMap()
 {
-    _map = BSP::load_bsp(_selected.string());
+    auto fgd = FGD::load(_cfg.game_def.string());
+    _map = MAP::load_map(_selected.string());
     _loadMap();
 }
 
 void MapViewer::_loadMap()
 {
-    _glbsp = BSP::bsp2gl(_map, _cfg.game_dir.string());
+    MAP::Entity worldspawn;
+    for (auto const &e : _map.entities)
+        if (e.properties.at("classname") == "worldspawn")
+        {
+            worldspawn = e;
+            break;
+        }
+
+    auto const &wad = WAD::load(worldspawn.properties.at("wad"));
+    TextureManager textures{wad};
+
+    _brushes.clear();
+    for (auto const &b : worldspawn.brushes)
+        _brushes.emplace_back(_brush2gl(b, textures));
 }

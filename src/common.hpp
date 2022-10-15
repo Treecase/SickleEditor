@@ -26,6 +26,8 @@
 struct Config
 {
     std::filesystem::path game_dir;
+    std::filesystem::path game_def;
+    std::filesystem::path maps_dir;
     int *window_width,
         *window_height;
 };

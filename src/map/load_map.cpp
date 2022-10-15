@@ -47,7 +47,7 @@ struct Token
 
 
 /** .MAP tokenizer. */
-class Tokenizer
+class MAPTokenizer
 {
 private:
     struct TokenizeError : std::runtime_error
@@ -303,7 +303,7 @@ private:
     }
 
 public:
-    Tokenizer(std::istream &f)
+    MAPTokenizer(std::istream &f)
     :   _tokens{}
     ,   _io{f}
     {
@@ -316,7 +316,7 @@ public:
 };
 
 /** .MAP parser. */
-class Parser
+class MAPParser
 {
 private:
     struct ParseError : std::runtime_error
@@ -446,7 +446,7 @@ private:
     }
 
 public:
-    Parser(std::vector<Token> const &tokens)
+    MAPParser(std::vector<Token> const &tokens)
     :   _i{0}
     ,   _tokens{tokens}
     ,   _result{}
@@ -466,7 +466,7 @@ MAP::Map MAP::load_map(std::string const &path)
         throw std::runtime_error{"Failed to open '" + path + "'"};
 
     // Reset tokenizer state.
-    Tokenizer tokenizer{f};
-    Parser parser{tokenizer.tokens()};
+    MAPTokenizer tokenizer{f};
+    MAPParser parser{tokenizer.tokens()};
     return parser.map();
 }

@@ -57,7 +57,7 @@ struct Token
 
 
 /** .fgd tokenizer. */
-class Tokenizer
+class FGDTokenizer
 {
 private:
     struct TokenizeError : std::runtime_error
@@ -397,7 +397,7 @@ private:
     }
 
 public:
-    Tokenizer(std::istream &f)
+    FGDTokenizer(std::istream &f)
     :   _tokens{}
     ,   _io{f}
     {
@@ -420,7 +420,7 @@ public:
 };
 
 /** .MAP parser. */
-class Parser
+class FGDParser
 {
 private:
     struct ParseError : std::runtime_error
@@ -515,7 +515,7 @@ private:
     }
 
 public:
-    Parser(std::vector<Token> const &tokens)
+    FGDParser(std::vector<Token> const &tokens)
     :   _i{0}
     ,   _tokens{tokens}
     ,   _result{}
@@ -533,7 +533,7 @@ FGD::FGD FGD::load(std::string const &path)
     std::ifstream f{path, std::ios::in | std::ios::binary};
     if (!f.is_open())
         throw std::runtime_error{"Failed to open '" + path + "'"};
-    Tokenizer tokenizer{f};
-    Parser parser{tokenizer.tokens()};
+    FGDTokenizer tokenizer{f};
+    FGDParser parser{tokenizer.tokens()};
     return parser.fgd();
 }
