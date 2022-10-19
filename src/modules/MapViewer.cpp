@@ -261,13 +261,17 @@ auto _mesh_from_planes(MAP::Brush const &brush, TextureManager &textures)
                 glm::vec3{p0.offx[0], p0.offx[1], p0.offx[2]});
             auto const t = glm::normalize(
                 glm::vec3{p0.offy[0], p0.offy[1], p0.offy[2]});
-            glm::vec2 const scale{p0.offx[3], p0.offy[3]};
+            glm::vec2 const offset{p0.offx[3], p0.offy[3]};
+            glm::vec2 const scale{p0.scalex, p0.scaley};
             auto const &texture = textures.at(p0.miptex);
             mesh.vbo.insert(
                 mesh.vbo.end(),
                 {   point.x, point.y, point.z,
-                    (glm::dot(point, s) + scale.s) / (float)texture.w,
-                    (glm::dot(point, t) + scale.t) / (float)texture.h});
+                    ((glm::dot(point, s) / scale.x) + offset.s)
+                        / (float)texture.w,
+                    ((glm::dot(point, t) / scale.y) + offset.t)
+                        / (float)texture.h
+                });
             mesh.ebo.push_back(mesh.ebo.size());
         }
     }
