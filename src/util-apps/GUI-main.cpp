@@ -60,8 +60,6 @@
 // Any of the above can also be #define'd instead.
 
 #include "../App.hpp"
-#include "../common.hpp"
-#include "version.hpp"
 
 #include <GL/glew.h>
 #include <imgui.h>
@@ -170,7 +168,7 @@ Config handle_args(int argc, char *argv[])
         {
             std::cout <<
                 APP_canon_name
-                << " (" << SE_CANON_NAME << " " << SE_VERSION << ") "
+                << " (" << APP_canon_name << " " << APP_version << ") "
                 << APP_version << "\n" <<
                 "Copyright (C) 2022 Trevor Last\n"
                 "License GPLv3+: GNU GPL version 3 or later "
@@ -178,7 +176,7 @@ Config handle_args(int argc, char *argv[])
                 "This is free software: you are free to change and "
                     "redistribute it.\n"
                 "There is NO WARRANTY, to the extent permitted by law.\n";
-            exit(0);
+            exit(EXIT_SUCCESS);
         }
         else if (strcmp(argv[i], "--help") == 0)
         {
@@ -190,7 +188,7 @@ Config handle_args(int argc, char *argv[])
                 "Report bugs to: "
                     "https://github.com/Treecase/SickleEditor/issues\n"
                 "pkg home page: https://github.com/Treecase/SickleEditor\n";
-            exit(0);
+            exit(EXIT_SUCCESS);
         }
     }
     return APP_handle_args(argc, argv);

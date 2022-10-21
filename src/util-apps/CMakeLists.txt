@@ -25,3 +25,5 @@ target_link_libraries(PrintMap PRIVATE map)
 add_executable(LoadFGD LoadFGD.cpp)
 target_include_directories(LoadFGD PRIVATE "${PROJECT_BINARY_DIR}/include")
 target_link_libraries(LoadFGD PRIVATE fgd)
+
+target_sources(sickle PRIVATE Sickle.cpp)

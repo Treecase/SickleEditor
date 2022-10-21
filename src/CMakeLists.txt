@@ -15,10 +15,7 @@
 
 configure_file(version.hpp.in "${PROJECT_BINARY_DIR}/include/version.hpp")
 
-target_sources(sickle PRIVATE
-    main.cpp
-    ui_helpers.cpp
-)
+target_sources(sickle PRIVATE ui_helpers.cpp)
 
 add_subdirectory(modules)
 

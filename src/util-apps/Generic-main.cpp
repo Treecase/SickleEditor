@@ -48,6 +48,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <cstring>
+
 
 /** Set app config from command-line arguments. */
 APP_Config handle_args(int argc, char *argv[])
