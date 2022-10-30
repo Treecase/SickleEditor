@@ -86,7 +86,7 @@ struct Plane
     {
         static float constexpr EPSILON = 0.001f;
         return glm::epsilonEqual(
-            a*point.x + b*point.y + c*point.z, -d, EPSILON);
+            a*point.x + b*point.y + c*point.z + d, 0.0f, EPSILON);
     }
 };
 
@@ -105,69 +105,46 @@ struct std::hash<glm::vec3>
 struct VectorLessCounterClockwise
 {
     // Precalculated center of points to be compared.
-    glm::vec3 center;
+    glm::vec3 const center;
     // Plane to compare in.
-    Plane plane;
+    Plane const plane;
+    // Plane's S and T axes.
+    glm::vec3 const s_axisN, t_axisN;
 
     VectorLessCounterClockwise(glm::vec3 const &center, Plane const &plane)
     :   center{center}
     ,   plane{plane}
+    ,   s_axisN{glm::normalize(plane.points[1] - plane.points[0])}
+    ,   t_axisN{glm::normalize(glm::cross(s_axisN, plane.normal))}
     {
     }
     /** Sorts vertices counterclockwise. */
     bool operator()(glm::vec3 const &a, glm::vec3 const &b) const
     {
-        // Plane's S and T axes.
-        auto const s_axisN = glm::normalize(plane.points[1] - plane.points[0]);
-        auto const t_axisN = glm::normalize(plane.points[2] - plane.points[0]);
+        // Local space A and B vectors.
+        auto const a_local = a - center;
+        auto const b_local = b - center;
 
-        // Normalized 0 degree reference axis (we use the S axis).
-        auto const axis_0_degreesN = s_axisN;
-
-        // Normalized local space A and B direction vectors.
-        auto const point_aN = glm::normalize(a - center);
-        auto const point_bN = glm::normalize(b - center);
-
-        // Cross product of 0 axis and points
-        auto const cross_a = glm::cross(point_aN, axis_0_degreesN);
-        auto const cross_b = glm::cross(point_bN, axis_0_degreesN);
+        // Vertices projected onto the plane.
+        glm::vec2 const a_proj{
+            glm::dot(a_local, s_axisN), glm::dot(a_local, t_axisN)};
+        glm::vec2 const b_proj{
+            glm::dot(b_local, s_axisN), glm::dot(b_local, t_axisN)};
 
         // Angle between the 0 vector and point
-        auto a_theta = glm::asin(glm::length(cross_a));
-        auto b_theta = glm::asin(glm::length(cross_b));
+        auto a_theta = glm::atan(a_proj.y, a_proj.x);
+        auto b_theta = glm::atan(b_proj.y, b_proj.x);
 
-        // asin's result is limited to 0-180 degrees, but we want the full
-        // 0-360. To do this, we compare the cross product result's direction
-        // to the plane normal. If they're in the same direction, leave it as
-        // is. If they're in opposite directions, subtract it from 360 degrees
-        // to access the 180-360 range.
-        if (glm::dot(cross_a, glm::normalize(plane.normal)) < 0.0f)
-            a_theta = glm::radians(360.0f) - a_theta;
-        if (glm::dot(cross_b, glm::normalize(plane.normal)) < 0.0f)
-            b_theta = glm::radians(360.0f) - b_theta;
+        // Don't want negative angles. (Doesn't really matter, but whatever.)
+        if (a_theta < 0.0f) a_theta += glm::radians(360.0);
+        if (b_theta < 0.0f) b_theta += glm::radians(360.0);
 
+        // If the angles aren't equal, compare them.
+        // If the angles are the same, use distance from center as tiebreaker.
         if (glm::epsilonNotEqual(a_theta, b_theta, glm::epsilon<float>()))
-            // If the angles aren't the same, just compare them, smallest wins.
-            return a_theta < b_theta;
+            return -a_theta < -b_theta;
         else
-        {
-            // If the angles are the same, we need some tiebreaker. First
-            // tiebreaker is comparing the two points' distance along the
-            // plane's S axis, closest wins.
-            auto const a_proj_s = glm::dot(point_aN, s_axisN);
-            auto const b_proj_s = glm::dot(point_bN, s_axisN);
-            if (glm::epsilonNotEqual(a_proj_s, b_proj_s, glm::epsilon<float>()))
-                return a_proj_s < b_proj_s;
-            else
-            {
-                // If the first tiebreaker is *also* tied, move on to the second
-                // tiebreaker: compare points' distance along the plane's T
-                // axis, closest wins.
-                auto const a_proj_t = glm::dot(point_aN, t_axisN);
-                auto const b_proj_t = glm::dot(point_bN, t_axisN);
-                return a_proj_t < a_proj_t;
-            }
-        }
+            return glm::length(a_proj) < glm::length(b_proj);
     }
 };
 
@@ -183,26 +160,25 @@ auto _sort_vertices_counterclockwise(
     std::set<glm::vec3, VectorLessCounterClockwise> sorted{
         vertices.cbegin(), vertices.cend(),
         VectorLessCounterClockwise{center, plane}};
-    // assert(sorted.size() == vertices.size());
+    assert(sorted.size() == vertices.size());
     return sorted;
 }
 
-/** Solve for a 3-plane intersection. */
-bool _solve_3_plane_intersection(
-    Plane const &pl0, Plane const &pl1, Plane const &pl2, glm::vec3 *out)
+/** Solve `Ax = d` for `x`. */
+template<glm::length_t C, typename T>
+bool _cramer(glm::mat<C, C, T> const &A, glm::vec<C, T> const &d, glm::vec<C, T> *x)
 {
-    // Solve using Cramer's law.
-    glm::vec3 const a{pl0.a, pl1.a, pl2.a};
-    glm::vec3 const b{pl0.b, pl1.b, pl2.b};
-    glm::vec3 const c{pl0.c, pl1.c, pl2.c};
-    glm::vec3 const d{pl0.d, pl1.d, pl2.d};
-    auto const D = glm::determinant(glm::mat3{a, b, c});
-    if (glm::epsilonEqual(glm::length(d), 0.0f, glm::epsilon<float>()))
+    static constexpr float EPSILON = glm::epsilon<float>();
+    auto const &a = A[0];
+    auto const &b = A[1];
+    auto const &c = A[2];
+    auto const &D = glm::determinant(A);
+    if (glm::epsilonEqual(glm::length(d), 0.0f, EPSILON))
     {
         // Only solution is 0,0,0
-        if (glm::epsilonEqual(D, 0.0f, glm::epsilon<float>()))
+        if (glm::epsilonEqual(D, 0.0f, EPSILON))
         {
-            *out = {0.0f, 0.0f, 0.0f};
+            *x = {0.0f, 0.0f, 0.0f};
             return true;
         }
         // Infinite solutions
@@ -212,12 +188,12 @@ bool _solve_3_plane_intersection(
     else
     {
         // Single solution
-        if (glm::epsilonNotEqual(D, 0.0f, glm::epsilon<float>()))
+        if (glm::epsilonNotEqual(D, 0.0f, EPSILON))
         {
-            *out = {
-                -glm::determinant(glm::mat3{d, b, c}) / D,
-                -glm::determinant(glm::mat3{a, d, c}) / D,
-                -glm::determinant(glm::mat3{a, b, d}) / D};
+            *x = {
+                glm::determinant(glm::mat3{d, b, c}) / D,
+                glm::determinant(glm::mat3{a, d, c}) / D,
+                glm::determinant(glm::mat3{a, b, d}) / D};
             return true;
         }
         // No unique solution
@@ -227,43 +203,82 @@ bool _solve_3_plane_intersection(
     return false;
 }
 
+/**
+ * True if x is a valid solution to `b + Ax >= 0`.
+ * Rows of A come from plane.a,b,c; rows of b come from plane.d.
+ */
+bool _is_point_in_polygon(std::vector<Plane> const &planes, glm::vec3 const &x)
+{
+    static constexpr float EPSILON = 0.0001f;
+    for (size_t i = 0; i < planes.size(); ++i)
+    {
+        auto const b = -planes[i].d;
+        auto const Ax = -planes[i].a*x.x - planes[i].b*x.y - planes[i].c*x.z;
+        if (!(b + Ax >= -EPSILON))
+            return false;
+    }
+    return true;
+}
+
 /** Create a Mesh from a Brush's Planes. */
 auto _mesh_from_planes(MAP::Brush const &brush, TextureManager &textures)
 {
-    std::vector<Mesh> meshes{};
-    for (auto const &p0 : brush.planes)
+    // Convert Brush Planes to Planes.
+    std::vector<Plane> polygon{};
+    for (auto const &p : brush.planes)
+        polygon.emplace_back(p);
+
+    // Vertex enumeration.
+    // This brute-force method can produce duplicates, so we use an
+    // unordered_set to eliminate these.
+    std::unordered_set<glm::vec3> vertices{};
+    for (auto const &p0 : polygon)
     {
-        std::unordered_set<glm::vec3> points{};
-        Plane const pl0{p0};
-        for (auto const &p1 : brush.planes)
+        for (auto const &p1 : polygon)
         {
-            if (&p1 == &p0)
-                continue;
-            Plane const pl1{p1};
-            for (auto const &p2 : brush.planes)
+            for (auto const &p2 : polygon)
             {
-                if (&p2 == &p1 || &p2 == &p0)
-                    continue;
-                Plane const pl2{p2};
-                glm::vec3 point;
-                if (_solve_3_plane_intersection(pl0, pl1, pl2, &point))
-                    points.emplace(point);
+                glm::mat3 const B{
+                    -p0.a, -p1.a, -p2.a,
+                    -p0.b, -p1.b, -p2.b,
+                    -p0.c, -p1.c, -p2.c,
+                };
+                glm::vec3 const b_bar{-p0.d, -p1.d, -p2.d};
+                glm::vec3 x_bar;
+                // If `b_bar + B*x_bar = 0` has a unique solution, and that
+                // solution satisfies `b + A*x_bar >= 0`, output it.
+                if (_cramer(B, -b_bar, &x_bar))
+                    if (_is_point_in_polygon(polygon, x_bar))
+                        vertices.emplace(glm::round(x_bar));
             }
         }
+    }
+
+    // Build meshes from the plane vertices.
+    std::vector<Mesh> meshes{};
+    for (auto const &p : brush.planes)
+    {
+        // Find points that lie on the plane.
+        std::unordered_set<glm::vec3> plane_points{};
+        Plane const pl{p};
+        for (auto const &vertex : vertices)
+            if (pl.containsPoint(vertex))
+                plane_points.emplace(vertex);
         // Create the mesh and add the points to it.
         auto &mesh = meshes.emplace_back();
-        mesh.tex = p0.miptex;
-        for (auto const &point : _sort_vertices_counterclockwise(points, pl0))
+        mesh.tex = p.miptex;
+        auto const &sorted = _sort_vertices_counterclockwise(plane_points, pl);
+        for (auto const &point : sorted)
         {
-            assert(pl0.containsPoint(point));
+            assert(pl.containsPoint(point));
             // TODO: texcoord rotation
             auto const s = glm::normalize(
-                glm::vec3{p0.offx[0], p0.offx[1], p0.offx[2]});
+                glm::vec3{p.offx[0], p.offx[1], p.offx[2]});
             auto const t = glm::normalize(
-                glm::vec3{p0.offy[0], p0.offy[1], p0.offy[2]});
-            glm::vec2 const offset{p0.offx[3], p0.offy[3]};
-            glm::vec2 const scale{p0.scalex, p0.scaley};
-            auto const &texture = textures.at(p0.miptex);
+                glm::vec3{p.offy[0], p.offy[1], p.offy[2]});
+            glm::vec2 const offset{p.offx[3], p.offy[3]};
+            glm::vec2 const scale{p.scalex, p.scaley};
+            auto const &texture = textures.at(p.miptex);
             mesh.vbo.insert(
                 mesh.vbo.end(),
                 {   point.x, point.y, point.z,
@@ -389,14 +404,13 @@ MapViewer::MapViewer(Config &cfg)
         "MapShader"}
 ,   _map{}
 ,   _brushes{}
-,   _selected{cfg.maps_dir/"test.map"}
+,   _selected{""}
 ,   _camera{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 70.0f, 5.0f}
 ,   _wireframe{false}
 ,   _translation{0.0f, 0.0f, 0.0f}
 ,   _rotation{-90.0f, 0.0f, 0.0f}
 ,   _scale{0.005f}
 {
-    _loadSelectedMap();
 }
 
 void MapViewer::input(SDL_Event const *event)
@@ -578,7 +592,7 @@ void MapViewer::drawGL(float deltaT)
         {
             plane.texture.bind();
             glDrawElements(
-                GL_TRIANGLE_STRIP, plane.count, GL_UNSIGNED_INT, plane.indices);
+                GL_TRIANGLE_FAN, plane.count, GL_UNSIGNED_INT, plane.indices);
         }
     }
 }
