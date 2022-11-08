@@ -31,6 +31,8 @@
 #include <string>
 
 
+static float const default_mouse_sensitivity = 0.5f;
+
 char const *const APP_title = "Sickle Editor";
 std::string const APP_canon_name = "sickle";
 std::string const APP_version = "0.1.0";
@@ -96,6 +98,7 @@ APP_Config APP_handle_args(int argc, char *argv[])
         cfg.game_dir = "/";
     else
         cfg.game_dir = argv[3];
+    cfg.mouse_sensitivity = default_mouse_sensitivity;
     return cfg;
 }
 

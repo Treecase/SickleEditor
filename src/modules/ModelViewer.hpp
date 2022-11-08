@@ -19,17 +19,14 @@
 #ifndef _MODELVIEWER_HPP
 #define _MODELVIEWER_HPP
 
-#include "../common.hpp"
+#include "../OrbitCam.hpp"
+#include "../Transform.hpp"
 #include "../mdl/load_model.hpp"
 #include "../mdl/mdl2gl.hpp"
 #include "Module.hpp"
 
-#include <GL/glew.h>
-#include <glm/glm.hpp>
 #include <glutils/glutils.hpp>
-#include <SDL.h>
 
-#include <filesystem>
 #include <vector>
 
 
@@ -49,22 +46,14 @@ private:
     // Path to loaded MDL.
     std::filesystem::path _selected;
 
+    // Model transform.
+    Transform _transform;
+
     // Orbiting camera.
-    struct Camera {
-        glm::vec2 angle;    // x/y angle
-        GLfloat zoom;       // Distance from origin
-        GLfloat fov;        // FOV
-    } _camera;
+    OrbitCam _camera;
 
     // Wireframe display toggle.
     bool _wireframe;
-
-    // Model translation.
-    GLfloat _translation[3];
-    // Model rotation.
-    GLfloat _rotation[3];
-    // Model scaling.
-    GLfloat _scale;
 
     /** Called when _selected is updated. */
     void _loadSelectedModel();

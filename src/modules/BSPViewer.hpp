@@ -19,26 +19,16 @@
 #ifndef _BSPVIEWER_HPP
 #define _BSPVIEWER_HPP
 
-#include "../common.hpp"
+#include "../Transform.hpp"
 #include "../bsp/bsp2gl.hpp"
 #include "../bsp/load_bsp.hpp"
-#include "Module.hpp"
-
-#include <GL/glew.h>
-#include <glm/glm.hpp>
-#include <glutils/glutils.hpp>
-#include <SDL.h>
-
-#include <filesystem>
+#include "Base3DViewer.hpp"
 
 
 /** Displays BSP files. */
-class BSPViewer : public Module
+class BSPViewer : public Base3DViewer
 {
 private:
-    // Shader.
-    GLUtil::Program _shader;
-
     // Loaded map.
     BSP::BSP _map;
     // GL map.
@@ -46,23 +36,8 @@ private:
     // Path to loaded map.
     std::filesystem::path _selected;
 
-    // First-person camera.
-    struct Camera {
-        glm::vec3 pos;      // Position
-        glm::vec2 angle;    // x/y angle
-        GLfloat fov;        // FOV
-        GLfloat speed;      // Movement speed
-    } _camera;
-
-    // Wireframe display toggle.
-    bool _wireframe;
-
-    // Map translation.
-    GLfloat _translation[3];
-    // Map rotation.
-    GLfloat _rotation[3];
-    // Map scaling.
-    GLfloat _scale;
+    // Map transform.
+    Transform _transform;
 
     /** Called when _selected is updated. */
     void _loadSelectedMap();
@@ -70,9 +45,6 @@ private:
 
 public:
     BSPViewer(Config &cfg);
-
-    /** Handle user input. */
-    void input(SDL_Event const *event) override;
 
     /** Draw the module's UI. */
     void drawUI() override;

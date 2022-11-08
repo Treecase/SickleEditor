@@ -30,6 +30,7 @@ struct Config
     std::filesystem::path maps_dir;
     int *window_width,
         *window_height;
+    float mouse_sensitivity;
 };
 
 #endif

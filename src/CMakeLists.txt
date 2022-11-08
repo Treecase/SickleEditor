@@ -26,7 +26,7 @@ add_subdirectory(fgd)
 target_link_libraries(sickle PRIVATE fgd)
 
 add_subdirectory(map)
-target_link_libraries(sickle PRIVATE map)
+target_link_libraries(sickle PRIVATE map mapgl)
 
 add_subdirectory(mdl)
 target_link_libraries(sickle PRIVATE mdl)
