@@ -6,7 +6,7 @@ Open-source editor for GoldSrc.
 
 Pass the game directory.
 ```shell
-$ sickle ~/.steam/steam/steamapps/common/Half-Life
+$ sickle "~/.steam/steam/steamapps/common/Half-Life SDK/Hammer Editor/fgd/half-life/halflife.fgd" ./maps ~/.steam/steam/steamapps/common/Half-Life
 ```
 
 
@@ -14,11 +14,8 @@ $ sickle ~/.steam/steam/steamapps/common/Half-Life
 
 Install the required libraries:
 - [SDL2](https://libsdl.org)
-- [GLEW](http://glew.sourceforge.net/)
-- [glm](https://github.com/g-truc/glm)
-- [imgui](https://github.com/ocornut/imgui) (Included as a git submodule)
 
-Note that if you are building on Windows, the dependencies (except imgui) should be installed into the `externals` directory.
+Note that if you are building on Windows, the dependencies should be installed into the `externals` directory.
 
 Build the program:
 

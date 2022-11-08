@@ -43,30 +43,11 @@ if(MSVC)
         )
         add_library(SDL2::SDL2 ALIAS SDL2)
     endif()
-
-    if(NOT TARGET GLEW::GLEW)
-        add_library(glew INTERFACE)
-        target_include_directories(glew INTERFACE externals/glew-2.2.0/include)
-        target_link_libraries(glew INTERFACE
-            externals/glew-2.2.0/lib/Release/x64/glew32
-        )
-        add_library(GLEW::GLEW ALIAS glew)
-    endif()
-
-    # TODO: use submodule
-    if(NOT TARGET glm::glm)
-        add_library(glm INTERFACE)
-        target_include_directories(glm INTERFACE externals/glm)
-        add_library(glm::glm ALIAS glm)
-    endif()
 else()
     find_package(SDL2 REQUIRED)
-    find_package(GLEW REQUIRED)
-    if (NOT TARGET glm::glm)
-        find_package(glm REQUIRED)
-    endif()
 endif()
 
+# imgui library
 add_library(imgui OBJECT)
 target_sources(imgui PRIVATE
     extern/imgui/backends/imgui_impl_sdl.cpp
