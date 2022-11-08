@@ -45,6 +45,7 @@ if(MSVC)
     endif()
 else()
     find_package(SDL2 REQUIRED)
+    find_package(GLEW REQUIRED)
 endif()
 
 # imgui library

@@ -22,6 +22,7 @@
 #include "load_wad.hpp"
 #include "lumps.hpp"
 
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 

@@ -26,6 +26,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <cstring>
+
 
 /** A Plane in 3D space. */
 struct Plane

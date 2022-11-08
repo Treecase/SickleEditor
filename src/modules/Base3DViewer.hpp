@@ -48,7 +48,7 @@ protected:
 public:
     Base3DViewer(
         Config &cfg, std::string const &title, bool visible, bool glrender,
-        GLUtil::Program &shader, FreeCam &camera, bool wireframe,
+        GLUtil::Program &&shader, FreeCam &&camera, bool wireframe,
         float shift_multiplier
     )
     :   Module(cfg, title, visible, glrender)
