@@ -58,7 +58,11 @@ public:
     ,   running{true}
     {
         if (_modules.size() == 1)
+        {
             _activeGLDisplay = (*_modules.cbegin()).get();
+            (*_modules.cbegin())->gl_visible = true;
+            (*_modules.cbegin())->ui_visible = true;
+        }
     }
 
     /** Handle user input. */
@@ -83,28 +87,19 @@ public:
                 running = false;
             ImGui::EndMenu();
         }
-        if (_modules.size() != 1)
-        {
-            if (ImGui::BeginMenu("View"))
-            {
-                if (ImGui::MenuItem("<none>"))
-                    _activeGLDisplay = nullptr;
-                for (auto &module : _modules)
-                    if (ImGui::MenuItem(module->title.c_str()))
-                    {
-                        if (_activeGLDisplay)
-                            _activeGLDisplay->gl_visible = false;
-                        _activeGLDisplay = module.get();
-                        _activeGLDisplay->gl_visible = true;
-                    }
-                ImGui::EndMenu();
-            }
-        }
         if (ImGui::BeginMenu("Windows"))
         {
+            if (ImGui::MenuItem("<none>"))
+                _activeGLDisplay = nullptr;
             for (auto &module : _modules)
                 if (ImGui::MenuItem(module->title.c_str()))
+                {
+                    if (_activeGLDisplay)
+                        _activeGLDisplay->gl_visible = false;
+                    _activeGLDisplay = module.get();
+                    _activeGLDisplay->gl_visible = true;
                     module->ui_visible = true;
+                }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Help"))

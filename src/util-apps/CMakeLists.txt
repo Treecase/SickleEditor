@@ -17,7 +17,6 @@ add_executable(ListEntities ListEntities.cpp)
 target_include_directories(ListEntities PRIVATE "${PROJECT_BINARY_DIR}/include")
 target_link_libraries(ListEntities PRIVATE bsp wad)
 
-
 add_executable(PrintMap PrintMap.cpp)
 target_include_directories(PrintMap PRIVATE "${PROJECT_BINARY_DIR}/include")
 target_link_libraries(PrintMap PRIVATE map)
@@ -25,5 +24,20 @@ target_link_libraries(PrintMap PRIVATE map)
 add_executable(LoadFGD LoadFGD.cpp)
 target_include_directories(LoadFGD PRIVATE "${PROJECT_BINARY_DIR}/include")
 target_link_libraries(LoadFGD PRIVATE fgd)
+
+add_executable(ViewBSP ViewBSP.cpp ../ui_helpers.cpp ../modules/BSPViewer.cpp)
+target_include_directories(ViewBSP PRIVATE "${PROJECT_BINARY_DIR}/include")
+target_compile_features(ViewBSP PRIVATE cxx_std_17)
+target_link_libraries(ViewBSP PRIVATE imgui SDL2::SDL2 bsp wad)
+
+add_executable(ViewMDL ViewMDL.cpp ../ui_helpers.cpp ../modules/ModelViewer.cpp)
+target_include_directories(ViewMDL PRIVATE "${PROJECT_BINARY_DIR}/include")
+target_compile_features(ViewMDL PRIVATE cxx_std_17)
+target_link_libraries(ViewMDL PRIVATE imgui SDL2::SDL2 mdl)
+if(MSVC)
+    target_link_libraries(ViewMDL PRIVATE OpenGL32)
+else()
+    target_link_libraries(ViewMDL PRIVATE GL)
+endif()
 
 target_sources(sickle PRIVATE Sickle.cpp)

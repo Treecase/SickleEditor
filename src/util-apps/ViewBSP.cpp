@@ -1,5 +1,5 @@
 /**
- * Sickle.cpp - Sickle Editor entry point.
+ * ViewBSP.cpp - View .bsp files.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "../common.hpp"
 #include "version.hpp"
 
-#include "../modules/MapViewer.hpp"
+#include "../modules/BSPViewer.hpp"
 
 #include <iostream>
 #include <string>
@@ -28,12 +28,12 @@
 
 static float const default_mouse_sensitivity = 0.5f;
 
-char const *const APP_title = "Sickle Editor";
-std::string const APP_canon_name = "sickle";
+char const *const APP_title = "View BSP";
+std::string const APP_canon_name = "viewbsp";
 std::string const APP_version = "0.1.0";
 
 typedef Config APP_Config;
-typedef App<MapViewer> APP_Type;
+typedef App<BSPViewer> APP_Type;
 
 
 void APP_init_SDL()
@@ -50,8 +50,8 @@ void APP_init_OpenGL()
 void APP_print_usage(char const *name)
 {
     std::cout <<
-        "Usage: " << name << " GAMEDEF.fgd MAPSDIR [GAMEDIR]\n"
-        "Edit GoldSrc .map files.\n"
+        "Usage: " << name << " [GAMEDIR]\n"
+        "View .bsp files.\n"
         "\n";
 }
 
@@ -59,33 +59,19 @@ void APP_print_usage(char const *name)
 void print_usage_short(char const *name)
 {
     std::cout <<
-        "Usage: " << name << " GAMEDEF.fgd MAPSDIR [GAMEDIR]\n"
+        "Usage: " << name << " [GAMEDIR]\n"
         "Try '" << name << " --help' for more information.\n";
 }
 
 APP_Config APP_handle_args(int argc, char *argv[])
 {
+    if (argc > 2)
+    {
+        print_usage_short(argv[0]);
+        exit(EXIT_FAILURE);
+    }
     APP_Config cfg{};
-    // TODO: these shouldn't error out
-    if (argc < 2)
-    {
-        print_usage_short(argv[0]);
-        exit(EXIT_FAILURE);
-    }
-    else
-        cfg.game_def = argv[1];
-    if (argc < 3)
-    {
-        print_usage_short(argv[0]);
-        exit(EXIT_FAILURE);
-    }
-    else
-        cfg.maps_dir = argv[2];
-
-    if (argc < 4)
-        cfg.game_dir = "/";
-    else
-        cfg.game_dir = argv[3];
+    cfg.game_dir = argv[1];
     cfg.mouse_sensitivity = default_mouse_sensitivity;
     return cfg;
 }
