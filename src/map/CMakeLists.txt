@@ -20,9 +20,4 @@ add_library(mapgl OBJECT
     map2gl.cpp
 )
 
-target_link_libraries(mapgl PUBLIC map wad glutils::glutils GLEW::GLEW)
-if(MSVC)
-    target_link_libraries(mapgl PRIVATE OpenGL32)
-else()
-    target_link_libraries(mapgl PRIVATE GL)
-endif()
+target_link_libraries(mapgl PUBLIC map wad glutils::glutils GLEW::GLEW SickleGL)

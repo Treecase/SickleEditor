@@ -16,11 +16,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../App.hpp"
+#include "../SickleApp.hpp"
 #include "../common.hpp"
 #include "version.hpp"
-
-#include "../modules/MapViewer.hpp"
 
 #include <iostream>
 #include <string>
@@ -30,10 +28,10 @@ static float const default_mouse_sensitivity = 0.5f;
 
 char const *const APP_title = "Sickle Editor";
 std::string const APP_canon_name = "sickle";
-std::string const APP_version = "0.1.0";
+std::string const APP_version = SE_VERSION;
 
 typedef Config APP_Config;
-typedef App<MapViewer> APP_Type;
+typedef SickleApp APP_Type;
 
 
 void APP_init_SDL()

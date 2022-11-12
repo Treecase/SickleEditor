@@ -48,6 +48,14 @@ else()
     find_package(GLEW REQUIRED)
 endif()
 
+# GL library depends on platform, so define an alias for it
+add_library(SickleGL INTERFACE)
+if(WIN32)
+    target_link_libraries(SickleGL INTERFACE OpenGL32)
+else()
+    target_link_libraries(SickleGL INTERFACE GL)
+endif()
+
 # imgui library
 add_library(imgui OBJECT)
 target_sources(imgui PRIVATE
@@ -79,11 +87,8 @@ target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 add_subdirectory(src)
 
 
-# Linkage
-if(MSVC)
-    target_link_libraries(sickle PRIVATE OpenGL32)
-else()
-    target_link_libraries(sickle PRIVATE GL)
+if(MINGW)
+    target_link_libraries(sickle PRIVATE mingw32 SDL2::SDL2main)
 endif()
 
 target_link_libraries(sickle PRIVATE
@@ -91,6 +96,7 @@ target_link_libraries(sickle PRIVATE
     SDL2::SDL2
     GLEW::GLEW
     glm::glm
+    SickleGL
     glutils::glutils
     ${CMAKE_DL_LIBS}
 )

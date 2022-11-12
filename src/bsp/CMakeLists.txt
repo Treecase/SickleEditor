@@ -18,10 +18,4 @@ add_library(bsp OBJECT
     entities_lump.cpp
     load_bsp.cpp
 )
-target_link_libraries(bsp PUBLIC glutils::glutils GLEW::GLEW)
-# Linkage
-if(MSVC)
-    target_link_libraries(bsp PRIVATE OpenGL32)
-else()
-    target_link_libraries(bsp PRIVATE GL)
-endif()
+target_link_libraries(bsp PUBLIC glutils::glutils GLEW::GLEW SickleGL)
