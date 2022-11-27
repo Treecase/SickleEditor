@@ -15,6 +15,8 @@
 
 add_library(mdl OBJECT
     load_model.cpp
+)
+add_library(mdlgl OBJECT
     mdl2gl.cpp
 )
-target_link_libraries(mdl PUBLIC glutils::glutils)
+target_link_libraries(mdlgl PUBLIC glutils::glutils)

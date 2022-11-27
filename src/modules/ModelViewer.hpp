@@ -40,7 +40,7 @@ private:
     // Loaded MDL.
     MDL::Model _model;
     // Model GL data.
-    GLMDL _glmodel;
+    MDL::GLMDL _glmodel;
     // List of loaded MDL's associated GL textures.
     std::vector<GLUtil::Texture> _textures;
     // Path to loaded MDL.
@@ -57,7 +57,6 @@ private:
 
     /** Called when _selected is updated. */
     void _loadSelectedModel();
-    void _loadModel();
 
 public:
     ModelViewer(Config &cfg);

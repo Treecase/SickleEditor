@@ -22,7 +22,7 @@ add_subdirectory(modules)
 add_subdirectory(gtk)
 
 add_subdirectory(bsp)
-target_link_libraries(sickle PRIVATE bsp)
+target_link_libraries(sickle PRIVATE bsp bspgl)
 
 add_subdirectory(fgd)
 target_link_libraries(sickle PRIVATE fgd)
@@ -31,7 +31,7 @@ add_subdirectory(map)
 target_link_libraries(sickle PRIVATE map mapgl)
 
 add_subdirectory(mdl)
-target_link_libraries(sickle PRIVATE mdl)
+target_link_libraries(sickle PRIVATE mdl mdlgl)
 
 add_subdirectory(wad)
 target_link_libraries(sickle PRIVATE wad)

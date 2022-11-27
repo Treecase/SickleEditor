@@ -19,8 +19,9 @@
 #ifndef _UI_HELPERS_HPP
 #define _UI_HELPERS_HPP
 
-#include "Transform.hpp"
 #include "FreeCam.hpp"
+#include "OrbitCam.hpp"
+#include "Transform.hpp"
 
 #include <imgui.h>
 
@@ -42,8 +43,11 @@ namespace ImGui
     /** ImGui config for Transform objects. */
     bool Transform(::Transform *transform, bool uniform_scale=true);
 
-    /** ImGui Camera config menu. */
+    /** ImGui FreeCam config menu. */
     void FreeCam(::FreeCam *cam);
+
+    /** ImGui OrbitCam config menu. */
+    void OrbitCam(::OrbitCam *cam);
 }
 
 #endif

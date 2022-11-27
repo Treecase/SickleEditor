@@ -29,45 +29,10 @@ static float const MIN_ZOOM = 0.5f;
 ModelViewer::ModelViewer(Config &cfg)
 :   Module{cfg, "Model Viewer", false, false}
 ,   _shader{{
-        GLUtil::shader_from_file(
-            "shaders/model.vert", GL_VERTEX_SHADER),
-        GLUtil::shader_from_file(
-            "shaders/model.frag", GL_FRAGMENT_SHADER)},
+        GLUtil::shader_from_file("shaders/model.vert", GL_VERTEX_SHADER),
+        GLUtil::shader_from_file("shaders/model.frag", GL_FRAGMENT_SHADER)},
         "ModelShader"}
-,   _model{
-        "<none>",
-        {   // bodyparts
-            {   "QuadBodyPart",
-                {   // models
-                    {   "QuadModel",
-                        {   // meshes
-                            {   {   // tricmds
-                                    {   false,
-                                        {   // vertices
-                                            {3, 0, 1,1},
-                                            {1, 0, 0,1},
-                                            {2, 0, 1,0},
-                                            {0, 0, 0,0}}}},
-                                0}
-                        },
-                        {   // vertices
-                            { 1.0f, 1.0f, 0.0f}, // tl
-                            { 1.0f,-1.0f, 0.0f}, // bl
-                            {-1.0f, 1.0f, 0.0f}, // tr
-                            {-1.0f,-1.0f, 0.0f}  // br
-                        }}}}},
-        {   // textures
-            {   "<none>",
-                2, 2,
-                {0,1,2,3},
-                {   0xff,0x00,0x00,
-                    0x00,0xff,0x00,
-                    0x00,0x00,0xff,
-                    0xff,0xff,0xff}}},
-        {   // skinref
-            0
-        }
-    }
+,   _model{}
 ,   _glmodel{}
 ,   _textures{}
 ,   _selected{""}
@@ -75,7 +40,6 @@ ModelViewer::ModelViewer(Config &cfg)
 ,   _wireframe{false}
 ,   _transform{}
 {
-    _loadModel();
 }
 
 void ModelViewer::input(SDL_Event const *event)
@@ -93,10 +57,16 @@ void ModelViewer::input(SDL_Event const *event)
         auto modstate = SDL_GetModState();
         // Scroll with ALT pressed to change FOV.
         if (modstate & KMOD_ALT)
-            _camera.setFOV(_camera.fov - _cfg.mouse_sensitivity * event->wheel.y);
+        {
+            _camera.setFOV(
+                _camera.fov - _cfg.mouse_sensitivity * event->wheel.y);
+        }
         // Scroll with nothing pressed to zoom.
         else
-            _camera.setZoom(_camera.zoom - _cfg.mouse_sensitivity * event->wheel.y);
+        {
+            _camera.setZoom(
+                _camera.zoom - _cfg.mouse_sensitivity * event->wheel.y);
+        }
         break;}
     case SDL_KEYDOWN:{
         // Toggle wireframe with Z key.
@@ -118,7 +88,7 @@ void ModelViewer::drawUI()
     {
         ImGui::TextUnformatted(("Model: " + _model.name).c_str());
         if (ImGui::CollapsingHeader("Camera"))
-            _camera.imgui();
+            ImGui::OrbitCam(&_camera);
         if (ImGui::CollapsingHeader("Model Transform"))
             ImGui::Transform(&_transform);
         ImGui::Separator();
@@ -168,35 +138,20 @@ void ModelViewer::drawGL(float deltaT)
 
     // Draw model.
     _shader.use();
-    _glmodel.vao->bind();
-    _glmodel.ebo->bind();
     glActiveTexture(GL_TEXTURE0);
-    auto const &tex = _textures[0];
-    tex.bind();
     _shader.setUniformS("model", modelMatrix);
     _shader.setUniformS("view", _camera.getViewMatrix());
     _shader.setUniformS("projection", projectionMatrix);
     _shader.setUniformS("tex", 0);
-    for (size_t i = 0; i < _glmodel.count.size(); ++i)
-    {
-        _textures.at(_glmodel.texture.at(i)).bind();
-        glDrawElements(
-            GL_TRIANGLES, _glmodel.count.at(i), GL_UNSIGNED_INT,
-            _glmodel.indices.at(i));
-    }
+    _glmodel.render(_textures);
 }
 
 
 void ModelViewer::_loadSelectedModel()
 {
-    _model = MDL::load_mdl(_selected.string());
-    _loadModel();
-}
-
-void ModelViewer::_loadModel()
-{
+    _model = MDL::load(_selected.string());
     _textures.clear();
     for (auto const &t : _model.textures)
         _textures.push_back(texture2GLTexture(t));
-    _glmodel = model2vao(_model);
+    _glmodel = MDL::GLMDL{_model};
 }

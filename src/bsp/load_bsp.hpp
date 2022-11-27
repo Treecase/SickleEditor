@@ -28,7 +28,7 @@
 
 namespace BSP
 {
-    typedef float vec3[3];
+    using vec3 = float[3];
 
     struct BBox
     {
@@ -155,7 +155,7 @@ namespace BSP
     };
 
     /** Load a .bsp file. */
-    BSP load_bsp(std::string const &path);
+    BSP load(std::string const &path);
 }
 
 #endif

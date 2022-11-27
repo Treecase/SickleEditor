@@ -49,7 +49,7 @@ int APP_run(APP_Config const &filenames)
 {
     for (auto const &filename : filenames)
     {
-        auto map = MAP::load_map(filename);
+        auto map = MAP::load(filename);
         std::cout << "<map " << filename << ">\n";
         for (auto const &entity : map.entities)
         {

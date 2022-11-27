@@ -41,7 +41,6 @@ private:
 
     /** Called when _selected is updated. */
     void _loadSelectedMap();
-    void _loadMap();
 
 public:
     BSPViewer(Config &cfg);

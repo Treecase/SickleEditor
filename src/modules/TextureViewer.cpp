@@ -172,7 +172,7 @@ void TextureViewer::_loadSelectedModel_MDL()
     catch (std::out_of_range const &)
     {
     }
-    _models[_selected_model] = MDL::load_mdl(_selected_model);
+    _models[_selected_model] = MDL::load(_selected_model);
 }
 
 void TextureViewer::_loadSelectedModel_GL()

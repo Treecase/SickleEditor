@@ -34,36 +34,15 @@ class MapViewer : public Base3DViewer
 private:
     // Loaded map.
     MAP::Map _map;
-    /** GL representation of a Brush Plane. */
-    struct GLPlane
-    {
-        GLUtil::Texture texture;
-        GLsizei count;
-        void *indices;
-    };
-    /** GL representation of a Brush. */
-    struct GLBrush
-    {
-        std::vector<GLPlane> planes;
-        GLUtil::VertexArray vao;
-        GLUtil::Buffer vbo, ebo;
-
-        GLBrush(
-            std::vector<GLPlane> const &planes,
-            std::vector<GLfloat> const &vbodata,
-            std::vector<GLuint> const &ebodata);
-    };
-    std::vector<std::shared_ptr<GLBrush>> _brushes;
+    MAP::GLMap _glmap;
     // Path to loaded map.
     std::filesystem::path _selected;
 
     // Map transform
     Transform _transform;
 
-    GLBrush *_brush2gl(MAP::Brush const &brush, MAP::TextureManager &textures);
     /** Called when _selected is updated. */
     void _loadSelectedMap();
-    void _loadMap();
 
 public:
     MapViewer(Config &cfg);

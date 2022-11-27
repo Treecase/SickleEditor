@@ -50,6 +50,5 @@ Sickle::AppWin *Sickle::AppWin::create()
 
 void Sickle::AppWin::open(Glib::RefPtr<Gio::File> const &file)
 {
-    auto map = MAP::load_map(file->get_path());
-    m_maparea->set_map(map);
+    m_maparea->set_map(MAP::load(file->get_path()));
 }

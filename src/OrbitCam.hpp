@@ -21,12 +21,12 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include <imgui.h>
 
 
 /** Orbiting Camera. */
-struct OrbitCam
+class OrbitCam
 {
+public:
     glm::vec2 angle;        // x/y angle
     float zoom;             // Distance from origin
     float fov;              // FOV
@@ -79,20 +79,6 @@ struct OrbitCam
                 glm::cross(up, pos)),
             angle.x,
             up);
-    }
-
-
-    /** ImGui Camera config menu. */
-    void imgui()
-    {
-        // FOV
-        ImGui::SliderFloat("FOV", &fov, min_fov, max_fov);
-        // Rotation
-        float angle_[2] = {glm::degrees(angle.x), glm::degrees(angle.y)};
-        ImGui::DragFloat2("Angle", angle_);
-        setAngle({glm::radians(angle_[0]), glm::radians(angle_[1])});
-        // Zoom
-        ImGui::DragFloat("Zoom", &zoom, 0.1f, min_zoom, FLT_MAX);
     }
 };
 

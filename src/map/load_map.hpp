@@ -36,22 +36,26 @@ namespace MAP
         float rotation;
         float scalex, scaley;
     };
+
     struct Brush
     {
         std::vector<Plane> planes;
     };
+
     struct Entity
     {
         std::unordered_map<std::string, std::string> properties;
         std::vector<Brush> brushes;
     };
+
     struct Map
     {
         std::vector<Entity> entities;
     };
 
+
     /** Parse a .map file. */
-    Map load_map(std::string const &path);
+    Map load(std::string const &path);
 }
 
 #endif

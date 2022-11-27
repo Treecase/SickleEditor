@@ -402,7 +402,7 @@ public:
 };
 
 
-MDL::Model MDL::load_mdl(std::string const &path)
+MDL::Model MDL::load(std::string const &path)
 {
     MDLLoader con{path};
     return con.getResult();

@@ -32,30 +32,6 @@
 #include <filesystem>
 
 
-/** GL representation of a Brush Plane. */
-struct GLPlane
-{
-    GLUtil::Texture texture;
-    GLsizei count;
-    void *indices;
-};
-
-/** GL representation of a Brush. */
-struct GLBrush
-{
-    std::vector<GLPlane> planes;
-    GLUtil::VertexArray vao;
-    GLUtil::Buffer vbo, ebo;
-
-    GLBrush(
-        std::vector<GLPlane> const &planes,
-        std::vector<GLfloat> const &vbodata,
-        std::vector<GLuint> const &ebodata);
-
-    static GLBrush *create_from_map_brush(MAP::Brush const &brush, MAP::TextureManager &textures);
-};
-
-
 namespace Sickle
 {
     /** Displays .map files. */
@@ -78,8 +54,7 @@ namespace Sickle
         Glib::RefPtr<Gtk::Builder> m_refBuilder;
 
         // Loaded map.
-        MAP::Map _map;
-        std::vector<std::shared_ptr<GLBrush>> _brushes;
+        MAP::GLMap _glmap;
 
     private:
         // Shader.
@@ -95,10 +70,6 @@ namespace Sickle
 
         // Map transform
         Transform _transform;
-
-        GLuint _vao;
-        GLuint _vbo;
-        GLuint _program;
     };
 }
 

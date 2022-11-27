@@ -25,69 +25,41 @@
 
 #include <cstring>
 
-#define TEXTURE_SCALING 0.01f
 
+/** Format for buffered vertex data. */
+struct BSPVertexDef
+{
+    GLfloat x, y, z;    // Position
+    GLfloat s, t;       // UV
+};
 
-namespace BSP {
-    /** So VertexDef can be used in unordered_map. */
-    bool operator==(VertexDef const &lhs, VertexDef const &rhs)
-    {
-        return (
-            lhs.x == rhs.x
-            && lhs.y == rhs.y
-            && lhs.z == rhs.z
-            && lhs.s == rhs.s
-            && lhs.t == rhs.t
-        );
-    }
+/** So BSPVertexDef can be used in unordered_map. */
+bool operator==(BSPVertexDef const &lhs, BSPVertexDef const &rhs)
+{
+    return (
+        lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z
+        && lhs.s == rhs.s && lhs.t == rhs.t
+    );
 }
 
 /** So BSPVertexDef can be used in unordered_map. */
 template<>
-struct std::hash<BSP::VertexDef>
+struct std::hash<BSPVertexDef>
 {
-    size_t operator()(BSP::VertexDef const &v) const noexcept
+    size_t operator()(BSPVertexDef const &v) const noexcept
     {
-        return (
-            std::hash<GLfloat>{}(v.x)
-            ^ std::hash<GLfloat>{}(v.y)
-            ^ std::hash<GLfloat>{}(v.z)
-            ^ std::hash<GLfloat>{}(v.s)
-            ^ std::hash<GLfloat>{}(v.t)
-        );
+        std::hash<GLfloat> h{};
+        return h(v.x) ^ h(v.y) ^ h(v.z) ^ h(v.s) ^ h(v.t);
     }
 };
 
-/** Convert BSP paletted texture data to RGBA format. */
-std::vector<uint8_t *> depalettize(WAD::TexLump const &lump)
-{
-    std::vector<uint8_t *> rgba_textures{};
-
-    auto const textures = {lump.tex1, lump.tex2, lump.tex4, lump.tex8};
-    for (auto const &tex : textures)
-    {
-        auto rgba = new uint8_t[tex.size() * 4];
-        for (size_t i = 0, j = 0; i < tex.size(); ++i, j += 4)
-        {
-            auto color = lump.palette[tex[i]];
-            rgba[j+0] = color[0];
-            rgba[j+1] = color[1];
-            rgba[j+2] = color[2];
-            rgba[j+3] = 0xff;
-        }
-        rgba_textures.push_back(rgba);
-    }
-    return rgba_textures;
-}
-
-
+/** Context for BSP GL conversion. */
 class BSP2GL_Context
 {
 private:
-    std::unordered_map<BSP::VertexDef, size_t> _vertIdx{};
-    std::vector<BSP::VertexDef> _vboData;
+    std::unordered_map<BSPVertexDef, size_t> _vertIdx{};
+    std::vector<BSPVertexDef> _vboData;
     std::vector<GLuint> _eboData;
-
 
 public:
     BSP2GL_Context()
@@ -97,8 +69,7 @@ public:
     {
     }
 
-
-    GLuint addVertex(BSP::VertexDef const &v)
+    GLuint addVertex(BSPVertexDef const &v)
     {
         GLuint n = 0;
         try
@@ -125,7 +96,43 @@ public:
 };
 
 
-BSP::GLBSP BSP::bsp2gl(BSP const &bsp, std::string const &game_dir)
+/** Convert BSP paletted texture data to RGBA format. */
+std::vector<uint8_t *> depalettize(WAD::TexLump const &lump)
+{
+    std::vector<uint8_t *> rgba_textures{};
+
+    auto const textures = {lump.tex1, lump.tex2, lump.tex4, lump.tex8};
+    for (auto const &tex : textures)
+    {
+        auto rgba = new uint8_t[tex.size() * 4];
+        for (size_t i = 0, j = 0; i < tex.size(); ++i, j += 4)
+        {
+            auto color = lump.palette[tex[i]];
+            rgba[j+0] = color[0];
+            rgba[j+1] = color[1];
+            rgba[j+2] = color[2];
+            rgba[j+3] = 0xff;
+        }
+        rgba_textures.push_back(rgba);
+    }
+    return rgba_textures;
+}
+
+
+/* ===[ GLBSP ]=== */
+BSP::GLBSP::GLBSP()
+:   models{}
+,   vao{nullptr}
+,   vbo{nullptr}
+,   ebo{nullptr}
+{
+}
+
+BSP::GLBSP::GLBSP(BSP const &bsp, std::string const &game_dir)
+:   models{}
+,   vao{new GLUtil::VertexArray{"mapVAO"}}
+,   vbo{new GLUtil::Buffer{GL_ARRAY_BUFFER, "mapVBO"}}
+,   ebo{new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, "mapEBO"}}
 {
     struct GLMeshData
     {
@@ -144,8 +151,8 @@ BSP::GLBSP BSP::bsp2gl(BSP const &bsp, std::string const &game_dir)
     // the VBO.
     BSP2GL_Context context{};
 
-    std::vector<GLModelData> models{};
-    models.reserve(bsp.models.size());
+    std::vector<GLModelData> modeldata{};
+    modeldata.reserve(bsp.models.size());
 
     // Iterate over models in the map.
     for (auto const &model : bsp.models)
@@ -231,17 +238,16 @@ BSP::GLBSP BSP::bsp2gl(BSP const &bsp, std::string const &game_dir)
                 mesh.ebo.push_back(context.newFace());
             }
         }
-        models.push_back(model_data);
+        modeldata.push_back(model_data);
     }
 
-    GLBSP out{};
-    std::vector<VertexDef> vboData = context.getVBO();
+    std::vector<BSPVertexDef> vboData = context.getVBO();
     std::vector<GLuint> eboData{};
 
     // Now that we have all the vertices in the Context VBO, we can flatten our
     // models' separate EBOs into one big one, which we'll actually send to GPU.
     auto const textures = getTextures(bsp, game_dir);
-    for (auto const &model : models)
+    for (auto const &model : modeldata)
     {
         GLModel glmodel{};
         for (size_t i = 0; i < model.meshes.size(); ++i)
@@ -254,31 +260,43 @@ BSP::GLBSP BSP::bsp2gl(BSP const &bsp, std::string const &game_dir)
             });
             eboData.insert(eboData.end(), mesh.ebo.cbegin(), mesh.ebo.cend());
         }
-        out.models.push_back(glmodel);
+        models.push_back(glmodel);
     }
 
-    out.vao.reset(new GLUtil::VertexArray{"mapVAO"});
-    out.vao->bind();
+    vao->bind();
+    vbo->bind();
+    vbo->buffer(GL_STATIC_DRAW, vboData);
+    ebo->bind();
+    ebo->buffer(GL_STATIC_DRAW, eboData);
 
-    out.vbo.reset(new GLUtil::Buffer{GL_ARRAY_BUFFER, "mapVBO"});
-    out.vbo->bind();
-    out.vbo->buffer(GL_STATIC_DRAW, vboData);
+    vao->enableVertexAttribArray(
+        0, 3, GL_FLOAT, sizeof(BSPVertexDef), offsetof(BSPVertexDef, x));
+    vao->enableVertexAttribArray(
+        1, 2, GL_FLOAT, sizeof(BSPVertexDef), offsetof(BSPVertexDef, s));
 
-    out.ebo.reset(new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, "mapEBO"});
-    out.ebo->bind();
-    out.ebo->buffer(GL_STATIC_DRAW, eboData);
-
-    out.vao->enableVertexAttribArray(
-        0, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, x));
-    out.vao->enableVertexAttribArray(
-        1, 2, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, s));
-
-    out.ebo->unbind();
-    out.vbo->unbind();
-    out.vao->unbind();
-
-    return out;
+    ebo->unbind();
+    vbo->unbind();
+    vao->unbind();
 }
+
+void BSP::GLBSP::render()
+{
+    vao->bind();
+    ebo->bind();
+    glEnable(GL_PRIMITIVE_RESTART);
+    glPrimitiveRestartIndex(-1);
+    for (auto const &model : models)
+    {
+        auto const &position = model.position;
+        for (auto const &mesh : model.meshes)
+        {
+            mesh.tex.bind();
+            glDrawElements(
+                GL_TRIANGLE_FAN, mesh.count, GL_UNSIGNED_INT, mesh.indices);
+        }
+    }
+}
+
 
 static std::vector<WAD::WAD> BSP_wads;
 

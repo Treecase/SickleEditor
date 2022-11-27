@@ -33,17 +33,6 @@
 
 namespace MAP
 {
-    // TODO: move this into glutil?
-    /**
-     * A Mesh, containing a texture name, vertex data, and element buffer data.
-     */
-    struct Mesh
-    {
-        std::string tex;
-        std::vector<GLfloat> vbo{};
-        std::vector<GLuint> ebo{};
-    };
-
     /** Wraps GLUtil's Texture, to keep some additional information we need. */
     struct MapTexture
     {
@@ -54,11 +43,46 @@ namespace MAP
         MapTexture(WAD::TexLump const &texlump);
     };
 
+    using TextureManager = WAD::TextureManager<MapTexture>;
 
-    typedef WAD::TextureManager<MapTexture> TextureManager;
-    /** Create a Mesh from a Brush's Planes. */
-    std::vector<Mesh> mesh_from_planes(
-        MAP::Brush const &brush, TextureManager &textures);
+    /** GL representation of a Brush Plane. */
+    struct GLPlane
+    {
+        GLUtil::Texture texture;
+        GLsizei count;
+        void *indices;
+    };
+
+    /** GL representation of a Brush. */
+    struct GLBrush
+    {
+        std::vector<GLPlane> planes;
+        GLUtil::VertexArray vao;
+        GLUtil::Buffer vbo, ebo;
+
+        GLBrush(
+            std::vector<GLPlane> const &planes,
+            std::vector<GLfloat> const &vbodata,
+            std::vector<GLuint> const &ebodata);
+
+        /** Create a new GLBrush from a Brush. */
+        static GLBrush *new_from_brush(
+            Brush const &brush, TextureManager &textures);
+    };
+
+    class GLMap
+    {
+    public:
+        GLMap();
+        /** Transform map Brush to GL brush. */
+        GLMap(Map const &map);
+
+        /** Draw a GLMap. */
+        void render();
+
+    private:
+        std::vector<std::shared_ptr<GLBrush>> _brushes;
+    };
 };
 
 #endif

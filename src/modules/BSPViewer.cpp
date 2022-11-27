@@ -25,10 +25,8 @@
 BSPViewer::BSPViewer(Config &cfg)
 :   Base3DViewer{cfg, "BSP Viewer", false, false,
         GLUtil::Program{{
-            GLUtil::shader_from_file(
-                "shaders/map.vert", GL_VERTEX_SHADER),
-            GLUtil::shader_from_file(
-                "shaders/map.frag", GL_FRAGMENT_SHADER)},
+            GLUtil::shader_from_file("shaders/map.vert", GL_VERTEX_SHADER),
+            GLUtil::shader_from_file("shaders/map.frag", GL_FRAGMENT_SHADER)},
             "BSPShader"},
         FreeCam{},
         false,
@@ -42,7 +40,6 @@ BSPViewer::BSPViewer(Config &cfg)
         {glm::radians(-90.0f), 0.0f, 0.0f},
         {0.005f, 0.005f, 0.005f}}
 {
-    _loadMap();
 }
 
 void BSPViewer::drawUI()
@@ -98,37 +95,16 @@ void BSPViewer::drawGL(float deltaT)
 
     // Draw models.
     _shader.use();
-    _glbsp.vao->bind();
-    _glbsp.ebo->bind();
     glActiveTexture(GL_TEXTURE0);
     _shader.setUniformS("view", _camera.getViewMatrix());
     _shader.setUniformS("projection", projectionMatrix);
     _shader.setUniformS("tex", 0);
-
-    glEnable(GL_PRIMITIVE_RESTART);
-    glPrimitiveRestartIndex(-1);
-    for (auto const &model : _glbsp.models)
-    {
-        auto const &position = model.position;
-        _shader.setUniformS("model", modelMatrix);
-
-        for (auto const &mesh : model.meshes)
-        {
-            mesh.tex.bind();
-            glDrawElements(
-                GL_TRIANGLE_FAN, mesh.count, GL_UNSIGNED_INT, mesh.indices);
-        }
-    }
+    _glbsp.render();
 }
 
 
 void BSPViewer::_loadSelectedMap()
 {
-    _map = BSP::load_bsp(_selected.string());
-    _loadMap();
-}
-
-void BSPViewer::_loadMap()
-{
-    _glbsp = BSP::bsp2gl(_map, _cfg.game_dir.string());
+    _map = BSP::load(_selected.string());
+    _glbsp = BSP::GLBSP{_map, _cfg.game_dir.string()};
 }

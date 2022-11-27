@@ -185,7 +185,7 @@ std::vector<BSP::Texture> extract_textures(std::vector<uint8_t> const &lump)
 
 
 /** Load a .bsp file. */
-BSP::BSP BSP::load_bsp(std::string const &path)
+BSP::BSP BSP::load(std::string const &path)
 {
     std::ifstream f{path, std::ios::in | std::ios::binary};
     if (!f.is_open())

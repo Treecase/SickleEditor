@@ -24,36 +24,50 @@
 template<typename T> T min(T a, T b) {return a < b? a : b;}
 
 
-/** Used by MDL2GL, so VertexDef can be used in unordered_map. */
-bool operator==(VertexDef const &lhs, VertexDef const &rhs)
+/** Format for buffered vertex data. */
+struct MDLVertexDef
+{
+    GLfloat x, y, z;    // Position
+    GLfloat s, t;       // UV
+    GLfloat r, g, b;    // Vertex color
+};
+
+struct MeshDef
+{
+    // VBO data.
+    std::vector<MDLVertexDef> vertices;
+    // EBO data.
+    std::vector<GLuint> indices;
+};
+
+struct ModelDef
+{
+    // Model meshes.
+    std::vector<MeshDef> meshes;
+};
+
+
+/** Used by MDL2GL, so MDLVertexDef can be used in unordered_map. */
+bool operator==(MDLVertexDef const &lhs, MDLVertexDef const &rhs)
 {
     return (
-        lhs.x == rhs.x
-        && lhs.y == rhs.y
-        && lhs.z == rhs.z
-        && lhs.s == rhs.s
-        && lhs.t == rhs.t
-        && lhs.r == rhs.r
-        && lhs.g == rhs.g
-        && lhs.b == rhs.b
+        lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z
+        && lhs.s == rhs.s && lhs.t == rhs.t
+        && lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b
     );
 }
 
-/** Used by MDL2GL, so VertexDef can be used in unordered_map. */
+/** Used by MDL2GL, so MDLVertexDef can be used in unordered_map. */
 template<>
-struct std::hash<VertexDef>
+struct std::hash<MDLVertexDef>
 {
-    size_t operator()(VertexDef const &v) const noexcept
+    size_t operator()(MDLVertexDef const &v) const noexcept
     {
+        std::hash<GLfloat> const h{};
         return (
-            std::hash<GLfloat>{}(v.x)
-            ^ std::hash<GLfloat>{}(v.y)
-            ^ std::hash<GLfloat>{}(v.z)
-            ^ std::hash<GLfloat>{}(v.s)
-            ^ std::hash<GLfloat>{}(v.t)
-            ^ std::hash<GLfloat>{}(v.r)
-            ^ std::hash<GLfloat>{}(v.g)
-            ^ std::hash<GLfloat>{}(v.b)
+            h(v.x) ^ h(v.y) ^ h(v.z)
+            ^ h(v.s) ^ h(v.t)
+            ^ h(v.r) ^ h(v.g) ^ h(v.b)
         );
     }
 };
@@ -64,14 +78,14 @@ class MDL2GL
 private:
     /* VBO/EBO data. */
     // Vertex definitions. (position, uvs, etc.)
-    std::vector<VertexDef> _vboData;
+    std::vector<MDLVertexDef> _vboData;
     // Reference the vertices in _vboData to define the actual triangles of the
     // model.
     std::vector<GLuint> _eboData;
 
     // Instead of having to search through _vboData directly to check if a
     // vertex already exists, this maps its index directly for quick lookup.
-    std::unordered_map<VertexDef, GLuint> _vertIdx;
+    std::unordered_map<MDLVertexDef, GLuint> _vertIdx;
 
     /* glDrawElements data. */
     // Contains the number of vertices in each mesh.
@@ -93,7 +107,7 @@ private:
         MDL::Texture const &texture)
     {
         auto p = vertices.at(v.position_index);
-        VertexDef vd{
+        MDLVertexDef vd{
             p.x, p.y, p.z,
             v.uv_s / (float)(texture.w-1), v.uv_t / (float)(texture.h-1),
             1.0f, 1.0f, 1.0f
@@ -181,7 +195,70 @@ public:
 };
 
 
-GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
+/* ===[ GLMDL ]=== */
+MDL::GLMDL::GLMDL()
+:   count{}
+,   indices{}
+,   texture{}
+,   vao{nullptr}
+,   vbo{nullptr}
+,   ebo{nullptr}
+{
+}
+
+MDL::GLMDL::GLMDL(MDL::Model const &model)
+:   count{}
+,   indices{}
+,   texture{}
+,   vao{new GLUtil::VertexArray{model.name + "VAO"}}
+,   vbo{new GLUtil::Buffer{GL_ARRAY_BUFFER, model.name + "VBO"}}
+,   ebo{new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, model.name + "EBO"}}
+{
+    MDL2GL glmdl{model};
+
+    count = glmdl.getCount();
+    indices = glmdl.getIndices();
+    texture = glmdl.getTextureIndices();
+
+    // Create the VAO.
+    vao->bind();
+
+    // Buffer the vertex data.
+    vbo->bind();
+    vbo->buffer(GL_STATIC_DRAW, glmdl.getVBO());
+
+    // Buffer the index data.
+    ebo->bind();
+    ebo->buffer(GL_STATIC_DRAW, glmdl.getEBO());
+
+    // Populate vertex positions array.
+    vao->enableVertexAttribArray(
+        0, 3, GL_FLOAT, sizeof(MDLVertexDef), offsetof(MDLVertexDef, x));
+    // Populate vertex UV array.
+    vao->enableVertexAttribArray(
+        1, 2, GL_FLOAT, sizeof(MDLVertexDef), offsetof(MDLVertexDef, s));
+    // Populate vertex color array.
+    vao->enableVertexAttribArray(
+        2, 3, GL_FLOAT, sizeof(MDLVertexDef), offsetof(MDLVertexDef, r));
+
+    ebo->unbind();
+    vbo->unbind();
+    vao->unbind();
+}
+
+void MDL::GLMDL::render(std::vector<GLUtil::Texture> const &textures)
+{
+    vao->bind();
+    ebo->bind();
+    for (size_t i = 0; i < count.size(); ++i)
+    {
+        textures.at(texture[i]).bind();
+        glDrawElements(GL_TRIANGLES, count[i], GL_UNSIGNED_INT, indices[i]);
+    }
+}
+
+
+GLUtil::Texture MDL::texture2GLTexture(MDL::Texture const &texture)
 {
     // Calculate resized power-of-two dimensions.
     int resized_w = texture.w > 256? 256 : 1;
@@ -242,45 +319,4 @@ GLUtil::Texture texture2GLTexture(MDL::Texture const &texture)
     delete[] unpaletted;
     t.unbind();
     return t;
-}
-
-GLMDL model2vao(MDL::Model const &model)
-{
-    MDL2GL glmdl{model};
-    GLMDL out{};
-
-    out.count = glmdl.getCount();
-    out.indices = glmdl.getIndices();
-    out.texture = glmdl.getTextureIndices();
-
-    // Create the VAO.
-    out.vao.reset(new GLUtil::VertexArray{model.name + "VAO"});
-    out.vao->bind();
-
-    // Buffer the vertex data.
-    out.vbo.reset(new GLUtil::Buffer{GL_ARRAY_BUFFER, model.name + "VBO"});
-    out.vbo->bind();
-    out.vbo->buffer(GL_STATIC_DRAW, glmdl.getVBO());
-
-    // Buffer the index data.
-    out.ebo.reset(
-        new GLUtil::Buffer{GL_ELEMENT_ARRAY_BUFFER, model.name + "EBO"});
-    out.ebo->bind();
-    out.ebo->buffer(GL_STATIC_DRAW, glmdl.getEBO());
-
-    // Populate vertex positions array.
-    out.vao->enableVertexAttribArray(
-        0, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, x));
-    // Populate vertex UV array.
-    out.vao->enableVertexAttribArray(
-        1, 2, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, s));
-    // Populate vertex color array.
-    out.vao->enableVertexAttribArray(
-        2, 3, GL_FLOAT, sizeof(VertexDef), offsetof(VertexDef, r));
-
-    out.ebo->unbind();
-    out.vbo->unbind();
-    out.vao->unbind();
-
-    return out;
 }

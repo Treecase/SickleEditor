@@ -49,7 +49,7 @@ int APP_run(APP_Config const &filenames)
 {
     for (auto const &filename : filenames)
     {
-        auto bsp = BSP::load_bsp(filename);
+        auto bsp = BSP::load(filename);
         std::cout << "<" << filename << ">\n";
         for (auto const &entity : bsp.entities)
         {

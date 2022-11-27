@@ -39,11 +39,6 @@ namespace Sickle
     protected:
         Glib::RefPtr<Gtk::Builder> m_refBuilder;
         MapArea *m_maparea;
-
-
-        GLBrush *_brush2gl(MAP::Brush const &brush, MAP::TextureManager &textures);
-        void _loadSelectedMap();
-        void _loadMap();
     };
 }
 

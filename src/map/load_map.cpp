@@ -459,7 +459,7 @@ public:
 };
 
 
-MAP::Map MAP::load_map(std::string const &path)
+MAP::Map MAP::load(std::string const &path)
 {
     std::ifstream f{path, std::ios::in | std::ios::binary};
     if (!f.is_open())

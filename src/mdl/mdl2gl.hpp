@@ -24,42 +24,29 @@
 #include <glutils/glutils.hpp>
 
 
-/** Format for buffered vertex data. */
-struct VertexDef
+namespace MDL
 {
-    GLfloat x, y, z;    // Position
-    GLfloat s, t;       // UV
-    GLfloat r, g, b;    // Vertex color
-};
+    class GLMDL
+    {
+    public:
+        GLMDL();
+        /** Convert an MDL Model into a GLMDL. */
+        GLMDL(MDL::Model const &model);
 
-struct MeshDef
-{
-    // VBO data.
-    std::vector<VertexDef> vertices;
-    // EBO data.
-    std::vector<GLuint> indices;
-};
+        /** Render a GL model. */
+        void render(std::vector<GLUtil::Texture> const &textures);
 
-struct ModelDef
-{
-    // Model meshes.
-    std::vector<MeshDef> meshes;
-};
-
-struct GLMDL
-{
-    std::vector<GLsizei> count;
-    std::vector<void *> indices;
-    std::vector<size_t> texture;
-    std::shared_ptr<GLUtil::VertexArray> vao;
-    std::shared_ptr<GLUtil::Buffer> vbo, ebo;
-};
+    private:
+        std::vector<GLsizei> count;
+        std::vector<void *> indices;
+        std::vector<size_t> texture;
+        std::shared_ptr<GLUtil::VertexArray> vao;
+        std::shared_ptr<GLUtil::Buffer> vbo, ebo;
+    };
 
 
-/** Convert from MDL texture format to an OpenGL texture object. */
-GLUtil::Texture texture2GLTexture(MDL::Texture const &texture);
-
-/** Convert from MDL Model format to an OpenGL VAO. */
-GLMDL model2vao(MDL::Model const &model);
+    /** Convert from MDL texture format to an OpenGL texture object. */
+    GLUtil::Texture texture2GLTexture(MDL::Texture const &texture);
+}
 
 #endif

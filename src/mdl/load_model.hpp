@@ -28,71 +28,71 @@
 
 namespace MDL
 {
-struct Vec3
-{
-    float x, y, z;
-};
+    struct Vec3
+    {
+        float x, y, z;
+    };
 
 
-/** MDL Texture data. */
-struct Texture
-{
-    std::string name;
-    int w, h;
-    std::vector<uint8_t> data;
-    std::array<std::array<uint8_t, 3>, 256> palette;
-};
+    /** MDL Texture data. */
+    struct Texture
+    {
+        std::string name;
+        int w, h;
+        std::vector<uint8_t> data;
+        std::array<std::array<uint8_t, 3>, 256> palette;
+    };
 
-/** MDL Vertex. */
-struct Vertex
-{
-    int position_index;
-    int light_index;
-    int uv_s,
-        uv_t;
-};
+    /** MDL Vertex. */
+    struct Vertex
+    {
+        int position_index;
+        int light_index;
+        int uv_s,
+            uv_t;
+    };
 
-/** MDL Tricmds. */
-struct Tricmd
-{
-    bool mode; // true = triangle fan, false = triangle strip
-    std::vector<Vertex> vertices;
-};
+    /** MDL Tricmds. */
+    struct Tricmd
+    {
+        bool mode; // true = triangle fan, false = triangle strip
+        std::vector<Vertex> vertices;
+    };
 
-/** MDL Mesh. */
-struct Mesh
-{
-    std::vector<Tricmd> tricmds;
-    uint16_t skinref;
-};
+    /** MDL Mesh. */
+    struct Mesh
+    {
+        std::vector<Tricmd> tricmds;
+        uint16_t skinref;
+    };
 
-/** MDL Model. */
-struct MDLModel
-{
-    std::string name;
-    std::vector<Mesh> meshes;
-    std::vector<Vec3> vertices;
-};
+    /** MDL Model. */
+    struct MDLModel
+    {
+        std::string name;
+        std::vector<Mesh> meshes;
+        std::vector<Vec3> vertices;
+    };
 
-/** MDL BodyPart. */
-struct BodyPart
-{
-    std::string name;
-    std::vector<MDLModel> models;
-};
+    /** MDL BodyPart. */
+    struct BodyPart
+    {
+        std::string name;
+        std::vector<MDLModel> models;
+    };
 
-/** Loaded MDL data. */
-struct Model
-{
-    std::string name;
-    std::vector<BodyPart> bodyparts;
-    std::vector<Texture> textures;
-    std::vector<uint16_t> skinref;
-};
+    /** Loaded MDL data. */
+    struct Model
+    {
+        std::string name;
+        std::vector<BodyPart> bodyparts;
+        std::vector<Texture> textures;
+        std::vector<uint16_t> skinref;
+    };
 
 
-/** Load a .mdl file. */
-Model load_mdl(std::string const &path);
+    /** Load a .mdl file. */
+    Model load(std::string const &path);
 }
 
 #endif

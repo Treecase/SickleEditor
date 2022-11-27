@@ -130,6 +130,16 @@ struct VectorLessCounterClockwise
     }
 };
 
+// TODO: move this into glutil?
+/**
+ * A Mesh, containing a texture name, vertex data, and element buffer data.
+ */
+struct Mesh
+{
+    std::string tex;
+    std::vector<GLfloat> vbo{};
+    std::vector<GLuint> ebo{};
+};
 
 /** Sort vertices counterclockwise. */
 auto _sort_vertices_counterclockwise(
@@ -222,9 +232,9 @@ auto _texlump_depalettize(WAD::TexLump const &lump)
     return rgba_textures;
 }
 
-
-std::vector<MAP::Mesh> MAP::mesh_from_planes(
-    Brush const &brush, TextureManager &textures)
+/** Create a Mesh from a Brush's Planes. */
+std::vector<Mesh> mesh_from_planes(
+    MAP::Brush const &brush, MAP::TextureManager &textures)
 {
     // Convert Brush Planes to Planes.
     std::vector<::Plane> polygon{};
@@ -329,4 +339,88 @@ MAP::MapTexture::MapTexture(WAD::TexLump const &texlump)
         delete[] mipmaps[i];
     }
     texture->unbind();
+}
+
+
+/* ===[ GLBrush ]=== */
+MAP::GLBrush::GLBrush(
+    std::vector<GLPlane> const &planes, std::vector<GLfloat> const &vbodata,
+    std::vector<GLuint> const &ebodata)
+:   planes{planes}
+,   vao{"BrushVAO"}
+,   vbo{GL_ARRAY_BUFFER, "BrushVBO"}
+,   ebo{GL_ELEMENT_ARRAY_BUFFER, "BrushEBO"}
+{
+    vao.bind();
+    vbo.bind();
+    vbo.buffer(GL_STATIC_DRAW, vbodata);
+    ebo.bind();
+    ebo.buffer(GL_STATIC_DRAW, ebodata);
+    vao.enableVertexAttribArray(0, 3, GL_FLOAT, 5*sizeof(GLfloat), 0);
+    vao.enableVertexAttribArray(
+        1, 2, GL_FLOAT, 5*sizeof(GLfloat), 3*sizeof(GLfloat));
+    ebo.unbind();
+    vbo.unbind();
+    vao.unbind();
+}
+
+MAP::GLBrush *MAP::GLBrush::new_from_brush(
+    MAP::Brush const &brush, TextureManager &textures)
+{
+    // Merge Plane mesh V/EBOs into Brush V/EBO.
+    std::vector<GLPlane> planes{};
+    std::vector<GLfloat> vbodata{};
+    std::vector<GLuint> ebodata{};
+    for (auto const &mesh : mesh_from_planes(brush, textures))
+    {
+        planes.push_back({
+            *textures.at(mesh.tex).texture,
+            (GLsizei)mesh.ebo.size(),
+            (void *)(ebodata.size() * sizeof(GLuint))});
+        size_t const index = vbodata.size() / 5;
+        for (auto const &idx : mesh.ebo)
+            ebodata.push_back(index + idx);
+        vbodata.insert(vbodata.end(), mesh.vbo.cbegin(), mesh.vbo.cend());
+    }
+    return new GLBrush{planes, vbodata, ebodata};
+}
+
+
+/* ===[ GLMap ]=== */
+MAP::GLMap::GLMap()
+:   _brushes{}
+{
+}
+
+MAP::GLMap::GLMap(Map const &map)
+:   _brushes{}
+{
+    Entity worldspawn;
+    for (auto const &e : map.entities)
+        if (e.properties.at("classname") == "worldspawn")
+        {
+            worldspawn = e;
+            break;
+        }
+
+    auto const &wad = WAD::load(worldspawn.properties.at("wad"));
+    TextureManager textures{wad};
+
+    for (auto const &b : worldspawn.brushes)
+        _brushes.emplace_back(GLBrush::new_from_brush(b, textures));
+}
+
+void MAP::GLMap::render()
+{
+    for (auto const &brush : _brushes)
+    {
+        brush->vao.bind();
+        brush->ebo.bind();
+        for (auto const &plane : brush->planes)
+        {
+            plane.texture.bind();
+            glDrawElements(
+                GL_TRIANGLE_FAN, plane.count, GL_UNSIGNED_INT, plane.indices);
+        }
+    }
 }

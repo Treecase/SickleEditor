@@ -151,7 +151,11 @@ bool ImGui::Transform(::Transform *transform, bool uniform_scale)
         changed = true;
     }
     auto const rd = glm::degrees(transform->rotation);
-    float t[3] = {transform->translation.x, transform->translation.y, transform->translation.z};
+    float t[3] = {
+        transform->translation.x,
+        transform->translation.y,
+        transform->translation.z
+    };
     float r[3] = {rd.x, rd.y, rd.z};
     float s[3] = {transform->scale.x, transform->scale.y, transform->scale.z};
     if (ImGui::DragFloat3("Translation", t, 0.01f))
@@ -191,8 +195,7 @@ void ImGui::FreeCam(::FreeCam *cam)
     ImGui::DragFloat3("Pos", pos_, 0.01f);
     cam->pos = glm::vec3{pos_[0], pos_[1], pos_[2]};
     // Rotation
-    float angle_[2] = {
-        glm::degrees(cam->angle.x), glm::degrees(cam->angle.y)};
+    float angle_[2] = {glm::degrees(cam->angle.x), glm::degrees(cam->angle.y)};
     ImGui::DragFloat2("Angle", angle_, 0.5f, FLT_MIN, FLT_MAX);
     cam->angle.x = fmod(glm::radians(angle_[0]), glm::radians(360.0f));
     cam->angle.y = glm::clamp(
@@ -201,4 +204,16 @@ void ImGui::FreeCam(::FreeCam *cam)
     ImGui::SliderFloat("FOV", &cam->fov, cam->min_fov, cam->max_fov);
     // Speed
     ImGui::DragFloat("Speed", &cam->speed, 0.1f, 0.0f, FLT_MAX);
+}
+
+void ImGui::OrbitCam(::OrbitCam *cam)
+{
+    // FOV
+    ImGui::SliderFloat("FOV", &cam->fov, cam->min_fov, cam->max_fov);
+    // Rotation
+    float angle_[2] = {glm::degrees(cam->angle.x), glm::degrees(cam->angle.y)};
+    ImGui::DragFloat2("Angle", angle_);
+    cam->setAngle({glm::radians(angle_[0]), glm::radians(angle_[1])});
+    // Zoom
+    ImGui::DragFloat("Zoom", &cam->zoom, 0.1f, cam->min_zoom, FLT_MAX);
 }

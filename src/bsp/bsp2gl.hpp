@@ -29,13 +29,6 @@
 
 namespace BSP
 {
-    /** Format for buffered vertex data. */
-    struct VertexDef
-    {
-        GLfloat x, y, z;    // Position
-        GLfloat s, t;       // UV
-    };
-
     /** The lowest-level BSP GL object. */
     struct Mesh
     {
@@ -52,16 +45,22 @@ namespace BSP
     };
 
     /** The BSP's GL representation. */
-    struct GLBSP
+    class GLBSP
     {
+    public:
+        GLBSP();
+        /** Convert from .bsp to an OpenGL format. */
+        GLBSP(BSP const &bsp, std::string const &game_dir);
+
+        /** Draw the GLBSP. */
+        void render();
+
+    private:
         std::vector<GLModel> models;
         std::shared_ptr<GLUtil::VertexArray> vao;
         std::shared_ptr<GLUtil::Buffer> vbo, ebo;
     };
 
-
-    /** Convert from .bsp to an OpenGL format. */
-    GLBSP bsp2gl(BSP const &bsp, std::string const &game_dir);
 
     /** Get textures from .bsp data. */
     std::vector<GLUtil::Texture> getTextures(BSP const &bsp, std::string const &game_dir);
