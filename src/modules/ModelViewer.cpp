@@ -120,7 +120,7 @@ void ModelViewer::drawUI()
         if (ImGui::CollapsingHeader("Camera"))
             _camera.imgui();
         if (ImGui::CollapsingHeader("Model Transform"))
-            _transform.imgui();
+            ImGui::Transform(&_transform);
         ImGui::Separator();
         if (ImGui::BeginChild("ModelTree"))
         {

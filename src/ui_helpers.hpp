@@ -19,6 +19,9 @@
 #ifndef _UI_HELPERS_HPP
 #define _UI_HELPERS_HPP
 
+#include "Transform.hpp"
+#include "FreeCam.hpp"
+
 #include <imgui.h>
 
 #include <filesystem>
@@ -35,6 +38,12 @@ namespace ImGui
 
     /** File picker popup modal. Returns true when the path has been updated. */
     bool FilePicker(char const *name, std::filesystem::path *path);
+
+    /** ImGui config for Transform objects. */
+    bool Transform(::Transform *transform, bool uniform_scale=true);
+
+    /** ImGui Camera config menu. */
+    void FreeCam(::FreeCam *cam);
 }
 
 #endif

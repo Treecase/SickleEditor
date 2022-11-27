@@ -20,6 +20,7 @@
 #define _BASE3DVIEWER_HPP
 
 #include "../FreeCam.hpp"
+#include "../ui_helpers.hpp"
 #include "Module.hpp"
 
 #include <glm/glm.hpp>
@@ -89,7 +90,7 @@ public:
     void drawUI() override
     {
         if (ImGui::CollapsingHeader("Camera"))
-            _camera.imgui();
+            ImGui::FreeCam(&_camera);
         ImGui::Checkbox("Wireframe", &_wireframe);
         setWireframe(_wireframe);
     }

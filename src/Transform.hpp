@@ -21,7 +21,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <imgui.h>
 
 
 /** 3D transform. */
@@ -74,39 +73,6 @@ struct Transform
                 rotation.x,
                 glm::vec3{1.0f, 0.0f, 0.0f}
             );
-    }
-
-
-    /** ImGui config. */
-    void imgui(bool uniform_scale=true)
-    {
-        if (ImGui::Button("Reset"))
-        {
-            translation = glm::vec3{0.0f};
-            rotation = glm::vec3{0.0f};
-            scale = glm::vec3{1.0f};
-        }
-        auto const rd = glm::degrees(rotation);
-        float t[3] = {translation.x, translation.y, translation.z};
-        float r[3] = {rd.x, rd.y, rd.z};
-        float s[3] = {scale.x, scale.y, scale.z};
-        if (ImGui::DragFloat3("Translation", t, 0.01f))
-            translation = glm::vec3{t[0], t[1], t[2]};
-        if (ImGui::DragFloat3("Rotation", r, 0.5f))
-        {
-            glm::vec3 const rv{r[0], r[1], r[2]};
-            rotation = glm::mod(glm::radians(rv), glm::radians(360.0f));
-        }
-        if (uniform_scale)
-        {
-            if (ImGui::DragFloat("Scale", s, 0.005f, FLT_MIN, FLT_MAX))
-                scale = glm::vec3{s[0]};
-        }
-        else
-        {
-            if (ImGui::DragFloat3("Scale", s, 0.005f, FLT_MIN, FLT_MAX))
-                scale = glm::vec3{s[0], s[1], s[2]};
-        }
     }
 };
 

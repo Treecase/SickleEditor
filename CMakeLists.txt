@@ -23,7 +23,7 @@ if(EXISTS "${LOC_PATH}")
     message(FATAL_ERROR "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles.")
 endif()
 
-project(Sickle
+project("Sickle Editor"
     VERSION 0.1.0
     DESCRIPTION "Open-Source GoldSrc Editor"
     LANGUAGES CXX

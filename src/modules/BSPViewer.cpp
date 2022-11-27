@@ -57,7 +57,7 @@ void BSPViewer::drawUI()
             + (_selected.empty()? "<none>" : _selected.filename().string())
             ).c_str());
         if (ImGui::CollapsingHeader("Map Transform"))
-            _transform.imgui();
+            ImGui::Transform(&_transform);
         Base3DViewer::drawUI();
         ImGui::Separator();
         if (ImGui::BeginChild("MapTree"))

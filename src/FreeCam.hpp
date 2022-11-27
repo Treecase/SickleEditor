@@ -21,7 +21,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include <imgui.h>
 
 
 /** Freelook first-person camera. */
@@ -94,28 +93,6 @@ struct FreeCam
     glm::mat4 getViewMatrix() const
     {
         return glm::lookAt(pos, pos + getLookDirection(), getUpDirection());
-    }
-
-
-    /** ImGui Camera config menu. */
-    void imgui()
-    {
-        // Position
-        float pos_[3] = {pos.x, pos.y, pos.z};
-        ImGui::DragFloat3("Pos", pos_, 0.01f);
-        pos.x = pos_[0];
-        pos.y = pos_[1];
-        pos.z = pos_[2];
-        // Rotation
-        float angle_[2] = {glm::degrees(angle.x), glm::degrees(angle.y)};
-        ImGui::DragFloat2("Angle", angle_, 0.5f, FLT_MIN, FLT_MAX);
-        angle.x = fmod(glm::radians(angle_[0]), glm::radians(360.0f));
-        angle.y = glm::clamp(
-            glm::radians(angle_[1]), -glm::radians(89.0f), glm::radians(89.0f));
-        // FOV
-        ImGui::SliderFloat("FOV", &fov, min_fov, max_fov);
-        // Speed
-        ImGui::DragFloat("Speed", &speed, 0.1f, 0.0f, FLT_MAX);
     }
 };
 

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="@GRESOURCE_PREFIX@">
+    <file>gtk/menus.ui</file>
+    <file>About.glade</file>
+    <file>AppWin.glade</file>
+    <file>logo.png</file>
+    <file>logo.svg</file>
+  </gresource>
+</gresources>

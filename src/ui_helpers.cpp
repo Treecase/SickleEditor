@@ -139,3 +139,66 @@ bool ImGui::FilePicker(char const *name, std::filesystem::path *path)
     }
     return r;
 }
+
+bool ImGui::Transform(::Transform *transform, bool uniform_scale)
+{
+    bool changed = false;
+    if (ImGui::Button("Reset"))
+    {
+        transform->translation = glm::vec3{0.0f};
+        transform->rotation = glm::vec3{0.0f};
+        transform->scale = glm::vec3{1.0f};
+        changed = true;
+    }
+    auto const rd = glm::degrees(transform->rotation);
+    float t[3] = {transform->translation.x, transform->translation.y, transform->translation.z};
+    float r[3] = {rd.x, rd.y, rd.z};
+    float s[3] = {transform->scale.x, transform->scale.y, transform->scale.z};
+    if (ImGui::DragFloat3("Translation", t, 0.01f))
+    {
+        transform->translation = glm::vec3{t[0], t[1], t[2]};
+        changed = true;
+    }
+    if (ImGui::DragFloat3("Rotation", r, 0.5f))
+    {
+        glm::vec3 const rv{r[0], r[1], r[2]};
+        transform->rotation = glm::mod(glm::radians(rv), glm::radians(360.0f));
+        changed = true;
+    }
+    if (uniform_scale)
+    {
+        if (ImGui::DragFloat("Scale", s, 0.005f, FLT_MIN, FLT_MAX))
+        {
+            transform->scale = glm::vec3{s[0]};
+            changed = true;
+        }
+    }
+    else
+    {
+        if (ImGui::DragFloat3("Scale", s, 0.005f, FLT_MIN, FLT_MAX))
+        {
+            transform->scale = glm::vec3{s[0], s[1], s[2]};
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+void ImGui::FreeCam(::FreeCam *cam)
+{
+    // Position
+    float pos_[3] = {cam->pos.x, cam->pos.y, cam->pos.z};
+    ImGui::DragFloat3("Pos", pos_, 0.01f);
+    cam->pos = glm::vec3{pos_[0], pos_[1], pos_[2]};
+    // Rotation
+    float angle_[2] = {
+        glm::degrees(cam->angle.x), glm::degrees(cam->angle.y)};
+    ImGui::DragFloat2("Angle", angle_, 0.5f, FLT_MIN, FLT_MAX);
+    cam->angle.x = fmod(glm::radians(angle_[0]), glm::radians(360.0f));
+    cam->angle.y = glm::clamp(
+        glm::radians(angle_[1]), -glm::radians(89.0f), glm::radians(89.0f));
+    // FOV
+    ImGui::SliderFloat("FOV", &cam->fov, cam->min_fov, cam->max_fov);
+    // Speed
+    ImGui::DragFloat("Speed", &cam->speed, 0.1f, 0.0f, FLT_MAX);
+}

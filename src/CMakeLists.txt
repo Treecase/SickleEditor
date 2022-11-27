@@ -19,6 +19,8 @@ target_sources(sickle PRIVATE ui_helpers.cpp)
 
 add_subdirectory(modules)
 
+add_subdirectory(gtk)
+
 add_subdirectory(bsp)
 target_link_libraries(sickle PRIVATE bsp)
 
