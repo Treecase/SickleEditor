@@ -32,7 +32,11 @@ namespace Sickle
     public:
         static Glib::RefPtr<App> create();
 
+        auto property_fgd_path() {return _prop_fgd_path.get_proxy();}
+
     protected:
+        Glib::RefPtr<Gio::Settings> m_settings;
+
         App();
 
         // Signals
@@ -40,19 +44,26 @@ namespace Sickle
         void on_activate() override;
         void on_open(Gio::Application::type_vec_files const &files, Glib::ustring const &hint) override;
 
-        Glib::ustring game_definition_path;
-        FGD::FGD game_definition;
-
-    private:
-        AppWin *create_appwindow();
         // Actions
-        void on_hide_window(Gtk::Window *window);
-        void on_dialog_response(int response, Gtk::Dialog *dialog);
-        // > Menu actions
+        // Menu Actions
         void on_action_new();
         void on_action_open();
         void on_action_exit();
+        void on_action_setGameDef();
         void on_action_about();
+
+    private:
+        FGD::FGD _game_definition;
+
+        AppWin *_create_appwindow();
+
+        // Properties
+        Glib::Property<Glib::ustring> _prop_fgd_path;
+
+        // Signal Handlers
+        void _on_hide_window(Gtk::Window *window);
+        void _on_dialog_response(int response, Gtk::Dialog *dialog);
+        void _on_fgd_path_changed();
     };
 }
 

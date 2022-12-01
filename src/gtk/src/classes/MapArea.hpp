@@ -40,7 +40,7 @@ namespace Sickle
     public:
         MapArea(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> const &refBuilder);
 
-        void set_map(MAP::Map const &map);
+        void set_map(MAP::Map const *map);
 
         // Signal handlers
         /** Where GL initialization should be done. */
@@ -53,23 +53,15 @@ namespace Sickle
     protected:
         Glib::RefPtr<Gtk::Builder> m_refBuilder;
 
-        // Loaded map.
-        MAP::GLMap _glmap;
-
     private:
-        // Shader.
         std::shared_ptr<GLUtil::Program> _shader;
-        // Camera.
         FreeCam _camera;
+        MAP::GLMap _glmap;
+        Transform _transform;
 
         // Properties
-        // Wireframe display toggle.
-        bool _wireframe;
-        /** Speed multiplier when shift key is held down. */
-        float _shift_multiplier;
-
-        // Map transform
-        Transform _transform;
+        bool _prop_wireframe;
+        float _prop_shift_multiplier;
     };
 }
 

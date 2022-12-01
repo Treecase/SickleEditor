@@ -25,11 +25,11 @@
 
 int main(int argc, char *argv[])
 {
-    /* Since this example is running uninstalled,
-     * we have to help it find its schema. This
-     * is *not* necessary in properly installed
-     * application. */
+    /* Debug builds won't have a schema installed, so we need to manually point
+     * to it. */
+#ifndef _NDEBUG
     Glib::setenv("GSETTINGS_SCHEMA_DIR", SE_BINARY_DIR, false);
+#endif
     auto app = Sickle::App::create();
     return app->run(argc, argv);
 }

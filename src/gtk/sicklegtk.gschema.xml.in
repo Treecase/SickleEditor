@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema path="@GRESOURCE_PREFIX@" id="@APPLICATION_ID@">
-    <key name="grouping" type="u">
-      <range min="1"/>
-      <default>8</default>
-      <summary>Grouping</summary>
-      <description>Byte grouping.</description>
+
+    <key name="fgd-path" type="s">
+      <default>""</default>
+      <summary>"Game .fgd path"</summary>
+      <description>"Path to the game's .fgd file"</description>
     </key>
-    <key name="bytes-per-line" type="u">
-      <range min="1"/>
-      <default>16</default>
-      <summary>Bytes per line</summary>
-      <description>Number of bytes per line.</description>
-    </key>
+
   </schema>
 </schemalist>

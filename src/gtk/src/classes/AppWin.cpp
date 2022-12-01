@@ -48,7 +48,13 @@ Sickle::AppWin *Sickle::AppWin::create()
     return window;
 }
 
-void Sickle::AppWin::open(Glib::RefPtr<Gio::File> const &file)
+void Sickle::AppWin::open(Gio::File const *file)
 {
-    m_maparea->set_map(MAP::load(file->get_path()));
+    if (file)
+    {
+        auto const map = MAP::load(file->get_path());
+        m_maparea->set_map(&map);
+    }
+    else
+        m_maparea->set_map(nullptr);
 }

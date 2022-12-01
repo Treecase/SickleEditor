@@ -34,7 +34,7 @@ namespace Sickle
         static AppWin *create();
 
         /** Open a file. */
-        void open(Glib::RefPtr<Gio::File> const &file);
+        void open(Gio::File const *file);
 
     protected:
         Glib::RefPtr<Gtk::Builder> m_refBuilder;

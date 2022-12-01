@@ -24,13 +24,14 @@
 
 /* ===[ MapArea ]=== */
 Sickle::MapArea::MapArea(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> const &refBuilder)
-:   Gtk::GLArea{cobject}
+:   Glib::ObjectBase{typeid(MapArea)}
+,   Gtk::GLArea{cobject}
 ,   m_refBuilder{refBuilder}
 ,   _glmap{}
 ,   _shader{nullptr}
 ,   _camera{}
-,   _wireframe{false}
-,   _shift_multiplier{2.0f}
+,   _prop_wireframe{false}
+,   _prop_shift_multiplier{2.0f}
 ,   _transform{
         {0.0f, 0.0f, 0.0f},
         {glm::radians(-90.0f), 0.0f, 0.0f},
@@ -44,10 +45,13 @@ Sickle::MapArea::MapArea(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> con
     set_auto_render(true);
 }
 
-void Sickle::MapArea::set_map(MAP::Map const &map)
+void Sickle::MapArea::set_map(MAP::Map const *map)
 {
     make_current();
-    _glmap = MAP::GLMap{map};
+    if (map)
+        _glmap = MAP::GLMap{*map};
+    else
+        _glmap = MAP::GLMap{};
     queue_render();
 }
 

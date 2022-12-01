@@ -21,6 +21,17 @@
       </section>
     </submenu>
 
+    <!-- 'Edit' Menu -->
+    <submenu>
+      <attribute name="label" translatable="yes">_Edit</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Set Game Definition</attribute>
+          <attribute name="action">app.setGameDef</attribute>
+        </item>
+      </section>
+    </submenu>
+
     <!-- 'Help' Menu -->
     <submenu>
       <attribute name="label" translatable="yes">_Help</attribute>
