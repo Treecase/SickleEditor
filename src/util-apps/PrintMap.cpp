@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../map/load_map.hpp"
+#include "map/load_map.hpp"
 
 #include <iostream>
 #include <string>

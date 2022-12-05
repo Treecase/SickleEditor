@@ -17,8 +17,8 @@
  */
 
 #include "MapViewer.hpp"
-#include "../ui_helpers.hpp"
-#include "../fgd/fgd.hpp"
+#include "utils/ui_helpers.hpp"
+#include "fgd/fgd.hpp"
 
 #include <imgui.h>
 

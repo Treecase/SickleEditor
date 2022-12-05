@@ -13,10 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.7...3.23)
-if(${CMAKE_VERSION} VERSION_LESS 3.12)
-    cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
-endif()
+cmake_minimum_required(VERSION 3.13)
 
 file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
 if(EXISTS "${LOC_PATH}")
@@ -33,20 +30,15 @@ project("Sickle Editor"
 # Dependencies
 add_subdirectory(extern/glutils)
 
+set(imgui_DIR cmake)
+find_package(imgui)
+
 if(MSVC)
-    if(NOT TARGET SDL2::SDL2)
-        add_library(SDL2 INTERFACE)
-        target_include_directories(SDL2 INTERFACE externals/SDL2-2.0.22/include)
-        target_link_libraries(SDL2 INTERFACE
-            "${PROJECT_SOURCE_DIR}/externals/SDL2-2.0.22/lib/x64/SDL2main.lib"
-            "${PROJECT_SOURCE_DIR}/externals/SDL2-2.0.22/lib/x64/SDL2.lib"
-        )
-        add_library(SDL2::SDL2 ALIAS SDL2)
-    endif()
+    set(SDL2_DIR cmake)
 else()
-    find_package(SDL2 REQUIRED)
     find_package(GLEW REQUIRED)
 endif()
+find_package(SDL2 REQUIRED)
 
 # GL library depends on platform, so define an alias for it
 add_library(SickleGL INTERFACE)
@@ -56,32 +48,12 @@ else()
     target_link_libraries(SickleGL INTERFACE GL)
 endif()
 
-# imgui library
-add_library(imgui OBJECT)
-target_sources(imgui PRIVATE
-    extern/imgui/backends/imgui_impl_sdl.cpp
-    extern/imgui/backends/imgui_impl_opengl3.cpp
-    extern/imgui/misc/cpp/imgui_stdlib.cpp
-    extern/imgui/imgui.cpp
-    extern/imgui/imgui_demo.cpp
-    extern/imgui/imgui_draw.cpp
-    extern/imgui/imgui_tables.cpp
-    extern/imgui/imgui_widgets.cpp
-)
-target_include_directories(imgui
-    PUBLIC
-    extern/imgui/
-    extern/imgui/backends
-)
-target_link_libraries(imgui PUBLIC SDL2::SDL2)
-
 
 # Declare targets
 add_executable(sickle)
 target_compile_features(sickle PRIVATE cxx_std_17)
 set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
-
 
 # Project sources
 add_subdirectory(src)

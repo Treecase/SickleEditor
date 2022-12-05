@@ -15,25 +15,16 @@
 
 configure_file(version.hpp.in "${PROJECT_BINARY_DIR}/include/version.hpp")
 
-target_sources(sickle PRIVATE ui_helpers.cpp)
-
-add_subdirectory(modules)
-
-add_subdirectory(gtk)
-
 add_subdirectory(bsp)
-target_link_libraries(sickle PRIVATE bsp bspgl)
-
 add_subdirectory(fgd)
-target_link_libraries(sickle PRIVATE fgd)
-
+add_subdirectory(gtk)
 add_subdirectory(map)
-target_link_libraries(sickle PRIVATE map mapgl)
-
 add_subdirectory(mdl)
-target_link_libraries(sickle PRIVATE mdl mdlgl)
-
-add_subdirectory(wad)
-target_link_libraries(sickle PRIVATE wad)
-
+add_subdirectory(modules)
 add_subdirectory(util-apps)
+add_subdirectory(utils)
+add_subdirectory(wad)
+
+target_include_directories(sickle PRIVATE .)
+target_include_directories(sicklegtk PRIVATE .)
+target_link_libraries(sickle PRIVATE bsp bspgl fgd map mapgl mdl mdlgl wad)

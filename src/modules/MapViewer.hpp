@@ -19,12 +19,12 @@
 #ifndef _MAPVIEWER_HPP
 #define _MAPVIEWER_HPP
 
-#include "../Transform.hpp"
-#include "../map/load_map.hpp"
-#include "../map/map2gl.hpp"
-#include "../wad/load_wad.hpp"
-#include "../wad/lumps.hpp"
-#include "../wad/TextureManager.hpp"
+#include "utils/Transform.hpp"
+#include "map/load_map.hpp"
+#include "map/map2gl.hpp"
+#include "wad/load_wad.hpp"
+#include "wad/lumps.hpp"
+#include "wad/TextureManager.hpp"
 #include "Base3DViewer.hpp"
 
 

@@ -13,12 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-add_library(bsp OBJECT
-    entities_lump.cpp
-    load_bsp.cpp
-)
+add_library(bsp OBJECT entities_lump.cpp load_bsp.cpp)
 
-add_library(bspgl OBJECT
-    bsp2gl.cpp
-)
-target_link_libraries(bspgl PUBLIC glutils::glutils GLEW::GLEW SickleGL)
+add_library(bspgl OBJECT bsp2gl.cpp)
+target_link_libraries(bspgl PUBLIC bsp glutils::glutils GLEW::GLEW SickleGL)

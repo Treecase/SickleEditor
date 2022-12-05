@@ -59,7 +59,7 @@
 //
 // Any of the above can also be #define'd instead.
 
-#include "../App.hpp"
+#include "utils/App.hpp"
 
 #include <GL/glew.h>
 #include <imgui.h>

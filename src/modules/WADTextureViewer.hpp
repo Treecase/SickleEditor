@@ -20,7 +20,7 @@
 #define _WADTEXTUREVIEWER_HPP
 
 #include "../common.hpp"
-#include "../wad/load_wad.hpp"
+#include "wad/load_wad.hpp"
 #include "Module.hpp"
 
 #include <GL/glew.h>

@@ -19,9 +19,9 @@
 #ifndef _BSPVIEWER_HPP
 #define _BSPVIEWER_HPP
 
-#include "../Transform.hpp"
-#include "../bsp/bsp2gl.hpp"
-#include "../bsp/load_bsp.hpp"
+#include "utils/Transform.hpp"
+#include "bsp/bsp2gl.hpp"
+#include "bsp/load_bsp.hpp"
 #include "Base3DViewer.hpp"
 
 

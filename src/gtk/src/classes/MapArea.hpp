@@ -19,13 +19,13 @@
 #ifndef _SE_MAPAREA_HPP
 #define _SE_MAPAREA_HPP
 
-#include "../../../Transform.hpp"
-#include "../../../FreeCam.hpp"
-#include "../../../map/load_map.hpp"
-#include "../../../map/map2gl.hpp"
-#include "../../../wad/load_wad.hpp"
-#include "../../../wad/lumps.hpp"
-#include "../../../wad/TextureManager.hpp"
+#include "utils/Transform.hpp"
+#include "utils/FreeCam.hpp"
+#include "map/load_map.hpp"
+#include "map/map2gl.hpp"
+#include "wad/load_wad.hpp"
+#include "wad/lumps.hpp"
+#include "wad/TextureManager.hpp"
 
 #include <gtkmm.h>
 

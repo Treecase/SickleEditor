@@ -19,10 +19,10 @@
 #ifndef _MODELVIEWER_HPP
 #define _MODELVIEWER_HPP
 
-#include "../OrbitCam.hpp"
-#include "../Transform.hpp"
-#include "../mdl/load_model.hpp"
-#include "../mdl/mdl2gl.hpp"
+#include "utils/OrbitCam.hpp"
+#include "utils/Transform.hpp"
+#include "mdl/load_model.hpp"
+#include "mdl/mdl2gl.hpp"
 #include "Module.hpp"
 
 #include <glutils/glutils.hpp>

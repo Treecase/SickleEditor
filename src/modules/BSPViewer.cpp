@@ -17,7 +17,7 @@
  */
 
 #include "BSPViewer.hpp"
-#include "../ui_helpers.hpp"
+#include "utils/ui_helpers.hpp"
 
 #include <imgui.h>
 

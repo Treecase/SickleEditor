@@ -21,7 +21,7 @@
 
 #include "common.hpp"
 #include "modules/MapViewer.hpp"
-#include "ui_helpers.hpp"
+#include "utils/ui_helpers.hpp"
 #include "version.hpp"
 
 #include <imgui.h>

@@ -17,8 +17,8 @@
  */
 
 #include "TextureViewer.hpp"
-#include "../mdl/mdl2gl.hpp"
-#include "../ui_helpers.hpp"
+#include "mdl/mdl2gl.hpp"
+#include "utils/ui_helpers.hpp"
 
 #include <imgui.h>
 

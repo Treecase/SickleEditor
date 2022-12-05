@@ -13,11 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-add_library(map OBJECT
-    load_map.cpp
-)
-add_library(mapgl OBJECT
-    map2gl.cpp
-)
+add_library(map OBJECT load_map.cpp)
 
+add_library(mapgl OBJECT map2gl.cpp)
 target_link_libraries(mapgl PUBLIC map wad glutils::glutils GLEW::GLEW SickleGL)

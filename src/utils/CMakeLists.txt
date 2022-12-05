@@ -13,6 +13,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-add_library(mdl OBJECT load_model.cpp)
-add_library(mdlgl OBJECT mdl2gl.cpp)
-target_link_libraries(mdlgl PUBLIC mdl glutils::glutils)
+target_sources(sickle PRIVATE ui_helpers.cpp)

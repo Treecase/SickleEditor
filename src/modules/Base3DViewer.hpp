@@ -19,8 +19,8 @@
 #ifndef _BASE3DVIEWER_HPP
 #define _BASE3DVIEWER_HPP
 
-#include "../FreeCam.hpp"
-#include "../ui_helpers.hpp"
+#include "utils/FreeCam.hpp"
+#include "utils/ui_helpers.hpp"
 #include "Module.hpp"
 
 #include <glm/glm.hpp>
