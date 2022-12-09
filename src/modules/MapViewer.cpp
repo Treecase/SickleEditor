@@ -28,9 +28,9 @@ MapViewer::MapViewer(Config &cfg)
         cfg, "Map Viewer", false, false,
         GLUtil::Program{{
             GLUtil::shader_from_file(
-                "shaders/map.vert", GL_VERTEX_SHADER),
+                "gresource/shaders/map.vert", GL_VERTEX_SHADER),
             GLUtil::shader_from_file(
-                "shaders/map.frag", GL_FRAGMENT_SHADER)},
+                "gresource/shaders/map.frag", GL_FRAGMENT_SHADER)},
             "MapShader"},
         FreeCam{},
         false,

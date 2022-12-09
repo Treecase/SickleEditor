@@ -17,9 +17,21 @@
  */
 
 #include "MapArea.hpp"
-#include "../../../fgd/fgd.hpp"
+#include "appid.hpp"
+#include "fgd/fgd.hpp"
 
 #include <iostream>
+
+
+namespace GLUtil
+{
+    Shader shader_from_resource(std::string const &path, GLenum type)
+    {
+        auto b = Gio::Resource::lookup_data_global(SE_GRESOURCE_PREFIX + path);
+        gsize size = 0;
+        return {type, static_cast<char const *>(b->get_data(size)), path};
+    }
+}
 
 
 /* ===[ MapArea ]=== */
@@ -77,8 +89,10 @@ void Sickle::MapArea::on_realize()
     _shader.reset(
         new GLUtil::Program{
             {
-                GLUtil::shader_from_file("shaders/map.vert", GL_VERTEX_SHADER),
-                GLUtil::shader_from_file("shaders/map.frag", GL_FRAGMENT_SHADER)
+                GLUtil::shader_from_resource(
+                    "shaders/map.vert", GL_VERTEX_SHADER),
+                GLUtil::shader_from_resource(
+                    "shaders/map.frag", GL_FRAGMENT_SHADER),
             },
             "MapShader"
         }

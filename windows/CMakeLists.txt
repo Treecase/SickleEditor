@@ -9,6 +9,6 @@ add_custom_target(
         -o resources.res
     DEPENDS resources.rc
 )
-target_link_libraries(sicklegtk PRIVATE
+target_link_libraries(sickle PRIVATE
     "${CMAKE_CURRENT_BINARY_DIR}/resources.res"
 )

@@ -40,5 +40,3 @@ if(MINGW)
     target_link_libraries(ViewMDL PRIVATE mingw32 SDL2::SDL2main)
 endif()
 target_link_libraries(ViewMDL PRIVATE imgui SDL2::SDL2 SickleGL mdl mdlgl)
-
-target_sources(sickle PRIVATE Sickle.cpp)

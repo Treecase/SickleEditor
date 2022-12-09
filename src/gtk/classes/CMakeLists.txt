@@ -1,5 +1,5 @@
 
-target_sources(sicklegtk PRIVATE
+target_sources(sickle PRIVATE
     App.cpp
     About.cpp
     AppWin.cpp

@@ -29,8 +29,8 @@ static float const MIN_ZOOM = 0.5f;
 ModelViewer::ModelViewer(Config &cfg)
 :   Module{cfg, "Model Viewer", false, false}
 ,   _shader{{
-        GLUtil::shader_from_file("shaders/model.vert", GL_VERTEX_SHADER),
-        GLUtil::shader_from_file("shaders/model.frag", GL_FRAGMENT_SHADER)},
+        GLUtil::shader_from_file("gresource/shaders/model.vert", GL_VERTEX_SHADER),
+        GLUtil::shader_from_file("gresource/shaders/model.frag", GL_FRAGMENT_SHADER)},
         "ModelShader"}
 ,   _model{}
 ,   _glmodel{}

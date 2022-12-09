@@ -25,8 +25,8 @@
 BSPViewer::BSPViewer(Config &cfg)
 :   Base3DViewer{cfg, "BSP Viewer", false, false,
         GLUtil::Program{{
-            GLUtil::shader_from_file("shaders/map.vert", GL_VERTEX_SHADER),
-            GLUtil::shader_from_file("shaders/map.frag", GL_FRAGMENT_SHADER)},
+            GLUtil::shader_from_file("gresource/shaders/map.vert", GL_VERTEX_SHADER),
+            GLUtil::shader_from_file("gresource/shaders/map.frag", GL_FRAGMENT_SHADER)},
             "BSPShader"},
         FreeCam{},
         false,

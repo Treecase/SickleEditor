@@ -26,19 +26,34 @@ project("Sickle Editor"
     LANGUAGES CXX
 )
 
+# Application ID
+set(APPLICATION_ID com.github.treecase.sicklegtk)
+# GResource prefix
+set(GRESOURCE_PREFIX /com/github/treecase/sicklegtk/)
+# GSchema path
+set(SCHEMA_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+
 
 # Dependencies
+# glutils
 add_subdirectory(extern/glutils)
 
+# imgui
 set(imgui_DIR cmake)
 find_package(imgui)
 
+# SDL2
 if(MSVC)
     set(SDL2_DIR cmake)
-else()
-    find_package(GLEW REQUIRED)
 endif()
 find_package(SDL2 REQUIRED)
+
+# GLEW
+find_package(GLEW REQUIRED)
+
+# gtkmm3
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
 
 # GL library depends on platform, so define an alias for it
 add_library(SickleGL INTERFACE)
@@ -49,26 +64,53 @@ else()
 endif()
 
 
+# Configure files
+# Desktop file
+configure_file(sicklegtk.desktop.in ${APPLICATION_ID}.desktop)
+# Settings schema
+configure_file(sicklegtk.gschema.xml.in sicklegtk.gschema.xml)
+
+
 # Declare targets
 add_executable(sickle)
 target_compile_features(sickle PRIVATE cxx_std_17)
 set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 
+# Compiles settings gschema
+add_custom_target(
+    gschemas.compiled
+    COMMAND
+        glib-compile-schemas
+        --strict
+        --targetdir=.
+        --schema-file=sicklegtk.gschema.xml
+)
+add_dependencies(sickle gschemas.compiled)
+
+# Add .exe icon on Windows
+if(WIN32)
+    add_subdirectory(windows)
+endif()
+
 # Project sources
 add_subdirectory(src)
+# GResource data
+add_subdirectory(gresource)
 
 
+# Linking
 if(MINGW)
-    target_link_libraries(sickle PRIVATE mingw32 SDL2::SDL2main)
+    target_link_libraries(sickle PRIVATE mingw32)
 endif()
 
 target_link_libraries(sickle PRIVATE
     imgui
-    SDL2::SDL2
     GLEW::GLEW
     glm::glm
     SickleGL
     glutils::glutils
     ${CMAKE_DL_LIBS}
+    PkgConfig::GTKMM
+    fgd map mapgl wad
 )

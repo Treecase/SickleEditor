@@ -18,7 +18,7 @@
 
 #include "appid.hpp"
 #include "version.hpp"
-#include "classes/App.hpp"
+#include "gtk/classes/App.hpp"
 
 #include <gtkmm.h>
 

@@ -20,7 +20,7 @@
 #define _SE_APP_HPP
 
 #include "AppWin.hpp"
-#include "../../../fgd/fgd.hpp"
+#include "fgd/fgd.hpp"
 
 #include <gtkmm.h>
 

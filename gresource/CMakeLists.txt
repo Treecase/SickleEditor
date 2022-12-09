@@ -13,5 +13,5 @@ add_custom_target(resources.cpp
         --generate-source
 )
 
-add_dependencies(sicklegtk resources.cpp)
-target_sources(sicklegtk PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/resources.cpp")
+add_dependencies(sickle resources.cpp)
+target_sources(sickle PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/resources.cpp")

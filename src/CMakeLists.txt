@@ -25,6 +25,7 @@ add_subdirectory(util-apps)
 add_subdirectory(utils)
 add_subdirectory(wad)
 
+target_sources(sickle PRIVATE main.cpp)
+
 target_include_directories(sickle PRIVATE .)
-target_include_directories(sicklegtk PRIVATE .)
 target_link_libraries(sickle PRIVATE bsp bspgl fgd map mapgl mdl mdlgl wad)
