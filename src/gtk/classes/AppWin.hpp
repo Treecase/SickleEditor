@@ -39,6 +39,9 @@ namespace Sickle
     protected:
         Glib::RefPtr<Gtk::Builder> m_refBuilder;
         MapArea *m_maparea;
+
+        bool on_key_press_event(GdkEventKey *event) override;
+        bool on_key_release_event(GdkEventKey *event) override;
     };
 }
 

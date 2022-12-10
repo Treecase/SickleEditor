@@ -50,8 +50,19 @@ namespace Sickle
         /** Draw everything we need. */
         bool on_render(Glib::RefPtr<Gdk::GLContext> const &context) override;
 
+        // Input Signals
+        bool on_key_press_event(GdkEventKey *event) override;
+        bool on_key_release_event(GdkEventKey *event) override;
+
     protected:
         Glib::RefPtr<Gtk::Builder> m_refBuilder;
+
+        bool tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock);
+
+        // Input Signals
+        bool on_button_press_event(GdkEventButton *event) override;
+        bool on_motion_notify_event(GdkEventMotion *event) override;
+        bool on_scroll_event(GdkEventScroll *event) override;
 
     private:
         std::shared_ptr<GLUtil::Program> _shader;
@@ -59,9 +70,18 @@ namespace Sickle
         MAP::GLMap _glmap;
         Transform _transform;
 
+        struct State
+        {
+            gdouble pointer_prev_x, pointer_prev_y;
+            gint64 last_frame_time;
+            glm::vec3 move_direction;
+            bool gofast;
+        } _state;
+
         // Properties
         bool _prop_wireframe;
         float _prop_shift_multiplier;
+        float _prop_mouse_sensitivity;
     };
 }
 

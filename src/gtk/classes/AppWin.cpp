@@ -58,3 +58,18 @@ void Sickle::AppWin::open(Gio::File const *file)
     else
         m_maparea->set_map(nullptr);
 }
+
+
+bool Sickle::AppWin::on_key_press_event(GdkEventKey *event)
+{
+    if (Gtk::Window::on_key_press_event(event))
+        return true;
+    return m_maparea->on_key_press_event(event);
+}
+
+bool Sickle::AppWin::on_key_release_event(GdkEventKey *event)
+{
+    if (Gtk::Window::on_key_release_event(event))
+        return true;
+    return m_maparea->on_key_release_event(event);
+}
