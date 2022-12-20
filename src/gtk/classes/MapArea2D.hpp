@@ -1,5 +1,5 @@
 /**
- * MapArea.hpp - Sickle editor main window GLArea.
+ * MapArea2D.hpp - Sickle editor main window DrawingArea.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,70 +16,51 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _SE_MAPAREA_HPP
-#define _SE_MAPAREA_HPP
+#ifndef _SE_MAPAREA2D_HPP
+#define _SE_MAPAREA2D_HPP
 
-#include "utils/Transform.hpp"
-#include "utils/FreeCam.hpp"
 #include "map/load_map.hpp"
-#include "map/map2gl.hpp"
-#include "wad/load_wad.hpp"
-#include "wad/lumps.hpp"
-#include "wad/TextureManager.hpp"
 
-#include <gdkmm/frameclock.h>
-#include <giomm/resource.h>
-#include <gtkmm/glarea.h>
+#include <gdkmm/rgba.h>
+#include <glibmm/property.h>
+#include <glibmm/ustring.h>
+#include <gtkmm/drawingarea.h>
 
 
 namespace Sickle
 {
     /** Displays .map files. */
-    class MapArea : public Gtk::GLArea
+    class MapArea2D : public Gtk::DrawingArea
     {
     public:
-        MapArea();
+        MapArea2D();
 
         void set_map(MAP::Map const *map);
 
+        auto property_clear_color() {return _prop_clear_color.get_proxy();}
+        auto property_grid_size() {return _prop_grid_size.get_proxy();}
+        auto property_name() {return _prop_name.get_proxy();}
+
         // Signal handlers
-        /** Where GL initialization should be done. */
-        void on_realize() override;
-        /** Where GL cleanup should be done. */
-        void on_unrealize() override;
-        /** Draw everything we need. */
-        bool on_render(Glib::RefPtr<Gdk::GLContext> const &context) override;
+        bool on_draw(Cairo::RefPtr<Cairo::Context> const &cr) override;
 
         // Input Signals
         bool on_key_press_event(GdkEventKey *event) override;
         bool on_key_release_event(GdkEventKey *event) override;
 
     protected:
-        bool tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock);
-
         // Input Signals
         bool on_button_press_event(GdkEventButton *event) override;
         bool on_motion_notify_event(GdkEventMotion *event) override;
         bool on_scroll_event(GdkEventScroll *event) override;
 
     private:
-        std::shared_ptr<GLUtil::Program> _shader;
-        FreeCam _camera;
-        MAP::GLMap _glmap;
-        Transform _transform;
-
-        struct State
-        {
-            gdouble pointer_prev_x, pointer_prev_y;
-            gint64 last_frame_time;
-            glm::vec3 move_direction;
-            bool gofast;
-        } _state;
+        MAP::Map *_map;
 
         // Properties
-        bool _prop_wireframe;
-        float _prop_shift_multiplier;
-        float _prop_mouse_sensitivity;
+        Glib::Property<Gdk::RGBA> _prop_clear_color;
+        Glib::Property<int> _prop_grid_size;
+        Glib::Property<Glib::ustring> _prop_name;
     };
 }
 

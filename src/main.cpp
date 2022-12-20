@@ -20,7 +20,9 @@
 #include "version.hpp"
 #include "gtk/classes/App.hpp"
 
-#include <gtkmm.h>
+#ifndef _NDEBUG
+#include <glibmm/miscutils.h>
+#endif
 
 
 int main(int argc, char *argv[])

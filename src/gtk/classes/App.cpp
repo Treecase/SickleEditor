@@ -17,12 +17,11 @@
  */
 
 #include "App.hpp"
-#include "About.hpp"
-#include "AppWin.hpp"
 
+#include "About.hpp"
 #include "appid.hpp"
 
-#include <iostream>
+#include <gtkmm/filechoosernative.h>
 
 
 Glib::RefPtr<Sickle::App> Sickle::App::create()

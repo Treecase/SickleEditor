@@ -4,4 +4,5 @@ target_sources(sickle PRIVATE
     About.cpp
     AppWin.cpp
     MapArea.cpp
+    MapArea2D.cpp
 )

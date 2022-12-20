@@ -20,8 +20,10 @@
 #define _SE_APPWIN_HPP
 
 #include "MapArea.hpp"
+#include "MapArea2D.hpp"
 
-#include <gtkmm.h>
+#include <gtkmm/applicationwindow.h>
+#include <gtkmm/grid.h>
 
 
 namespace Sickle
@@ -35,10 +37,9 @@ namespace Sickle
         void open(Gio::File const *file);
 
     protected:
+        Gtk::Grid m_grid;
         MapArea m_maparea;
-
-        bool on_key_press_event(GdkEventKey *event) override;
-        bool on_key_release_event(GdkEventKey *event) override;
+        MapArea2D m_drawarea_top, m_drawarea_front, m_drawarea_right;
     };
 }
 

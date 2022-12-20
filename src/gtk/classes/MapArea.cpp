@@ -17,10 +17,8 @@
  */
 
 #include "MapArea.hpp"
-#include "appid.hpp"
-#include "fgd/fgd.hpp"
 
-#include <iostream>
+#include "appid.hpp"
 
 
 namespace GLUtil
@@ -60,8 +58,9 @@ Sickle::MapArea::MapArea()
     set_has_depth_buffer(true);
     set_hexpand(true);
     set_vexpand(true);
-    set_size_request(640, 480);
+    set_size_request(320, 240);
     set_auto_render(true);
+    set_can_focus(true);
 
     add_events(
         Gdk::POINTER_MOTION_MASK
@@ -141,7 +140,6 @@ bool Sickle::MapArea::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     _shader->setUniformS("tex", 0);
     _shader->setUniformS("model", modelMatrix);
     _glmap.render();
-    Gtk::GLArea::on_render(context);
     return true;
 }
 
@@ -189,8 +187,12 @@ bool Sickle::MapArea::on_key_press_event(GdkEventKey *event)
     case GDK_KEY_Shift_R:
         _state.gofast = true;
         break;
+
+    default:
+        return Gtk::GLArea::on_key_press_event(event);
+        break;
     }
-    return Gtk::GLArea::on_key_press_event(event);
+    return true;
 }
 
 bool Sickle::MapArea::on_key_release_event(GdkEventKey *event)
@@ -228,8 +230,12 @@ bool Sickle::MapArea::on_key_release_event(GdkEventKey *event)
     case GDK_KEY_Shift_R:
         _state.gofast = false;
         break;
+
+    default:
+        return Gtk::GLArea::on_key_release_event(event);
+        break;
     }
-    return Gtk::GLArea::on_key_press_event(event);
+    return true;
 }
 
 

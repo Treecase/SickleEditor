@@ -19,7 +19,7 @@
 #ifndef _SE_ABOUT_HPP
 #define _SE_ABOUT_HPP
 
-#include <gtkmm.h>
+#include <gtkmm/aboutdialog.h>
 
 
 namespace Sickle

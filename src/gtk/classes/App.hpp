@@ -22,7 +22,8 @@
 #include "AppWin.hpp"
 #include "fgd/fgd.hpp"
 
-#include <gtkmm.h>
+#include <gtkmm/application.h>
+#include <giomm/settings.h>
 
 
 namespace Sickle
