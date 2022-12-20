@@ -62,7 +62,6 @@ namespace Sickle
 
         // Signal Handlers
         void _on_hide_window(Gtk::Window *window);
-        void _on_dialog_response(int response, Gtk::Dialog *dialog);
         void _on_fgd_path_changed();
     };
 }

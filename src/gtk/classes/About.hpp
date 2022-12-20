@@ -27,12 +27,7 @@ namespace Sickle
     class About : public Gtk::AboutDialog
     {
     public:
-        About(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> const &refBuilder);
-
-        static About *create(Gtk::Window &parent);
-
-    protected:
-        Glib::RefPtr<Gtk::Builder> m_refBuilder;
+        About();
     };
 }
 

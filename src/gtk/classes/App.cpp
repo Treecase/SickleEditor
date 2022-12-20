@@ -142,17 +142,15 @@ void Sickle::App::on_action_setGameDef()
 
 void Sickle::App::on_action_about()
 {
-    auto about = Sickle::About::create(*get_active_window());
-    // Delete the dialog when it is hidden.
-    about->signal_hide().connect(sigc::bind(sigc::mem_fun(*this, &App::_on_hide_window), about));
-    about->signal_response().connect(sigc::bind(sigc::mem_fun(*this, &App::_on_dialog_response), about));
-    about->run();
+    auto about = Sickle::About{};
+    about.set_transient_for(*get_active_window());
+    about.run();
 }
 
 
 Sickle::AppWin *Sickle::App::_create_appwindow()
 {
-    auto appwindow = AppWin::create();
+    auto appwindow = new AppWin{};
     add_window(*appwindow);
     // Delete the window when it is hidden.
     appwindow->signal_hide().connect(sigc::bind(sigc::mem_fun(*this,
@@ -163,11 +161,6 @@ Sickle::AppWin *Sickle::App::_create_appwindow()
 void Sickle::App::_on_hide_window(Gtk::Window *window)
 {
     delete window;
-}
-
-void Sickle::App::_on_dialog_response(int response, Gtk::Dialog *dialog)
-{
-    delete dialog;
 }
 
 void Sickle::App::_on_fgd_path_changed()

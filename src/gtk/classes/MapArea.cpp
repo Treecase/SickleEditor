@@ -35,10 +35,9 @@ namespace GLUtil
 
 
 /* ===[ MapArea ]=== */
-Sickle::MapArea::MapArea(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> const &refBuilder)
+Sickle::MapArea::MapArea()
 :   Glib::ObjectBase{typeid(MapArea)}
-,   Gtk::GLArea{cobject}
-,   m_refBuilder{refBuilder}
+,   Gtk::GLArea{}
 ,   _glmap{}
 ,   _shader{nullptr}
 ,   _camera{}

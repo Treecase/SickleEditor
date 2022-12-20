@@ -24,28 +24,16 @@
 #include "version.hpp"
 
 
-Sickle::AppWin::AppWin(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> const &refBuilder)
-:   Gtk::ApplicationWindow{cobject}
-,   m_refBuilder{refBuilder}
-,   m_maparea{nullptr}
+Sickle::AppWin::AppWin()
+:   Gtk::ApplicationWindow{}
+,   m_maparea{}
 {
-    m_refBuilder->get_widget_derived("gl-area", m_maparea);
-    if (!m_maparea)
-        throw std::runtime_error("No \"gl-area\" object in AppWin.glade");
-
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
     set_title(SE_CANON_NAME);
-}
 
-Sickle::AppWin *Sickle::AppWin::create()
-{
-    auto refBuilder = Gtk::Builder::create_from_resource(SE_GRESOURCE_PREFIX "AppWin.glade");
-    AppWin *window = nullptr;
-    refBuilder->get_widget_derived("app_window", window);
-    if (!window)
-        throw std::runtime_error("No \"app_window\" object in AppWin.glade");
-    return window;
+    add(m_maparea);
+    show_all_children();
 }
 
 void Sickle::AppWin::open(Gio::File const *file)
@@ -53,10 +41,10 @@ void Sickle::AppWin::open(Gio::File const *file)
     if (file)
     {
         auto const map = MAP::load(file->get_path());
-        m_maparea->set_map(&map);
+        m_maparea.set_map(&map);
     }
     else
-        m_maparea->set_map(nullptr);
+        m_maparea.set_map(nullptr);
 }
 
 
@@ -64,12 +52,12 @@ bool Sickle::AppWin::on_key_press_event(GdkEventKey *event)
 {
     if (Gtk::Window::on_key_press_event(event))
         return true;
-    return m_maparea->on_key_press_event(event);
+    return m_maparea.on_key_press_event(event);
 }
 
 bool Sickle::AppWin::on_key_release_event(GdkEventKey *event)
 {
     if (Gtk::Window::on_key_release_event(event))
         return true;
-    return m_maparea->on_key_release_event(event);
+    return m_maparea.on_key_release_event(event);
 }

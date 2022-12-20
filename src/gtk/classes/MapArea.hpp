@@ -38,7 +38,7 @@ namespace Sickle
     class MapArea : public Gtk::GLArea
     {
     public:
-        MapArea(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> const &refBuilder);
+        MapArea();
 
         void set_map(MAP::Map const *map);
 
@@ -55,8 +55,6 @@ namespace Sickle
         bool on_key_release_event(GdkEventKey *event) override;
 
     protected:
-        Glib::RefPtr<Gtk::Builder> m_refBuilder;
-
         bool tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock);
 
         // Input Signals

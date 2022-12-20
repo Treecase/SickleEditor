@@ -29,16 +29,13 @@ namespace Sickle
     class AppWin : public Gtk::ApplicationWindow
     {
     public:
-        AppWin(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> const &refBuilder);
-
-        static AppWin *create();
+        AppWin();
 
         /** Open a file. */
         void open(Gio::File const *file);
 
     protected:
-        Glib::RefPtr<Gtk::Builder> m_refBuilder;
-        MapArea *m_maparea;
+        MapArea m_maparea;
 
         bool on_key_press_event(GdkEventKey *event) override;
         bool on_key_release_event(GdkEventKey *event) override;

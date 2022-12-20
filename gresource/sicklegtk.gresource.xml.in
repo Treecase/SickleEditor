@@ -8,8 +8,6 @@
     <file>shaders/model.frag</file>
     <file>shaders/model.vert</file>
     <file>shaders/vertex.vert</file>
-    <file>About.glade</file>
-    <file>AppWin.glade</file>
     <file>logo.png</file>
     <file>logo.svg</file>
   </gresource>

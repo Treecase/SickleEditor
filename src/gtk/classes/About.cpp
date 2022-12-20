@@ -19,22 +19,17 @@
 #include "About.hpp"
 
 #include "appid.hpp"
+#include "version.hpp"
 
 
-Sickle::About::About(BaseObjectType *cobject, Glib::RefPtr<Gtk::Builder> const &refBuilder)
-:   Gtk::AboutDialog{cobject}
-,   m_refBuilder{refBuilder}
+Sickle::About::About()
+:   Gtk::AboutDialog{}
 {
+    set_program_name(SE_CANON_NAME);
+    set_version(SE_VERSION);
+    set_copyright("Copyright © 2022\nTrevor Last");
+    set_website("https://github.com/Treecase/SickleEditor");
+    set_website_label("Github");
     set_logo(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.svg"));
-}
-
-Sickle::About *Sickle::About::create(Gtk::Window &parent)
-{
-    auto refBuilder = Gtk::Builder::create_from_resource(SE_GRESOURCE_PREFIX "About.glade");
-    About *dialog = nullptr;
-    refBuilder->get_widget_derived("about", dialog);
-    if (!dialog)
-        throw std::runtime_error("No \"about\" object in AppPrefs.ui");
-    dialog->set_transient_for(parent);
-    return dialog;
+    set_license_type(Gtk::License::LICENSE_GPL_3_0);
 }
