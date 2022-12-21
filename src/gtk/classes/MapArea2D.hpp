@@ -55,7 +55,15 @@ namespace Sickle
         bool on_scroll_event(GdkEventScroll *event) override;
 
     private:
-        MAP::Map *_map;
+        MAP::Map const *_map;
+        struct Transform2D
+        {
+            int x, y;
+        } _transform;
+        struct
+        {
+            int pointer_prev_x, pointer_prev_y;
+        } _state;
 
         // Properties
         Glib::Property<Gdk::RGBA> _prop_clear_color;

@@ -19,10 +19,40 @@
 #include "MapArea2D.hpp"
 
 
+struct DrawAnchor {
+    bool top;
+    bool left;
+};
+static DrawAnchor const TopLeft{true, true};
+static DrawAnchor const TopRight{true, false};
+static DrawAnchor const BottomLeft{false, true};
+static DrawAnchor const BottomRight{false, false};
+
+/** Draw text. */
+void drawtext(Cairo::RefPtr<Cairo::Context> const &cr, std::string const &text, int x, int y, DrawAnchor anchor=TopLeft)
+{
+    Cairo::TextExtents extents;
+    cr->get_text_extents(text, extents);
+
+    int tx = x - extents.x_bearing;
+    int ty = y - extents.y_bearing;
+
+    if (!anchor.left)
+        tx -= extents.width;
+    if (!anchor.top)
+        ty -= extents.height;
+
+    cr->move_to(tx, ty);
+    cr->show_text(text);
+}
+
+
+/* ===[ MapArea2D ]=== */
 Sickle::MapArea2D::MapArea2D()
 :   Glib::ObjectBase{typeid(MapArea2D)}
 ,   Gtk::DrawingArea{}
 ,   _map{nullptr}
+,   _transform{0, 0}
 ,   _prop_clear_color{*this, "clear-color", {}}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _prop_name{*this, "name", "<blank>"}
@@ -41,7 +71,7 @@ Sickle::MapArea2D::MapArea2D()
 
 void Sickle::MapArea2D::set_map(MAP::Map const *map)
 {
-    _map = const_cast<MAP::Map *>(map);
+    _map = map;
 }
 
 bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
@@ -59,34 +89,65 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
     cr->set_source_rgb(clear_color.get_red(), clear_color.get_green(), clear_color.get_blue());
     cr->paint();
 
-    // Draw grid
+
+    /* ===[ World-Space Drawing ]=== */
+    cr->save();
+    cr->set_antialias(Cairo::ANTIALIAS_NONE);
+    cr->translate(width / 2.0, height / 2.0);
+
+    /* Grid */
     cr->set_source_rgb(0.3, 0.3, 0.3);
     cr->set_line_width(1);
+    int const grid_count_v = width / grid_size;
+    int const grid_count_h = width / grid_size;
+    int const left = -(grid_count_v / 2) * grid_size;
+    int const top = -(grid_count_h / 2) * grid_size;
+
     // Vertical lines
-    cr->move_to(0, 0);
-    for (int x = 0; x <= width; x += grid_size)
+    cr->move_to(left + _transform.x % grid_size, -height / 2.0);
+    for (int i = 0; i <= grid_count_v; ++i)
     {
         cr->rel_line_to(0, height);
         cr->rel_move_to(grid_size, -height);
     }
     // Horizontal lines
-    cr->move_to(0, 0);
-    for (int y = 0; y <= width; y += grid_size)
+    cr->move_to(-width / 2.0, top + _transform.y % grid_size);
+    for (int i = 0; i <= grid_count_h; ++i)
     {
         cr->rel_line_to(width, 0);
         cr->rel_move_to(-width, grid_size);
     }
     cr->stroke();
 
-    // Show name in top-left corner
+    // x/y axes
+    cr->set_source_rgb(0.5, 0.5, 0.5);
+    cr->set_line_width(2);
+    cr->move_to(_transform.x, -height / 2.0);
+    cr->rel_line_to(0, height);
+    cr->move_to(-width / 2.0, _transform.y);
+    cr->rel_line_to(width, 0);
+    cr->stroke();
+
+    /* World */
+    cr->translate(_transform.x, _transform.y);
+
+    // Draw a "brush"
+    cr->set_source_rgb(1, 0, 0);
+    cr->set_line_width(1);
+    cr->rectangle(0, 0, grid_size, grid_size);
+    cr->stroke();
+
+    cr->restore();
+
+
+    /* ===[ Screen-Space Overlay Drawing ]=== */
     cr->set_source_rgb(1, 1, 1);
     cr->select_font_face("sans-serif", Cairo::FontSlant::FONT_SLANT_NORMAL, Cairo::FontWeight::FONT_WEIGHT_NORMAL);
     cr->set_font_size(12);
-    cr->move_to(4, 4);
-    Cairo::TextExtents extents;
-    cr->get_text_extents(name, extents);
-    cr->rel_move_to(-extents.x_bearing, -extents.y_bearing);
-    cr->show_text(name);
+    // Show name in top-left corner
+    drawtext(cr, name, 4, 4);
+    // Show transform coords in top-right corner
+    drawtext(cr, std::to_string(_transform.x) + "," + std::to_string(_transform.y), width - 4, 4, TopRight);
 
     return true;
 }
@@ -104,11 +165,28 @@ bool Sickle::MapArea2D::on_key_release_event(GdkEventKey *event)
 
 bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 {
+    if (event->button == 2)
+    {
+        _state.pointer_prev_x = event->x;
+        _state.pointer_prev_y = event->y;
+        return true;
+    }
     return Gtk::DrawingArea::on_button_press_event(event);
 }
 
 bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
 {
+    if (event->state & Gdk::BUTTON2_MASK)
+    {
+        auto dx = event->x - _state.pointer_prev_x;
+        auto dy = event->y - _state.pointer_prev_y;
+        _transform.x += dx;
+        _transform.y += dy;
+        _state.pointer_prev_x = event->x;
+        _state.pointer_prev_y = event->y;
+        queue_draw();
+        return true;
+    }
     return Gtk::DrawingArea::on_motion_notify_event(event);
 }
 
