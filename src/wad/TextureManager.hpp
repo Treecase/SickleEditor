@@ -43,9 +43,19 @@ namespace WAD
         std::unordered_map<std::string, Lump> lumps{};
         std::unordered_map<std::string, LoadedTexture> textures;
 
-        TextureManager(WAD const &wad)
+        TextureManager()
         :   lumps{}
         ,   textures{}
+        {
+        }
+        TextureManager(WAD const &wad)
+        :   TextureManager()
+        {
+            add_wad(wad);
+        }
+
+        /** Add a WAD to the manager. */
+        void add_wad(WAD const &wad)
         {
             for (auto const &lump : wad.directory)
                 if (lump.type == 0x43)

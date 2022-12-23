@@ -403,8 +403,15 @@ MAP::GLMap::GLMap(Map const &map)
             break;
         }
 
-    auto const &wad = WAD::load(worldspawn.properties.at("wad"));
-    TextureManager textures{wad};
+    auto const &wadpaths = worldspawn.properties.at("wad");
+    TextureManager textures{};
+    for (size_t i = 0, j = 0; j != std::string::npos; i = j + 1)
+    {
+        j = wadpaths.find(';', i);
+        auto const n = (j == std::string::npos? j : j - i);
+        auto const &wadpath = wadpaths.substr(i, n);
+        textures.add_wad(WAD::load(wadpath));
+    }
 
     for (auto const &b : worldspawn.brushes)
         _brushes.emplace_back(GLBrush::new_from_brush(b, textures));
