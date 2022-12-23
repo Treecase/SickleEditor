@@ -18,6 +18,8 @@
 
 #include "map2gl.hpp"
 
+#include "../convexhull/convexhull.hpp"
+
 #include <glm/ext/scalar_constants.hpp>
 #include <glm/gtc/epsilon.hpp>
 
@@ -72,6 +74,7 @@ struct Plane
     }
 };
 
+#if 0 // temporarily in hv_enumeration.hpp
 /** std::hash template so glm::vec3 can be used in std::set and friends. */
 template<>
 struct std::hash<glm::vec3>
@@ -82,6 +85,7 @@ struct std::hash<glm::vec3>
         return hashf(vec.x) ^ hashf(vec.y) ^ hashf(vec.z);
     }
 };
+#endif
 
 /** Implements std::less interface to sort glm::vec3s counterclockwise. */
 struct VectorLessCounterClockwise
@@ -156,63 +160,6 @@ auto _sort_vertices_counterclockwise(
     return sorted;
 }
 
-/** Solve `Ax = d` for `x`. */
-template<glm::length_t C, typename T>
-bool _cramer(
-    glm::mat<C, C, T> const &A, glm::vec<C, T> const &d, glm::vec<C, T> *x)
-{
-    static constexpr float EPSILON = glm::epsilon<float>();
-    auto const &a = A[0];
-    auto const &b = A[1];
-    auto const &c = A[2];
-    auto const &D = glm::determinant(A);
-    if (glm::epsilonEqual(glm::length(d), 0.0f, EPSILON))
-    {
-        // Only solution is 0,0,0
-        if (glm::epsilonEqual(D, 0.0f, EPSILON))
-        {
-            *x = {0.0f, 0.0f, 0.0f};
-            return true;
-        }
-        // Infinite solutions
-        else
-            ;
-    }
-    else
-    {
-        // Single solution
-        if (glm::epsilonNotEqual(D, 0.0f, EPSILON))
-        {
-            *x = {
-                glm::determinant(glm::mat3{d, b, c}) / D,
-                glm::determinant(glm::mat3{a, d, c}) / D,
-                glm::determinant(glm::mat3{a, b, d}) / D};
-            return true;
-        }
-        // No unique solution
-        else
-            ;
-    }
-    return false;
-}
-
-/**
- * True if x is a valid solution to `b + Ax >= 0`.
- * Rows of A come from plane.a,b,c; rows of b come from plane.d.
- */
-bool _is_point_in_polygon(std::vector<Plane> const &planes, glm::vec3 const &x)
-{
-    static constexpr float EPSILON = 0.0001f;
-    for (size_t i = 0; i < planes.size(); ++i)
-    {
-        auto const b = -planes[i].d;
-        auto const Ax = -planes[i].a*x.x - planes[i].b*x.y - planes[i].c*x.z;
-        if (!(b + Ax >= -EPSILON))
-            return false;
-    }
-    return true;
-}
-
 /** Convert paletted texture data to RGBA format. */
 auto _texlump_depalettize(WAD::TexLump const &lump)
 {
@@ -241,31 +188,10 @@ std::vector<Mesh> mesh_from_planes(
     for (auto const &p : brush.planes)
         polygon.emplace_back(p);
 
-    // Vertex enumeration.
-    // This brute-force method can produce duplicates, so we use an
-    // unordered_set to eliminate these.
-    std::unordered_set<glm::vec3> vertices{};
-    for (auto const &p0 : polygon)
-    {
-        for (auto const &p1 : polygon)
-        {
-            for (auto const &p2 : polygon)
-            {
-                glm::mat3 const B{
-                    -p0.a, -p1.a, -p2.a,
-                    -p0.b, -p1.b, -p2.b,
-                    -p0.c, -p1.c, -p2.c,
-                };
-                glm::vec3 const b_bar{-p0.d, -p1.d, -p2.d};
-                glm::vec3 x_bar;
-                // If `b_bar + B*x_bar = 0` has a unique solution, and that
-                // solution satisfies `b + A*x_bar >= 0`, output it.
-                if (_cramer(B, -b_bar, &x_bar))
-                    if (_is_point_in_polygon(polygon, x_bar))
-                        vertices.emplace(glm::round(x_bar));
-            }
-        }
-    }
+    std::vector<HalfPlane> halfplanes{};
+    for (auto const &p : polygon)
+        halfplanes.push_back(HalfPlane{-p.a, -p.b, -p.c, -p.d});
+    auto vertices = vertex_enumeration(halfplanes);
 
     // Build meshes from the plane vertices.
     std::vector<Mesh> meshes{};
