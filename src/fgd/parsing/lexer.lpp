@@ -1,0 +1,98 @@
+/**
+ * lexer.lpp - .fgd scanner.
+ * Copyright (C) 2022 Trevor Last
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+%{
+#include "FGDParser.hpp"
+#include "FGDScanner.hpp"
+
+#include <string>
+
+/* For convenience. */
+using token = FGD::FGDParser::token;
+%}
+
+
+%option debug nodefault noyywrap
+%option c++
+%option prefix="fgd"
+%option yyclass="FGD::Scanner"
+
+
+%{
+/* Update location on pattern match. */
+#define YY_USER_ACTION  yylloc->step(); yylloc->columns(yyleng);
+%}
+
+
+/* Property types. */
+/* TODO: Better way to do this? */
+INTEGER [iI][nN][tT][eE][gG][eE][rR]
+STRING [sS][tT][rR][iI][nN][gG]
+CHOICES [cC][hH][oO][iI][cC][eE][sS]
+FLAGS [fF][lL][aA][gG][sS]
+TARGET_SOURCE [tT][aA][rR][gG][eE][tT]_[sS][oO][uU][rR][cC][eE]
+TARGET_DESTINATION [tT][aA][rR][gG][eE][tT]_[dD][eE][sS][tT][iI][nN][aA][t][iI][oO][nN]
+COLOR255 [cC][oO][lL][oO][rR]255
+STUDIO [sS][tT][uU][dD][iI][oO]
+SPRITE [sS][pP][rR][iI][tT][eE]
+SOUND [sS][oO][uU][nN][dD]
+
+STRING_CHAR [^"\n]
+
+
+%%
+-?[[:digit:]]+    %{
+    yylval->emplace<int>(std::stoi(yytext));
+    return token::NUMBER;
+%}
+
+\"{STRING_CHAR}*\"  %{
+    yylval->emplace<std::string>(yytext+1, yyleng-2);
+    return token::STRING;
+%}
+
+BaseClass   return token::BASECLASS;
+SolidClass  return token::SOLIDCLASS;
+PointClass  return token::POINTCLASS;
+
+{INTEGER}               return token::INTEGER_T;
+{STRING}                return token::STRING_T;
+{CHOICES}               return token::CHOICE_T;
+{FLAGS}                 return token::FLAG_T;
+{TARGET_SOURCE}         return token::TARGET_SOURCE_T;
+{TARGET_DESTINATION}    return token::TARGET_DESTINATION_T;
+{COLOR255}              return token::COLOR255_T;
+{STUDIO}                return token::STUDIO_T;
+{SPRITE}                return token::SPRITE_T;
+{SOUND}                 return token::SOUND_T;
+
+size        return token::SIZE_ATTR;
+color       return token::COLOR_ATTR;
+base        return token::BASE_ATTR;
+iconsprite  return token::ICONSPRITE_ATTR;
+decal       return token::DECAL_ATTR;
+
+[[:alpha:]_][[:alnum:]_]* %{
+    yylval->emplace<std::string>(yytext);
+    return token::L_NAME;
+%}
+
+\n          yylloc->lines();
+[[:space:]]
+\/\/.*$
+.           return *yytext;

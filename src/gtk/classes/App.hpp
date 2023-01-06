@@ -54,7 +54,7 @@ namespace Sickle
         void on_action_about();
 
     private:
-        FGD::FGD _game_definition;
+        FGD::GameDef _game_definition;
 
         AppWin *_create_appwindow();
 

@@ -166,5 +166,5 @@ void Sickle::App::_on_fgd_path_changed()
 {
     auto const path = property_fgd_path().get_value();
     if (!path.empty())
-        _game_definition = FGD::load(property_fgd_path().get_value());
+        _game_definition = FGD::from_file(property_fgd_path().get_value());
 }

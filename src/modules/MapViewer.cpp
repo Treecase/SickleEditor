@@ -18,7 +18,6 @@
 
 #include "MapViewer.hpp"
 #include "utils/ui_helpers.hpp"
-#include "fgd/fgd.hpp"
 
 #include <imgui.h>
 
@@ -110,7 +109,6 @@ void MapViewer::drawGL(float deltaT)
 
 void MapViewer::_loadSelectedMap()
 {
-    auto fgd = FGD::load(_cfg.game_def.string());
     _map = MAP::load(_selected.string());
     _glmap = MAP::GLMap{_map};
 }
