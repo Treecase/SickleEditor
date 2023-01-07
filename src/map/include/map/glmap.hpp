@@ -1,5 +1,5 @@
 /**
- * map2gl.hpp - Convert .map data into OpenGL objects.
+ * glmap.hpp - Convert .map data into OpenGL objects.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,13 +16,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _MAP2GL_HPP
-#define _MAP2GL_HPP
+#ifndef SE_GLMAP_HPP
+#define SE_GLMAP_HPP
 
-#include "../wad/load_wad.hpp"
-#include "../wad/lumps.hpp"
-#include "../wad/TextureManager.hpp"
-#include "load_map.hpp"
+#include "../../../wad/load_wad.hpp"
+#include "../../../wad/lumps.hpp"
+#include "../../../wad/TextureManager.hpp"
+#include "map/map.hpp"
+#include "map/vertexmap.hpp"
 
 #include <glutils/glutils.hpp>
 
@@ -66,8 +67,7 @@ namespace MAP
             std::vector<GLuint> const &ebodata);
 
         /** Create a new GLBrush from a Brush. */
-        static GLBrush *new_from_brush(
-            Brush const &brush, TextureManager &textures);
+        static GLBrush *new_from_vbrush(V::Brush const &brush, TextureManager &textures);
     };
 
     class GLMap

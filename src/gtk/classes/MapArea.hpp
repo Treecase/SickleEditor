@@ -21,8 +21,8 @@
 
 #include "utils/Transform.hpp"
 #include "utils/FreeCam.hpp"
-#include "map/load_map.hpp"
-#include "map/map2gl.hpp"
+#include "map/map.hpp"
+#include "map/glmap.hpp"
 #include "wad/load_wad.hpp"
 #include "wad/lumps.hpp"
 #include "wad/TextureManager.hpp"

@@ -19,7 +19,7 @@
 #ifndef _SE_MAPAREA2D_HPP
 #define _SE_MAPAREA2D_HPP
 
-#include "map/load_map.hpp"
+#include "map/map.hpp"
 
 #include <gdkmm/rgba.h>
 #include <glibmm/property.h>

@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "map/load_map.hpp"
+#include "map/map.hpp"
 
 #include <iostream>
 #include <string>
@@ -66,8 +66,8 @@ int APP_run(APP_Config const &filenames)
                         << " (" << plane.b[0] << " " << plane.b[1] << " " << plane.b[2] << ")"
                         << " (" << plane.c[0] << " " << plane.c[1] << " " << plane.c[2] << ")"
                         << " " << plane.miptex
-                        << " [" << plane.offx[0] << ", " << plane.offx[1] << ", " << plane.offx[2] << ", " << plane.offx[3] << "]"
-                        << " [" << plane.offy[0] << ", " << plane.offy[1] << ", " << plane.offy[2] << ", " << plane.offy[3] << "]"
+                        << " [" << plane.s_vector[0] << ", " << plane.s_vector[1] << ", " << plane.s_vector[2] << ", " << plane.s_vector[3] << "]"
+                        << " [" << plane.t_vector[0] << ", " << plane.t_vector[1] << ", " << plane.t_vector[2] << ", " << plane.t_vector[3] << "]"
                         << " "  << plane.rotation
                         << " "  << plane.scalex << " " << plane.scaley
                         << "\n";
