@@ -26,21 +26,16 @@
 /** Freelook first-person camera. */
 struct FreeCam
 {
-    glm::vec3 pos;      // Position
-    glm::vec2 angle;    // x/y angle (radians)
-    float fov;          // FOV (degrees)
-    float speed;        // Movement speed
-    float min_fov = 30.0f, // FOV min value
-          max_fov = 90.0f; // FOV max value
-
-
-    FreeCam()
-    :   pos{0.0f, 0.0f, 0.0f}
-    ,   angle{0.0f, 0.0f}
-    ,   fov{70.0f}
-    ,   speed{5.0f}
-    {
-    }
+    // Position
+    glm::vec3 pos{0.0f, 0.0f, 0.0f};
+    // x/y angle (radians)
+    glm::vec2 angle{0.0f, 0.0f};
+    // FOV (degrees)
+    float fov{70.0f};
+    // Movement speed
+    float speed{1.0f};
+    // FOV min/max value
+    float min_fov{30.0f}, max_fov{90.0f};
 
     /** Set camera angle. */
     void setAngle(glm::vec2 value)

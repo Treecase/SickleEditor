@@ -73,6 +73,7 @@ namespace Sickle
             gdouble pointer_prev_x, pointer_prev_y;
             gint64 last_frame_time;
             glm::vec3 move_direction;
+            glm::vec2 turn_rates;
             bool gofast;
         } _state;
 

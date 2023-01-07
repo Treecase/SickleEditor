@@ -21,6 +21,19 @@
 #include "appid.hpp"
 
 
+#define DEFAULT_MOUSE_SENSITIVITY   0.75f
+#define DEFAULT_MOVE_SPEED  1.0f
+#define DEFAULT_FOV 70.0f   // degrees
+#define MIN_FOV     30.0f   // degrees
+#define MAX_FOV     90.0f   // degrees
+
+#define TURN_RATE   120.0f  // degrees/second
+#define FOV_DELTA   1.0f    // degrees
+
+#define NEAR_PLANE  0.1f
+#define FAR_PLANE   1000.0f
+
+
 namespace GLUtil
 {
     Shader shader_from_resource(std::string const &path, GLenum type)
@@ -38,7 +51,12 @@ Sickle::MapArea::MapArea()
 ,   Gtk::GLArea{}
 ,   _glmap{}
 ,   _shader{nullptr}
-,   _camera{}
+,   _camera{
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f},
+        DEFAULT_FOV,
+        DEFAULT_MOVE_SPEED,
+        MIN_FOV, MAX_FOV}
 ,   _transform{
         {0.0f, 0.0f, 0.0f},
         {glm::radians(-90.0f), 0.0f, 0.0f},
@@ -47,11 +65,12 @@ Sickle::MapArea::MapArea()
         0.0, 0.0,
         0,
         {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f},
         false
     }
 ,   _prop_wireframe{false}
 ,   _prop_shift_multiplier{2.0f}
-,   _prop_mouse_sensitivity{0.75f}
+,   _prop_mouse_sensitivity{DEFAULT_MOUSE_SENSITIVITY}
 {
     set_required_version(4, 3);
     set_use_es(false);
@@ -128,7 +147,7 @@ bool Sickle::MapArea::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     auto const projectionMatrix = glm::perspective(
         glm::radians(_camera.fov),
         get_width() / (float)get_height(),
-        0.1f, 1000.0f);
+        NEAR_PLANE, FAR_PLANE);
 
     auto const modelMatrix = _transform.getMatrix();
 
@@ -188,6 +207,19 @@ bool Sickle::MapArea::on_key_press_event(GdkEventKey *event)
         _state.gofast = true;
         break;
 
+    case GDK_KEY_Up:
+        _state.turn_rates.y = -TURN_RATE;
+        break;
+    case GDK_KEY_Down:
+        _state.turn_rates.y = TURN_RATE;
+        break;
+    case GDK_KEY_Left:
+        _state.turn_rates.x = -TURN_RATE;
+        break;
+    case GDK_KEY_Right:
+        _state.turn_rates.x = TURN_RATE;
+        break;
+
     default:
         return Gtk::GLArea::on_key_press_event(event);
         break;
@@ -231,6 +263,15 @@ bool Sickle::MapArea::on_key_release_event(GdkEventKey *event)
         _state.gofast = false;
         break;
 
+    case GDK_KEY_Up:
+    case GDK_KEY_Down:
+        _state.turn_rates.y = 0.0f;
+        break;
+    case GDK_KEY_Left:
+    case GDK_KEY_Right:
+        _state.turn_rates.x = 0.0f;
+        break;
+
     default:
         return Gtk::GLArea::on_key_release_event(event);
         break;
@@ -241,26 +282,27 @@ bool Sickle::MapArea::on_key_release_event(GdkEventKey *event)
 
 bool Sickle::MapArea::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
 {
-    static float const USEC_TO_SECONDS = 0.000001;
+    static constexpr float const USEC_TO_SECONDS = 0.000001f;
 
     auto const frame_time = clock->get_frame_time();
-    if (_state.last_frame_time == 0)
-        goto done;
-    if (glm::length(_state.move_direction) == 0.0f)
-        goto done;
-
-    {   // Block needed for gotos to compile
     auto const frame_delta = frame_time - _state.last_frame_time;
     auto const delta = frame_delta * USEC_TO_SECONDS;
+    _state.last_frame_time = frame_time;
 
-    auto const direction = glm::normalize(_state.move_direction);
-    auto const motion = direction * _camera.speed * (_state.gofast? _prop_shift_multiplier : 1.0f);
-    _camera.translate(motion * delta);
-    queue_render();
+    if (glm::length(_state.move_direction) != 0.0f)
+    {
+        auto const direction = glm::normalize(_state.move_direction);
+        auto const motion = direction * _camera.speed * (_state.gofast? _prop_shift_multiplier : 1.0f);
+        _camera.translate(motion * delta);
+        queue_render();
     }
 
-done:
-    _state.last_frame_time = frame_time;
+    if (glm::length(_state.turn_rates) != 0.0f)
+    {
+        _camera.rotate(_state.turn_rates * (_state.gofast? _prop_shift_multiplier : 1.0f) * _prop_mouse_sensitivity * delta);
+        queue_render();
+    }
+
     return G_SOURCE_CONTINUE;
 }
 
@@ -297,10 +339,10 @@ bool Sickle::MapArea::on_scroll_event(GdkEventScroll *event)
         switch (event->direction)
         {
         case GDK_SCROLL_DOWN:
-            _camera.setFOV(_camera.fov + 1.0f);
+            _camera.setFOV(_camera.fov + FOV_DELTA);
             break;
         case GDK_SCROLL_UP:
-            _camera.setFOV(_camera.fov - 1.0f);
+            _camera.setFOV(_camera.fov - FOV_DELTA);
             break;
         }
         queue_render();
