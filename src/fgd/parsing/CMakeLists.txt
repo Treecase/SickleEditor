@@ -17,7 +17,12 @@ add_flex_bison_dependency(fgdlexer fgdparser)
 add_library(fgd_parsing OBJECT
     "${FLEX_fgdlexer_OUTPUTS}"
     "${BISON_fgdparser_OUTPUTS}"
+    FGDDriver.cpp
 )
-target_include_directories(fgd_parsing PRIVATE "${FLEX_INCLUDE_DIRS}" .)
+target_include_directories(fgd_parsing PRIVATE
+    "${FLEX_INCLUDE_DIRS}"
+    ../include
+    .
+)
 target_include_directories(fgd_parsing PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(fgd_parsing PRIVATE "${FLEX_LIBRARIES}")

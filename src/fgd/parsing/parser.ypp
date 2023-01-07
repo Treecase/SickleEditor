@@ -41,7 +41,7 @@
         class FGDScanner;
     }
 
-    #include "../export/fgd/fgd.hpp"
+    #include "fgd/fgd.hpp"
 }
 
 %code top {

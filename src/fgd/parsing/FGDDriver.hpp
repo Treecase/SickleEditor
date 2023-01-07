@@ -21,7 +21,7 @@
 
 #include "FGDParser.hpp"
 #include "FGDScanner.hpp"
-#include "../export/fgd/fgd.hpp"
+#include "fgd/fgd.hpp"
 
 #include <istream>
 #include <memory>

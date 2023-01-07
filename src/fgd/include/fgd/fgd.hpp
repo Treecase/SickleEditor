@@ -32,7 +32,7 @@ namespace FGD
     struct Property
     {
         std::string name;
-        virtual std::string type() const {return "?";}
+        virtual std::string type() const=0;
         virtual std::string rest() const {return "";}
         Property(std::string const &name): name{name} {}
         virtual ~Property() {};
@@ -196,7 +196,7 @@ namespace FGD
 
     struct Attribute
     {
-        virtual std::string name() const {return "?";}
+        virtual std::string name() const=0;
         virtual std::string inner() const {return "";}
         virtual ~Attribute() {}
     };
@@ -296,7 +296,7 @@ namespace FGD
         std::string name;
         std::optional<std::string> description;
         std::vector<std::shared_ptr<Property>> properties;
-        virtual std::string type() const {return "?";}
+        virtual std::string type() const=0;
         Class(
             std::vector<std::shared_ptr<Attribute>> const &attributes,
             std::string const &name,
