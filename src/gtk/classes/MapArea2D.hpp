@@ -16,15 +16,17 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _SE_MAPAREA2D_HPP
-#define _SE_MAPAREA2D_HPP
+#ifndef SE_MAPAREA2D_HPP
+#define SE_MAPAREA2D_HPP
 
 #include "map/map.hpp"
+#include "map/vertexmap.hpp"
 
 #include <gdkmm/rgba.h>
 #include <glibmm/property.h>
 #include <glibmm/ustring.h>
 #include <gtkmm/drawingarea.h>
+#include <cairomm/cairomm.h>
 
 
 namespace Sickle
@@ -33,9 +35,11 @@ namespace Sickle
     class MapArea2D : public Gtk::DrawingArea
     {
     public:
+        enum DrawAngle {TOP, FRONT, RIGHT};
         MapArea2D();
 
         void set_map(MAP::Map const *map);
+        void set_draw_angle(DrawAngle angle);
 
         auto property_clear_color() {return _prop_clear_color.get_proxy();}
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
@@ -55,10 +59,12 @@ namespace Sickle
         bool on_scroll_event(GdkEventScroll *event) override;
 
     private:
-        MAP::Map const *_map;
+        MAP::V::VertexMap _map;
+        DrawAngle _angle{TOP};
         struct Transform2D
         {
-            int x, y;
+            double x, y;
+            double zoom;
         } _transform;
         struct
         {
@@ -69,6 +75,15 @@ namespace Sickle
         Glib::Property<Gdk::RGBA> _prop_clear_color;
         Glib::Property<int> _prop_grid_size;
         Glib::Property<Glib::ustring> _prop_name;
+
+        float _axis_horizontal(std::array<float, 3> const &vertex) const;
+        float _axis_vertical(std::array<float, 3> const &vertex) const;
+        void _draw_brush(
+            Cairo::RefPtr<Cairo::Context> const &cr,
+            MAP::V::Brush const &brush) const;
+        void _draw_map(
+            Cairo::RefPtr<Cairo::Context> const &cr,
+            MAP::V::VertexMap const &map) const;
     };
 }
 

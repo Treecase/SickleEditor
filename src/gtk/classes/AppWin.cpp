@@ -21,32 +21,72 @@
 #include "appid.hpp"
 #include "version.hpp"
 
+#include <algorithm>
+
+
+#define GRID_SIZE_MIN   1U
+#define GRID_SIZE_MAX   512U
+
 
 Sickle::AppWin::AppWin()
-:   Gtk::ApplicationWindow{}
-,   m_grid{}
+:   Glib::ObjectBase{typeid(AppWin)}
+,   Gtk::ApplicationWindow{}
+,   m_viewgrid{}
 ,   m_maparea{}
 ,   m_drawarea_top{}
 ,   m_drawarea_front{}
 ,   m_drawarea_right{}
+,   m_hbox{}
+,   m_gridsizelabel{}
+,   _map{}
+,   _prop_grid_size{*this, "grid-size", 32}
+,   _binding_grid_size_top{}
+,   _binding_grid_size_front{}
+,   _binding_grid_size_right{}
 {
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
     set_title(SE_CANON_NAME);
 
-    m_grid.set_row_spacing(2);
-    m_grid.set_column_spacing(2);
-    m_grid.set_row_homogeneous(true);
-    m_grid.set_column_homogeneous(true);
+    _binding_grid_size_top = Glib::Binding::bind_property(
+        property_grid_size(),
+        m_drawarea_top.property_grid_size(),
+        Glib::BindingFlags::BINDING_SYNC_CREATE);
+    _binding_grid_size_front = Glib::Binding::bind_property(
+        property_grid_size(),
+        m_drawarea_front.property_grid_size(),
+        Glib::BindingFlags::BINDING_SYNC_CREATE);
+    _binding_grid_size_right = Glib::Binding::bind_property(
+        property_grid_size(),
+        m_drawarea_right.property_grid_size(),
+        Glib::BindingFlags::BINDING_SYNC_CREATE);
 
-    m_drawarea_top.property_name() = "top";
-    m_drawarea_front.property_name() = "front";
-    m_drawarea_right.property_name() = "right";
+    property_grid_size().signal_changed().connect(
+        sigc::mem_fun(*this, AppWin::_on_grid_size_changed));
+    _on_grid_size_changed();
 
-    m_grid.attach(m_maparea, 0, 0);
-    m_grid.attach(m_drawarea_top, 1, 0);
-    m_grid.attach(m_drawarea_front, 0, 1);
-    m_grid.attach(m_drawarea_right, 1, 1);
+    add_events(Gdk::KEY_PRESS_MASK);
+
+    m_drawarea_top.property_name() = "top (x/y)";
+    m_drawarea_top.set_draw_angle(Sickle::MapArea2D::DrawAngle::TOP);
+    m_drawarea_front.property_name() = "front (y/z)";
+    m_drawarea_front.set_draw_angle(Sickle::MapArea2D::DrawAngle::FRONT);
+    m_drawarea_right.property_name() = "right (x/z)";
+    m_drawarea_right.set_draw_angle(Sickle::MapArea2D::DrawAngle::RIGHT);
+
+    m_viewgrid.set_row_spacing(2);
+    m_viewgrid.set_column_spacing(2);
+    m_viewgrid.set_row_homogeneous(true);
+    m_viewgrid.set_column_homogeneous(true);
+    m_viewgrid.attach(m_maparea, 0, 0);
+    m_viewgrid.attach(m_drawarea_top, 1, 0);
+    m_viewgrid.attach(m_drawarea_front, 0, 1);
+    m_viewgrid.attach(m_drawarea_right, 1, 1);
+
+    m_hbox.pack_end(m_gridsizelabel);
+
+    m_grid.attach(m_viewgrid, 0, 0);
+    m_grid.attach(m_hbox, 0, 1);
     add(m_grid);
 
     show_all_children();
@@ -56,17 +96,48 @@ void Sickle::AppWin::open(Gio::File const *file)
 {
     if (file)
     {
-        auto const map = MAP::load(file->get_path());
-        m_maparea.set_map(&map);
-        m_drawarea_top.set_map(&map);
-        m_drawarea_front.set_map(&map);
-        m_drawarea_right.set_map(&map);
+        _map = MAP::load(file->get_path());
+        m_maparea.set_map(&_map);
+        m_drawarea_top.set_map(&_map);
+        m_drawarea_front.set_map(&_map);
+        m_drawarea_right.set_map(&_map);
     }
     else
     {
+        _map = MAP::Map{};
         m_maparea.set_map(nullptr);
         m_drawarea_top.set_map(nullptr);
         m_drawarea_front.set_map(nullptr);
         m_drawarea_right.set_map(nullptr);
     }
+}
+
+void Sickle::AppWin::set_grid_size(guint grid_size)
+{ property_grid_size() = std::clamp(grid_size, GRID_SIZE_MIN, GRID_SIZE_MAX); }
+
+guint Sickle::AppWin::get_grid_size()
+{ return property_grid_size().get_value(); }
+
+bool Sickle::AppWin::on_key_press_event(GdkEventKey *event)
+{
+    switch (event->keyval)
+    {
+    case GDK_KEY_bracketleft:{
+        set_grid_size(get_grid_size() / 2);
+        break;}
+    case GDK_KEY_bracketright:{
+        set_grid_size(get_grid_size() * 2);
+        break;}
+    default:
+        return Gtk::ApplicationWindow::on_key_press_event(event);
+        break;
+    }
+    return true;
+}
+
+
+void Sickle::AppWin::_on_grid_size_changed()
+{
+    m_gridsizelabel.set_text(
+        "Grid Size: " + std::to_string(property_grid_size().get_value()));
 }

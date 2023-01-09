@@ -16,14 +16,18 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _SE_APPWIN_HPP
-#define _SE_APPWIN_HPP
+#ifndef SE_APPWIN_HPP
+#define SE_APPWIN_HPP
 
 #include "MapArea.hpp"
 #include "MapArea2D.hpp"
 
+#include <glibmm/property.h>
+#include <glibmm/binding.h>
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/grid.h>
+#include <gtkmm/hvbox.h>
+#include <gtkmm/label.h>
 
 
 namespace Sickle
@@ -36,10 +40,29 @@ namespace Sickle
         /** Open a file. */
         void open(Gio::File const *file);
 
+        auto property_grid_size() {return _prop_grid_size.get_proxy();}
+        void set_grid_size(guint grid_size);
+        guint get_grid_size();
+
+        // Input Signals
+        bool on_key_press_event(GdkEventKey *event) override;
+
     protected:
         Gtk::Grid m_grid;
+        Gtk::Grid m_viewgrid;
         MapArea m_maparea;
         MapArea2D m_drawarea_top, m_drawarea_front, m_drawarea_right;
+        Gtk::HBox m_hbox;
+        Gtk::Label m_gridsizelabel;
+
+    private:
+        MAP::Map _map;
+        Glib::Property<guint> _prop_grid_size;
+        Glib::RefPtr<Glib::Binding> _binding_grid_size_top,
+            _binding_grid_size_front,
+            _binding_grid_size_right;
+
+        void _on_grid_size_changed();
     };
 }
 
