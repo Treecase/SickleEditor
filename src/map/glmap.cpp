@@ -20,6 +20,7 @@
 
 #include <array>
 #include <vector>
+#include <cstring>
 
 
 // TODO: move this into glutil?

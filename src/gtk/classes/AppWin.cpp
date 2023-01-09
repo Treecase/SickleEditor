@@ -62,7 +62,7 @@ Sickle::AppWin::AppWin()
         Glib::BindingFlags::BINDING_SYNC_CREATE);
 
     property_grid_size().signal_changed().connect(
-        sigc::mem_fun(*this, AppWin::_on_grid_size_changed));
+        sigc::mem_fun(*this, &AppWin::_on_grid_size_changed));
     _on_grid_size_changed();
 
     add_events(Gdk::KEY_PRESS_MASK);

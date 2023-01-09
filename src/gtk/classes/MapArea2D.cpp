@@ -155,7 +155,7 @@ Sickle::MapArea2D::MapArea2D()
     set_can_focus(true);
 
     property_grid_size().signal_changed().connect(
-        sigc::mem_fun(*this, MapArea2D::queue_draw));
+        sigc::mem_fun(*this, &MapArea2D::queue_draw));
 
     add_events(
         Gdk::POINTER_MOTION_MASK
@@ -342,6 +342,8 @@ const
 {
     for (auto const &face : brush.faces)
     {
+        if (face.vertices.empty())
+            continue;
         auto const &first = face.vertices[0];
         cr->move_to(_axis_horizontal(first), _axis_vertical(first));
         for (auto const &vertex : face.vertices)
