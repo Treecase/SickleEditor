@@ -16,14 +16,17 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "map/vertexmap.hpp"
+#include "map/map.hpp"
 #include "../convexhull/convexhull.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/ext/scalar_constants.hpp>
 #include <glm/gtc/epsilon.hpp>
 
+#include <algorithm>
+#include <array>
 #include <set>
+#include <vector>
 
 
 /** An abstracted plane. */
@@ -49,10 +52,7 @@ struct MathPlane
     {
     }
     MathPlane(MAP::Plane const &p)
-    :   MathPlane{
-        {p.a[0], p.a[1], p.a[2]},
-        {p.b[0], p.b[1], p.b[2]},
-        {p.c[0], p.c[1], p.c[2]}}
+    :   MathPlane{p.a, p.b, p.c}
     {
     }
 
@@ -65,17 +65,18 @@ struct MathPlane
     }
 };
 
-/** Implements std::less interface to sort glm::vec3s counterclockwise. */
+/** Implements std::less interface to sort MAP::Vertex counterclockwise. */
 struct VectorLessCounterClockwise
 {
     // Precalculated center of points to be compared.
-    glm::vec3 const center;
+    MAP::Vertex const center;
     // Plane to compare in.
     MathPlane const plane;
     // Plane's S and T axes.
-    glm::vec3 const s_axisN, t_axisN;
+    MAP::Vector3 const s_axisN, t_axisN;
 
-    VectorLessCounterClockwise(glm::vec3 const &center, MathPlane const &plane)
+    VectorLessCounterClockwise(
+        MAP::Vertex const &center, MathPlane const &plane)
     :   center{center}
     ,   plane{plane}
     ,   s_axisN{glm::normalize(plane.points[1] - plane.points[0])}
@@ -83,16 +84,16 @@ struct VectorLessCounterClockwise
     {
     }
     /** Sorts vertices counterclockwise. */
-    bool operator()(glm::vec3 const &a, glm::vec3 const &b) const
+    bool operator()(MAP::Vertex const &a, MAP::Vertex const &b) const
     {
         // Local space A and B vectors.
         auto const a_local = a - center;
         auto const b_local = b - center;
 
         // Vertices projected onto the plane.
-        glm::vec2 const a_proj{
+        MAP::Vector2 const a_proj{
             glm::dot(a_local, s_axisN), glm::dot(a_local, t_axisN)};
-        glm::vec2 const b_proj{
+        MAP::Vector2 const b_proj{
             glm::dot(b_local, s_axisN), glm::dot(b_local, t_axisN)};
 
         // Angle between the 0 vector and point
@@ -112,26 +113,20 @@ struct VectorLessCounterClockwise
     }
 };
 
-
-/** Sort vertices counterclockwise. */
-auto _sort_vertices_counterclockwise(
-    std::unordered_set<glm::vec3> const &vertices, MathPlane const &plane)
+/** Must be an iterator over glm::vec3s. */
+template<class RandomIt>
+auto _find_polyhedron_center(RandomIt first, RandomIt last)
 {
-    glm::vec3 center{0.0f};
-    for (auto const &vertex : vertices)
-        center += vertex;
-    center /= vertices.size();
-    std::set<glm::vec3, VectorLessCounterClockwise> sorted{
-        vertices.cbegin(), vertices.cend(),
-        VectorLessCounterClockwise{center, plane}};
-    return sorted;
+    MAP::Vertex center{0.0f};
+    MAP::Vertex::value_type i = 0;
+    for (; first != last; ++first, ++i)
+        center += *first;
+    return center / i;
 }
 
-/** Convert from half-plane Brush to vertex Brush. */
-MAP::V::Brush brush_h_to_v(MAP::Brush const &hbrush)
-{
-    MAP::V::Brush vbrush{};
 
+void brush_add_vertices(MAP::Brush &hbrush)
+{
     // Get brush vertices from planes.
     std::vector<HalfPlane> halfplanes{};
     for (auto const &plane : hbrush.planes)
@@ -143,55 +138,20 @@ MAP::V::Brush brush_h_to_v(MAP::Brush const &hbrush)
     auto const vertices = vertex_enumeration(halfplanes);
 
     // Build faces by finding all the vertices that lie on each plane.
-    for (auto const &plane : hbrush.planes)
+    for (auto &plane : hbrush.planes)
     {
-        decltype(MAP::V::Face::vertices) face_verts{};
         MathPlane const mp{plane};
-        for (auto const &vertex : vertices)
-            if (mp.containsPoint(vertex))
-                face_verts.push_back({vertex.x, vertex.y, vertex.z});
-
-        MAP::V::Face face{
-            face_verts,
-            plane.miptex,
-            {plane.s_vector[0], plane.s_vector[1], plane.s_vector[2]},
-            {plane.t_vector[0], plane.t_vector[1], plane.t_vector[2]},
-            {plane.s_vector[3], plane.t_vector[3]},
-            plane.rotation,
-            {plane.scalex, plane.scaley}
-        };
-
-        // TODO: clean up
-        std::unordered_set<glm::vec3> vertices_us{};
-        for (auto const &v : face.vertices)
-            vertices_us.emplace(v[0], v[1], v[2]);
-
-        auto const vertices_sorted =\
-            _sort_vertices_counterclockwise(vertices_us, mp);
-
-        face.vertices.clear();
-        for (auto const &v : vertices_sorted)
-            face.vertices.push_back({v.x, v.y, v.z});
-
-        vbrush.faces.push_back(face);
+        std::copy_if(
+            vertices.cbegin(), vertices.cend(),
+            std::back_inserter(plane.vertices),
+            [&mp](auto v){return mp.containsPoint(v);});
+        // Sort vertices counterclockwise
+        std::sort(
+            plane.vertices.begin(), plane.vertices.end(),
+            VectorLessCounterClockwise{
+                _find_polyhedron_center(
+                    plane.vertices.cbegin(), plane.vertices.cend()),
+                plane
+            });
     }
-
-    return vbrush;
-}
-
-
-MAP::V::VertexMap MAP::V::VertexMap::from_planes_map(
-    MAP::Map const &map)
-{
-    VertexMap vm{};
-
-    for (auto const &ent : map.entities)
-    {
-        auto &e = vm.entities.emplace_back();
-        e.properties = ent.properties;
-        for (auto const &brush : ent.brushes)
-            e.brushes.emplace_back(brush_h_to_v(brush));
-    }
-
-    return vm;
 }

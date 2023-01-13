@@ -23,6 +23,10 @@
 #include <stdexcept>
 
 
+/** Add counterclockwise sorted vertices to BRUSH. */
+void brush_add_vertices(MAP::Brush &hbrush); // defined in vertexmap.cpp
+
+
 enum TokenType
 {
     NONE,
@@ -393,6 +397,7 @@ private:
         MAP::Brush brush{};
         while (_peek().type == '(')
             brush.planes.push_back(_Plane());
+        brush_add_vertices(brush);
         auto t = _next();
         if (t.type != '}')
             throw ParseError{"Expected RBRACE"};
@@ -401,19 +406,26 @@ private:
 
     MAP::Plane _Plane()
     {
-        return {
-            _Point(), _Point(), _Point(),
-            _MipTex(),
-            _Off(), _Off(),
-            _Number(),
-            _Number(), _Number()};
+        MAP::Plane plane{};
+        plane.a = _Point();
+        plane.b = _Point();
+        plane.c = _Point();
+        plane.miptex = _MipTex();
+        auto const offx = _Off();
+        auto const offy = _Off();
+        plane.s = {offx[0], offx[1], offx[2]};
+        plane.t = {offy[0], offy[1], offy[2]};
+        plane.offsets = {offx[3], offy[3]};
+        plane.rotation = _Number();
+        plane.scale = {_Number(), _Number()};
+        return plane;
     }
 
-    std::array<float, 3> _Point()
+    MAP::Vertex _Point()
     {
         if (_next().type != '(')
             throw ParseError{"Expected LPAREN"};
-        std::array<float, 3> pt{_Number(), _Number(), _Number()};
+        MAP::Vertex pt{_Number(), _Number(), _Number()};
         if (_next().type != ')')
             throw ParseError{"Expected RPAREN"};
         return pt;

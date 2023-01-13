@@ -167,9 +167,9 @@ Sickle::MapArea2D::MapArea2D()
 void Sickle::MapArea2D::set_map(MAP::Map const *map)
 {
     if (map)
-        _map = MAP::V::VertexMap::from_planes_map(*map);
+        _map = *map;
     else
-        _map = MAP::V::VertexMap{};
+        _map = MAP::Map{};
     queue_draw();
 }
 
@@ -312,35 +312,35 @@ bool Sickle::MapArea2D::on_scroll_event(GdkEventScroll *event)
 }
 
 
-float Sickle::MapArea2D::_axis_horizontal(std::array<float, 3> const &vertex)
+float Sickle::MapArea2D::_axis_horizontal(MAP::Vertex const &vertex)
 const
 {
     switch (_angle)
     {
-    case DrawAngle::TOP: return vertex[0]; break;
-    case DrawAngle::FRONT: return vertex[1]; break;
-    case DrawAngle::RIGHT: return vertex[0]; break;
+    case DrawAngle::TOP: return vertex.x; break;
+    case DrawAngle::FRONT: return vertex.y; break;
+    case DrawAngle::RIGHT: return vertex.x; break;
     }
     throw std::runtime_error{"Bad ANGLE"};
 }
 
-float Sickle::MapArea2D::_axis_vertical(std::array<float, 3> const &vertex)
+float Sickle::MapArea2D::_axis_vertical(MAP::Vertex const &vertex)
 const
 {
     switch (_angle)
     {
-    case DrawAngle::TOP: return -vertex[1]; break;
-    case DrawAngle::FRONT: return -vertex[2]; break;
-    case DrawAngle::RIGHT: return -vertex[2]; break;
+    case DrawAngle::TOP: return -vertex.y; break;
+    case DrawAngle::FRONT: return -vertex.z; break;
+    case DrawAngle::RIGHT: return -vertex.z; break;
     }
     throw std::runtime_error{"Bad ANGLE"};
 }
 
 void Sickle::MapArea2D::_draw_brush(
-    Cairo::RefPtr<Cairo::Context> const &cr, MAP::V::Brush const &brush)
+    Cairo::RefPtr<Cairo::Context> const &cr, MAP::Brush const &brush)
 const
 {
-    for (auto const &face : brush.faces)
+    for (auto const &face : brush.planes)
     {
         if (face.vertices.empty())
             continue;
@@ -353,7 +353,7 @@ const
 }
 
 void Sickle::MapArea2D::_draw_map(
-    Cairo::RefPtr<Cairo::Context> const &cr, MAP::V::VertexMap const &map)
+    Cairo::RefPtr<Cairo::Context> const &cr, MAP::Map const &map)
 const
 {
     for (auto const &e : map.entities)

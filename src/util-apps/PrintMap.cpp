@@ -66,10 +66,10 @@ int APP_run(APP_Config const &filenames)
                         << " (" << plane.b[0] << " " << plane.b[1] << " " << plane.b[2] << ")"
                         << " (" << plane.c[0] << " " << plane.c[1] << " " << plane.c[2] << ")"
                         << " " << plane.miptex
-                        << " [" << plane.s_vector[0] << ", " << plane.s_vector[1] << ", " << plane.s_vector[2] << ", " << plane.s_vector[3] << "]"
-                        << " [" << plane.t_vector[0] << ", " << plane.t_vector[1] << ", " << plane.t_vector[2] << ", " << plane.t_vector[3] << "]"
+                        << " [" << plane.s[0] << ", " << plane.s[1] << ", " << plane.s[2] << ", " << plane.offsets[0] << "]"
+                        << " [" << plane.t[0] << ", " << plane.t[1] << ", " << plane.t[2] << ", " << plane.offsets[1] << "]"
                         << " "  << plane.rotation
-                        << " "  << plane.scalex << " " << plane.scaley
+                        << " "  << plane.scale[0] << " " << plane.scale[1]
                         << "\n";
                 }
                 std::cout << "    }\n";

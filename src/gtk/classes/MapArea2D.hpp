@@ -20,7 +20,6 @@
 #define SE_MAPAREA2D_HPP
 
 #include "map/map.hpp"
-#include "map/vertexmap.hpp"
 
 #include <gdkmm/rgba.h>
 #include <glibmm/property.h>
@@ -59,7 +58,7 @@ namespace Sickle
         bool on_scroll_event(GdkEventScroll *event) override;
 
     private:
-        MAP::V::VertexMap _map;
+        MAP::Map _map;
         DrawAngle _angle{TOP};
         struct Transform2D
         {
@@ -76,14 +75,14 @@ namespace Sickle
         Glib::Property<int> _prop_grid_size;
         Glib::Property<Glib::ustring> _prop_name;
 
-        float _axis_horizontal(std::array<float, 3> const &vertex) const;
-        float _axis_vertical(std::array<float, 3> const &vertex) const;
+        float _axis_horizontal(MAP::Vertex const &vertex) const;
+        float _axis_vertical(MAP::Vertex const &vertex) const;
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,
-            MAP::V::Brush const &brush) const;
+            MAP::Brush const &brush) const;
         void _draw_map(
             Cairo::RefPtr<Cairo::Context> const &cr,
-            MAP::V::VertexMap const &map) const;
+            MAP::Map const &map) const;
     };
 }
 

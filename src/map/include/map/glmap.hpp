@@ -23,7 +23,6 @@
 #include "../../../wad/lumps.hpp"
 #include "../../../wad/TextureManager.hpp"
 #include "map/map.hpp"
-#include "map/vertexmap.hpp"
 
 #include <glutils/glutils.hpp>
 
@@ -67,7 +66,7 @@ namespace MAP
             std::vector<GLuint> const &ebodata);
 
         /** Create a new GLBrush from a Brush. */
-        static GLBrush *new_from_vbrush(V::Brush const &brush, TextureManager &textures);
+        static GLBrush *new_from_brush(Brush const &brush, TextureManager &textures);
     };
 
     class GLMap

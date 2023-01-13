@@ -19,6 +19,8 @@
 #ifndef SE_MAP_HPP
 #define SE_MAP_HPP
 
+#include <glm/glm.hpp>
+
 #include <array>
 #include <string>
 #include <unordered_map>
@@ -27,18 +29,24 @@
 
 namespace MAP
 {
+    typedef glm::vec3 Vertex;
+    typedef glm::vec3 Vector3;
+    typedef glm::vec2 Vector2;
+
     /** Half-spaces used to define a brush. */
     struct Plane
     {
         // 3 points which define the plane
-        std::array<float, 3> a, b, c;
+        Vertex a, b, c;
+        // Vertices are sorted counterclockwise
+        std::vector<Vertex> vertices;
         // Name of the texture to paste on the plane
         std::string miptex;
         // Texture application vars
-        std::array<float, 4> s_vector;
-        std::array<float, 4> t_vector;
+        Vector3 s, t;
+        Vector2 offsets;
         float rotation;
-        float scalex, scaley;
+        Vector2 scale;
     };
 
     /** A convex polyhedron. */

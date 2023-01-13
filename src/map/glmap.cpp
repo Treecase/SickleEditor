@@ -54,33 +54,30 @@ auto _texlump_depalettize(WAD::TexLump const &lump)
 }
 
 /** Create a Mesh from a VBrush. */
-std::vector<Mesh> mesh_from_vbrush(
-    MAP::V::Brush const &brush, MAP::TextureManager &textures)
+std::vector<Mesh> mesh_from_brush(
+    MAP::Brush const &brush, MAP::TextureManager &textures)
 {
     // Build meshes from the brush faces.
     std::vector<Mesh> meshes{};
-    for (auto const &f : brush.faces)
+    for (auto const &f : brush.planes)
     {
         // Create the mesh and add the points to it.
         auto &mesh = meshes.emplace_back();
         mesh.tex = f.miptex;
 
-        auto const s = glm::normalize(glm::vec3{f.s[0], f.s[1], f.s[2]});
-        auto const t = glm::normalize(glm::vec3{f.t[0], f.t[1], f.t[2]});
-        glm::vec2 const offset{f.offsets[0], f.offsets[1]};
-        glm::vec2 const scale{f.scale[0], f.scale[1]};
+        auto const s = glm::normalize(glm::vec3{f.s.x, f.s.y, f.s.z});
+        auto const t = glm::normalize(glm::vec3{f.t.x, f.t.y, f.t.z});
         auto const &texture = textures.at(f.miptex);
 
-        for (auto const &p : f.vertices)
+        for (auto const &point : f.vertices)
         {
             // TODO: texcoord rotation
-            glm::vec3 point{p[0], p[1], p[2]};
             mesh.vbo.insert(
                 mesh.vbo.end(),
                 {   point.x, point.y, point.z,
-                    ((glm::dot(point, s) / scale.x) + offset.s)
+                    ((glm::dot(point, s) / f.scale.s) + f.offsets.s)
                         / (float)texture.w,
-                    ((glm::dot(point, t) / scale.y) + offset.t)
+                    ((glm::dot(point, t) / f.scale.t) + f.offsets.t)
                         / (float)texture.h
                 });
             mesh.ebo.push_back(mesh.ebo.size());
@@ -146,14 +143,14 @@ MAP::GLBrush::GLBrush(
     vao.unbind();
 }
 
-MAP::GLBrush *MAP::GLBrush::new_from_vbrush(
-    V::Brush const &brush, TextureManager &textures)
+MAP::GLBrush *MAP::GLBrush::new_from_brush(
+    Brush const &brush, TextureManager &textures)
 {
     // Merge Plane mesh V/EBOs into Brush V/EBO.
     std::vector<GLPlane> planes{};
     std::vector<GLfloat> vbodata{};
     std::vector<GLuint> ebodata{};
-    for (auto const &mesh : mesh_from_vbrush(brush, textures))
+    for (auto const &mesh : mesh_from_brush(brush, textures))
     {
         planes.push_back({
             *textures.at(mesh.tex).texture,
@@ -177,10 +174,8 @@ MAP::GLMap::GLMap()
 MAP::GLMap::GLMap(Map const &map)
 :   _brushes{}
 {
-    auto vm = V::VertexMap::from_planes_map(map);
-
-    V::Entity worldspawn;
-    for (auto const &e : vm.entities)
+    Entity worldspawn;
+    for (auto const &e : map.entities)
         if (e.properties.at("classname") == "worldspawn")
         {
             worldspawn = e;
@@ -198,7 +193,7 @@ MAP::GLMap::GLMap(Map const &map)
     }
 
     for (auto const &b : worldspawn.brushes)
-        _brushes.emplace_back(GLBrush::new_from_vbrush(b, textures));
+        _brushes.emplace_back(GLBrush::new_from_brush(b, textures));
 }
 
 void MAP::GLMap::render()
