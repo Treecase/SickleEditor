@@ -65,6 +65,7 @@ namespace Sickle
     private:
         std::shared_ptr<GLUtil::Program> _shader;
         FreeCam _camera;
+        MAP::Map const *_map;
         MAP::GLMap _glmap;
         Transform _transform;
 
@@ -81,6 +82,8 @@ namespace Sickle
         bool _prop_wireframe;
         float _prop_shift_multiplier;
         float _prop_mouse_sensitivity;
+
+        void _synchronize_glmap();
     };
 }
 

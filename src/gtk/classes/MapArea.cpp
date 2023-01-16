@@ -49,6 +49,7 @@ namespace GLUtil
 Sickle::MapArea::MapArea()
 :   Glib::ObjectBase{typeid(MapArea)}
 ,   Gtk::GLArea{}
+,   _map{nullptr}
 ,   _glmap{}
 ,   _shader{nullptr}
 ,   _camera{
@@ -92,12 +93,13 @@ Sickle::MapArea::MapArea()
 
 void Sickle::MapArea::set_map(MAP::Map const *map)
 {
-    make_current();
-    if (map)
-        _glmap = MAP::GLMap{*map};
-    else
-        _glmap = MAP::GLMap{};
-    queue_render();
+    _map = map;
+    // We need the GL to be initialized to set `_glmap`, which only happens
+    // after the widget has been realized. If the map is set before this, the
+    // initialization of `_glmap` is deferred until the `on_realize` signal is
+    // recieved.
+    if (get_realized())
+        _synchronize_glmap();
 }
 
 void Sickle::MapArea::on_realize()
@@ -130,6 +132,8 @@ void Sickle::MapArea::on_realize()
             "MapShader"
         }
     );
+
+    _synchronize_glmap();
 }
 
 void Sickle::MapArea::on_unrealize()
@@ -349,4 +353,15 @@ bool Sickle::MapArea::on_scroll_event(GdkEventScroll *event)
         return true;
     }
     return Gtk::GLArea::on_scroll_event(event);
+}
+
+
+void Sickle::MapArea::_synchronize_glmap()
+{
+    make_current();
+    if (_map)
+        _glmap = MAP::GLMap{*_map};
+    else
+        _glmap = MAP::GLMap{};
+    queue_render();
 }

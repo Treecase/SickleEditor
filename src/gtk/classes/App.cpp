@@ -78,8 +78,9 @@ void Sickle::App::on_open(Gio::Application::type_vec_files const &files, Glib::u
         appwindow = dynamic_cast<AppWin *>(windows[0]);
     if (!appwindow)
         appwindow = _create_appwindow();
-    for (auto const &file : files)
-        appwindow->open(file.get());
+    // Assuming files won't be empty, since if it was, `on_activate` would be
+    // used instead
+    appwindow->open(files[0].get());
     appwindow->present();
 }
 
