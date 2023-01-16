@@ -27,6 +27,8 @@
 #include <gtkmm/drawingarea.h>
 #include <cairomm/cairomm.h>
 
+#include <tuple>
+
 
 namespace Sickle
 {
@@ -54,6 +56,7 @@ namespace Sickle
     protected:
         // Input Signals
         bool on_button_press_event(GdkEventButton *event) override;
+        bool on_enter_notify_event(GdkEventCrossing *event) override;
         bool on_motion_notify_event(GdkEventMotion *event) override;
         bool on_scroll_event(GdkEventScroll *event) override;
 
@@ -67,7 +70,11 @@ namespace Sickle
         } _transform;
         struct
         {
+            struct BBox {int x1, y1, z1; int x2, y2, z2;};
             int pointer_prev_x, pointer_prev_y;
+            // FIXME: SELECTION and SELECTED are easily confused. Should be renamed to something better.
+            BBox selection; // TODO: This is shared b/t all MapAreas
+            MAP::Brush *selected; // TODO: This is shared b/t all MapAreas
         } _state;
 
         // Properties
@@ -75,8 +82,21 @@ namespace Sickle
         Glib::Property<int> _prop_grid_size;
         Glib::Property<Glib::ustring> _prop_name;
 
-        float _axis_horizontal(MAP::Vertex const &vertex) const;
-        float _axis_vertical(MAP::Vertex const &vertex) const;
+        /** Convert screen-space coordinates to world-space coordinates. */
+        template<typename T>
+        std::tuple<T, T> _screenspace_to_worldspace(T x, T y) const
+        {
+            auto const width = get_allocated_width();
+            auto const height = get_allocated_height();
+            return {
+                ((x - 0.5 * width ) - _transform.x) / _transform.zoom,
+                ((y - 0.5 * height) - _transform.y) / _transform.zoom};
+        }
+
+        /** Convert world-space coordinates to draw-space coordinates. */
+        std::tuple<double, double> _worldspace_to_drawspace(
+            MAP::Vertex const &v) const;
+
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,
             MAP::Brush const &brush) const;

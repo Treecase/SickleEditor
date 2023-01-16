@@ -86,7 +86,8 @@ Sickle::MapArea::MapArea()
         Gdk::POINTER_MOTION_MASK
         | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
         | Gdk::BUTTON_MOTION_MASK | Gdk::BUTTON_PRESS_MASK
-        | Gdk::SCROLL_MASK);
+        | Gdk::SCROLL_MASK
+        | Gdk::ENTER_NOTIFY_MASK);
 
     add_tick_callback(sigc::mem_fun(*this, &MapArea::tick_callback));
 }
@@ -319,6 +320,12 @@ bool Sickle::MapArea::on_button_press_event(GdkEventButton *event)
         return true;
     }
     return Gtk::GLArea::on_button_press_event(event);
+}
+
+bool Sickle::MapArea::on_enter_notify_event(GdkEventCrossing *event)
+{
+    grab_focus();
+    return true;
 }
 
 bool Sickle::MapArea::on_motion_notify_event(GdkEventMotion *event)
