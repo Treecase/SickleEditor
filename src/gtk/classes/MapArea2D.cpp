@@ -161,13 +161,16 @@ Sickle::MapArea2D::MapArea2D(Editor &ed)
 
     _editor.brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
+    _editor.selected.signal_updated().connect(
+        sigc::mem_fun(*this, &MapArea2D::queue_draw));
     property_grid_size().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
 
     add_events(
         Gdk::POINTER_MOTION_MASK
         | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
-        | Gdk::BUTTON_MOTION_MASK | Gdk::BUTTON_PRESS_MASK
+        | Gdk::BUTTON_MOTION_MASK
+        | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK
         | Gdk::SCROLL_MASK
         | Gdk::ENTER_NOTIFY_MASK);
 }
@@ -190,8 +193,6 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 {
     auto const grid_size = property_grid_size().get_value();
     auto const name = property_name().get_value();
-
-    auto context = get_style_context();
 
     auto const width = get_allocated_width();
     auto const height = get_allocated_height();
@@ -311,6 +312,11 @@ bool Sickle::MapArea2D::on_key_press_event(GdkEventKey *event)
         _transform.zoom = std::clamp(_transform.zoom, MIN_ZOOM, MAX_ZOOM);
         break;
 
+    case GDK_KEY_Control_L:
+    case GDK_KEY_Control_R:
+        _state.multiselect = true;
+        break;
+
     default:
         return Gtk::DrawingArea::on_key_press_event(event);
         break;
@@ -321,7 +327,18 @@ bool Sickle::MapArea2D::on_key_press_event(GdkEventKey *event)
 
 bool Sickle::MapArea2D::on_key_release_event(GdkEventKey *event)
 {
-    return Gtk::DrawingArea::on_key_press_event(event);
+    switch (event->keyval)
+    {
+    case GDK_KEY_Control_L:
+    case GDK_KEY_Control_R:
+        _state.multiselect = false;
+        break;
+
+    default:
+        return Gtk::DrawingArea::on_key_press_event(event);
+        break;
+    }
+    return true;
 }
 
 
@@ -329,13 +346,11 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 {
     if (event->button == 1)
     {
-        // TODO: select on button release event. check that the mouse wasn't dragged (or at least wasn't dragged very far!)
-        // if (!_map.entities.empty())
-        //     _state.selected = &_map.entities[0].brushes[0];
         auto const v = _drawspace_to_worldspace(
             _screenspace_to_drawspace(event->x, event->y));
         _editor.brushbox.p1(v);
         _editor.brushbox.p2(v);
+        _state.dragged = false;
         return true;
     }
     if (event->button == 2)
@@ -345,6 +360,29 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
         return true;
     }
     return Gtk::DrawingArea::on_button_press_event(event);
+}
+
+bool Sickle::MapArea2D::on_button_release_event(GdkEventButton *event)
+{
+    if (event->button == 1 && !_state.dragged)
+    {
+        if (!_state.multiselect)
+            _editor.selected.clear();
+        if (!_map.entities.empty())
+        {
+            auto point = _screenspace_to_drawspace(event->x, event->y);
+            auto picked = pick_brush(point);
+            if (picked)
+            {
+                if (_editor.selected.contains(picked))
+                    _editor.selected.remove(picked);
+                else
+                    _editor.selected.add(picked);
+            }
+        }
+        return true;
+    }
+    return Gtk::DrawingArea::on_button_release_event(event);
 }
 
 bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
@@ -360,6 +398,8 @@ bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
         _editor.brushbox.p2(
             _drawspace_to_worldspace(
                 _screenspace_to_drawspace(event->x, event->y)));
+        _state.dragged = true;
+        _editor.selected.clear();
         return true;
     }
     if (event->state & Gdk::BUTTON2_MASK)
@@ -467,4 +507,61 @@ const
     for (auto const &e : map.entities)
         for (auto const &brush : e.brushes)
             _draw_brush(cr, brush);
+}
+
+/** Templated bounding box using glm vectors. */
+template<glm::length_t L, typename T>
+struct BBox
+{
+    using Point = glm::vec<L, T>;
+    Point min{INFINITY, INFINITY}, max{-INFINITY, -INFINITY};
+    T volume() const {
+        auto const wh = glm::abs(max - min);
+        return wh.x * wh.y;
+    }
+    bool contains(Point point) const {
+        return (
+            glm::all(glm::lessThanEqual(min, point))
+            && glm::all(glm::lessThanEqual(point, max))
+        );
+    }
+    void add(Point pt) {
+        for (glm::length_t i = 0; i < Point::length(); ++i)
+        {
+            if (pt[i] < min[i]) min[i] = pt[i];
+            if (pt[i] > max[i]) max[i] = pt[i];
+        }
+    }
+};
+
+MAP::Brush const *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
+{
+    using BBox = BBox<DrawSpacePoint::length(), DrawSpacePoint::value_type>;
+
+    MAP::Brush const *picked{nullptr};
+    BBox pbbox{};
+
+    for (auto const &entity : _map.entities)
+    {
+        for (auto const &brush : entity.brushes)
+        {
+            BBox bbox{};
+            for (auto const &face : brush.planes)
+                for (auto const &vertex : face.vertices)
+                    bbox.add(_worldspace_to_drawspace(vertex));
+
+            if (bbox.contains(point))
+            {
+                // If the point is inside multiple bboxes, we pick the one with
+                // the smallest volume. Could use other metrics, but this seems
+                // logical enough.
+                if (bbox.volume() < pbbox.volume())
+                {
+                    picked = &brush;
+                    pbbox = bbox;
+                }
+            }
+        }
+    }
+    return picked;
 }

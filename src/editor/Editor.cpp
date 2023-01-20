@@ -31,3 +31,24 @@ void Sickle::Editor::BBox::p2(MAP::Vertex v)
     _p2 = v;
     signal_updated().emit();
 }
+
+
+/* ===[ Editor::Selection ]=== */
+void Sickle::Editor::Selection::clear() {
+    _selected.clear();
+    signal_updated().emit();
+}
+
+void Sickle::Editor::Selection::add(Item const &item) {
+    _selected.emplace(item);
+    signal_updated().emit();
+}
+
+void Sickle::Editor::Selection::remove(Item const &item) {
+    _selected.erase(item);
+    signal_updated().emit();
+}
+
+bool Sickle::Editor::Selection::contains(Item const &item) const {
+    return _selected.count(item) != 0;
+}

@@ -37,6 +37,8 @@ namespace Sickle
     class MapArea2D : public Gtk::DrawingArea
     {
     public:
+        using DrawSpacePoint = glm::vec2;
+
         enum DrawAngle {TOP, FRONT, RIGHT};
         MapArea2D(Editor &ed);
 
@@ -57,6 +59,7 @@ namespace Sickle
     protected:
         // Input Signals
         bool on_button_press_event(GdkEventButton *event) override;
+        bool on_button_release_event(GdkEventButton *event) override;
         bool on_enter_notify_event(GdkEventCrossing *event) override;
         bool on_motion_notify_event(GdkEventMotion *event) override;
         bool on_scroll_event(GdkEventScroll *event) override;
@@ -72,6 +75,8 @@ namespace Sickle
         struct
         {
             int pointer_prev_x, pointer_prev_y;
+            bool dragged;
+            bool multiselect{false};
         } _state;
         Editor &_editor;
 
@@ -79,8 +84,6 @@ namespace Sickle
         Glib::Property<Gdk::RGBA> _prop_clear_color;
         Glib::Property<int> _prop_grid_size;
         Glib::Property<Glib::ustring> _prop_name;
-
-        using DrawSpacePoint = glm::vec2;
 
         /** Convert screen-space coordinates to draw-space coordinates. */
         DrawSpacePoint _screenspace_to_drawspace(double x, double y) const;
@@ -95,6 +98,7 @@ namespace Sickle
         void _draw_map(
             Cairo::RefPtr<Cairo::Context> const &cr,
             MAP::Map const &map) const;
+        MAP::Brush const *pick_brush(DrawSpacePoint point);
     };
 }
 

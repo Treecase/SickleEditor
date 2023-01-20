@@ -23,6 +23,8 @@
 
 #include <sigc++/signal.h>
 
+#include <unordered_set>
+
 
 namespace Sickle
 {
@@ -33,8 +35,9 @@ namespace Sickle
     class Editor
     {
     public:
-        struct BBox
+        class BBox
         {
+        public:
             void p1(MAP::Vertex v);
             void p2(MAP::Vertex v);
             auto p1() const {return _p1;}
@@ -47,8 +50,30 @@ namespace Sickle
             MAP::Vertex _p1, _p2;
         };
 
+        class Selection
+        {
+        public:
+            using Item = MAP::Brush const *;
+
+            void clear();
+            void add(Item const &item);
+            void remove(Item const &item);
+            bool contains(Item const &item) const;
+
+            auto begin() const {return _selected.begin();}
+            auto end() const {return _selected.end();}
+
+            auto &signal_updated() {return _signal_updated;}
+        protected:
+            sigc::signal<void()> _signal_updated;
+        private:
+            std::unordered_set<Item> _selected;
+        };
+
+        /** Box used to create new brushes. */
         BBox brushbox;
-        std::vector<MAP::Brush *> selected;
+        /** Selected brushes/entities. */
+        Selection selected;
     };
 }
 
