@@ -17,6 +17,7 @@
  */
 
 #include "MapArea2D.hpp"
+#include "AppWin.hpp"
 
 #include <cmath>
 #include <algorithm>
@@ -142,12 +143,13 @@ void draw_text(
 
 
 /* ===[ MapArea2D ]=== */
-Sickle::MapArea2D::MapArea2D()
+Sickle::MapArea2D::MapArea2D(Editor &ed)
 :   Glib::ObjectBase{typeid(MapArea2D)}
 ,   Gtk::DrawingArea{}
 ,   _map{}
 ,   _transform{0, 0, 1.0}
-,   _state{0,0, {0,0,0, 0,0,0}, nullptr}
+,   _state{0, 0}
+,   _editor{ed}
 ,   _prop_clear_color{*this, "clear-color", {}}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _prop_name{*this, "name", "<blank>"}
@@ -157,6 +159,8 @@ Sickle::MapArea2D::MapArea2D()
     set_size_request(320, 240);
     set_can_focus(true);
 
+    _editor.brushbox.signal_updated().connect(
+        sigc::mem_fun(*this, &MapArea2D::queue_draw));
     property_grid_size().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
 
@@ -240,11 +244,11 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         cr->stroke();
 
         // Draw the selected brush
-        if (_state.selected)
+        for (auto const &brush : _editor.selected)
         {
             cr->set_source_rgb(1, 0, 0);
             cr->set_line_width(1 / _transform.zoom);
-            _draw_brush(cr, *_state.selected);
+            _draw_brush(cr, *brush);
             cr->stroke();
         }
 
@@ -252,11 +256,9 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         cr->set_source_rgb(1, 1, 1);
         cr->set_line_width(1 / _transform.zoom);
         cr->set_dash(std::vector<double>{4/_transform.zoom, 4/_transform.zoom}, 0);
-        cr->rectangle(
-            _state.selection.x1,
-            _state.selection.y1,
-            _state.selection.x2-_state.selection.x1,
-            _state.selection.y2-_state.selection.y1);
+        auto const p1 = _worldspace_to_drawspace(_editor.brushbox.p1());
+        auto const p2 = _worldspace_to_drawspace(_editor.brushbox.p2());
+        cr->rectangle(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
         cr->stroke();
 
     cr->restore();
@@ -327,12 +329,13 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 {
     if (event->button == 1)
     {
-        _state.selected = &_map.entities[0].brushes[0];
-        auto const[x, y] = _screenspace_to_worldspace(event->x, event->y);
-        _state.selection.x1 = _state.selection.x2 = x;
-        _state.selection.y1 = _state.selection.y2 = y;
-        _state.selection.z1 = _state.selection.z2 = 0;
-        queue_draw();
+        // TODO: select on button release event. check that the mouse wasn't dragged (or at least wasn't dragged very far!)
+        // if (!_map.entities.empty())
+        //     _state.selected = &_map.entities[0].brushes[0];
+        auto const v = _drawspace_to_worldspace(
+            _screenspace_to_drawspace(event->x, event->y));
+        _editor.brushbox.p1(v);
+        _editor.brushbox.p2(v);
         return true;
     }
     if (event->button == 2)
@@ -354,13 +357,9 @@ bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
 {
     if (event->state & Gdk::BUTTON1_MASK)
     {
-        auto const[x, y] = _screenspace_to_worldspace(event->x, event->y);
-        _state.selection.x2 = x;
-        _state.selection.y2 = y;
-        _state.selection.z2 = 0;
-        _state.pointer_prev_x = event->x;
-        _state.pointer_prev_y = event->y;
-        queue_draw();
+        _editor.brushbox.p2(
+            _drawspace_to_worldspace(
+                _screenspace_to_drawspace(event->x, event->y)));
         return true;
     }
     if (event->state & Gdk::BUTTON2_MASK)
@@ -394,7 +393,37 @@ bool Sickle::MapArea2D::on_scroll_event(GdkEventScroll *event)
 }
 
 
-std::tuple<double, double>
+Sickle::MapArea2D::DrawSpacePoint
+Sickle::MapArea2D::_screenspace_to_drawspace(double x, double y) const
+{
+    auto const width = get_allocated_width();
+    auto const height = get_allocated_height();
+    return {
+        ((x - 0.5*width ) - _transform.x) / _transform.zoom
+        ,
+        ((y - 0.5*height) - _transform.y) / _transform.zoom
+    };
+}
+
+MAP::Vertex
+Sickle::MapArea2D::_drawspace_to_worldspace(DrawSpacePoint const &v) const
+{
+    switch (_angle)
+    {
+    case DrawAngle::TOP:
+        return {v.x, -v.y, 0};
+        break;
+    case DrawAngle::FRONT:
+        return {0, v.x, -v.y};
+        break;
+    case DrawAngle::RIGHT:
+        return {v.x, 0, -v.y};
+        break;
+    }
+    throw std::runtime_error{"`_angle` is invalid"};
+}
+
+Sickle::MapArea2D::DrawSpacePoint
 Sickle::MapArea2D::_worldspace_to_drawspace(MAP::Vertex const &v) const
 {
     switch (_angle)
@@ -420,12 +449,12 @@ const
     {
         if (face.vertices.empty())
             continue;
-        auto const[x0, y0] = _worldspace_to_drawspace(face.vertices[0]);
-        cr->move_to(x0, y0);
+        auto const p0 = _worldspace_to_drawspace(face.vertices[0]);
+        cr->move_to(p0.x, p0.y);
         for (auto const &vertex : face.vertices)
         {
-            auto const[x, y] = _worldspace_to_drawspace(vertex);
-            cr->line_to(x, y);
+            auto const p = _worldspace_to_drawspace(vertex);
+            cr->line_to(p.x, p.y);
         }
         cr->close_path();
     }

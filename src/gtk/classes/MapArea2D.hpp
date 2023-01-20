@@ -20,6 +20,7 @@
 #define SE_MAPAREA2D_HPP
 
 #include "map/map.hpp"
+#include "editor/Editor.hpp"
 
 #include <gdkmm/rgba.h>
 #include <glibmm/property.h>
@@ -37,7 +38,7 @@ namespace Sickle
     {
     public:
         enum DrawAngle {TOP, FRONT, RIGHT};
-        MapArea2D();
+        MapArea2D(Editor &ed);
 
         void set_map(MAP::Map const *map);
         void set_draw_angle(DrawAngle angle);
@@ -70,32 +71,23 @@ namespace Sickle
         } _transform;
         struct
         {
-            struct BBox {int x1, y1, z1; int x2, y2, z2;};
             int pointer_prev_x, pointer_prev_y;
-            // FIXME: SELECTION and SELECTED are easily confused. Should be renamed to something better.
-            BBox selection; // TODO: This is shared b/t all MapAreas
-            MAP::Brush *selected; // TODO: This is shared b/t all MapAreas
         } _state;
+        Editor &_editor;
 
         // Properties
         Glib::Property<Gdk::RGBA> _prop_clear_color;
         Glib::Property<int> _prop_grid_size;
         Glib::Property<Glib::ustring> _prop_name;
 
-        /** Convert screen-space coordinates to world-space coordinates. */
-        template<typename T>
-        std::tuple<T, T> _screenspace_to_worldspace(T x, T y) const
-        {
-            auto const width = get_allocated_width();
-            auto const height = get_allocated_height();
-            return {
-                ((x - 0.5 * width ) - _transform.x) / _transform.zoom,
-                ((y - 0.5 * height) - _transform.y) / _transform.zoom};
-        }
+        using DrawSpacePoint = glm::vec2;
 
+        /** Convert screen-space coordinates to draw-space coordinates. */
+        DrawSpacePoint _screenspace_to_drawspace(double x, double y) const;
+        /** Convert draw-space coordinates to world-space coordinates. */
+        MAP::Vertex _drawspace_to_worldspace(DrawSpacePoint const &v) const;
         /** Convert world-space coordinates to draw-space coordinates. */
-        std::tuple<double, double> _worldspace_to_drawspace(
-            MAP::Vertex const &v) const;
+        DrawSpacePoint _worldspace_to_drawspace(MAP::Vertex const &v) const;
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,

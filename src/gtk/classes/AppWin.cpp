@@ -31,11 +31,13 @@
 Sickle::AppWin::AppWin()
 :   Glib::ObjectBase{typeid(AppWin)}
 ,   Gtk::ApplicationWindow{}
+,   editor{}
+,   m_grid{}
 ,   m_viewgrid{}
 ,   m_maparea{}
-,   m_drawarea_top{}
-,   m_drawarea_front{}
-,   m_drawarea_right{}
+,   m_drawarea_top{editor}
+,   m_drawarea_front{editor}
+,   m_drawarea_right{editor}
 ,   m_hbox{}
 ,   m_gridsizelabel{}
 ,   _map{}

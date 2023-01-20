@@ -17,6 +17,7 @@ configure_file(version.hpp.in "${PROJECT_BINARY_DIR}/include/version.hpp")
 
 add_subdirectory(bsp)
 add_subdirectory(convexhull)
+add_subdirectory(editor)
 add_subdirectory(fgd)
 add_subdirectory(gtk)
 add_subdirectory(map)
@@ -28,4 +29,4 @@ add_subdirectory(wad)
 target_sources(sickle PRIVATE main.cpp)
 
 target_include_directories(sickle PRIVATE .)
-target_link_libraries(sickle PRIVATE bsp bspgl convexhull fgd map mapgl mdl mdlgl wad)
+target_link_libraries(sickle PRIVATE bsp bspgl convexhull editor fgd map mapgl mdl mdlgl wad)

@@ -21,6 +21,7 @@
 
 #include "MapArea.hpp"
 #include "MapArea2D.hpp"
+#include "editor/Editor.hpp"
 
 #include <glibmm/property.h>
 #include <glibmm/binding.h>
@@ -35,6 +36,8 @@ namespace Sickle
     class AppWin : public Gtk::ApplicationWindow
     {
     public:
+        Editor editor;
+
         AppWin();
 
         /** Open a file. */
