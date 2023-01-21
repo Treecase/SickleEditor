@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "load_bsp.hpp"
+#include "bsp/load_bsp.hpp"
 
 #include <fstream>
 #include <iostream>

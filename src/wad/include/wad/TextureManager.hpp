@@ -16,10 +16,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TEXTUREMANAGER_HPP
-#define _TEXTUREMANAGER_HPP
+#ifndef SE_TEXTUREMANAGER_HPP
+#define SE_TEXTUREMANAGER_HPP
 
-#include "load_wad.hpp"
+#include "wad.hpp"
 #include "lumps.hpp"
 
 #include <stdexcept>

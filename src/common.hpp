@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _COMMON_HPP
-#define _COMMON_HPP
+#ifndef SE_COMMON_HPP
+#define SE_COMMON_HPP
 
 #include <filesystem>
 

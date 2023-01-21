@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EDITOR_HPP
-#define EDITOR_HPP
+#ifndef SE_EDITOR_HPP
+#define SE_EDITOR_HPP
 
 #include "map/map.hpp"
 

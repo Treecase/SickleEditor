@@ -16,14 +16,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _SE_MAPAREA_HPP
-#define _SE_MAPAREA_HPP
+#ifndef SE_MAPAREA_HPP
+#define SE_MAPAREA_HPP
 
 #include "utils/Transform.hpp"
 #include "utils/FreeCam.hpp"
 #include "map/map.hpp"
 #include "map/glmap.hpp"
-#include "wad/load_wad.hpp"
+#include "wad/wad.hpp"
 #include "wad/lumps.hpp"
 #include "wad/TextureManager.hpp"
 

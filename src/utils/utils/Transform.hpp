@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TRANSFORM_HPP
-#define _TRANSFORM_HPP
+#ifndef SE_TRANSFORM_HPP
+#define SE_TRANSFORM_HPP
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

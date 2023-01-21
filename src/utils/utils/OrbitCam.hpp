@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _ORBITCAM_HPP
-#define _ORBITCAM_HPP
+#ifndef SE_ORBITCAM_HPP
+#define SE_ORBITCAM_HPP
 
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>

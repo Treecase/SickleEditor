@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _SE_APP_HPP
-#define _SE_APP_HPP
+#ifndef SE_APP_HPP
+#define SE_APP_HPP
 
 #include "AppWin.hpp"
 #include "fgd/fgd.hpp"

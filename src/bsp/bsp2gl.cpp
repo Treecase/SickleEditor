@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "bsp2gl.hpp"
-#include "../wad/lumps.hpp"
+#include "bsp/bsp2gl.hpp"
+#include "wad/lumps.hpp"
 
 #include <algorithm>
 #include <deque>

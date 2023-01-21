@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "mdl2gl.hpp"
+#include "mdl/mdl2gl.hpp"
 
 #include <unordered_map>
 

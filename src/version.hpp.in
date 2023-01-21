@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _VERSION_HPP
-#define _VERSION_HPP
+#ifndef SE_VERSION_HPP
+#define SE_VERSION_HPP
 
 #define SE_CANON_NAME "@PROJECT_NAME@"
 #define SE_VERSION "@PROJECT_VERSION@"

@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "load_model.hpp"
+#include "mdl/load_model.hpp"
 
 #include <fstream>
 #include <unordered_map>

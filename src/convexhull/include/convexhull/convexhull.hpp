@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _CONVEXHULL_HPP
-#define _CONVEXHULL_HPP
+#ifndef SE_CONVEXHULL_HPP
+#define SE_CONVEXHULL_HPP
 
 #include <glm/glm.hpp>
 

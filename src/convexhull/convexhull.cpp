@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "convexhull.hpp"
+#include "convexhull/convexhull.hpp"
 
 #include <glm/ext/scalar_constants.hpp>
 #include <glm/gtc/epsilon.hpp>

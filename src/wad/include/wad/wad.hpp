@@ -1,5 +1,5 @@
 /**
- * load_wad.hpp - Load WAD files.
+ * wad.hpp - Load WAD files.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _LOAD_WAD
-#define _LOAD_WAD
+#ifndef SE_LOAD_WAD
+#define SE_LOAD_WAD
 
 #include <string>
 #include <vector>

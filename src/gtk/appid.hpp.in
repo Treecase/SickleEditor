@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _SE_APPID_HPP
-#define _SE_APPID_HPP
+#ifndef SE_APPID_HPP
+#define SE_APPID_HPP
 
 #define SE_APPLICATION_ID "@APPLICATION_ID@"
 #define SE_GRESOURCE_PREFIX "@GRESOURCE_PREFIX@"

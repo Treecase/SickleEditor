@@ -17,7 +17,7 @@
  */
 
 #include "map/map.hpp"
-#include "../convexhull/convexhull.hpp"
+#include "convexhull/convexhull.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/ext/scalar_constants.hpp>

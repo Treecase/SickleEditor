@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _FREECAM_HPP
-#define _FREECAM_HPP
+#ifndef SE_FREECAM_HPP
+#define SE_FREECAM_HPP
 
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>

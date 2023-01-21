@@ -38,16 +38,6 @@ set(SCHEMA_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 # glutils
 add_subdirectory(extern/glutils)
 
-# imgui
-set(imgui_DIR cmake)
-find_package(imgui)
-
-# SDL2
-if(MSVC)
-    set(SDL2_DIR cmake)
-endif()
-find_package(SDL2 REQUIRED)
-
 # GLEW
 find_package(GLEW REQUIRED)
 
@@ -74,7 +64,6 @@ configure_file(sicklegtk.gschema.xml.in sicklegtk.gschema.xml)
 # Declare targets
 add_executable(sickle)
 target_compile_features(sickle PRIVATE cxx_std_17)
-set_target_properties(sickle PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 
 # Compiles settings gschema
@@ -103,14 +92,11 @@ add_subdirectory(gresource)
 if(MINGW)
     target_link_libraries(sickle PRIVATE mingw32)
 endif()
-
 target_link_libraries(sickle PRIVATE
-    imgui
     GLEW::GLEW
     glm::glm
     SickleGL
     glutils::glutils
     ${CMAKE_DL_LIBS}
     PkgConfig::GTKMM
-    fgd map mapgl wad
 )

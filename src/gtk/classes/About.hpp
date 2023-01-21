@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _SE_ABOUT_HPP
-#define _SE_ABOUT_HPP
+#ifndef SE_ABOUT_HPP
+#define SE_ABOUT_HPP
 
 #include <gtkmm/aboutdialog.h>
 

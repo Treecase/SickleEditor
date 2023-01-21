@@ -16,11 +16,11 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _BSP2GL_HPP
-#define _BSP2GL_HPP
+#ifndef SE_BSP2GL_HPP
+#define SE_BSP2GL_HPP
 
 #include "load_bsp.hpp"
-#include "../wad/load_wad.hpp"
+#include "wad/wad.hpp"
 
 #include <glutils/glutils.hpp>
 

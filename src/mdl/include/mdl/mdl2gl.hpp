@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _MDL2GL_HPP
-#define _MDL2GL_HPP
+#ifndef SE_MDL2GL_HPP
+#define SE_MDL2GL_HPP
 
 #include "load_model.hpp"
 

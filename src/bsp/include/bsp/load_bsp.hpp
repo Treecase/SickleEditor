@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _LOAD_BSP
-#define _LOAD_BSP
+#ifndef SE_LOAD_BSP
+#define SE_LOAD_BSP
 
 #include "entities_lump.hpp"
 

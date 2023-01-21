@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _LOAD_MODEL
-#define _LOAD_MODEL
+#ifndef SE_LOAD_MODEL
+#define SE_LOAD_MODEL
 
 #include <array>
 #include <string>

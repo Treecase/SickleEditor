@@ -75,7 +75,7 @@ namespace Sickle
         struct
         {
             int pointer_prev_x, pointer_prev_y;
-            bool dragged;
+            bool dragged{false};
             bool multiselect{false};
         } _state;
         Editor &_editor;

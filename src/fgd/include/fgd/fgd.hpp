@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef FGD_HPP
-#define FGD_HPP
+#ifndef SE_FGD_HPP
+#define SE_FGD_HPP
 
 #include <map>
 #include <memory>

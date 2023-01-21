@@ -1,6 +1,4 @@
 .vscode/
 build/
-extern/SDL2-*/
 notes/
-imgui.ini
 *.dll

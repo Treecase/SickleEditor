@@ -19,9 +19,9 @@
 #ifndef SE_GLMAP_HPP
 #define SE_GLMAP_HPP
 
-#include "../../../wad/load_wad.hpp"
-#include "../../../wad/lumps.hpp"
-#include "../../../wad/TextureManager.hpp"
+#include "wad/wad.hpp"
+#include "wad/lumps.hpp"
+#include "wad/TextureManager.hpp"
 #include "map/map.hpp"
 
 #include <glutils/glutils.hpp>

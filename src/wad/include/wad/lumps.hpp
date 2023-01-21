@@ -1,5 +1,5 @@
 /**
- * entities_lump.hpp - Parse the .bsp Entities lump.
+ * lumps.hpp - WAD lump types.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,35 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _ENTITIES_LUMP_HPP
-#define _ENTITIES_LUMP_HPP
+#ifndef SE_LUMPS_HPP
+#define SE_LUMPS_HPP
 
-#include <string>
-#include <unordered_map>
+#include "wad.hpp"
+
+#include <array>
 #include <vector>
 
+#include <cstdint>
 
-typedef std::unordered_map<std::string, std::string> Entity;
 
+namespace WAD
+{
+    /**
+     * Texture lump. Type 0x43.
+     */
+    struct TexLump
+    {
+        char name[16];
+        uint32_t width, height;
+        std::vector<uint8_t> tex1;
+        std::vector<uint8_t> tex2;
+        std::vector<uint8_t> tex4;
+        std::vector<uint8_t> tex8;
+        std::vector<std::array<uint8_t, 3>> palette;
+    };
 
-/** Parse a .bsp's Entities lump. */
-std::vector<Entity> parse_entities(std::string const &buf);
+    /* Read a TexLump from a Lump. */
+    TexLump readTexLump(Lump const &lump);
+}
 
 #endif
