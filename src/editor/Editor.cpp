@@ -39,16 +39,16 @@ void Sickle::Editor::Selection::clear() {
     signal_updated().emit();
 }
 
-void Sickle::Editor::Selection::add(Item const &item) {
+void Sickle::Editor::Selection::add(Item *item) {
     _selected.emplace(item);
     signal_updated().emit();
 }
 
-void Sickle::Editor::Selection::remove(Item const &item) {
+void Sickle::Editor::Selection::remove(Item *item) {
     _selected.erase(item);
     signal_updated().emit();
 }
 
-bool Sickle::Editor::Selection::contains(Item const &item) const {
+bool Sickle::Editor::Selection::contains(Item const *item) const {
     return _selected.count(item) != 0;
 }

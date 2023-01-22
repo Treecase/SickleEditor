@@ -28,6 +28,17 @@
 
 namespace Sickle
 {
+    /** Editor Brush interface. */
+    class EditorBrush : public MAP::Brush
+    {
+    public:
+        EditorBrush(MAP::Brush const &brush)
+        :   MAP::Brush{brush}
+        {
+        }
+    };
+    using EditorMap = MAP::TMap<EditorBrush>;
+
     /**
      * The Editor class manages all the objects in the map, as well editor-only
      * data like visgroups.
@@ -53,12 +64,12 @@ namespace Sickle
         class Selection
         {
         public:
-            using Item = MAP::Brush const *;
+            using Item = EditorBrush;
 
             void clear();
-            void add(Item const &item);
-            void remove(Item const &item);
-            bool contains(Item const &item) const;
+            void add(Item *item);
+            void remove(Item *item);
+            bool contains(Item const *item) const;
 
             auto begin() const {return _selected.begin();}
             auto end() const {return _selected.end();}
@@ -67,13 +78,27 @@ namespace Sickle
         protected:
             sigc::signal<void()> _signal_updated;
         private:
-            std::unordered_set<Item> _selected;
+            std::unordered_set<Item const *> _selected;
         };
 
         /** Box used to create new brushes. */
-        BBox brushbox;
+        BBox brushbox{};
         /** Selected brushes/entities. */
-        Selection selected;
+        Selection selected{};
+
+        auto &signal_map_changed() {return _signal_map_changed;}
+
+        void set_map(MAP::Map const &map)
+        {
+            _map = EditorMap{map};
+            signal_map_changed().emit();
+        }
+        auto &get_map() const {return _map;}
+
+        protected:
+            sigc::signal<void()> _signal_map_changed{};
+        private:
+            EditorMap _map{};
     };
 }
 

@@ -20,6 +20,8 @@
 
 #include "appid.hpp"
 
+#include <giomm/resource.h>
+
 
 #define DEFAULT_MOUSE_SENSITIVITY   0.75f
 #define DEFAULT_MOVE_SPEED  1.0f
@@ -46,11 +48,10 @@ namespace GLUtil
 
 
 /* ===[ MapArea ]=== */
-Sickle::MapArea::MapArea()
+Sickle::MapArea::MapArea(Editor &ed)
 :   Glib::ObjectBase{typeid(MapArea)}
 ,   Gtk::GLArea{}
-,   _map{nullptr}
-,   _glmap{}
+,   _editor{ed}
 ,   _shader{nullptr}
 ,   _camera{
         {0.0f, 0.0f, 0.0f},
@@ -82,6 +83,9 @@ Sickle::MapArea::MapArea()
     set_auto_render(true);
     set_can_focus(true);
 
+    _editor.signal_map_changed().connect(
+        sigc::mem_fun(*this, &MapArea::on_editor_map_changed));
+
     add_events(
         Gdk::POINTER_MOTION_MASK
         | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
@@ -90,17 +94,6 @@ Sickle::MapArea::MapArea()
         | Gdk::ENTER_NOTIFY_MASK);
 
     add_tick_callback(sigc::mem_fun(*this, &MapArea::tick_callback));
-}
-
-void Sickle::MapArea::set_map(MAP::Map const *map)
-{
-    _map = map;
-    // We need the GL to be initialized to set `_glmap`, which only happens
-    // after the widget has been realized. If the map is set before this, the
-    // initialization of `_glmap` is deferred until the `on_realize` signal is
-    // recieved.
-    if (get_realized())
-        _synchronize_glmap();
 }
 
 void Sickle::MapArea::on_realize()
@@ -163,7 +156,7 @@ bool Sickle::MapArea::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     _shader->setUniformS("projection", projectionMatrix);
     _shader->setUniformS("tex", 0);
     _shader->setUniformS("model", modelMatrix);
-    _glmap.render();
+    _mapview->render();
     return true;
 }
 
@@ -362,13 +355,19 @@ bool Sickle::MapArea::on_scroll_event(GdkEventScroll *event)
     return Gtk::GLArea::on_scroll_event(event);
 }
 
+void Sickle::MapArea::on_editor_map_changed()
+{
+    if (get_realized())
+    {
+        _synchronize_glmap();
+        queue_render();
+    }
+}
+
 
 void Sickle::MapArea::_synchronize_glmap()
 {
     make_current();
-    if (_map)
-        _glmap = MAP::GLMap{*_map};
-    else
-        _glmap = MAP::GLMap{};
+    _mapview.reset(new MAP::GLMap{_editor.get_map()});
     queue_render();
 }

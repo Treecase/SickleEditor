@@ -34,7 +34,7 @@ Sickle::AppWin::AppWin()
 ,   editor{}
 ,   m_grid{}
 ,   m_viewgrid{}
-,   m_maparea{}
+,   m_maparea{editor}
 ,   m_drawarea_top{editor}
 ,   m_drawarea_front{editor}
 ,   m_drawarea_right{editor}
@@ -97,21 +97,10 @@ Sickle::AppWin::AppWin()
 void Sickle::AppWin::open(Gio::File const *file)
 {
     if (file)
-    {
         _map = MAP::load(file->get_path());
-        m_maparea.set_map(&_map);
-        m_drawarea_top.set_map(&_map);
-        m_drawarea_front.set_map(&_map);
-        m_drawarea_right.set_map(&_map);
-    }
     else
-    {
         _map = MAP::Map{};
-        m_maparea.set_map(nullptr);
-        m_drawarea_top.set_map(nullptr);
-        m_drawarea_front.set_map(nullptr);
-        m_drawarea_right.set_map(nullptr);
-    }
+    editor.set_map(_map);
 }
 
 void Sickle::AppWin::set_grid_size(guint grid_size)

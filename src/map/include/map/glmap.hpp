@@ -66,21 +66,20 @@ namespace MAP
             std::vector<GLuint> const &ebodata);
 
         /** Create a new GLBrush from a Brush. */
-        static GLBrush *new_from_brush(Brush const &brush, TextureManager &textures);
+        static GLBrush new_from_brush(Brush const &brush, TextureManager &textures);
+
+        void render() const;
     };
 
-    class GLMap
+    class GLMap : public TMap<GLBrush>
     {
     public:
-        GLMap();
         /** Transform map Brush to GL brush. */
         GLMap(Map const &map);
+        virtual ~GLMap()=default;
 
         /** Draw a GLMap. */
         void render();
-
-    private:
-        std::vector<std::shared_ptr<GLBrush>> _brushes;
     };
 };
 

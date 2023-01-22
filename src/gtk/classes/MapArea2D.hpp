@@ -19,7 +19,6 @@
 #ifndef SE_MAPAREA2D_HPP
 #define SE_MAPAREA2D_HPP
 
-#include "map/map.hpp"
 #include "editor/Editor.hpp"
 
 #include <gdkmm/rgba.h>
@@ -27,8 +26,6 @@
 #include <glibmm/ustring.h>
 #include <gtkmm/drawingarea.h>
 #include <cairomm/cairomm.h>
-
-#include <tuple>
 
 
 namespace Sickle
@@ -42,7 +39,6 @@ namespace Sickle
         enum DrawAngle {TOP, FRONT, RIGHT};
         MapArea2D(Editor &ed);
 
-        void set_map(MAP::Map const *map);
         void set_draw_angle(DrawAngle angle);
 
         auto property_clear_color() {return _prop_clear_color.get_proxy();}
@@ -64,8 +60,10 @@ namespace Sickle
         bool on_motion_notify_event(GdkEventMotion *event) override;
         bool on_scroll_event(GdkEventScroll *event) override;
 
+        void on_editor_map_changed();
+
     private:
-        MAP::Map _map;
+        Editor &_editor;
         DrawAngle _angle{TOP};
         struct Transform2D
         {
@@ -78,7 +76,6 @@ namespace Sickle
             bool dragged{false};
             bool multiselect{false};
         } _state;
-        Editor &_editor;
 
         // Properties
         Glib::Property<Gdk::RGBA> _prop_clear_color;
@@ -94,11 +91,9 @@ namespace Sickle
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,
-            MAP::Brush const &brush) const;
-        void _draw_map(
-            Cairo::RefPtr<Cairo::Context> const &cr,
-            MAP::Map const &map) const;
-        MAP::Brush const *pick_brush(DrawSpacePoint point);
+            EditorBrush const &brush) const;
+        void _draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const;
+        EditorBrush const *pick_brush(DrawSpacePoint point);
     };
 }
 

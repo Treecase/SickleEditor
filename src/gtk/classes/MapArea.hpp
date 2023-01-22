@@ -19,16 +19,12 @@
 #ifndef SE_MAPAREA_HPP
 #define SE_MAPAREA_HPP
 
+#include "editor/Editor.hpp"
+#include "map/glmap.hpp"
 #include "utils/Transform.hpp"
 #include "utils/FreeCam.hpp"
-#include "map/map.hpp"
-#include "map/glmap.hpp"
-#include "wad/wad.hpp"
-#include "wad/lumps.hpp"
-#include "wad/TextureManager.hpp"
 
 #include <gdkmm/frameclock.h>
-#include <giomm/resource.h>
 #include <gtkmm/glarea.h>
 
 
@@ -38,9 +34,7 @@ namespace Sickle
     class MapArea : public Gtk::GLArea
     {
     public:
-        MapArea();
-
-        void set_map(MAP::Map const *map);
+        MapArea(Editor &ed);
 
         // Signal handlers
         /** Where GL initialization should be done. */
@@ -63,12 +57,14 @@ namespace Sickle
         bool on_motion_notify_event(GdkEventMotion *event) override;
         bool on_scroll_event(GdkEventScroll *event) override;
 
+        void on_editor_map_changed();
+
     private:
+        Editor &_editor;
         std::shared_ptr<GLUtil::Program> _shader;
         FreeCam _camera;
-        MAP::Map const *_map;
-        MAP::GLMap _glmap;
         Transform _transform;
+        std::unique_ptr<MAP::GLMap> _mapview{nullptr};
 
         struct State
         {

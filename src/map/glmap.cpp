@@ -143,7 +143,7 @@ MAP::GLBrush::GLBrush(
     vao.unbind();
 }
 
-MAP::GLBrush *MAP::GLBrush::new_from_brush(
+MAP::GLBrush MAP::GLBrush::new_from_brush(
     Brush const &brush, TextureManager &textures)
 {
     // Merge Plane mesh V/EBOs into Brush V/EBO.
@@ -161,28 +161,37 @@ MAP::GLBrush *MAP::GLBrush::new_from_brush(
             ebodata.push_back(index + idx);
         vbodata.insert(vbodata.end(), mesh.vbo.cbegin(), mesh.vbo.cend());
     }
-    return new GLBrush{planes, vbodata, ebodata};
+    return GLBrush{planes, vbodata, ebodata};
+}
+
+void MAP::GLBrush::render() const
+{
+    vao.bind();
+    ebo.bind();
+    for (auto const &plane : planes)
+    {
+        plane.texture.bind();
+        glDrawElements(
+            GL_TRIANGLE_FAN, plane.count, GL_UNSIGNED_INT, plane.indices);
+    }
 }
 
 
 /* ===[ GLMap ]=== */
-MAP::GLMap::GLMap()
-:   _brushes{}
-{
-}
-
 MAP::GLMap::GLMap(Map const &map)
-:   _brushes{}
 {
-    Entity worldspawn;
+    Entity const *worldspawn{nullptr};
     for (auto const &e : map.entities)
         if (e.properties.at("classname") == "worldspawn")
         {
-            worldspawn = e;
+            worldspawn = &e;
             break;
         }
 
-    auto const &wadpaths = worldspawn.properties.at("wad");
+    if (!worldspawn)
+        return;
+
+    auto const &wadpaths = worldspawn->properties.at("wad");
     TextureManager textures{};
     for (size_t i = 0, j = 0; j != std::string::npos; i = j + 1)
     {
@@ -192,21 +201,18 @@ MAP::GLMap::GLMap(Map const &map)
         textures.add_wad(WAD::load(wadpath));
     }
 
-    for (auto const &b : worldspawn.brushes)
-        _brushes.emplace_back(GLBrush::new_from_brush(b, textures));
+    for (auto const &e : map.entities)
+    {
+        auto &ent = entities.emplace_back();
+        ent.properties = e.properties;
+        for (auto const &b : e.brushes)
+            ent.brushes.emplace_back(GLBrush::new_from_brush(b, textures));
+    }
 }
 
 void MAP::GLMap::render()
 {
-    for (auto const &brush : _brushes)
-    {
-        brush->vao.bind();
-        brush->ebo.bind();
-        for (auto const &plane : brush->planes)
-        {
-            plane.texture.bind();
-            glDrawElements(
-                GL_TRIANGLE_FAN, plane.count, GL_UNSIGNED_INT, plane.indices);
-        }
-    }
+    for (auto const &entity : entities)
+        for (auto const &brush : entity.brushes)
+            brush.render();
 }

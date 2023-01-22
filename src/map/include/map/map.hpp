@@ -56,18 +56,41 @@ namespace MAP
         std::vector<Plane> planes;
     };
 
-    /** Map entity. BRUSHES can be empty if this is a PointClass entity. */
-    struct Entity
+
+    template<class BrushT>
+    struct TEntity
     {
-        std::unordered_map<std::string, std::string> properties;
-        std::vector<Brush> brushes;
+        std::unordered_map<std::string, std::string> properties{};
+        std::vector<BrushT> brushes{};
+
+        template<class OtherBrushT>
+        TEntity(TEntity<OtherBrushT> const &other)
+        :   properties{other.properties}
+        {
+            for (auto const &otherbrush : other.brushes)
+                brushes.emplace_back(otherbrush);
+        }
+        TEntity()=default;
+        virtual ~TEntity()=default;
     };
 
-    /** A map is just a collection of entities. */
-    struct Map
+    template<class BrushT>
+    struct TMap
     {
-        std::vector<Entity> entities;
+        std::vector<TEntity<BrushT>> entities{};
+
+        template<class OtherBrushT>
+        TMap(TMap<OtherBrushT> const &other)
+        {
+            for (auto const &otherentity : other.entities)
+                entities.emplace_back(otherentity);
+        }
+        TMap()=default;
+        virtual ~TMap()=default;
     };
+
+    using Entity = TEntity<Brush>;
+    using Map = TMap<Brush>;
 
 
     /** Parse a .map file. */
