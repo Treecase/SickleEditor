@@ -18,6 +18,8 @@
 
 #include "editor/Editor.hpp"
 
+#include <algorithm>
+
 
 /* ===[ Editor::BBox ]=== */
 void Sickle::Editor::BBox::p1(MAP::Vertex v)
@@ -35,20 +37,25 @@ void Sickle::Editor::BBox::p2(MAP::Vertex v)
 
 /* ===[ Editor::Selection ]=== */
 void Sickle::Editor::Selection::clear() {
+    std::for_each(
+        _selected.begin(), _selected.end(),
+        [](auto brush){brush->is_selected = false;});
     _selected.clear();
     signal_updated().emit();
 }
 
 void Sickle::Editor::Selection::add(Item *item) {
     _selected.emplace(item);
+    item->is_selected = true;
     signal_updated().emit();
 }
 
 void Sickle::Editor::Selection::remove(Item *item) {
     _selected.erase(item);
+    item->is_selected = false;
     signal_updated().emit();
 }
 
-bool Sickle::Editor::Selection::contains(Item const *item) const {
+bool Sickle::Editor::Selection::contains(Item *item) const {
     return _selected.count(item) != 0;
 }

@@ -28,10 +28,27 @@
 
 namespace Sickle
 {
+    template<typename T>
+    class Property
+    {
+    public:
+        Property()=default;
+        Property(T init): _value{init} {}
+        auto &signal_changed() {return _signal_changed;}
+        void set(T value) {_value = value; signal_changed().emit();}
+        T operator=(T value) {set(value); return _value;}
+        operator T() const {return _value;}
+        T get() const {return _value;}
+    private:
+        T _value{};
+        sigc::signal<void()> _signal_changed{};
+    };
+
     /** Editor Brush interface. */
     class EditorBrush : public MAP::Brush
     {
     public:
+        Property<bool> is_selected;
         EditorBrush(MAP::Brush const &brush)
         :   MAP::Brush{brush}
         {
@@ -69,7 +86,7 @@ namespace Sickle
             void clear();
             void add(Item *item);
             void remove(Item *item);
-            bool contains(Item const *item) const;
+            bool contains(Item *item) const;
 
             auto begin() const {return _selected.begin();}
             auto end() const {return _selected.end();}
@@ -78,7 +95,7 @@ namespace Sickle
         protected:
             sigc::signal<void()> _signal_updated;
         private:
-            std::unordered_set<Item const *> _selected;
+            std::unordered_set<Item *> _selected;
         };
 
         /** Box used to create new brushes. */

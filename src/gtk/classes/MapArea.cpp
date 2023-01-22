@@ -85,6 +85,10 @@ Sickle::MapArea::MapArea(Editor &ed)
 
     _editor.signal_map_changed().connect(
         sigc::mem_fun(*this, &MapArea::on_editor_map_changed));
+    _editor.selected.signal_updated().connect(
+        sigc::mem_fun(*this, &MapArea::queue_render));
+    _editor.brushbox.signal_updated().connect(
+        sigc::mem_fun(*this, &MapArea::queue_render));
 
     add_events(
         Gdk::POINTER_MOTION_MASK
@@ -156,7 +160,18 @@ bool Sickle::MapArea::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     _shader->setUniformS("projection", projectionMatrix);
     _shader->setUniformS("tex", 0);
     _shader->setUniformS("model", modelMatrix);
-    _mapview->render();
+    // TODO: Do this properly, very brittle right now
+    for (size_t e = 0; e < _mapview->entities.size(); ++e)
+    {
+        for (size_t b = 0; b < _mapview->entities[e].brushes.size(); ++b)
+        {
+            if (_editor.get_map().entities[e].brushes[b].is_selected)
+                _shader->setUniformS("modulate", glm::vec3{1, 0, 0});
+            else
+                _shader->setUniformS("modulate", glm::vec3{1, 1, 1});
+            _mapview->entities[e].brushes[b].render();
+        }
+    }
     return true;
 }
 
