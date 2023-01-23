@@ -93,7 +93,7 @@ namespace Sickle
             Cairo::RefPtr<Cairo::Context> const &cr,
             EditorBrush const &brush) const;
         void _draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const;
-        EditorBrush const *pick_brush(DrawSpacePoint point);
+        EditorBrush *pick_brush(DrawSpacePoint point);
     };
 }
 
