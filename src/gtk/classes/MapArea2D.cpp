@@ -333,7 +333,7 @@ bool Sickle::MapArea2D::on_key_release_event(GdkEventKey *event)
         break;
 
     default:
-        return Gtk::DrawingArea::on_key_press_event(event);
+        return Gtk::DrawingArea::on_key_release_event(event);
         break;
     }
     return true;

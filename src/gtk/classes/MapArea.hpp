@@ -126,6 +126,7 @@ namespace Sickle
             glm::vec3 move_direction;
             glm::vec2 turn_rates;
             bool gofast;
+            bool multiselect{false};
         } _state;
 
         // Properties

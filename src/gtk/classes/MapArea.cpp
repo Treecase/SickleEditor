@@ -243,6 +243,11 @@ bool Sickle::MapArea::on_key_press_event(GdkEventKey *event)
         _state.turn_rates.x = TURN_RATE;
         break;
 
+    case GDK_KEY_Control_L:
+    case GDK_KEY_Control_R:
+        _state.multiselect = true;
+        break;
+
     default:
         return Gtk::GLArea::on_key_press_event(event);
         break;
@@ -295,6 +300,11 @@ bool Sickle::MapArea::on_key_release_event(GdkEventKey *event)
         _state.turn_rates.x = 0.0f;
         break;
 
+    case GDK_KEY_Control_L:
+    case GDK_KEY_Control_R:
+        _state.multiselect = false;
+        break;
+
     default:
         return Gtk::GLArea::on_key_release_event(event);
         break;
@@ -344,6 +354,8 @@ bool Sickle::MapArea::on_button_release_event(GdkEventButton *event)
 {
     if (event->button == 1)
     {
+        if (!_state.multiselect)
+            _editor.selected.clear();
         if (!_editor.get_map().entities.empty())
         {
             auto picked = pick_brush({event->x, event->y});
