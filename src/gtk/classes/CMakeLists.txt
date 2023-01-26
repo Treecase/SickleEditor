@@ -5,4 +5,5 @@ target_sources(sickle PRIVATE
     AppWin.cpp
     MapArea.cpp
     MapArea2D.cpp
+    gtkglutils.cpp
 )

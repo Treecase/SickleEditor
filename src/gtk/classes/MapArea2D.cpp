@@ -241,7 +241,7 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         {
             for (auto const &b : e.brushes)
             {
-                if (_editor.selected.contains(&b))
+                if (b.is_selected)
                 {
                     cr->set_source_rgb(1, 0, 0);
                     cr->set_line_width(1 / _transform.zoom);
@@ -372,11 +372,10 @@ bool Sickle::MapArea2D::on_button_release_event(GdkEventButton *event)
             auto picked = pick_brush(point);
             if (picked)
             {
-                auto p = const_cast<EditorBrush *>(picked);
-                if (_editor.selected.contains(picked))
-                    _editor.selected.remove(p);
+                if (picked->is_selected)
+                    _editor.selected.remove(picked);
                 else
-                    _editor.selected.add(p);
+                    _editor.selected.add(picked);
             }
         }
         return true;
@@ -536,11 +535,11 @@ struct BBox
     }
 };
 
-Sickle::EditorBrush const *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
+Sickle::EditorBrush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
 {
     using BBox = BBox<DrawSpacePoint::length(), DrawSpacePoint::value_type>;
 
-    EditorBrush const *picked{nullptr};
+    EditorBrush *picked{nullptr};
     BBox pbbox{};
 
     for (auto const &entity : _editor.get_map().entities)
@@ -559,7 +558,7 @@ Sickle::EditorBrush const *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
                 // logical enough.
                 if (bbox.volume() < pbbox.volume())
                 {
-                    picked = &brush;
+                    picked = const_cast<EditorBrush *>(&brush);
                     pbbox = bbox;
                 }
             }
