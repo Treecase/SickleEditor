@@ -490,7 +490,7 @@ const
 {
     for (auto const &face : brush.planes)
     {
-        if (brush.planes.empty())
+        if (face.vertices.empty())
             continue;
         auto const p0 = _worldspace_to_drawspace(face.vertices[0]);
         cr->move_to(p0.x, p0.y);
