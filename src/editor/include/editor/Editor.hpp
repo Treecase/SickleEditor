@@ -107,6 +107,8 @@ namespace Sickle
 
         void set_map(MAP::Map const &map)
         {
+            brushbox = BBox{};
+            selected.clear();
             _map = EditorMap{map};
             signal_map_changed().emit();
         }

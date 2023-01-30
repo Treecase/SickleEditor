@@ -146,8 +146,6 @@ void draw_text(
 Sickle::MapArea2D::MapArea2D(Editor &ed)
 :   Glib::ObjectBase{typeid(MapArea2D)}
 ,   Gtk::DrawingArea{}
-,   _transform{0, 0, 1.0}
-,   _state{0, 0}
 ,   _editor{ed}
 ,   _prop_clear_color{*this, "clear-color", {}}
 ,   _prop_grid_size{*this, "grid-size", 32}
@@ -353,8 +351,8 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
     }
     if (event->button == 2)
     {
-        _state.pointer_prev_x = event->x;
-        _state.pointer_prev_y = event->y;
+        _state.pointer_prev.x = event->x;
+        _state.pointer_prev.y = event->y;
         return true;
     }
     return Gtk::DrawingArea::on_button_press_event(event);
@@ -402,12 +400,12 @@ bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
     }
     if (event->state & Gdk::BUTTON2_MASK)
     {
-        auto dx = event->x - _state.pointer_prev_x;
-        auto dy = event->y - _state.pointer_prev_y;
+        auto dx = event->x - _state.pointer_prev.x;
+        auto dy = event->y - _state.pointer_prev.y;
         _transform.x += dx;
         _transform.y += dy;
-        _state.pointer_prev_x = event->x;
-        _state.pointer_prev_y = event->y;
+        _state.pointer_prev.x = event->x;
+        _state.pointer_prev.y = event->y;
         queue_draw();
         return true;
     }
@@ -432,6 +430,8 @@ bool Sickle::MapArea2D::on_scroll_event(GdkEventScroll *event)
 
 void Sickle::MapArea2D::on_editor_map_changed()
 {
+    _transform = Transform2D{};
+    _state = State{};
     queue_draw();
 }
 

@@ -26,6 +26,7 @@
 #include "utils/FreeCam.hpp"
 
 #include <gdkmm/frameclock.h>
+#include <glibmm/property.h>
 #include <gtkmm/glarea.h>
 
 
@@ -88,6 +89,12 @@ namespace Sickle
 
         MapArea(Editor &ed);
 
+        auto property_wireframe() {return _prop_wireframe.get_proxy();};
+        auto property_shift_multiplier()
+        {return _prop_shift_multiplier.get_proxy();};
+        auto property_mouse_sensitivity()
+        {return _prop_mouse_sensitivity.get_proxy();};
+
         // Signal handlers
         /** Where GL initialization should be done. */
         void on_realize() override;
@@ -114,25 +121,25 @@ namespace Sickle
 
     private:
         Editor &_editor;
-        std::shared_ptr<GLUtil::Program> _shader;
+        std::shared_ptr<GLUtil::Program> _shader{nullptr};
         FreeCam _camera;
         Transform _transform;
         std::unique_ptr<MAP::GLMap> _mapview{nullptr};
 
         struct State
         {
-            gdouble pointer_prev_x, pointer_prev_y;
-            gint64 last_frame_time;
-            glm::vec3 move_direction;
-            glm::vec2 turn_rates;
-            bool gofast;
+            glm::vec2 pointer_prev{0, 0};
+            gint64 last_frame_time{0};
+            glm::vec3 move_direction{0, 0, 0};
+            glm::vec2 turn_rates{0, 0};
+            bool gofast{false};
             bool multiselect{false};
-        } _state;
+        } _state{};
 
         // Properties
-        bool _prop_wireframe;
-        float _prop_shift_multiplier;
-        float _prop_mouse_sensitivity;
+        Glib::Property<bool> _prop_wireframe;
+        Glib::Property<float> _prop_shift_multiplier;
+        Glib::Property<float> _prop_mouse_sensitivity;
 
         void _synchronize_glmap();
         EditorBrush *pick_brush(glm::vec2 const &P);

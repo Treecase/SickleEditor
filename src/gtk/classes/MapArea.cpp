@@ -57,7 +57,6 @@ Sickle::MapArea::MapArea(Editor &ed)
 :   Glib::ObjectBase{typeid(MapArea)}
 ,   Gtk::GLArea{}
 ,   _editor{ed}
-,   _shader{nullptr}
 ,   _camera{
         {0.0f, 0.0f, 0.0f},
         {0.0f, 0.0f},
@@ -68,16 +67,10 @@ Sickle::MapArea::MapArea(Editor &ed)
         {0.0f, 0.0f, 0.0f},
         {glm::radians(-90.0f), 0.0f, 0.0f},
         {0.005f, 0.005f, 0.005f}}
-,   _state{
-        0.0, 0.0,
-        0,
-        {0.0f, 0.0f, 0.0f},
-        {0.0f, 0.0f},
-        false
-    }
-,   _prop_wireframe{false}
-,   _prop_shift_multiplier{2.0f}
-,   _prop_mouse_sensitivity{DEFAULT_MOUSE_SENSITIVITY}
+,   _prop_wireframe{*this, "wireframe", false}
+,   _prop_shift_multiplier{*this, "grid-size", 2.0f}
+,   _prop_mouse_sensitivity{
+        *this, "mouse-sensitivity", DEFAULT_MOUSE_SENSITIVITY}
 {
     set_required_version(4, 3);
     set_use_es(false);
@@ -192,8 +185,10 @@ bool Sickle::MapArea::on_key_press_event(GdkEventKey *event)
     case GDK_KEY_z:
     case GDK_KEY_Z:
         make_current();
-        _prop_wireframe = !_prop_wireframe;
-        glPolygonMode(GL_FRONT_AND_BACK, _prop_wireframe? GL_LINE : GL_FILL);
+        property_wireframe() = !property_wireframe().get_value();
+        glPolygonMode(
+            GL_FRONT_AND_BACK,
+            property_wireframe().get_value()? GL_LINE : GL_FILL);
         queue_render();
         return true;
         break;
@@ -325,14 +320,20 @@ bool Sickle::MapArea::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
     if (glm::length(_state.move_direction) != 0.0f)
     {
         auto const direction = glm::normalize(_state.move_direction);
-        auto const motion = direction * _camera.speed * (_state.gofast? _prop_shift_multiplier : 1.0f);
+        auto const motion = (
+            direction
+            * _camera.speed
+            * (_state.gofast? property_shift_multiplier().get_value() : 1.0f));
         _camera.translate(motion * delta);
         queue_render();
     }
 
     if (glm::length(_state.turn_rates) != 0.0f)
     {
-        _camera.rotate(_state.turn_rates * (_state.gofast? _prop_shift_multiplier : 1.0f) * _prop_mouse_sensitivity * delta);
+        _camera.rotate(
+            _state.turn_rates
+            * (_state.gofast? property_shift_multiplier().get_value() : 1.0f)
+            * property_mouse_sensitivity().get_value() * delta);
         queue_render();
     }
 
@@ -343,8 +344,8 @@ bool Sickle::MapArea::on_button_press_event(GdkEventButton *event)
 {
     if (event->button == 2)
     {
-        _state.pointer_prev_x = event->x;
-        _state.pointer_prev_y = event->y;
+        _state.pointer_prev.x = event->x;
+        _state.pointer_prev.y = event->y;
         return true;
     }
     return Gtk::GLArea::on_button_press_event(event);
@@ -382,11 +383,12 @@ bool Sickle::MapArea::on_motion_notify_event(GdkEventMotion *event)
 {
     if (event->state & Gdk::BUTTON2_MASK)
     {
-        auto dx = event->x - _state.pointer_prev_x;
-        auto dy = event->y - _state.pointer_prev_y;
-        _camera.rotate(glm::vec2{dx, dy} * _prop_mouse_sensitivity);
-        _state.pointer_prev_x = event->x;
-        _state.pointer_prev_y = event->y;
+        auto dx = event->x - _state.pointer_prev.x;
+        auto dy = event->y - _state.pointer_prev.y;
+        _camera.rotate(
+            glm::vec2{dx, dy} * property_mouse_sensitivity().get_value());
+        _state.pointer_prev.x = event->x;
+        _state.pointer_prev.y = event->y;
         queue_render();
         return true;
     }
@@ -414,6 +416,20 @@ bool Sickle::MapArea::on_scroll_event(GdkEventScroll *event)
 
 void Sickle::MapArea::on_editor_map_changed()
 {
+    // TODO: Clean this up. Having to manually reset everything when the map
+    // changes is messing.
+    debug.setRayPoints({0,0,0}, {0,0,0});
+    _state = State{};
+    _camera = {
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f},
+        DEFAULT_FOV,
+        DEFAULT_MOVE_SPEED,
+        MIN_FOV, MAX_FOV};
+    _transform = {
+        {0.0f, 0.0f, 0.0f},
+        {glm::radians(-90.0f), 0.0f, 0.0f},
+        {0.005f, 0.005f, 0.005f}};
     if (get_realized())
     {
         _synchronize_glmap();
@@ -455,7 +471,8 @@ struct BBox
     }
 };
 
-bool raycast(glm::vec3 pos, glm::vec3 delta, BBox<3, float> const &bbox, float &t)
+bool
+raycast(glm::vec3 pos, glm::vec3 delta, BBox<3, float> const &bbox, float &t)
 {
     // https://people.csail.mit.edu/amy/papers/box-jgt.pdf
     float tmin, tmax, tymin, tymax, tzmin, tzmax;

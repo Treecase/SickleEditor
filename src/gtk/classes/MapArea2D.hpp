@@ -67,15 +67,15 @@ namespace Sickle
         DrawAngle _angle{TOP};
         struct Transform2D
         {
-            double x, y;
-            double zoom;
-        } _transform;
-        struct
+            double x{0}, y{0};
+            double zoom{1};
+        } _transform{};
+        struct State
         {
-            int pointer_prev_x, pointer_prev_y;
+            glm::vec2 pointer_prev{0, 0};
             bool dragged{false};
             bool multiselect{false};
-        } _state;
+        } _state{};
 
         // Properties
         Glib::Property<Gdk::RGBA> _prop_clear_color;
