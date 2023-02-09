@@ -43,14 +43,21 @@ namespace Sickle
         // Signals
         void on_startup() override;
         void on_activate() override;
-        void on_open(Gio::Application::type_vec_files const &files, Glib::ustring const &hint) override;
+        void on_open(
+            Gio::Application::type_vec_files const &files,
+            Glib::ustring const &hint) override;
 
         // Actions
         // Menu Actions
+        // File
         void on_action_new();
         void on_action_open();
         void on_action_exit();
+        // Edit
         void on_action_setGameDef();
+        // Tools
+        void on_action_openLuaConsole();
+        // Help
         void on_action_about();
 
     private:

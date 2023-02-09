@@ -417,8 +417,7 @@ bool Sickle::MapArea::on_scroll_event(GdkEventScroll *event)
 void Sickle::MapArea::on_editor_map_changed()
 {
     // TODO: Clean this up. Having to manually reset everything when the map
-    // changes is messing.
-    debug.setRayPoints({0,0,0}, {0,0,0});
+    // changes is messy.
     _state = State{};
     _camera = {
         {0.0f, 0.0f, 0.0f},
@@ -433,6 +432,7 @@ void Sickle::MapArea::on_editor_map_changed()
     if (get_realized())
     {
         _synchronize_glmap();
+        debug.setRayPoints({0,0,0}, {0,0,0});
         queue_render();
     }
 }

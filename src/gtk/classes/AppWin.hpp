@@ -21,7 +21,9 @@
 
 #include "MapArea.hpp"
 #include "MapArea2D.hpp"
+#include "LuaConsole.hpp"
 #include "editor/Editor.hpp"
+#include "se-lua/se-lua.hpp"
 
 #include <glibmm/property.h>
 #include <glibmm/binding.h>
@@ -37,11 +39,13 @@ namespace Sickle
     {
     public:
         Editor editor;
+        lua_State *L;
 
         AppWin();
 
         /** Open a file. */
         void open(Gio::File const *file);
+        void show_console_window();
 
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
         void set_grid_size(guint grid_size);
@@ -49,7 +53,6 @@ namespace Sickle
 
         // Input Signals
         bool on_key_press_event(GdkEventKey *event) override;
-
     protected:
         Gtk::Grid m_grid;
         Gtk::Grid m_viewgrid;
@@ -57,7 +60,8 @@ namespace Sickle
         MapArea2D m_drawarea_top, m_drawarea_front, m_drawarea_right;
         Gtk::HBox m_hbox;
         Gtk::Label m_gridsizelabel;
-
+        Gtk::Window m_luaconsolewindow;
+        LuaConsole m_luaconsole;
     private:
         MAP::Map _map;
         Glib::Property<guint> _prop_grid_size;

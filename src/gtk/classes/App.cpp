@@ -32,14 +32,14 @@ Glib::RefPtr<Sickle::App> Sickle::App::create()
 
 Sickle::App::App()
 :   Glib::ObjectBase{typeid(App)}
-,   Gtk::Application{SE_APPLICATION_ID, Gio::ApplicationFlags::APPLICATION_HANDLES_OPEN}
+,   Gtk::Application{
+        SE_APPLICATION_ID, Gio::ApplicationFlags::APPLICATION_HANDLES_OPEN}
 ,   m_settings{Gio::Settings::create(SE_APPLICATION_ID)}
 ,   _prop_fgd_path{*this, "fgd-path", ""}
 ,   _game_definition{}
 {
     property_fgd_path().signal_changed().connect(
-        sigc::mem_fun(*this, &App::_on_fgd_path_changed)
-    );
+        sigc::mem_fun(*this, &App::_on_fgd_path_changed));
     m_settings->bind("fgd-path", property_fgd_path());
 }
 
@@ -55,12 +55,16 @@ void Sickle::App::on_startup()
     add_action("exit", sigc::mem_fun(*this, &App::on_action_exit));
     // Edit
     add_action("setGameDef", sigc::mem_fun(*this, &App::on_action_setGameDef));
+    // Edit
+    add_action(
+        "openLuaConsole", sigc::mem_fun(*this, &App::on_action_openLuaConsole));
     // About
     add_action("about", sigc::mem_fun(*this, &App::on_action_about));
     // Add keyboard accelerators for the menu.
     set_accel_for_action("app.new", "<Ctrl>N");
     set_accel_for_action("app.open", "<Ctrl>O");
     set_accel_for_action("app.exit", "<Ctrl>Q");
+    set_accel_for_action("app.openLuaConsole", "<Ctrl><Shift>C");
 }
 
 void Sickle::App::on_activate()
@@ -69,7 +73,8 @@ void Sickle::App::on_activate()
     appwindow->present();
 }
 
-void Sickle::App::on_open(Gio::Application::type_vec_files const &files, Glib::ustring const &hint)
+void Sickle::App::on_open(
+    Gio::Application::type_vec_files const &files, Glib::ustring const &hint)
 {
     // Use already existing AppWin if it exists, otherwise create a new one.
     AppWin *appwindow = nullptr;
@@ -93,7 +98,9 @@ void Sickle::App::on_action_new()
 void Sickle::App::on_action_open()
 {
     auto win = dynamic_cast<AppWin *>(get_active_window());
-    auto chooser = Gtk::FileChooserNative::create("Open", Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN, "Open", "Cancel");
+    auto chooser = Gtk::FileChooserNative::create(
+        "Open", Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN, "Open",
+        "Cancel");
     chooser->set_transient_for(*win);
     auto all_filter = Gtk::FileFilter::create();
     all_filter->add_pattern("*.*");
@@ -121,7 +128,9 @@ void Sickle::App::on_action_exit()
 
 void Sickle::App::on_action_setGameDef()
 {
-    auto chooser = Gtk::FileChooserNative::create("Open", Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN, "Open", "Cancel");
+    auto chooser = Gtk::FileChooserNative::create(
+        "Open", Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN, "Open",
+        "Cancel");
     chooser->set_transient_for(*get_active_window());
     auto all_filter = Gtk::FileFilter::create();
     all_filter->add_pattern("*.*");
@@ -140,6 +149,14 @@ void Sickle::App::on_action_setGameDef()
     }
 }
 
+void Sickle::App::on_action_openLuaConsole()
+{
+    auto window = dynamic_cast<AppWin *>(get_active_window());
+    if (!window)
+        return;
+    window->show_console_window();
+}
+
 void Sickle::App::on_action_about()
 {
     auto about = Sickle::About{};
@@ -153,8 +170,8 @@ Sickle::AppWin *Sickle::App::_create_appwindow()
     auto appwindow = new AppWin{};
     add_window(*appwindow);
     // Delete the window when it is hidden.
-    appwindow->signal_hide().connect(sigc::bind(sigc::mem_fun(*this,
-      &App::_on_hide_window), appwindow));
+    appwindow->signal_hide().connect(
+        sigc::bind(sigc::mem_fun(*this, &App::_on_hide_window), appwindow));
     return appwindow;
 }
 

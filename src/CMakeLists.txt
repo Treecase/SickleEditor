@@ -7,6 +7,7 @@ add_subdirectory(convexhull)
 add_subdirectory(editor)
 add_subdirectory(fgd)
 add_subdirectory(gtk)
+add_subdirectory(lua)
 add_subdirectory(map)
 add_subdirectory(mdl)
 add_subdirectory(utils)
@@ -14,4 +15,4 @@ add_subdirectory(wad)
 
 target_sources(sickle PRIVATE main.cpp)
 
-target_link_libraries(sickle PRIVATE convexhull editor fgd map mapgl utils wad)
+target_link_libraries(sickle PRIVATE convexhull editor fgd se-lua map mapgl utils wad)

@@ -32,12 +32,15 @@ Sickle::AppWin::AppWin()
 :   Glib::ObjectBase{typeid(AppWin)}
 ,   Gtk::ApplicationWindow{}
 ,   editor{}
+,   L{luaL_newstate()}
 ,   m_grid{}
 ,   m_viewgrid{}
 ,   m_maparea{editor}
 ,   m_drawarea_top{editor}
 ,   m_drawarea_front{editor}
 ,   m_drawarea_right{editor}
+,   m_luaconsolewindow{}
+,   m_luaconsole{}
 ,   m_hbox{}
 ,   m_gridsizelabel{}
 ,   _map{}
@@ -46,6 +49,11 @@ Sickle::AppWin::AppWin()
 ,   _binding_grid_size_front{}
 ,   _binding_grid_size_right{}
 {
+    if (!L)
+        throw std::runtime_error{"Failed to allocate new lua_State"};
+    luaL_checkversion(L);
+    luaL_openlibs(L);
+
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
     set_title(SE_CANON_NAME);
@@ -91,6 +99,12 @@ Sickle::AppWin::AppWin()
     m_grid.attach(m_hbox, 0, 1);
     add(m_grid);
 
+    // Lua console window
+    m_luaconsole.property_lua_state().set_value(L);
+    m_luaconsole.set_size_request(320, 240);
+    m_luaconsolewindow.add(m_luaconsole);
+    m_luaconsolewindow.show_all_children();
+
     show_all_children();
 }
 
@@ -101,6 +115,11 @@ void Sickle::AppWin::open(Gio::File const *file)
     else
         _map = MAP::Map{};
     editor.set_map(_map);
+}
+
+void Sickle::AppWin::show_console_window()
+{
+    m_luaconsolewindow.present();
 }
 
 void Sickle::AppWin::set_grid_size(guint grid_size)
