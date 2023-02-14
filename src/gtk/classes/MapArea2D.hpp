@@ -20,6 +20,7 @@
 #define SE_MAPAREA2D_HPP
 
 #include "editor/Editor.hpp"
+#include "se-lua/se-lua.hpp"
 
 #include <gdkmm/rgba.h>
 #include <glibmm/property.h>
@@ -39,11 +40,13 @@ namespace Sickle
         enum DrawAngle {TOP, FRONT, RIGHT};
         MapArea2D(Editor &ed);
 
-        void set_draw_angle(DrawAngle angle);
-
         auto property_clear_color() {return _prop_clear_color.get_proxy();}
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
-        auto property_name() {return _prop_name.get_proxy();}
+        auto property_draw_angle() {return _prop_draw_angle.get_proxy();}
+        auto property_draw_angle() const {return _prop_draw_angle.get_proxy();}
+
+        void set_draw_angle(DrawAngle angle){property_draw_angle().set_value(angle);}
+        auto get_draw_angle() {return property_draw_angle().get_value();};
 
         // Signal handlers
         bool on_draw(Cairo::RefPtr<Cairo::Context> const &cr) override;
@@ -51,6 +54,10 @@ namespace Sickle
         // Input Signals
         bool on_key_press_event(GdkEventKey *event) override;
         bool on_key_release_event(GdkEventKey *event) override;
+
+        // Lua constructor needs access to private members.
+        friend int lmaparea2d_new_no_signals(lua_State *, MapArea2D const *);
+        friend int lmaparea2d_new(lua_State *, MapArea2D const *);
 
     protected:
         // Input Signals
@@ -61,10 +68,10 @@ namespace Sickle
         bool on_scroll_event(GdkEventScroll *event) override;
 
         void on_editor_map_changed();
+        void on_draw_angle_changed();
 
     private:
         Editor &_editor;
-        DrawAngle _angle{TOP};
         struct Transform2D
         {
             double x{0}, y{0};
@@ -80,7 +87,7 @@ namespace Sickle
         // Properties
         Glib::Property<Gdk::RGBA> _prop_clear_color;
         Glib::Property<int> _prop_grid_size;
-        Glib::Property<Glib::ustring> _prop_name;
+        Glib::Property<DrawAngle> _prop_draw_angle;
 
         /** Convert screen-space coordinates to draw-space coordinates. */
         DrawSpacePoint _screenspace_to_drawspace(double x, double y) const;

@@ -37,6 +37,8 @@ namespace Sickle
 
         auto property_lua_state() {return _prop_lua_state.get_proxy();}
 
+        void write(std::string const &str);
+        void writeline(std::string const &str);
         int _L_customprint(lua_State *L);
     protected:
         Gtk::ScrolledWindow m_scroll;

@@ -17,6 +17,8 @@
  */
 
 #include "AppWin.hpp"
+#include "AppWin_Lua.hpp"
+#include "MapArea2D_Lua.hpp"
 
 #include "appid.hpp"
 #include "version.hpp"
@@ -50,9 +52,18 @@ Sickle::AppWin::AppWin()
 ,   _binding_grid_size_right{}
 {
     if (!L)
-        throw std::runtime_error{"Failed to allocate new lua_State"};
+        throw Lua::Error{"Failed to allocate new lua_State"};
     luaL_checkversion(L);
     luaL_openlibs(L);
+
+    luaL_requiref(L, "appwin", luaopen_appwin, 1);
+    luaL_requiref(L, "maparea2d", luaopen_maparea2d, 1);
+
+    lappwin_new(L, this);
+    lua_setglobal(L, "gAppWin");
+
+    lua_pop(L, lua_gettop(L));
+
 
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
@@ -77,11 +88,8 @@ Sickle::AppWin::AppWin()
 
     add_events(Gdk::KEY_PRESS_MASK);
 
-    m_drawarea_top.property_name() = "top (x/y)";
     m_drawarea_top.set_draw_angle(Sickle::MapArea2D::DrawAngle::TOP);
-    m_drawarea_front.property_name() = "front (y/z)";
     m_drawarea_front.set_draw_angle(Sickle::MapArea2D::DrawAngle::FRONT);
-    m_drawarea_right.property_name() = "right (x/z)";
     m_drawarea_right.set_draw_angle(Sickle::MapArea2D::DrawAngle::RIGHT);
 
     m_viewgrid.set_row_spacing(2);
@@ -104,6 +112,7 @@ Sickle::AppWin::AppWin()
     m_luaconsole.set_size_request(320, 240);
     m_luaconsolewindow.add(m_luaconsole);
     m_luaconsolewindow.show_all_children();
+    m_luaconsolewindow.set_title(SE_CANON_NAME " - Lua Console");
 
     show_all_children();
 }
@@ -123,10 +132,14 @@ void Sickle::AppWin::show_console_window()
 }
 
 void Sickle::AppWin::set_grid_size(guint grid_size)
-{ property_grid_size() = std::clamp(grid_size, GRID_SIZE_MIN, GRID_SIZE_MAX); }
+{
+    property_grid_size() = std::clamp(grid_size, GRID_SIZE_MIN, GRID_SIZE_MAX);
+}
 
 guint Sickle::AppWin::get_grid_size()
-{ return property_grid_size().get_value(); }
+{
+    return property_grid_size().get_value();
+}
 
 bool Sickle::AppWin::on_key_press_event(GdkEventKey *event)
 {

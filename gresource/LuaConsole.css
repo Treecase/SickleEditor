@@ -1,0 +1,16 @@
+/* Stylesheet for LuaConsole window elements. */
+entry
+{
+    color: white;
+    caret-color: white;
+    background-color: black;
+    border-color: black;
+    border-top-color: white;
+}
+textview.view text
+{
+    color: white;
+    caret-color: white;
+    background-color: black;
+    border-color: black;
+}

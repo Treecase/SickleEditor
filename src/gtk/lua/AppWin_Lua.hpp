@@ -1,5 +1,5 @@
 /**
- * se-lua.cpp - Sickle Lua integration.
+ * AppWin_Lua.hpp - AppWin Lua binding.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,29 +16,19 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef SE_APPWIN_LUA_HPP
+#define SE_APPWIN_LUA_HPP
+
 #include "se-lua/se-lua.hpp"
 
 
-Lua::Error::Error(std::string const &what)
-:   std::runtime_error{what}
+namespace Sickle
 {
+    class AppWin;
+    int lappwin_new_no_signals(lua_State *L, Sickle::AppWin const *appwin);
+    int lappwin_new(lua_State *L, Sickle::AppWin *appwin);
 }
 
+int luaopen_appwin(lua_State *L);
 
-void Lua::checkerror(lua_State *L, int status)
-{
-    if (status != LUA_OK)
-    {
-        auto err = lua_tostring(L, -1);
-        lua_pop(L, 1);
-        throw Error{err};
-    }
-}
-
-void Lua::call_method(lua_State *L, std::string const &method)
-{
-    lua_pushlstring(L, method.c_str(), method.length());
-    lua_gettable(L, -2);
-    lua_rotate(L, -2, 1);
-    checkerror(L, lua_pcall(L, 1, 0, 0));
-}
+#endif

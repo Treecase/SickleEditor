@@ -19,6 +19,8 @@
 #include "LuaConsole.hpp"
 #include "AppWin.hpp"
 
+#include <gtkmm.h>
+
 #include <iostream>
 #include <sstream>
 
@@ -54,36 +56,58 @@ Sickle::LuaConsole::LuaConsole()
     pack_start(m_scroll);
     add(m_input);
 
-    Gdk::RGBA black{};
-    black.set_rgba(0, 0, 0);
-    Gdk::RGBA white{};
-    white.set_rgba(1, 1, 1);
+    auto css = Gtk::CssProvider::create();
+    css->load_from_resource(SE_GRESOURCE_PREFIX "LuaConsole.css");
+    m_input.get_style_context()->add_provider_for_screen(
+        Gdk::Screen::get_default(),
+        css,
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    m_output.get_style_context()->add_provider_for_screen(
+        Gdk::Screen::get_default(),
+        css,
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-    m_output.override_background_color(black);
-    m_output.override_color(white);
     m_output.set_editable(false);
     m_output.set_monospace(true);
+    m_output.set_can_focus(false);
 
     m_scroll.add(m_output);
 
-    m_input.override_background_color(black);
-    m_input.override_color(white);
+    write(">>> ");
 
     show_all_children();
+}
+
+void Sickle::LuaConsole::write(std::string const &str)
+{
+    m_output.get_buffer()->insert(m_output.get_buffer()->end(), str);
+}
+
+void Sickle::LuaConsole::writeline(std::string const &str)
+{
+    write(str + "\n");
 }
 
 
 void Sickle::LuaConsole::on_input_activated()
 {
-    m_output.get_buffer()->insert_at_cursor(">>> " + m_input.get_text() + "\n");
+    writeline(m_input.get_text());
     try
     {
         Lua::checkerror(L, luaL_dostring(L, m_input.get_text().c_str()));
     }
     catch (Lua::Error const &e)
     {
-        m_output.get_buffer()->insert_at_cursor(std::string{e.what()} + "\n");
+        try
+        {
+            Lua::checkerror(L, luaL_dostring(L, ("print(" + m_input.get_text() + ")").c_str()));
+        }
+        catch (Lua::Error const &)
+        {
+            writeline(e.what());
+        }
     }
+    write(">>> ");
     m_input.set_text("");
 }
 
@@ -145,7 +169,6 @@ int Sickle::LuaConsole::_L_customprint(lua_State *L)
             break;
         }
     }
-    str << '\n';
-    m_output.get_buffer()->insert_at_cursor(str.str());
+    writeline(str.str());
     return 0;
 }

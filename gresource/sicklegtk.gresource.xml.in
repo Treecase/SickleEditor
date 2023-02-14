@@ -10,5 +10,6 @@
     <file>shaders/vertex.vert</file>
     <file>logo.png</file>
     <file>logo.svg</file>
+    <file>LuaConsole.css</file>
   </gresource>
 </gresources>

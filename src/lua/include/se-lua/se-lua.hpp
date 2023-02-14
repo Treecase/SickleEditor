@@ -39,6 +39,9 @@ namespace Lua
 
     /** Check a Lua status error. */
     void checkerror(lua_State *L, int status);
+
+    /** Expects a table/full userdata to be at the top of the stack. */
+    void call_method(lua_State *L, std::string const &method);
 }
 
 #endif

@@ -53,6 +53,11 @@ namespace Sickle
 
         // Input Signals
         bool on_key_press_event(GdkEventKey *event) override;
+
+        // Lua constructor needs access to private members.
+        friend int lappwin_new_no_signals(lua_State *, AppWin const *);
+        friend int lappwin_new(lua_State *, AppWin const *);
+
     protected:
         Gtk::Grid m_grid;
         Gtk::Grid m_viewgrid;
@@ -62,6 +67,7 @@ namespace Sickle
         Gtk::Label m_gridsizelabel;
         Gtk::Window m_luaconsolewindow;
         LuaConsole m_luaconsole;
+
     private:
         MAP::Map _map;
         Glib::Property<guint> _prop_grid_size;

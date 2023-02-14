@@ -17,6 +17,7 @@
  */
 
 #include "MapArea2D.hpp"
+#include "MapArea2D_Lua.hpp"
 #include "AppWin.hpp"
 
 #include <cmath>
@@ -149,7 +150,7 @@ Sickle::MapArea2D::MapArea2D(Editor &ed)
 ,   _editor{ed}
 ,   _prop_clear_color{*this, "clear-color", {}}
 ,   _prop_grid_size{*this, "grid-size", 32}
-,   _prop_name{*this, "name", "<blank>"}
+,   _prop_draw_angle{*this, "draw-angle", DrawAngle::TOP}
 {
     set_hexpand(true);
     set_vexpand(true);
@@ -164,6 +165,8 @@ Sickle::MapArea2D::MapArea2D(Editor &ed)
         sigc::mem_fun(*this, &MapArea2D::on_editor_map_changed));
     property_grid_size().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
+    property_draw_angle().signal_changed().connect(
+        sigc::mem_fun(*this, &MapArea2D::on_draw_angle_changed));
 
     add_events(
         Gdk::POINTER_MOTION_MASK
@@ -174,9 +177,15 @@ Sickle::MapArea2D::MapArea2D(Editor &ed)
         | Gdk::ENTER_NOTIFY_MASK);
 }
 
-void Sickle::MapArea2D::set_draw_angle(DrawAngle angle)
+void Sickle::MapArea2D::on_draw_angle_changed()
 {
-    _angle = angle;
+    switch (property_draw_angle().get_value())
+    {
+    case DrawAngle::TOP: property_name() = "top (x/y)"; break;
+    case DrawAngle::FRONT: property_name() = "front (y/z)"; break;
+    case DrawAngle::RIGHT: property_name() = "right (x/z)"; break;
+    }
+    queue_draw();
 }
 
 bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
@@ -451,7 +460,7 @@ Sickle::MapArea2D::_screenspace_to_drawspace(double x, double y) const
 MAP::Vertex
 Sickle::MapArea2D::_drawspace_to_worldspace(DrawSpacePoint const &v) const
 {
-    switch (_angle)
+    switch (property_draw_angle().get_value())
     {
     case DrawAngle::TOP:
         return {v.x, -v.y, 0};
@@ -469,7 +478,7 @@ Sickle::MapArea2D::_drawspace_to_worldspace(DrawSpacePoint const &v) const
 Sickle::MapArea2D::DrawSpacePoint
 Sickle::MapArea2D::_worldspace_to_drawspace(MAP::Vertex const &v) const
 {
-    switch (_angle)
+    switch (property_draw_angle().get_value())
     {
     case DrawAngle::TOP:
         return {v.x, -v.y};
