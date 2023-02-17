@@ -56,8 +56,7 @@ namespace Sickle
         bool on_key_release_event(GdkEventKey *event) override;
 
         // Lua constructor needs access to private members.
-        friend int lmaparea2d_new_no_signals(lua_State *, MapArea2D const *);
-        friend int lmaparea2d_new(lua_State *, MapArea2D const *);
+        friend int lmaparea2d_new(lua_State *, MapArea2D *);
 
     protected:
         // Input Signals

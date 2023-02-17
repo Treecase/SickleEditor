@@ -51,12 +51,8 @@ namespace Sickle
         void set_grid_size(guint grid_size);
         guint get_grid_size();
 
-        // Input Signals
-        bool on_key_press_event(GdkEventKey *event) override;
-
         // Lua constructor needs access to private members.
-        friend int lappwin_new_no_signals(lua_State *, AppWin const *);
-        friend int lappwin_new(lua_State *, AppWin const *);
+        friend int lappwin_new(lua_State *, AppWin *);
 
     protected:
         Gtk::Grid m_grid;

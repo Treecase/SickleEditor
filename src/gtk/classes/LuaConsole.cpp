@@ -21,7 +21,6 @@
 
 #include <gtkmm.h>
 
-#include <iostream>
 #include <sstream>
 
 
@@ -73,8 +72,6 @@ Sickle::LuaConsole::LuaConsole()
 
     m_scroll.add(m_output);
 
-    write(">>> ");
-
     show_all_children();
 }
 
@@ -91,7 +88,7 @@ void Sickle::LuaConsole::writeline(std::string const &str)
 
 void Sickle::LuaConsole::on_input_activated()
 {
-    writeline(m_input.get_text());
+    writeline(">>> " + m_input.get_text());
     try
     {
         Lua::checkerror(L, luaL_dostring(L, m_input.get_text().c_str()));
@@ -107,7 +104,6 @@ void Sickle::LuaConsole::on_input_activated()
             writeline(e.what());
         }
     }
-    write(">>> ");
     m_input.set_text("");
 }
 

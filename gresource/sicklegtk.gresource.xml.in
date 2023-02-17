@@ -2,6 +2,7 @@
 <gresources>
   <gresource prefix="@GRESOURCE_PREFIX@">
     <file>gtk/menus.ui</file>
+    <file>lua/gdkkeysyms.lua</file>
     <file>shaders/fragment.frag</file>
     <file>shaders/map.frag</file>
     <file>shaders/map.vert</file>

@@ -20,13 +20,41 @@
 #include "MapArea2D_Lua.hpp"
 
 
+#define LIBRARY_NAME    "Sickle.maparea2d"
+
+
+/** Add value at the top of the stack to the objectTable using KEY. */
+void add_to_objectTable(lua_State *L, Sickle::MapArea2D *key)
+{
+    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
+    lua_pushlightuserdata(L, key);
+    lua_pushvalue(L, -3);
+    lua_settable(L, -3);
+    lua_pop(L, 1);
+}
+
+/** Get the Lua value associated with KEY from the objectTable. */
+void get_from_objectTable(lua_State *L, Sickle::MapArea2D *key)
+{
+    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
+    lua_pushlightuserdata(L, key);
+    lua_gettable(L, -2);
+    lua_remove(L, -2);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Internal
 Sickle::MapArea2D *lmaparea2d_checkmaparea2d(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.maparea2d");
-    luaL_argcheck(L, ud != NULL, arg, "`maparea2d' expected");
+    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
+    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
     return *static_cast<Sickle::MapArea2D **>(ud);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Metamethods
 int lmaparea2d_dunder_newindex(lua_State *L)
 {
     lmaparea2d_checkmaparea2d(L, 1);
@@ -45,6 +73,15 @@ int lmaparea2d_dunder_index(lua_State *L)
     return 1;
 }
 
+luaL_Reg maparea2dlib_metamethods[] = {
+    {"__newindex", lmaparea2d_dunder_newindex},
+    {"__index", lmaparea2d_dunder_index},
+    {NULL, NULL}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Methods
 int lmaparea2d_set_draw_angle(lua_State *L)
 {
     auto ma = lmaparea2d_checkmaparea2d(L, 1);
@@ -59,50 +96,57 @@ int lmaparea2d_get_draw_angle(lua_State *L)
     return 1;
 }
 
-luaL_Reg maparea2dlib_metamethods[] = {
-    {"__newindex", lmaparea2d_dunder_newindex},
-    {"__index", lmaparea2d_dunder_index},
-    {NULL, NULL}
-};
-
 luaL_Reg maparea2dlib_methods[] = {
     {"set_draw_angle", lmaparea2d_set_draw_angle},
     {"get_draw_angle", lmaparea2d_get_draw_angle},
     {NULL, NULL}
 };
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Functions
 static luaL_Reg maparea2dlib_functions[] = {
     {NULL, NULL}
 };
 
 
-int Sickle::lmaparea2d_new_no_signals(lua_State *L, Sickle::MapArea2D const *maparea)
+////////////////////////////////////////////////////////////////////////////////
+// C++ facing
+int Sickle::lmaparea2d_new(lua_State *L, Sickle::MapArea2D *maparea)
 {
+    // Create the Lua object.
     auto ptr = static_cast<Sickle::MapArea2D const **>(
         lua_newuserdatauv(L, sizeof(Sickle::MapArea2D *), 1));
     *ptr = maparea;
 
+    // Add methods/data table.
     lua_newtable(L);
     luaL_setfuncs(L, maparea2dlib_methods, 0);
     lua_setiuservalue(L, -2, 1);
 
-    luaL_setmetatable(L, "Sickle.maparea2d");
+    // Set metatable.
+    luaL_setmetatable(L, LIBRARY_NAME);
 
-    return 1;
-}
+    // Add the object to the Lua registry, using the pointer as key. This is
+    // needed for the C++ callbacks to know what object to call methods on.
+    add_to_objectTable(L, maparea);
 
-int Sickle::lmaparea2d_new(lua_State *L, Sickle::MapArea2D const *maparea)
-{
-    lmaparea2d_new_no_signals(L, maparea);
     return 1;
 }
 
 int luaopen_maparea2d(lua_State *L)
 {
-    luaL_newmetatable(L, "Sickle.maparea2d");
+    // Table used to map C++ pointers to Lua objects.
+    // TODO: References should be removed when the C++ objects are destroyed.
+    lua_newtable(L);
+    Lua::add_to_registry(L, LIBRARY_NAME".objectTable");
+    lua_pop(L, 1);
+
+    luaL_newmetatable(L, LIBRARY_NAME);
     luaL_setfuncs(L, maparea2dlib_metamethods, 0);
     luaL_newlib(L, maparea2dlib_functions);
-    // export MapArea2D::DrawAngle enum values
+
+    // Export DrawAngle enum values.
     lua_pushliteral(L, "TOP");
     lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::TOP);
     lua_settable(L, -3);
@@ -112,5 +156,6 @@ int luaopen_maparea2d(lua_State *L)
     lua_pushliteral(L, "RIGHT");
     lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::RIGHT);
     lua_settable(L, -3);
+
     return 1;
 }

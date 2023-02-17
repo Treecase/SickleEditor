@@ -59,6 +59,11 @@ Sickle::AppWin::AppWin()
     luaL_requiref(L, "appwin", luaopen_appwin, 1);
     luaL_requiref(L, "maparea2d", luaopen_maparea2d, 1);
 
+    auto const &res = Gio::Resource::lookup_data_global(
+        SE_GRESOURCE_PREFIX "lua/gdkkeysyms.lua");
+    gsize _size;
+    luaL_dostring(L, static_cast<char const *>(res->get_data(_size)));
+
     lappwin_new(L, this);
     lua_setglobal(L, "gAppWin");
 
@@ -139,23 +144,6 @@ void Sickle::AppWin::set_grid_size(guint grid_size)
 guint Sickle::AppWin::get_grid_size()
 {
     return property_grid_size().get_value();
-}
-
-bool Sickle::AppWin::on_key_press_event(GdkEventKey *event)
-{
-    switch (event->keyval)
-    {
-    case GDK_KEY_bracketleft:{
-        set_grid_size(get_grid_size() / 2);
-        break;}
-    case GDK_KEY_bracketright:{
-        set_grid_size(get_grid_size() * 2);
-        break;}
-    default:
-        return Gtk::ApplicationWindow::on_key_press_event(event);
-        break;
-    }
-    return true;
 }
 
 

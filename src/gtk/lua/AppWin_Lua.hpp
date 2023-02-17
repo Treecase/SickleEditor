@@ -25,7 +25,6 @@
 namespace Sickle
 {
     class AppWin;
-    int lappwin_new_no_signals(lua_State *L, Sickle::AppWin const *appwin);
     int lappwin_new(lua_State *L, Sickle::AppWin *appwin);
 }
 

@@ -25,9 +25,7 @@
 namespace Sickle
 {
     class MapArea2D;
-    int lmaparea2d_new_no_signals(
-        lua_State *L, Sickle::MapArea2D const *maparea);
-    int lmaparea2d_new(lua_State *L, Sickle::MapArea2D const *maparea);
+    int lmaparea2d_new(lua_State *L, Sickle::MapArea2D *maparea);
 }
 
 int luaopen_maparea2d(lua_State *L);

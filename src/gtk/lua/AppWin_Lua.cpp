@@ -21,13 +21,41 @@
 #include "MapArea2D_Lua.hpp"
 
 
+#define LIBRARY_NAME    "Sickle.appwin"
+
+
+/** Add value at the top of the stack to the objectTable using KEY. */
+void add_to_objectTable(lua_State *L, Sickle::AppWin *key)
+{
+    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
+    lua_pushlightuserdata(L, key);
+    lua_pushvalue(L, -3);
+    lua_settable(L, -3);
+    lua_pop(L, 1);
+}
+
+/** Get the Lua value associated with KEY from the objectTable. */
+void get_from_objectTable(lua_State *L, Sickle::AppWin *key)
+{
+    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
+    lua_pushlightuserdata(L, key);
+    lua_gettable(L, -2);
+    lua_remove(L, -2);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Internal
 Sickle::AppWin *lappwin_checkappwin(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.appwin");
-    luaL_argcheck(L, ud != NULL, arg, "`appwin' expected");
+    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
+    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
     return *static_cast<Sickle::AppWin **>(ud);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Metamethods
 int lappwin_dunder_newindex(lua_State *L)
 {
     lappwin_checkappwin(L, 1);
@@ -46,6 +74,15 @@ int lappwin_dunder_index(lua_State *L)
     return 1;
 }
 
+luaL_Reg appwinlib_metamethods[] = {
+    {"__newindex", lappwin_dunder_newindex},
+    {"__index", lappwin_dunder_index},
+    {NULL, NULL}
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Methods
 int lappwin_on_grid_size_changed(lua_State *L)
 {
     auto aw = lappwin_checkappwin(L, 1);
@@ -66,36 +103,62 @@ int lappwin_get_grid_size(lua_State *L)
     return 1;
 }
 
-luaL_Reg appwinlib_metamethods[] = {
-    {"__newindex", lappwin_dunder_newindex},
-    {"__index", lappwin_dunder_index},
-    {NULL, NULL}
-};
+int lappwin_on_key_press_event(lua_State *L)
+{
+    auto aw = lappwin_checkappwin(L, 1);
+    auto keyval = luaL_checkinteger(L, 2);
+
+    switch (keyval)
+    {
+    case GDK_KEY_bracketleft:{
+        aw->set_grid_size(aw->get_grid_size() / 2);
+        break;}
+    case GDK_KEY_bracketright:{
+        aw->set_grid_size(aw->get_grid_size() * 2);
+        break;}
+    default:
+        lua_pushboolean(L, false);
+        return 1;
+        break;
+    }
+    lua_pushboolean(L, true);
+    return 1;
+}
 
 luaL_Reg appwinlib_methods[] = {
     {"on_grid_size_changed", lappwin_on_grid_size_changed},
     {"set_grid_size", lappwin_set_grid_size},
     {"get_grid_size", lappwin_get_grid_size},
+    {"on_key_press_event", lappwin_on_key_press_event},
     {NULL, NULL}
 };
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Functions
 luaL_Reg appwinlib_functions[] = {
     {NULL, NULL}
 };
 
 
-int Sickle::lappwin_new_no_signals(lua_State *L, Sickle::AppWin const *appwin)
+////////////////////////////////////////////////////////////////////////////////
+// C++ facing
+int Sickle::lappwin_new(lua_State *L, Sickle::AppWin *appwin)
 {
+    // Create the Lua object.
     auto ptr = static_cast<Sickle::AppWin const **>(
         lua_newuserdatauv(L, sizeof(Sickle::AppWin *), 1));
     *ptr = appwin;
 
+    // Add methods/data table.
     lua_newtable(L);
     luaL_setfuncs(L, appwinlib_methods, 0);
     lua_setiuservalue(L, -2, 1);
 
-    luaL_setmetatable(L, "Sickle.appwin");
+    // Set metatable.
+    luaL_setmetatable(L, LIBRARY_NAME);
 
+    // Add fields.
     lua_pushliteral(L, "topMapArea");
     lmaparea2d_new(L, &appwin->m_drawarea_top);
     lua_settable(L, -3);
@@ -108,23 +171,36 @@ int Sickle::lappwin_new_no_signals(lua_State *L, Sickle::AppWin const *appwin)
     lmaparea2d_new(L, &appwin->m_drawarea_right);
     lua_settable(L, -3);
 
-    return 1;
-}
 
-int Sickle::lappwin_new(lua_State *L, Sickle::AppWin *appwin)
-{
-    lappwin_new_no_signals(L, appwin);
+    // Add the object to the Lua registry, using the pointer as key. This is
+    // needed for the C++ callbacks to know what object to call methods on.
+    add_to_objectTable(L, appwin);
+
+    // Connect signals.
     appwin->property_grid_size().signal_changed().connect(
         [L, appwin](){
-            lappwin_new_no_signals(L, appwin);
+            get_from_objectTable(L, appwin);
             Lua::call_method(L, "on_grid_size_changed");
         });
+    appwin->signal_key_press_event().connect(
+        [L, appwin](GdkEventKey *e){
+            get_from_objectTable(L, appwin);
+            Lua::call_method(L, "on_key_press_event", (lua_Integer)e->keyval);
+            return lua_toboolean(L, -1);
+        });
+
     return 1;
 }
 
 int luaopen_appwin(lua_State *L)
 {
-    luaL_newmetatable(L, "Sickle.appwin");
+    // Table used to map C++ pointers to Lua objects.
+    // TODO: References should be removed when the C++ objects are destroyed.
+    lua_newtable(L);
+    Lua::add_to_registry(L, LIBRARY_NAME".objectTable");
+    lua_pop(L, 1);
+
+    luaL_newmetatable(L, LIBRARY_NAME);
     luaL_setfuncs(L, appwinlib_metamethods, 0);
     luaL_newlib(L, appwinlib_functions);
     return 1;

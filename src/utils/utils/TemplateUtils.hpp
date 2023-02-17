@@ -1,5 +1,5 @@
 /**
- * se-lua.cpp - Sickle Lua integration.
+ * TemplateUtils.hpp - Template utilities.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,23 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "se-lua/se-lua.hpp"
+#ifndef SE_TEMPLATEUTILS_HPP
+#define SE_TEMPLATEUTILS_HPP
+
+#include <cstddef>
 
 
-Lua::Error::Error(std::string const &what)
-:   std::runtime_error{what}
+/** Apply a callable over all the arguments. */
+template<class Callable>
+size_t foreach(Callable c)
 {
+    return 0;
+}
+template<class Callable, typename Arg, typename... Rest>
+size_t foreach(Callable c, Arg arg, Rest... rest)
+{
+    c(arg);
+    return 1 + foreach(c, rest...);
 }
 
-
-void Lua::checkerror(lua_State *L, int status)
-{
-    if (status != LUA_OK)
-    {
-        auto err = lua_tostring(L, -1);
-        lua_pop(L, 1);
-        throw Error{err};
-    }
-}
-
-void Lua::get_method(lua_State *L, std::string const &method)
-{
-    lua_pushlstring(L, method.c_str(), method.length());
-    lua_gettable(L, -2);
-    lua_rotate(L, -2, 1);
-}
+#endif
