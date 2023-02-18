@@ -29,6 +29,7 @@ extern "C" {
 
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 
 namespace Lua
@@ -47,9 +48,17 @@ namespace Lua
         template<typename T>
         void operator()(T value)=delete;
 
+        void operator()(bool value)
+        {
+            lua_pushboolean(L, value);
+        }
         void operator()(lua_Integer value)
         {
             lua_pushinteger(L, value);
+        }
+        void operator()(lua_Number value)
+        {
+            lua_pushnumber(L, value);
         }
         void operator()(void *value)
         {
@@ -69,6 +78,7 @@ namespace Lua
     /** Check a Lua status error. */
     void checkerror(lua_State *L, int status);
 
+
     /**
      * Gets METHOD from object on top of stack and rotates to prepare for a
      * method call.
@@ -83,6 +93,26 @@ namespace Lua
         auto count = foreach(Pusher{L}, args...);
         checkerror(L, lua_pcall(L, 1 + count, 0, 0));
     }
+
+
+    /** Set table[KEY] = VALUE. Table is at the top of the stack. */
+    template<typename K, typename V>
+    void set_table(lua_State *L, K key, V value)
+    {
+        Pusher push{L};
+        push(key);
+        push(value);
+        lua_settable(L, -3);
+    }
+
+    /** Push a new table with the given key/value pairs installed.*/
+    template<typename... Keys, typename... Values>
+    void make_table(lua_State *L, std::pair<Keys, Values>... c)
+    {
+        lua_newtable(L);
+        (set_table(L, c.first, c.second), ...);
+    }
+
 
     /**
      * Add the value at the top of the stack to the Lua registry, using KEY as

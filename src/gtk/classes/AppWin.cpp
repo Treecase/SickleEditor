@@ -59,13 +59,34 @@ Sickle::AppWin::AppWin()
     luaL_requiref(L, "appwin", luaopen_appwin, 1);
     luaL_requiref(L, "maparea2d", luaopen_maparea2d, 1);
 
-    auto const &res = Gio::Resource::lookup_data_global(
-        SE_GRESOURCE_PREFIX "lua/gdkkeysyms.lua");
-    gsize _size;
-    luaL_dostring(L, static_cast<char const *>(res->get_data(_size)));
-
     lappwin_new(L, this);
     lua_setglobal(L, "gAppWin");
+
+    // Run internal scripts from GResources.
+    std::vector<std::string> lua_scripts{
+        "lua/gdkkeysyms.lua",
+    };
+    for (auto const &path : lua_scripts)
+    {
+        auto const &res = Gio::Resource::lookup_data_global(
+            SE_GRESOURCE_PREFIX + path);
+        gsize _size;
+        Lua::checkerror(
+            L,
+            luaL_dostring(L, static_cast<char const *>(res->get_data(_size))));
+    }
+
+    // Run external scripts in the lua-runtime directory.
+    auto dir = Gio::File::create_for_path("lua-runtime");
+    auto enumeration = dir->enumerate_children();
+    for (
+        auto file = enumeration->next_file();
+        file;
+        file = enumeration->next_file())
+    {
+        auto const &filepath = dir->get_path() + "/" + file->get_name();
+        Lua::checkerror(L, luaL_dofile(L, filepath.c_str()));
+    }
 
     lua_pop(L, lua_gettop(L));
 

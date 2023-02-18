@@ -1,5 +1,5 @@
 /**
- * MapArea2D_Lua.hpp - MapArea2D Lua binding.
+ * Editor_Lua.hpp - Editor Lua binding.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,18 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPAREA2D_LUA_HPP
-#define SE_MAPAREA2D_LUA_HPP
+#ifndef SE_EDITOR_LUA_HPP
+#define SE_EDITOR_LUA_HPP
 
 #include "se-lua/se-lua.hpp"
 
 
 namespace Sickle
 {
-    class MapArea2D;
+    class Editor;
 }
 
-int lmaparea2d_new(lua_State *L, Sickle::MapArea2D *maparea);
-int luaopen_maparea2d(lua_State *L);
+int leditor_new(lua_State *L, Sickle::Editor *editor);
+int luaopen_editor(lua_State *L);
 
 #endif

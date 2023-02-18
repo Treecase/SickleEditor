@@ -1,5 +1,5 @@
 /**
- * MapArea2D_Lua.hpp - MapArea2D Lua binding.
+ * GdkEvent_Lua.hpp - Lua::Pusher specializations for GDK events.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,24 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPAREA2D_LUA_HPP
-#define SE_MAPAREA2D_LUA_HPP
+#ifndef SE_GDKEVENT_LUA_HPP
+#define SE_GDKEVENT_LUA_HPP
 
 #include "se-lua/se-lua.hpp"
 
+#include <gdkmm/event.h>
 
-namespace Sickle
-{
-    class MapArea2D;
-}
 
-int lmaparea2d_new(lua_State *L, Sickle::MapArea2D *maparea);
-int luaopen_maparea2d(lua_State *L);
+template<>
+void Lua::Pusher::operator()(GdkEventKey const *event);
+
+template<>
+void Lua::Pusher::operator()(GdkEventButton const *event);
+
+template<>
+void Lua::Pusher::operator()(GdkEventMotion const *event);
+
+template<>
+void Lua::Pusher::operator()(GdkEventScroll const *event);
 
 #endif

@@ -8,3 +8,5 @@ target_link_libraries(editor PUBLIC
     map
     PkgConfig::sigc++
 )
+
+add_subdirectory(lua)

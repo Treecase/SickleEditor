@@ -1,5 +1,5 @@
 /**
- * AppWin_Lua.cpp - AppWin Lua binding.
+ * Editor_Lua.cpp - Editor Lua binding.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,15 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../classes/AppWin.hpp"
-#include "AppWin_Lua.hpp"
-#include "MapArea2D_Lua.hpp"
-#include "GdkEvent_Lua.hpp"
+#include "editor/Editor.hpp"
+#include "Editor_Lua.hpp"
 
 
-#define LIBRARY_NAME    "Sickle.appwin"
+#define LIBRARY_NAME    "Sickle.editor"
 
 
 /** Add value at the top of the stack to the objectTable using KEY. */
-void add_to_objectTable(lua_State *L, Sickle::AppWin *key)
+void add_to_objectTable(lua_State *L, Sickle::Editor *key)
 {
     Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
     lua_pushlightuserdata(L, key);
@@ -36,7 +34,7 @@ void add_to_objectTable(lua_State *L, Sickle::AppWin *key)
 }
 
 /** Get the Lua value associated with KEY from the objectTable. */
-void get_from_objectTable(lua_State *L, Sickle::AppWin *key)
+void get_from_objectTable(lua_State *L, Sickle::Editor *key)
 {
     Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
     lua_pushlightuserdata(L, key);
@@ -47,131 +45,93 @@ void get_from_objectTable(lua_State *L, Sickle::AppWin *key)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Internal
-Sickle::AppWin *lappwin_checkappwin(lua_State *L, int arg)
+Sickle::Editor *leditor_checkeditor(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
     luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
-    return *static_cast<Sickle::AppWin **>(ud);
+    return *static_cast<Sickle::Editor **>(ud);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Metamethods
-int lappwin_dunder_newindex(lua_State *L)
+int leditor_dunder_newindex(lua_State *L)
 {
-    lappwin_checkappwin(L, 1);
+    leditor_checkeditor(L, 1);
     lua_getiuservalue(L, -3, 1);
     lua_rotate(L, -3, 1);
     lua_settable(L, -3);
     return 0;
 }
 
-int lappwin_dunder_index(lua_State *L)
+int leditor_dunder_index(lua_State *L)
 {
-    lappwin_checkappwin(L, 1);
+    leditor_checkeditor(L, 1);
     lua_getiuservalue(L, 1, 1);
     lua_rotate(L, -2, 1);
     lua_gettable(L, -2);
     return 1;
 }
 
-luaL_Reg appwinlib_metamethods[] = {
-    {"__newindex", lappwin_dunder_newindex},
-    {"__index", lappwin_dunder_index},
+luaL_Reg editorlib_metamethods[] = {
+    {"__newindex", leditor_dunder_newindex},
+    {"__index", leditor_dunder_index},
     {NULL, NULL}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
-int lappwin_set_grid_size(lua_State *L)
-{
-    auto aw = lappwin_checkappwin(L, 1);
-    aw->set_grid_size(luaL_checkinteger(L, 2));
-    return 0;
-}
-
-int lappwin_get_grid_size(lua_State *L)
-{
-    auto aw = lappwin_checkappwin(L, 1);
-    lua_pushinteger(L, aw->get_grid_size());
-    return 1;
-}
-
-int do_nothing(lua_State *L)
+int _leditor_do_nothing(lua_State *L)
 {
     return 0;
 }
 
-luaL_Reg appwinlib_methods[] = {
-    {"set_grid_size", lappwin_set_grid_size},
-    {"get_grid_size", lappwin_get_grid_size},
-
-    {"on_grid_size_changed", do_nothing},
-    {"on_key_press_event", do_nothing},
+luaL_Reg editorlib_methods[] = {
+    {"on_map_changed", _leditor_do_nothing},
     {NULL, NULL}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
-luaL_Reg appwinlib_functions[] = {
+static luaL_Reg editorlib_functions[] = {
     {NULL, NULL}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int Sickle::lappwin_new(lua_State *L, Sickle::AppWin *appwin)
+int leditor_new(lua_State *L, Sickle::Editor *editor)
 {
     // Create the Lua object.
-    auto ptr = static_cast<Sickle::AppWin const **>(
-        lua_newuserdatauv(L, sizeof(Sickle::AppWin *), 1));
-    *ptr = appwin;
+    auto ptr = static_cast<Sickle::Editor const **>(
+        lua_newuserdatauv(L, sizeof(Sickle::Editor *), 1));
+    *ptr = editor;
 
     // Add methods/data table.
     lua_newtable(L);
-    luaL_setfuncs(L, appwinlib_methods, 0);
+    luaL_setfuncs(L, editorlib_methods, 0);
     lua_setiuservalue(L, -2, 1);
 
     // Set metatable.
     luaL_setmetatable(L, LIBRARY_NAME);
 
-    // Add fields.
-    lua_pushliteral(L, "topMapArea");
-    lmaparea2d_new(L, &appwin->m_drawarea_top);
-    lua_settable(L, -3);
-
-    lua_pushliteral(L, "frontMapArea");
-    lmaparea2d_new(L, &appwin->m_drawarea_front);
-    lua_settable(L, -3);
-
-    lua_pushliteral(L, "rightMapArea");
-    lmaparea2d_new(L, &appwin->m_drawarea_right);
-    lua_settable(L, -3);
-
-
     // Add the object to the Lua registry, using the pointer as key. This is
     // needed for the C++ callbacks to know what object to call methods on.
-    add_to_objectTable(L, appwin);
+    add_to_objectTable(L, editor);
 
     // Connect signals.
-    appwin->property_grid_size().signal_changed().connect(
-        [L, appwin](){
-            get_from_objectTable(L, appwin);
-            Lua::call_method(L, "on_grid_size_changed");
-        });
-    appwin->signal_key_press_event().connect(
-        [L, appwin](GdkEventKey const *e){
-            get_from_objectTable(L, appwin);
-            Lua::call_method(L, "on_key_press_event", e);
-            return lua_toboolean(L, -1);
+    editor->signal_map_changed().connect(
+        [L, editor](){
+            get_from_objectTable(L, editor);
+            Lua::call_method(L, "on_map_changed");
         });
 
     return 1;
 }
 
-int luaopen_appwin(lua_State *L)
+int luaopen_editor(lua_State *L)
 {
     // Table used to map C++ pointers to Lua objects.
     // TODO: References should be removed when the C++ objects are destroyed.
@@ -180,7 +140,8 @@ int luaopen_appwin(lua_State *L)
     lua_pop(L, 1);
 
     luaL_newmetatable(L, LIBRARY_NAME);
-    luaL_setfuncs(L, appwinlib_metamethods, 0);
-    luaL_newlib(L, appwinlib_functions);
+    luaL_setfuncs(L, editorlib_metamethods, 0);
+    luaL_newlib(L, editorlib_functions);
+
     return 1;
 }

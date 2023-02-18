@@ -25,8 +25,6 @@
 
 
 #define ZOOM_MULTIPLIER_SMOOTH  1.1
-#define ZOOM_MULTIPLIER_STEP    2.0
-#define MOVE_STEP   128.0
 #define MIN_ZOOM    (1.0 / 16.0)
 #define MAX_ZOOM    16.0
 
@@ -151,6 +149,8 @@ Sickle::MapArea2D::MapArea2D(Editor &ed)
 ,   _prop_clear_color{*this, "clear-color", {}}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _prop_draw_angle{*this, "draw-angle", DrawAngle::TOP}
+,   _prop_transform{*this, "transform", {}}
+,   _prop_state{*this, "state", {}}
 {
     set_hexpand(true);
     set_vexpand(true);
@@ -167,6 +167,8 @@ Sickle::MapArea2D::MapArea2D(Editor &ed)
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
     property_draw_angle().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::on_draw_angle_changed));
+    property_transform().signal_changed().connect(
+        sigc::mem_fun(*this, &MapArea2D::queue_draw));
 
     add_events(
         Gdk::POINTER_MOTION_MASK
@@ -204,6 +206,7 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 
 
     /* ===[ Grid ]=== */
+    auto const &_transform = property_transform().get_value();
     cr->save();
         cr->set_antialias(Cairo::ANTIALIAS_NONE);
         cr->translate(width / 2.0, height / 2.0);
@@ -291,61 +294,6 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
     return true;
 }
 
-bool Sickle::MapArea2D::on_key_press_event(GdkEventKey *event)
-{
-    switch (event->keyval)
-    {
-    case GDK_KEY_Up:
-        _transform.y += MOVE_STEP;
-        break;
-    case GDK_KEY_Down:
-        _transform.y -= MOVE_STEP;
-        break;
-    case GDK_KEY_Left:
-        _transform.x += MOVE_STEP;
-        break;
-    case GDK_KEY_Right:
-        _transform.x -= MOVE_STEP;
-        break;
-
-    case GDK_KEY_KP_Add:
-        _transform.zoom *= ZOOM_MULTIPLIER_STEP;
-        _transform.zoom = std::clamp(_transform.zoom, MIN_ZOOM, MAX_ZOOM);
-        break;
-    case GDK_KEY_KP_Subtract:
-        _transform.zoom /= ZOOM_MULTIPLIER_STEP;
-        _transform.zoom = std::clamp(_transform.zoom, MIN_ZOOM, MAX_ZOOM);
-        break;
-
-    case GDK_KEY_Control_L:
-    case GDK_KEY_Control_R:
-        _state.multiselect = true;
-        break;
-
-    default:
-        return Gtk::DrawingArea::on_key_press_event(event);
-        break;
-    }
-    queue_draw();
-    return true;
-}
-
-bool Sickle::MapArea2D::on_key_release_event(GdkEventKey *event)
-{
-    switch (event->keyval)
-    {
-    case GDK_KEY_Control_L:
-    case GDK_KEY_Control_R:
-        _state.multiselect = false;
-        break;
-
-    default:
-        return Gtk::DrawingArea::on_key_release_event(event);
-        break;
-    }
-    return true;
-}
-
 
 bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 {
@@ -355,13 +303,6 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
             _screenspace_to_drawspace(event->x, event->y));
         _editor.brushbox.p1(v);
         _editor.brushbox.p2(v);
-        _state.dragged = false;
-        return true;
-    }
-    if (event->button == 2)
-    {
-        _state.pointer_prev.x = event->x;
-        _state.pointer_prev.y = event->y;
         return true;
     }
     return Gtk::DrawingArea::on_button_press_event(event);
@@ -369,6 +310,7 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 
 bool Sickle::MapArea2D::on_button_release_event(GdkEventButton *event)
 {
+    auto const &_state = property_state().get_value();
     if (event->button == 1 && !_state.dragged)
     {
         if (!_state.multiselect)
@@ -398,6 +340,8 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 
 bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
 {
+    auto _transform = property_transform().get_value();
+    auto _state = property_state().get_value();
     if (event->state & Gdk::BUTTON1_MASK)
     {
         _editor.brushbox.p2(
@@ -405,6 +349,7 @@ bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
                 _screenspace_to_drawspace(event->x, event->y)));
         _state.dragged = true;
         _editor.selected.clear();
+        property_state().set_value(_state);
         return true;
     }
     if (event->state & Gdk::BUTTON2_MASK)
@@ -415,32 +360,17 @@ bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
         _transform.y += dy;
         _state.pointer_prev.x = event->x;
         _state.pointer_prev.y = event->y;
-        queue_draw();
+        property_transform().set_value(_transform);
+        property_state().set_value(_state);
         return true;
     }
     return Gtk::DrawingArea::on_motion_notify_event(event);
 }
 
-bool Sickle::MapArea2D::on_scroll_event(GdkEventScroll *event)
-{
-    switch (event->direction)
-    {
-    case GDK_SCROLL_DOWN:
-        _transform.zoom /= ZOOM_MULTIPLIER_SMOOTH;
-        break;
-    case GDK_SCROLL_UP:
-        _transform.zoom *= ZOOM_MULTIPLIER_SMOOTH;
-        break;
-    }
-    _transform.zoom = std::clamp(_transform.zoom, MIN_ZOOM, MAX_ZOOM);
-    queue_draw();
-    return true;
-}
-
 void Sickle::MapArea2D::on_editor_map_changed()
 {
-    _transform = Transform2D{};
-    _state = State{};
+    property_transform().reset_value();
+    property_state().reset_value();
     queue_draw();
 }
 
@@ -448,11 +378,11 @@ void Sickle::MapArea2D::on_editor_map_changed()
 Sickle::MapArea2D::DrawSpacePoint
 Sickle::MapArea2D::_screenspace_to_drawspace(double x, double y) const
 {
+    auto const &_transform = property_transform().get_value();
     auto const width = get_allocated_width();
     auto const height = get_allocated_height();
     return {
-        ((x - 0.5*width ) - _transform.x) / _transform.zoom
-        ,
+        ((x - 0.5*width ) - _transform.x) / _transform.zoom,
         ((y - 0.5*height) - _transform.y) / _transform.zoom
     };
 }

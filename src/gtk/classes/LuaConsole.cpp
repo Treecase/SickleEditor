@@ -21,6 +21,7 @@
 
 #include <gtkmm.h>
 
+#include <iostream>
 #include <sstream>
 
 
@@ -166,5 +167,6 @@ int Sickle::LuaConsole::_L_customprint(lua_State *L)
         }
     }
     writeline(str.str());
+    std::cout << str.str() << '\n';
     return 0;
 }
