@@ -25,9 +25,10 @@
 namespace Sickle
 {
     class AppWin;
-    int lappwin_new(lua_State *L, Sickle::AppWin *appwin);
 }
 
 int luaopen_appwin(lua_State *L);
+int lappwin_new(lua_State *L, Sickle::AppWin *appwin);
+Sickle::AppWin *lappwin_check(lua_State *L, int arg);
 
 #endif

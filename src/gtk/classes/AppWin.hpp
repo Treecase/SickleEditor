@@ -19,11 +19,11 @@
 #ifndef SE_APPWIN_HPP
 #define SE_APPWIN_HPP
 
+#include "AppWin_Lua.hpp"
+#include "LuaConsole.hpp"
 #include "MapArea.hpp"
 #include "MapArea2D.hpp"
-#include "LuaConsole.hpp"
 #include "editor/Editor.hpp"
-#include "se-lua/se-lua.hpp"
 
 #include <glibmm/property.h>
 #include <glibmm/binding.h>
@@ -52,7 +52,7 @@ namespace Sickle
         guint get_grid_size();
 
         // Lua constructor needs access to private members.
-        friend int lappwin_new(lua_State *, AppWin *);
+        friend int ::lappwin_new(lua_State *, AppWin *);
 
     protected:
         Gtk::Grid m_grid;

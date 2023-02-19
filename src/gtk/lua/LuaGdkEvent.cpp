@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "GdkEvent_Lua.hpp"
+#include "LuaGdkEvent.hpp"
 
 
 template<>

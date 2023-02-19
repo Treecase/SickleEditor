@@ -1,8 +1,7 @@
 
 add_library(sickle-gtk-lua STATIC
     AppWin_Lua.cpp
-    MapArea2D_Lua.cpp
-    GdkEvent_Lua.cpp
+    LuaGdkEvent.cpp
 )
 target_include_directories(sickle-gtk-lua PUBLIC .)
 target_link_libraries(sickle-gtk-lua PRIVATE editor)
@@ -16,3 +15,5 @@ target_link_libraries(sickle-gtk-lua PRIVATE
     glutils::glutils
     wad
 )
+
+add_subdirectory(MapArea2D)

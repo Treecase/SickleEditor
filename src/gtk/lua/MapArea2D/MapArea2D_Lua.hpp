@@ -25,9 +25,23 @@
 namespace Sickle
 {
     class MapArea2D;
+    namespace MapArea2Dx
+    {
+        struct Transform2D;
+        struct State;
+    }
 }
 
-int lmaparea2d_new(lua_State *L, Sickle::MapArea2D *maparea);
 int luaopen_maparea2d(lua_State *L);
+int lmaparea2d_new(lua_State *L, Sickle::MapArea2D *maparea);
+Sickle::MapArea2D *lmaparea2d_check(lua_State *L, int arg);
+
+int luaopen_transform2d(lua_State *L);
+int ltransform2d_new(lua_State *L, Sickle::MapArea2Dx::Transform2D const &transform);
+Sickle::MapArea2Dx::Transform2D *ltransform2d_check(lua_State *L, int arg);
+
+int luaopen_state(lua_State *L);
+int lstate_new(lua_State *L, Sickle::MapArea2Dx::State const &state);
+Sickle::MapArea2Dx::State *lstate_check(lua_State *L, int arg);
 
 #endif

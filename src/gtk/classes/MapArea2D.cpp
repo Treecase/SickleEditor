@@ -29,6 +29,31 @@
 #define MAX_ZOOM    16.0
 
 
+/** Templated bounding box using glm vectors. */
+template<glm::length_t L, typename T>
+struct BBox
+{
+    using Point = glm::vec<L, T>;
+    Point min{INFINITY, INFINITY}, max{-INFINITY, -INFINITY};
+    T volume() const {
+        auto const wh = glm::abs(max - min);
+        return wh.x * wh.y;
+    }
+    bool contains(Point point) const {
+        return (
+            glm::all(glm::lessThanEqual(min, point))
+            && glm::all(glm::lessThanEqual(point, max))
+        );
+    }
+    void add(Point pt) {
+        for (glm::length_t i = 0; i < Point::length(); ++i)
+        {
+            if (pt[i] < min[i]) min[i] = pt[i];
+            if (pt[i] > max[i]) max[i] = pt[i];
+        }
+    }
+};
+
 struct DrawAnchor {
     bool top;
     bool left;
@@ -167,6 +192,8 @@ Sickle::MapArea2D::MapArea2D(Editor &ed)
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
     property_draw_angle().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::on_draw_angle_changed));
+    property_draw_angle().signal_changed().connect(
+        sigc::mem_fun(*this, &MapArea2D::queue_draw));
     property_transform().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
 
@@ -179,15 +206,72 @@ Sickle::MapArea2D::MapArea2D(Editor &ed)
         | Gdk::ENTER_NOTIFY_MASK);
 }
 
-void Sickle::MapArea2D::on_draw_angle_changed()
+Sickle::MapArea2D::DrawSpacePoint
+Sickle::MapArea2D::screenspace_to_drawspace(double x, double y) const
+{
+    auto const &transform = property_transform().get_value();
+    auto const width = get_allocated_width();
+    auto const height = get_allocated_height();
+    return {
+        ((x - 0.5 * width ) - transform.x) / transform.zoom,
+        ((y - 0.5 * height) - transform.y) / transform.zoom
+    };
+}
+
+MAP::Vertex
+Sickle::MapArea2D::drawspace_to_worldspace(DrawSpacePoint const &v) const
 {
     switch (property_draw_angle().get_value())
     {
-    case DrawAngle::TOP: property_name() = "top (x/y)"; break;
-    case DrawAngle::FRONT: property_name() = "front (y/z)"; break;
-    case DrawAngle::RIGHT: property_name() = "right (x/z)"; break;
+    case DrawAngle::TOP  : return {v.x, -v.y, 0}; break;
+    case DrawAngle::FRONT: return {0, v.x, -v.y}; break;
+    case DrawAngle::RIGHT: return {v.x, 0, -v.y}; break;
     }
-    queue_draw();
+    throw std::logic_error{"bad DrawAngle value"};
+}
+
+Sickle::MapArea2D::DrawSpacePoint
+Sickle::MapArea2D::worldspace_to_drawspace(MAP::Vertex const &v) const
+{
+    switch (property_draw_angle().get_value())
+    {
+    case DrawAngle::TOP  : return {v.x, -v.y}; break;
+    case DrawAngle::FRONT: return {v.y, -v.z}; break;
+    case DrawAngle::RIGHT: return {v.x, -v.z}; break;
+    }
+    throw std::logic_error{"bad DrawAngle value"};
+}
+
+Sickle::EditorBrush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
+{
+    using BBox = BBox<DrawSpacePoint::length(), DrawSpacePoint::value_type>;
+
+    EditorBrush *picked{nullptr};
+    BBox pbbox{};
+
+    for (auto const &entity : _editor.get_map().entities)
+    {
+        for (auto const &brush : entity.brushes)
+        {
+            BBox bbox{};
+            for (auto const &face : brush.planes)
+                for (auto const &vertex : face.vertices)
+                    bbox.add(worldspace_to_drawspace(vertex));
+
+            if (bbox.contains(point))
+            {
+                // If the point is inside multiple bboxes, we pick the one with
+                // the smallest volume. Could use other metrics, but this seems
+                // logical enough.
+                if (bbox.volume() < pbbox.volume())
+                {
+                    picked = const_cast<EditorBrush *>(&brush);
+                    pbbox = bbox;
+                }
+            }
+        }
+    }
+    return picked;
 }
 
 bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
@@ -265,8 +349,8 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         cr->set_source_rgb(1, 1, 1);
         cr->set_line_width(1 / _transform.zoom);
         cr->set_dash(std::vector<double>{4/_transform.zoom, 4/_transform.zoom}, 0);
-        auto const p1 = _worldspace_to_drawspace(_editor.brushbox.p1());
-        auto const p2 = _worldspace_to_drawspace(_editor.brushbox.p2());
+        auto const p1 = worldspace_to_drawspace(_editor.brushbox.p1());
+        auto const p2 = worldspace_to_drawspace(_editor.brushbox.p2());
         cr->rectangle(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
         cr->stroke();
 
@@ -294,42 +378,22 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
     return true;
 }
 
-
-bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
+void Sickle::MapArea2D::on_editor_map_changed()
 {
-    if (event->button == 1)
-    {
-        auto const v = _drawspace_to_worldspace(
-            _screenspace_to_drawspace(event->x, event->y));
-        _editor.brushbox.p1(v);
-        _editor.brushbox.p2(v);
-        return true;
-    }
-    return Gtk::DrawingArea::on_button_press_event(event);
+    property_transform().reset_value();
+    property_state().reset_value();
+    queue_draw();
 }
 
-bool Sickle::MapArea2D::on_button_release_event(GdkEventButton *event)
+void Sickle::MapArea2D::on_draw_angle_changed()
 {
-    auto const &_state = property_state().get_value();
-    if (event->button == 1 && !_state.dragged)
+    switch (property_draw_angle().get_value())
     {
-        if (!_state.multiselect)
-            _editor.selected.clear();
-        if (!_editor.get_map().entities.empty())
-        {
-            auto point = _screenspace_to_drawspace(event->x, event->y);
-            auto picked = pick_brush(point);
-            if (picked)
-            {
-                if (picked->is_selected)
-                    _editor.selected.remove(picked);
-                else
-                    _editor.selected.add(picked);
-            }
-        }
-        return true;
+    case DrawAngle::TOP: property_name() = "top (x/y)"; break;
+    case DrawAngle::FRONT: property_name() = "front (y/z)"; break;
+    case DrawAngle::RIGHT: property_name() = "right (x/z)"; break;
     }
-    return Gtk::DrawingArea::on_button_release_event(event);
+    queue_draw();
 }
 
 bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
@@ -338,90 +402,6 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
     return true;
 }
 
-bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
-{
-    auto _transform = property_transform().get_value();
-    auto _state = property_state().get_value();
-    if (event->state & Gdk::BUTTON1_MASK)
-    {
-        _editor.brushbox.p2(
-            _drawspace_to_worldspace(
-                _screenspace_to_drawspace(event->x, event->y)));
-        _state.dragged = true;
-        _editor.selected.clear();
-        property_state().set_value(_state);
-        return true;
-    }
-    if (event->state & Gdk::BUTTON2_MASK)
-    {
-        auto dx = event->x - _state.pointer_prev.x;
-        auto dy = event->y - _state.pointer_prev.y;
-        _transform.x += dx;
-        _transform.y += dy;
-        _state.pointer_prev.x = event->x;
-        _state.pointer_prev.y = event->y;
-        property_transform().set_value(_transform);
-        property_state().set_value(_state);
-        return true;
-    }
-    return Gtk::DrawingArea::on_motion_notify_event(event);
-}
-
-void Sickle::MapArea2D::on_editor_map_changed()
-{
-    property_transform().reset_value();
-    property_state().reset_value();
-    queue_draw();
-}
-
-
-Sickle::MapArea2D::DrawSpacePoint
-Sickle::MapArea2D::_screenspace_to_drawspace(double x, double y) const
-{
-    auto const &_transform = property_transform().get_value();
-    auto const width = get_allocated_width();
-    auto const height = get_allocated_height();
-    return {
-        ((x - 0.5*width ) - _transform.x) / _transform.zoom,
-        ((y - 0.5*height) - _transform.y) / _transform.zoom
-    };
-}
-
-MAP::Vertex
-Sickle::MapArea2D::_drawspace_to_worldspace(DrawSpacePoint const &v) const
-{
-    switch (property_draw_angle().get_value())
-    {
-    case DrawAngle::TOP:
-        return {v.x, -v.y, 0};
-        break;
-    case DrawAngle::FRONT:
-        return {0, v.x, -v.y};
-        break;
-    case DrawAngle::RIGHT:
-        return {v.x, 0, -v.y};
-        break;
-    }
-    throw std::runtime_error{"`_angle` is invalid"};
-}
-
-Sickle::MapArea2D::DrawSpacePoint
-Sickle::MapArea2D::_worldspace_to_drawspace(MAP::Vertex const &v) const
-{
-    switch (property_draw_angle().get_value())
-    {
-    case DrawAngle::TOP:
-        return {v.x, -v.y};
-        break;
-    case DrawAngle::FRONT:
-        return {v.y, -v.z};
-        break;
-    case DrawAngle::RIGHT:
-        return {v.x, -v.z};
-        break;
-    }
-    throw std::runtime_error{"`_angle` is invalid"};
-}
 
 void Sickle::MapArea2D::_draw_brush(
     Cairo::RefPtr<Cairo::Context> const &cr, EditorBrush const &brush)
@@ -431,11 +411,11 @@ const
     {
         if (face.vertices.empty())
             continue;
-        auto const p0 = _worldspace_to_drawspace(face.vertices[0]);
+        auto const p0 = worldspace_to_drawspace(face.vertices[0]);
         cr->move_to(p0.x, p0.y);
         for (auto const &vertex : face.vertices)
         {
-            auto const p = _worldspace_to_drawspace(vertex);
+            auto const p = worldspace_to_drawspace(vertex);
             cr->line_to(p.x, p.y);
         }
         cr->close_path();
@@ -447,61 +427,4 @@ void Sickle::MapArea2D::_draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const
     for (auto const &e : _editor.get_map().entities)
         for (auto const &brush : e.brushes)
             _draw_brush(cr, brush);
-}
-
-/** Templated bounding box using glm vectors. */
-template<glm::length_t L, typename T>
-struct BBox
-{
-    using Point = glm::vec<L, T>;
-    Point min{INFINITY, INFINITY}, max{-INFINITY, -INFINITY};
-    T volume() const {
-        auto const wh = glm::abs(max - min);
-        return wh.x * wh.y;
-    }
-    bool contains(Point point) const {
-        return (
-            glm::all(glm::lessThanEqual(min, point))
-            && glm::all(glm::lessThanEqual(point, max))
-        );
-    }
-    void add(Point pt) {
-        for (glm::length_t i = 0; i < Point::length(); ++i)
-        {
-            if (pt[i] < min[i]) min[i] = pt[i];
-            if (pt[i] > max[i]) max[i] = pt[i];
-        }
-    }
-};
-
-Sickle::EditorBrush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
-{
-    using BBox = BBox<DrawSpacePoint::length(), DrawSpacePoint::value_type>;
-
-    EditorBrush *picked{nullptr};
-    BBox pbbox{};
-
-    for (auto const &entity : _editor.get_map().entities)
-    {
-        for (auto const &brush : entity.brushes)
-        {
-            BBox bbox{};
-            for (auto const &face : brush.planes)
-                for (auto const &vertex : face.vertices)
-                    bbox.add(_worldspace_to_drawspace(vertex));
-
-            if (bbox.contains(point))
-            {
-                // If the point is inside multiple bboxes, we pick the one with
-                // the smallest volume. Could use other metrics, but this seems
-                // logical enough.
-                if (bbox.volume() < pbbox.volume())
-                {
-                    picked = const_cast<EditorBrush *>(&brush);
-                    pbbox = bbox;
-                }
-            }
-        }
-    }
-    return picked;
 }

@@ -1,6 +1,6 @@
 -- Lua GDK Keysyms.
 -- TODO: Should generate this automatically.
-LuaGDK = {}
+LuaGDK = LuaGDK or {}
 LuaGDK.GDK_KEY_VoidSymbol = 0xffffff
 LuaGDK.GDK_KEY_BackSpace = 0xff08
 LuaGDK.GDK_KEY_Tab = 0xff09

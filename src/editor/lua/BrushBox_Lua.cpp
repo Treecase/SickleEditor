@@ -1,5 +1,5 @@
 /**
- * Editor_Lua.cpp - Editor Lua binding.
+ * BrushBox_Lua.cpp - Editor::BrushBox Lua binding.
  * Copyright (C) 2022 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,11 @@
 #include "editor/Editor.hpp"
 #include "Editor_Lua.hpp"
 
+#include <iostream>
 
-#define LIBRARY_NAME    "Sickle.editor"
-#define CLASSNAME       Sickle::Editor
+
+#define LIBRARY_NAME    "Sickle.editor.brushbox"
+#define CLASSNAME       Sickle::Editor::BBox
 
 
 /** Add value at the top of the stack to the objectTable using KEY. */
@@ -48,7 +50,7 @@ static void get_from_objectTable(lua_State *L, CLASSNAME *key)
 // Metamethods
 static int dunder_newindex(lua_State *L)
 {
-    leditor_check(L, 1);
+    lbrushbox_check(L, 1);
     lua_getiuservalue(L, -3, 1);
     lua_rotate(L, -3, 1);
     lua_settable(L, -3);
@@ -57,7 +59,7 @@ static int dunder_newindex(lua_State *L)
 
 static int dunder_index(lua_State *L)
 {
-    leditor_check(L, 1);
+    lbrushbox_check(L, 1);
     lua_getiuservalue(L, 1, 1);
     lua_rotate(L, -2, 1);
     lua_gettable(L, -2);
@@ -73,18 +75,44 @@ static luaL_Reg metamethods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
-static int get_selection(lua_State *L)
+static int get_start(lua_State *L)
 {
-    auto ed = leditor_check(L, 1);
-    lselection_new(L, &ed->selected);
-    return 1;
+    auto bb = lbrushbox_check(L, 1);
+    auto xyz = bb->p1();
+    lua_pushnumber(L, xyz.x);
+    lua_pushnumber(L, xyz.y);
+    lua_pushnumber(L, xyz.z);
+    return 3;
 }
 
-static int get_brushbox(lua_State *L)
+static int set_start(lua_State *L)
 {
-    auto ed = leditor_check(L, 1);
-    lbrushbox_new(L, &ed->brushbox);
-    return 1;
+    auto bb = lbrushbox_check(L, 1);
+    auto x = luaL_checknumber(L, 2);
+    auto y = luaL_checknumber(L, 3);
+    auto z = luaL_checknumber(L, 4);
+    bb->p1({x, y, z});
+    return 0;
+}
+
+static int get_end(lua_State *L)
+{
+    auto bb = lbrushbox_check(L, 1);
+    auto xyz = bb->p2();
+    lua_pushnumber(L, xyz.x);
+    lua_pushnumber(L, xyz.y);
+    lua_pushnumber(L, xyz.z);
+    return 3;
+}
+
+static int set_end(lua_State *L)
+{
+    auto bb = lbrushbox_check(L, 1);
+    auto x = luaL_checknumber(L, 2);
+    auto y = luaL_checknumber(L, 3);
+    auto z = luaL_checknumber(L, 4);
+    bb->p2({x, y, z});
+    return 0;
 }
 
 static int do_nothing(lua_State *L)
@@ -93,20 +121,22 @@ static int do_nothing(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
-    {"get_selection", get_selection},
-    {"get_brushbox", get_brushbox},
+    {"get_start", get_start},
+    {"set_start", set_start},
+    {"get_end", get_end},
+    {"set_end", set_end},
 
-    {"on_map_changed", do_nothing},
+    {"on_updated", do_nothing},
     {NULL, NULL}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int leditor_new(lua_State *L, CLASSNAME *editor)
+int lbrushbox_new(lua_State *L, CLASSNAME *bb)
 {
     // If we've already built an object for this pointer, just reuse it.
-    get_from_objectTable(L, editor);
+    get_from_objectTable(L, bb);
     if (!lua_isnil(L, -1))
         return 1;
     else
@@ -115,7 +145,7 @@ int leditor_new(lua_State *L, CLASSNAME *editor)
     // Create the Lua object.
     auto ptr = static_cast<CLASSNAME const **>(
         lua_newuserdatauv(L, sizeof(CLASSNAME *), 1));
-    *ptr = editor;
+    *ptr = bb;
 
     // Add methods/data table.
     lua_newtable(L);
@@ -127,30 +157,27 @@ int leditor_new(lua_State *L, CLASSNAME *editor)
 
     // Add the object to the Lua registry, using the pointer as key. This is
     // needed for the C++ callbacks to know what object to call methods on.
-    add_to_objectTable(L, editor);
+    add_to_objectTable(L, bb);
 
     // Connect signals.
-    editor->signal_map_changed().connect(
-        [L, editor](){
-            get_from_objectTable(L, editor);
-            Lua::call_method(L, "on_map_changed");
+    bb->signal_updated().connect(
+        [L, bb](){
+            get_from_objectTable(L, bb);
+            Lua::call_method(L, "on_updated");
         });
 
     return 1;
 }
 
-CLASSNAME *leditor_check(lua_State *L, int arg)
+CLASSNAME *lbrushbox_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
     luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
     return *static_cast<CLASSNAME **>(ud);
 }
 
-int luaopen_editor(lua_State *L)
+int luaopen_brushbox(lua_State *L)
 {
-    luaL_requiref(L, "selection", luaopen_selection, 1);
-    luaL_requiref(L, "brushbox", luaopen_brushbox, 1);
-
     // Table used to map C++ pointers to Lua objects.
     // TODO: References should be removed when the C++ objects are destroyed.
     lua_newtable(L);

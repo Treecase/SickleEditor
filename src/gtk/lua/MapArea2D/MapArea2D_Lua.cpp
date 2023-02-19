@@ -17,15 +17,17 @@
  */
 
 #include "../classes/MapArea2D.hpp"
+#include "Editor_Lua.hpp"
+#include "LuaGdkEvent.hpp"
 #include "MapArea2D_Lua.hpp"
-#include "GdkEvent_Lua.hpp"
 
 
 #define LIBRARY_NAME    "Sickle.maparea2d"
+#define CLASSNAME       Sickle::MapArea2D
 
 
 /** Add value at the top of the stack to the objectTable using KEY. */
-void add_to_objectTable(lua_State *L, Sickle::MapArea2D *key)
+static void add_to_objectTable(lua_State *L, CLASSNAME *key)
 {
     Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
     lua_pushlightuserdata(L, key);
@@ -35,7 +37,7 @@ void add_to_objectTable(lua_State *L, Sickle::MapArea2D *key)
 }
 
 /** Get the Lua value associated with KEY from the objectTable. */
-void get_from_objectTable(lua_State *L, Sickle::MapArea2D *key)
+static void get_from_objectTable(lua_State *L, CLASSNAME *key)
 {
     Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
     lua_pushlightuserdata(L, key);
@@ -45,172 +47,184 @@ void get_from_objectTable(lua_State *L, Sickle::MapArea2D *key)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Internal
-Sickle::MapArea2D *lmaparea2d_checkmaparea2d(lua_State *L, int arg)
-{
-    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
-    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
-    return *static_cast<Sickle::MapArea2D **>(ud);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 // Metamethods
-int lmaparea2d_dunder_newindex(lua_State *L)
+static int dunder_newindex(lua_State *L)
 {
-    lmaparea2d_checkmaparea2d(L, 1);
+    lmaparea2d_check(L, 1);
     lua_getiuservalue(L, -3, 1);
     lua_rotate(L, -3, 1);
     lua_settable(L, -3);
     return 0;
 }
 
-int lmaparea2d_dunder_index(lua_State *L)
+static int dunder_index(lua_State *L)
 {
-    lmaparea2d_checkmaparea2d(L, 1);
+    lmaparea2d_check(L, 1);
     lua_getiuservalue(L, 1, 1);
     lua_rotate(L, -2, 1);
     lua_gettable(L, -2);
     return 1;
 }
 
-luaL_Reg maparea2dlib_metamethods[] = {
-    {"__newindex", lmaparea2d_dunder_newindex},
-    {"__index", lmaparea2d_dunder_index},
+static luaL_Reg metamethods[] = {
+    {"__newindex", dunder_newindex},
+    {"__index", dunder_index},
     {NULL, NULL}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
-int lmaparea2d_set_draw_angle(lua_State *L)
+static int screenspace_to_drawspace(lua_State *L)
 {
-    auto ma = lmaparea2d_checkmaparea2d(L, 1);
+    auto ma = lmaparea2d_check(L, 1);
+    auto x = luaL_checknumber(L, 2);
+    auto y = luaL_checknumber(L, 3);
+    auto xy = ma->screenspace_to_drawspace(x, y);
+    lua_pushnumber(L, xy.x);
+    lua_pushnumber(L, xy.y);
+    return 2;
+}
+
+static int drawspace_to_worldspace(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
+    auto x = luaL_checknumber(L, 2);
+    auto y = luaL_checknumber(L, 3);
+    auto xyz = ma->drawspace_to_worldspace({x, y});
+    lua_pushnumber(L, xyz.x);
+    lua_pushnumber(L, xyz.y);
+    lua_pushnumber(L, xyz.z);
+    return 3;
+}
+
+static int worldspace_to_drawspace(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
+    auto x = luaL_checknumber(L, 2);
+    auto y = luaL_checknumber(L, 3);
+    auto z = luaL_checknumber(L, 4);
+    auto xy = ma->worldspace_to_drawspace({x, y, z});
+    lua_pushnumber(L, xy.x);
+    lua_pushnumber(L, xy.y);
+    return 2;
+}
+
+static int pick_brush(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
+    auto x = luaL_checknumber(L, 2);
+    auto y = luaL_checknumber(L, 3);
+    auto picked = ma->pick_brush({x, y});
+    if (picked)
+        leditorbrush_new(L, picked);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int set_draw_angle(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
     ma->set_draw_angle((Sickle::MapArea2D::DrawAngle)luaL_checkinteger(L, 2));
     return 0;
 }
 
-int lmaparea2d_get_draw_angle(lua_State *L)
+static int get_draw_angle(lua_State *L)
 {
-    auto ma = lmaparea2d_checkmaparea2d(L, 1);
+    auto ma = lmaparea2d_check(L, 1);
     lua_pushinteger(L, ma->get_draw_angle());
     return 1;
 }
 
-int get_transform(lua_State *L)
+static int get_editor(lua_State *L)
 {
-    auto ma = lmaparea2d_checkmaparea2d(L, 1);
-    auto transform = ma->property_transform().get_value();
-    Lua::make_table(L,
-        std::make_pair("x", transform.x),
-        std::make_pair("y", transform.y),
-        std::make_pair("zoom", transform.zoom));
-    return 1;
+    auto ma = lmaparea2d_check(L, 1);
+    auto &ed = ma->get_editor();
+    return leditor_new(L, &ed);
 }
 
-int set_transform(lua_State *L)
+static int get_transform(lua_State *L)
 {
-    auto ma = lmaparea2d_checkmaparea2d(L, 1);
-    luaL_argcheck(L, lua_istable(L, 2), 2, "`table' expected");
-    Sickle::MapArea2D::Transform2D transform{};
-    lua_pushliteral(L, "x");
-    lua_gettable(L, -2);
-    lua_pushliteral(L, "y");
-    lua_gettable(L, -3);
-    lua_pushliteral(L, "zoom");
-    lua_gettable(L, -4);
-    transform.x = lua_tonumber(L, -3);
-    transform.y = lua_tonumber(L, -2);
-    transform.zoom = lua_tonumber(L, -1);
-    ma->property_transform().set_value(transform);
+    auto ma = lmaparea2d_check(L, 1);
+    return ltransform2d_new(L, ma->property_transform().get_value());
+}
+
+static int set_transform(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
+    ma->property_transform().set_value(*ltransform2d_check(L, 2));
     return 0;
 }
 
-int get_state(lua_State *L)
+static int get_state(lua_State *L)
 {
-    auto ma = lmaparea2d_checkmaparea2d(L, 1);
-    auto state = ma->property_state().get_value();
-    Lua::make_table(L,
-        std::make_pair("dragged", state.dragged),
-        std::make_pair("multiselect", state.multiselect));
-    lua_pushliteral(L, "pointer_prev");
-    Lua::make_table(L,
-        std::make_pair("x", (lua_Number)state.pointer_prev.x),
-        std::make_pair("y", (lua_Number)state.pointer_prev.y));
-    lua_settable(L, -3);
-    return 1;
+    auto ma = lmaparea2d_check(L, 1);
+    return lstate_new(L, ma->property_state().get_value());
 }
 
-int set_state(lua_State *L)
+static int set_state(lua_State *L)
 {
-    auto ma = lmaparea2d_checkmaparea2d(L, 1);
-    luaL_argcheck(L, lua_istable(L, 2), 2, "`table' expected");
-    Sickle::MapArea2D::State state{};
-
-    lua_pushliteral(L, "pointer_prev");
-    lua_gettable(L, 2);
-    lua_pushliteral(L, "x");
-    lua_gettable(L, -2);
-    lua_pushliteral(L, "y");
-    lua_gettable(L, -3);
-    state.pointer_prev.x = lua_tonumber(L, -2);
-    state.pointer_prev.y = lua_tonumber(L, -1);
-    lua_pop(L, 2);
-
-    lua_pushliteral(L, "dragged");
-    lua_gettable(L, 2);
-    state.dragged = lua_toboolean(L, -1);
-
-    lua_pushliteral(L, "multiselect");
-    lua_gettable(L, 2);
-    state.multiselect = lua_toboolean(L, -1);
-
-    ma->property_state().set_value(state);
+    auto ma = lmaparea2d_check(L, 1);
+    ma->property_state().set_value(*lstate_check(L, 2));
     return 0;
 }
 
-int _lmaparea2d_do_nothing(lua_State *L)
+static int do_nothing(lua_State *L)
 {
     return 0;
 }
 
-luaL_Reg maparea2dlib_methods[] = {
-    {"set_draw_angle", lmaparea2d_set_draw_angle},
-    {"get_draw_angle", lmaparea2d_get_draw_angle},
+static luaL_Reg methods[] = {
+    {"screenspace_to_drawspace", screenspace_to_drawspace},
+    {"drawspace_to_worldspace", drawspace_to_worldspace},
+    {"worldspace_to_drawspace", worldspace_to_drawspace},
+    {"pick_brush", pick_brush},
+
+    {"set_draw_angle", set_draw_angle},
+    {"get_draw_angle", get_draw_angle},
+    {"get_editor", get_editor},
     {"get_transform", get_transform},
     {"set_transform", set_transform},
     {"get_state", get_state},
     {"set_state", set_state},
 
-    {"on_key_press_event", _lmaparea2d_do_nothing},
-    {"on_key_release_event", _lmaparea2d_do_nothing},
-    {"on_button_press_event", _lmaparea2d_do_nothing},
-    {"on_button_release_event", _lmaparea2d_do_nothing},
-    {"on_motion_notify_event", _lmaparea2d_do_nothing},
-    {"on_scroll_event", _lmaparea2d_do_nothing},
+    {"on_key_press_event", do_nothing},
+    {"on_key_release_event", do_nothing},
+    {"on_button_press_event", do_nothing},
+    {"on_button_release_event", do_nothing},
+    {"on_motion_notify_event", do_nothing},
+    {"on_scroll_event", do_nothing},
     {NULL, NULL}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
-static luaL_Reg maparea2dlib_functions[] = {
+static luaL_Reg functions[] = {
     {NULL, NULL}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int lmaparea2d_new(lua_State *L, Sickle::MapArea2D *maparea)
+int lmaparea2d_new(lua_State *L, CLASSNAME *maparea)
 {
+    // If we've already built an object for this pointer, just reuse it.
+    get_from_objectTable(L, maparea);
+    if (!lua_isnil(L, -1))
+        return 1;
+    else
+        lua_pop(L, 1);
+
     // Create the Lua object.
-    auto ptr = static_cast<Sickle::MapArea2D const **>(
-        lua_newuserdatauv(L, sizeof(Sickle::MapArea2D *), 1));
+    auto ptr = static_cast<CLASSNAME const **>(
+        lua_newuserdatauv(L, sizeof(CLASSNAME *), 1));
     *ptr = maparea;
 
     // Add methods/data table.
     lua_newtable(L);
-    luaL_setfuncs(L, maparea2dlib_methods, 0);
+    luaL_setfuncs(L, methods, 0);
     lua_setiuservalue(L, -2, 1);
 
     // Set metatable.
@@ -261,8 +275,19 @@ int lmaparea2d_new(lua_State *L, Sickle::MapArea2D *maparea)
     return 1;
 }
 
+CLASSNAME *lmaparea2d_check(lua_State *L, int arg)
+{
+    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
+    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
+    return *static_cast<CLASSNAME **>(ud);
+}
+
 int luaopen_maparea2d(lua_State *L)
 {
+    luaL_requiref(L, "transform2d", luaopen_transform2d, 1);
+    luaL_requiref(L, "state", luaopen_state, 1);
+    luaL_requiref(L, "editor", luaopen_editor, 1);
+
     // Table used to map C++ pointers to Lua objects.
     // TODO: References should be removed when the C++ objects are destroyed.
     lua_newtable(L);
@@ -270,10 +295,10 @@ int luaopen_maparea2d(lua_State *L)
     lua_pop(L, 1);
 
     luaL_newmetatable(L, LIBRARY_NAME);
-    luaL_setfuncs(L, maparea2dlib_metamethods, 0);
-    luaL_newlib(L, maparea2dlib_functions);
+    luaL_setfuncs(L, metamethods, 0);
 
     // Export DrawAngle enum values.
+    luaL_newlib(L, functions);
     lua_pushliteral(L, "TOP");
     lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::TOP);
     lua_settable(L, -3);

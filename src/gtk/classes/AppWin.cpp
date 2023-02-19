@@ -57,14 +57,15 @@ Sickle::AppWin::AppWin()
     luaL_openlibs(L);
 
     luaL_requiref(L, "appwin", luaopen_appwin, 1);
-    luaL_requiref(L, "maparea2d", luaopen_maparea2d, 1);
 
     lappwin_new(L, this);
     lua_setglobal(L, "gAppWin");
 
     // Run internal scripts from GResources.
     std::vector<std::string> lua_scripts{
+        "lua/gdkevents.lua",
         "lua/gdkkeysyms.lua",
+        "lua/gdktypes.lua",
     };
     for (auto const &path : lua_scripts)
     {

@@ -20,8 +20,6 @@
 #define SE_MAPAREA2D_HPP
 
 #include "editor/Editor.hpp"
-#include "se-lua/se-lua.hpp"
-#include "MapArea2D_Lua.hpp"
 
 #include <gdkmm/rgba.h>
 #include <glibmm/property.h>
@@ -32,14 +30,8 @@
 
 namespace Sickle
 {
-    /** Displays .map files. */
-    class MapArea2D : public Gtk::DrawingArea
+    namespace MapArea2Dx
     {
-    public:
-        using DrawSpacePoint = glm::vec2;
-
-        enum DrawAngle {TOP, FRONT, RIGHT};
-
         struct Transform2D
         {
             double x{0}, y{0};
@@ -52,8 +44,26 @@ namespace Sickle
             bool dragged{false};
             bool multiselect{false};
         };
+    }
+
+    /** Displays .map files. */
+    class MapArea2D : public Gtk::DrawingArea
+    {
+    public:
+        using DrawSpacePoint = glm::vec2;
+
+        enum DrawAngle {TOP, FRONT, RIGHT};
 
         MapArea2D(Editor &ed);
+
+        /** Convert screen-space coordinates to draw-space coordinates. */
+        DrawSpacePoint screenspace_to_drawspace(double x, double y) const;
+        /** Convert draw-space coordinates to world-space coordinates. */
+        MAP::Vertex drawspace_to_worldspace(DrawSpacePoint const &v) const;
+        /** Convert world-space coordinates to draw-space coordinates. */
+        DrawSpacePoint worldspace_to_drawspace(MAP::Vertex const &v) const;
+        /** Pick an EditorBrush based on the given point. */
+        EditorBrush *pick_brush(DrawSpacePoint point);
 
         auto property_clear_color() {return _prop_clear_color.get_proxy();}
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
@@ -65,22 +75,16 @@ namespace Sickle
 
         void set_draw_angle(DrawAngle angle){property_draw_angle().set_value(angle);}
         auto get_draw_angle() {return property_draw_angle().get_value();};
-
-        // Signal handlers
-        bool on_draw(Cairo::RefPtr<Cairo::Context> const &cr) override;
-
-        // Lua constructor needs access to private members.
-        friend int ::lmaparea2d_new(lua_State *, MapArea2D *);
+        auto &get_editor() {return _editor;}
 
     protected:
-        // Input Signals
-        bool on_button_press_event(GdkEventButton *event) override;
-        bool on_button_release_event(GdkEventButton *event) override;
-        bool on_enter_notify_event(GdkEventCrossing *event) override;
-        bool on_motion_notify_event(GdkEventMotion *event) override;
-
+        // Signal handlers
+        bool on_draw(Cairo::RefPtr<Cairo::Context> const &cr) override;
         void on_editor_map_changed();
         void on_draw_angle_changed();
+
+        // Input Signals
+        bool on_enter_notify_event(GdkEventCrossing *event) override;
 
     private:
         Editor &_editor;
@@ -89,21 +93,13 @@ namespace Sickle
         Glib::Property<Gdk::RGBA> _prop_clear_color;
         Glib::Property<int> _prop_grid_size;
         Glib::Property<DrawAngle> _prop_draw_angle;
-        Glib::Property<Transform2D> _prop_transform;
-        Glib::Property<State> _prop_state;
-
-        /** Convert screen-space coordinates to draw-space coordinates. */
-        DrawSpacePoint _screenspace_to_drawspace(double x, double y) const;
-        /** Convert draw-space coordinates to world-space coordinates. */
-        MAP::Vertex _drawspace_to_worldspace(DrawSpacePoint const &v) const;
-        /** Convert world-space coordinates to draw-space coordinates. */
-        DrawSpacePoint _worldspace_to_drawspace(MAP::Vertex const &v) const;
+        Glib::Property<MapArea2Dx::Transform2D> _prop_transform;
+        Glib::Property<MapArea2Dx::State> _prop_state;
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,
             EditorBrush const &brush) const;
         void _draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const;
-        EditorBrush *pick_brush(DrawSpacePoint point);
     };
 }
 

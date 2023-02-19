@@ -27,7 +27,20 @@ namespace Sickle
     class Editor;
 }
 
-int leditor_new(lua_State *L, Sickle::Editor *editor);
 int luaopen_editor(lua_State *L);
+int leditor_new(lua_State *L, Sickle::Editor *editor);
+Sickle::Editor *leditor_check(lua_State *L, int arg);
+
+int luaopen_selection(lua_State *L);
+int lselection_new(lua_State *L, Sickle::Editor::Selection *selection);
+Sickle::Editor::Selection *lselection_check(lua_State *L, int arg);
+
+int luaopen_brushbox(lua_State *L);
+int lbrushbox_new(lua_State *L, Sickle::Editor::BBox *selection);
+Sickle::Editor::BBox *lbrushbox_check(lua_State *L, int arg);
+
+int luaopen_editorbrush(lua_State *L);
+int leditorbrush_new(lua_State *L, Sickle::EditorBrush *brush);
+Sickle::EditorBrush *leditorbrush_check(lua_State *L, int arg);
 
 #endif
