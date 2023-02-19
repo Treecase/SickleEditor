@@ -77,17 +77,7 @@ Sickle::AppWin::AppWin()
             luaL_dostring(L, static_cast<char const *>(res->get_data(_size))));
     }
 
-    // Run external scripts in the lua-runtime directory.
-    auto dir = Gio::File::create_for_path("lua-runtime");
-    auto enumeration = dir->enumerate_children();
-    for (
-        auto file = enumeration->next_file();
-        file;
-        file = enumeration->next_file())
-    {
-        auto const &filepath = dir->get_path() + "/" + file->get_name();
-        Lua::checkerror(L, luaL_dofile(L, filepath.c_str()));
-    }
+    reload_scripts();
 
     lua_pop(L, lua_gettop(L));
 
@@ -156,6 +146,22 @@ void Sickle::AppWin::open(Gio::File const *file)
 void Sickle::AppWin::show_console_window()
 {
     m_luaconsolewindow.present();
+}
+
+void Sickle::AppWin::reload_scripts()
+{
+    // Run external scripts in the lua-runtime directory.
+    auto dir = Gio::File::create_for_path("lua-runtime");
+    auto enumeration = dir->enumerate_children();
+    for (
+        auto file = enumeration->next_file();
+        file;
+        file = enumeration->next_file())
+    {
+        auto const &filepath = dir->get_path() + "/" + file->get_name();
+        Lua::checkerror(L, luaL_dofile(L, filepath.c_str()));
+    }
+
 }
 
 void Sickle::AppWin::set_grid_size(guint grid_size)

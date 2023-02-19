@@ -45,7 +45,10 @@ namespace Sickle
 
         /** Open a file. */
         void open(Gio::File const *file);
+        /** Open the Lua console window. */
         void show_console_window();
+        /** Reload Lua scripts. */
+        void reload_scripts();
 
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
         void set_grid_size(guint grid_size);

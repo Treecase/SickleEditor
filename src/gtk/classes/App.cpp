@@ -58,6 +58,8 @@ void Sickle::App::on_startup()
     // Edit
     add_action(
         "openLuaConsole", sigc::mem_fun(*this, &App::on_action_openLuaConsole));
+    add_action(
+        "reloadLua", sigc::mem_fun(*this, &App::on_action_reloadLua));
     // About
     add_action("about", sigc::mem_fun(*this, &App::on_action_about));
     // Add keyboard accelerators for the menu.
@@ -65,6 +67,7 @@ void Sickle::App::on_startup()
     set_accel_for_action("app.open", "<Ctrl>O");
     set_accel_for_action("app.exit", "<Ctrl>Q");
     set_accel_for_action("app.openLuaConsole", "<Ctrl><Shift>C");
+    set_accel_for_action("app.reloadLua", "<Ctrl><Shift>R");
 }
 
 void Sickle::App::on_activate()
@@ -155,6 +158,14 @@ void Sickle::App::on_action_openLuaConsole()
     if (!window)
         return;
     window->show_console_window();
+}
+
+void Sickle::App::on_action_reloadLua()
+{
+    auto window = dynamic_cast<AppWin *>(get_active_window());
+    if (!window)
+        return;
+    window->reload_scripts();
 }
 
 void Sickle::App::on_action_about()

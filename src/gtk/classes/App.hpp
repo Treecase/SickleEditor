@@ -57,6 +57,7 @@ namespace Sickle
         void on_action_setGameDef();
         // Tools
         void on_action_openLuaConsole();
+        void on_action_reloadLua();
         // Help
         void on_action_about();
 
