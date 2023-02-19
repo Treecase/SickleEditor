@@ -1,6 +1,6 @@
 /**
  * AppWin.cpp - Sickle ApplicationWindow.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -151,7 +151,7 @@ void Sickle::AppWin::show_console_window()
 void Sickle::AppWin::reload_scripts()
 {
     // Run external scripts in the lua-runtime directory.
-    auto dir = Gio::File::create_for_path("lua-runtime");
+    auto dir = Gio::File::create_for_path(SE_DATA_DIR "lua-runtime");
     auto enumeration = dir->enumerate_children();
     for (
         auto file = enumeration->next_file();
@@ -161,7 +161,6 @@ void Sickle::AppWin::reload_scripts()
         auto const &filepath = dir->get_path() + "/" + file->get_name();
         Lua::checkerror(L, luaL_dofile(L, filepath.c_str()));
     }
-
 }
 
 void Sickle::AppWin::set_grid_size(guint grid_size)

@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Trevor Last
+# Copyright (C) 2022-2023 Trevor Last
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ if(EXISTS "${LOC_PATH}")
 endif()
 
 project("Sickle Editor"
-    VERSION 0.2.0
+    VERSION 0.3.0
     DESCRIPTION "Open-Source GoldSrc Editor"
     LANGUAGES CXX
 )
@@ -100,3 +100,7 @@ target_link_libraries(sickle PRIVATE
     ${CMAKE_DL_LIBS}
     PkgConfig::GTKMM
 )
+
+
+install(TARGETS sickle)
+install(DIRECTORY lua-runtime TYPE DATA)

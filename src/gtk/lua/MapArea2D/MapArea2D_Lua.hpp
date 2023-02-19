@@ -1,6 +1,6 @@
 /**
  * MapArea2D_Lua.hpp - MapArea2D Lua binding.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

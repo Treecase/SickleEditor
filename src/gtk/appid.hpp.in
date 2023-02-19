@@ -1,6 +1,6 @@
 /**
  * appid.hpp.in - GTK application ID.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,5 +22,6 @@
 #define SE_APPLICATION_ID "@APPLICATION_ID@"
 #define SE_GRESOURCE_PREFIX "@GRESOURCE_PREFIX@"
 #define SE_BINARY_DIR "@SCHEMA_DIR@"
+#define SE_DATA_DIR "../@CMAKE_INSTALL_DATAROOTDIR@/"
 
 #endif
