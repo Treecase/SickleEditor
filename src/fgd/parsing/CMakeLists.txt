@@ -1,6 +1,6 @@
 
-find_package(FLEX REQUIRED)
-find_package(BISON REQUIRED)
+find_package(FLEX 2.6 REQUIRED)
+find_package(BISON 3.2 REQUIRED)
 
 flex_target(fgdlexer
     lexer.lpp

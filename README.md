@@ -6,7 +6,7 @@ An open-source editor for GoldSrc maps. Currently, only .MAP files are supported
 
 ## Building
 
-Note that on Windows, only building with [mingw](https://www.mingw-w64.org) is supported. Sickle depends on [gtkmm-3](https://gtkmm.org/en/index.html) and [Lua 5.4](https://www.lua.org).
+Note that on Windows, only building with [mingw](https://www.mingw-w64.org) is supported. Sickle depends on [gtkmm-3](https://gtkmm.org/en/index.html) and [Lua 5.4](https://www.lua.org). You'll also need to have [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison) installed.
 
 Before building, you must initialize the git submodules for the project:
 
@@ -22,6 +22,7 @@ $ cd build
 $ cmake ..
 $ cmake --build .
 ```
+
 
 ## Installing
 

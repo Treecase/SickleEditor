@@ -1,5 +1,5 @@
 
-find_package(Lua REQUIRED)
+find_package(Lua 5.4 REQUIRED)
 
 add_library(se-lua STATIC se-lua.cpp)
 target_include_directories(se-lua PUBLIC include ${LUA_INCLUDE_DIR})
