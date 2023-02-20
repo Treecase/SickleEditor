@@ -130,7 +130,7 @@ function gAppWin.topMapArea:on_motion_notify_event(event)
     -- Pan view when dragging with middle-click.
     elseif event.state & LuaGDK.GDK_BUTTON2_MASK ~= 0 then
         transform:set_x(transform:get_x() + event.x - state:get_pointer_prev().x)
-        transform:set_y(transform:get_x() + event.y - state:get_pointer_prev().y)
+        transform:set_y(transform:get_y() + event.y - state:get_pointer_prev().y)
         state:set_pointer_prev(event)
         self:set_transform(transform)
         self:set_state(state)

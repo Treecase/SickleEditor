@@ -78,7 +78,7 @@ static luaL_Reg metamethods[] = {
 static int set_grid_size(lua_State *L)
 {
     auto aw = lappwin_check(L, 1);
-    aw->set_grid_size(luaL_checkinteger(L, 2));
+    aw->set_grid_size(luaL_checknumber(L, 2));
     return 0;
 }
 

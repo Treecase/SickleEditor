@@ -22,6 +22,10 @@
 #define SE_APPLICATION_ID "@APPLICATION_ID@"
 #define SE_GRESOURCE_PREFIX "@GRESOURCE_PREFIX@"
 #define SE_BINARY_DIR "@SCHEMA_DIR@"
+#ifdef NDEBUG
 #define SE_DATA_DIR "../@CMAKE_INSTALL_DATAROOTDIR@/"
+#else
+#define SE_DATA_DIR ""
+#endif
 
 #endif
