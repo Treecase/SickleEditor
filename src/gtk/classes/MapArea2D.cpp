@@ -416,14 +416,6 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
     return true;
 }
 
-bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
-{
-    auto state = property_state().get_value();
-    state.pointer_prev = glm::vec2{event->x, event->y};
-    property_state().set_value(state);
-    return false;
-}
-
 
 void Sickle::MapArea2D::_draw_brush(
     Cairo::RefPtr<Cairo::Context> const &cr, EditorBrush const &brush)

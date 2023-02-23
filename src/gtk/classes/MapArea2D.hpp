@@ -277,7 +277,6 @@ namespace Sickle
 
         // Input Signals
         bool on_enter_notify_event(GdkEventCrossing *event) override;
-        bool on_motion_notify_event(GdkEventMotion *event) override;
 
     private:
         Editor &_editor;
