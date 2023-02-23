@@ -104,3 +104,20 @@ target_link_libraries(sickle PRIVATE
 
 install(TARGETS sickle)
 install(DIRECTORY lua-runtime TYPE DATA)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_ID}.desktop"
+    DESTINATION share/applications
+)
+if(WIN32)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gschemas.compiled"
+        DESTINATION share/glib-2.0/schemas
+    )
+else()
+    install(FILES sicklegtk.gschema.xml
+        DESTINATION share/glib-2.0/schemas
+        RENAME ${APPLICATION_ID}.gschema.xml
+    )
+endif()
+install(FILES gresource/logo.svg
+    DESTINATION share/icons/hicolor/scalable/apps
+    RENAME ${APPLICATION_ID}.svg
+)
