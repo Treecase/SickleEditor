@@ -21,14 +21,14 @@
 #include <algorithm>
 
 
-/* ===[ Editor::BBox ]=== */
-void Sickle::Editor::BBox::p1(MAP::Vertex v)
+/* ===[ Editor::BrushBox ]=== */
+void Sickle::Editor::BrushBox::p1(MAP::Vertex v)
 {
     _p1 = v;
     signal_updated().emit();
 }
 
-void Sickle::Editor::BBox::p2(MAP::Vertex v)
+void Sickle::Editor::BrushBox::p2(MAP::Vertex v)
 {
     _p2 = v;
     signal_updated().emit();
@@ -47,6 +47,7 @@ void Sickle::Editor::Selection::clear() {
 void Sickle::Editor::Selection::add(Item *item) {
     _selected.emplace(item);
     item->is_selected = true;
+    item->signal_changed().connect([this](){signal_updated().emit();});
     signal_updated().emit();
 }
 

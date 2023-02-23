@@ -20,6 +20,7 @@
 #define SE_MAPAREA2D_HPP
 
 #include "editor/Editor.hpp"
+#include "utils/BoundingBox.hpp"
 
 #include <gdkmm/rgba.h>
 #include <glibmm/property.h>
@@ -46,6 +47,193 @@ namespace Sickle
         };
     }
 
+    class GrabbableBox
+    {
+        // in screenspace
+        glm::vec2 const grab_size{8};
+        // in drawspace
+        BBox2 box{};
+        // convert from screenspace to drawspace
+        float _unit{1.0};
+        void _draw_bbox(
+            Cairo::RefPtr<Cairo::Context> const &cr, BBox2 const &box)
+        {
+            auto const width = box.max.x - box.min.x;
+            auto const height = box.max.y - box.min.y;
+            cr->rectangle(box.min.x, box.min.y, width, height);
+        }
+    public:
+        /** Specifies a grabbable element of the GrabBox. */
+        enum Area
+        {
+            NONE,
+            BOX,
+            N, NE, E, SE, S, SW, W, NW
+        };
+
+        /** Set main bounding-box. */
+        void set_box(BBox2 const &other) {box = other;}
+        /** Get main bounding-box. */
+        auto &get_box() const {return box;}
+
+        /** Set screenspace-to-drawspace multiplier. */
+        void set_unit(double unit)
+        {
+            _unit = unit;
+        }
+
+        /**
+         * Check if a point is inside any of the grabbable areas of the
+         * GrabBox.
+         */
+        Area check_point(glm::vec2 const &point)
+        {
+            auto const width = box.max.x - box.min.x;
+            auto const height = box.max.y - box.min.y;
+            if (width == 0 && height == 0)
+                return Area::NONE;
+
+            // North-west
+            BBox2 nw{box.min, box.min - grab_size * _unit};
+            // North-east
+            BBox2 ne{
+                {box.max.x, box.min.y},
+                glm::vec2{box.max.x, box.min.y}
+                    + grab_size * glm::vec2{1, -1} * _unit
+            };
+            // South-west
+            BBox2 sw{
+                {box.min.x, box.max.y},
+                glm::vec2{box.min.x, box.max.y}
+                    + grab_size * glm::vec2{-1, 1} * _unit
+            };
+            // South-east
+            BBox2 se{
+                box.max,
+                box.max + grab_size * _unit
+            };
+
+            // North
+            BBox2 n{
+                box.min
+                    + glm::vec2{width / 2.0, 0}
+                    + grab_size * glm::vec2{-0.5, -1} * _unit,
+                box.min
+                    + glm::vec2{width / 2.0, 0}
+                    + grab_size * glm::vec2{0.5, 0} * _unit,
+            };
+            // East
+            BBox2 e{
+                box.min
+                    + glm::vec2{width, height / 2.0}
+                    + grab_size * glm::vec2{1, -0.5} * _unit,
+                box.min
+                    + glm::vec2{width, height / 2.0}
+                    + grab_size * glm::vec2{0, 0.5} * _unit,
+            };
+            // South
+            BBox2 s{
+                glm::vec2{box.min.x, box.max.y}
+                    + glm::vec2{width / 2.0, 0}
+                    + grab_size * glm::vec2{-0.5, 1} * _unit,
+                glm::vec2{box.min.x, box.max.y}
+                    + glm::vec2{width / 2.0, 0}
+                    + grab_size * glm::vec2{0.5, 0} * _unit,
+            };
+            // West
+            BBox2 w{
+                box.min
+                    + glm::vec2{0, height / 2.0}
+                    + grab_size * glm::vec2{-1, -0.5} * _unit,
+                box.min
+                    + glm::vec2{0, height / 2.0}
+                    + grab_size * glm::vec2{0, 0.5} * _unit,
+            };
+
+            if (box.contains(point)) return Area::BOX;
+            if (nw.contains(point)) return Area::NW;
+            if (ne.contains(point)) return Area::NE;
+            if (sw.contains(point)) return Area::SW;
+            if (se.contains(point)) return Area::SE;
+            if (n.contains(point)) return Area::N;
+            if (e.contains(point)) return Area::E;
+            if (s.contains(point)) return Area::S;
+            if (w.contains(point)) return Area::W;
+            return Area::NONE;
+        }
+
+        /** Draw the main bounding-box. */
+        void draw_box(Cairo::RefPtr<Cairo::Context> const &cr)
+        {
+            _draw_bbox(cr, box);
+        }
+        /** Draw the box control handles. */
+        void draw_handles(Cairo::RefPtr<Cairo::Context> const &cr)
+        {
+            auto const width = box.max.x - box.min.x;
+            auto const height = box.max.y - box.min.y;
+            if (width == 0 && height == 0)
+                return;
+
+            // North-west
+            _draw_bbox(cr, BBox2{box.min, box.min - grab_size * _unit});
+            // North-east
+            _draw_bbox(cr, BBox2{
+                {box.max.x, box.min.y},
+                glm::vec2{box.max.x, box.min.y}
+                    + grab_size * glm::vec2{1, -1} * _unit
+            });
+            // South-west
+            _draw_bbox(cr, BBox2{
+                {box.min.x, box.max.y},
+                glm::vec2{box.min.x, box.max.y}
+                    + grab_size * glm::vec2{-1, 1} * _unit
+            });
+            // South-east
+            _draw_bbox(cr, BBox2{
+                box.max,
+                box.max + grab_size * _unit
+            });
+
+            // North
+            _draw_bbox(cr, BBox2{
+                box.min
+                    + glm::vec2{width / 2.0, 0}
+                    + grab_size * glm::vec2{-0.5, -1} * _unit,
+                box.min
+                    + glm::vec2{width / 2.0, 0}
+                    + grab_size * glm::vec2{0.5, 0} * _unit,
+            });
+            // East
+            _draw_bbox(cr, BBox2{
+                box.min
+                    + glm::vec2{width, height / 2.0}
+                    + grab_size * glm::vec2{1, -0.5} * _unit,
+                box.min
+                    + glm::vec2{width, height / 2.0}
+                    + grab_size * glm::vec2{0, 0.5} * _unit,
+            });
+            // South
+            _draw_bbox(cr, BBox2{
+                glm::vec2{box.min.x, box.max.y}
+                    + glm::vec2{width / 2.0, 0}
+                    + grab_size * glm::vec2{-0.5, 1} * _unit,
+                glm::vec2{box.min.x, box.max.y}
+                    + glm::vec2{width / 2.0, 0}
+                    + grab_size * glm::vec2{0.5, 0} * _unit,
+            });
+            // West
+            _draw_bbox(cr, BBox2{
+                box.min
+                    + glm::vec2{0, height / 2.0}
+                    + grab_size * glm::vec2{-1, -0.5} * _unit,
+                box.min
+                    + glm::vec2{0, height / 2.0}
+                    + grab_size * glm::vec2{0, 0.5} * _unit,
+            });
+        }
+    };
+
     /** Displays .map files. */
     class MapArea2D : public Gtk::DrawingArea
     {
@@ -58,6 +246,8 @@ namespace Sickle
 
         /** Convert screen-space coordinates to draw-space coordinates. */
         DrawSpacePoint screenspace_to_drawspace(double x, double y) const;
+        /** Convert draw-space coordinates to screen-space coordinates. */
+        glm::vec2 drawspace_to_screenspace(DrawSpacePoint const &v) const;
         /** Convert draw-space coordinates to world-space coordinates. */
         MAP::Vertex drawspace_to_worldspace(DrawSpacePoint const &v) const;
         /** Convert world-space coordinates to draw-space coordinates. */
@@ -76,18 +266,23 @@ namespace Sickle
         void set_draw_angle(DrawAngle angle){property_draw_angle().set_value(angle);}
         auto get_draw_angle() {return property_draw_angle().get_value();};
         auto &get_editor() {return _editor;}
+        auto &get_box() {return _box;}
 
     protected:
         // Signal handlers
         bool on_draw(Cairo::RefPtr<Cairo::Context> const &cr) override;
         void on_editor_map_changed();
+        void on_editor_selection_changed();
         void on_draw_angle_changed();
 
         // Input Signals
         bool on_enter_notify_event(GdkEventCrossing *event) override;
+        bool on_motion_notify_event(GdkEventMotion *event) override;
 
     private:
         Editor &_editor;
+
+        GrabbableBox _box;
 
         // Properties
         Glib::Property<Gdk::RGBA> _prop_clear_color;

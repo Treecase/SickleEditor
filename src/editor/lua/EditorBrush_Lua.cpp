@@ -80,6 +80,16 @@ static int is_selected(lua_State *L)
     return 1;
 }
 
+static int translate(lua_State *L)
+{
+    auto brush = leditorbrush_check(L, 1);
+    auto x = luaL_checknumber(L, 2);
+    auto y = luaL_checknumber(L, 3);
+    auto z = luaL_checknumber(L, 4);
+    brush->translate({x, y, z});
+    return 0;
+}
+
 static int do_nothing(lua_State *L)
 {
     return 0;
@@ -87,6 +97,7 @@ static int do_nothing(lua_State *L)
 
 static luaL_Reg methods[] = {
     {"is_selected", is_selected},
+    {"translate", translate},
 
     {"on_selected", do_nothing},
     {NULL, NULL}

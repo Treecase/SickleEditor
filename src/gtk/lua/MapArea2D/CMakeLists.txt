@@ -1,5 +1,6 @@
 
 target_sources(sickle-gtk-lua PRIVATE
+    GrabbableBox_Lua.cpp
     MapArea2D_Lua.cpp
     State_Lua.cpp
     Transform2D_Lua.cpp

@@ -49,10 +49,20 @@ namespace Sickle
     {
     public:
         Property<bool> is_selected;
+        auto &signal_changed() {return _signal_changed;}
         EditorBrush(MAP::Brush const &brush)
         :   MAP::Brush{brush}
         {
         }
+        void translate(MAP::Vector3 const &translation)
+        {
+            for (auto &face : planes)
+                for (auto &vertex : face.vertices)
+                    vertex += translation;
+            signal_changed().emit();
+        }
+    private:
+        sigc::signal<void()> _signal_changed{};
     };
     using EditorMap = MAP::TMap<EditorBrush>;
 
@@ -63,7 +73,7 @@ namespace Sickle
     class Editor
     {
     public:
-        class BBox
+        class BrushBox
         {
         public:
             void p1(MAP::Vertex v);
@@ -99,7 +109,7 @@ namespace Sickle
         };
 
         /** Box used to create new brushes. */
-        BBox brushbox{};
+        BrushBox brushbox{};
         /** Selected brushes/entities. */
         Selection selected{};
 
@@ -107,7 +117,7 @@ namespace Sickle
 
         void set_map(MAP::Map const &map)
         {
-            brushbox = BBox{};
+            brushbox = BrushBox{};
             selected.clear();
             _map = EditorMap{map};
             signal_map_changed().emit();

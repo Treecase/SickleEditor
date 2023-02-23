@@ -1,6 +1,6 @@
 /**
- * BrushBox_Lua.cpp - Editor::BrushBox Lua binding.
- * Copyright (C) 2022 Trevor Last
+ * GrabbableBox_Lua.cpp - GrabbableBox Lua binding.
+ * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,14 +16,12 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
-#include "Editor_Lua.hpp"
-
-#include <iostream>
+#include "../classes/MapArea2D.hpp"
+#include "MapArea2D_Lua.hpp"
 
 
-#define LIBRARY_NAME    "Sickle.editor.brushbox"
-#define CLASSNAME       Sickle::Editor::BrushBox
+#define LIBRARY_NAME    "Sickle.grabbablebox"
+#define CLASSNAME       Sickle::GrabbableBox
 
 
 /** Add value at the top of the stack to the objectTable using KEY. */
@@ -47,96 +45,28 @@ static void get_from_objectTable(lua_State *L, CLASSNAME *key)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Metamethods
-static int dunder_newindex(lua_State *L)
+// Methods
+static int check_point(lua_State *L)
 {
-    lbrushbox_check(L, 1);
-    lua_getiuservalue(L, -3, 1);
-    lua_rotate(L, -3, 1);
-    lua_settable(L, -3);
-    return 0;
-}
-
-static int dunder_index(lua_State *L)
-{
-    lbrushbox_check(L, 1);
-    lua_getiuservalue(L, 1, 1);
-    lua_rotate(L, -2, 1);
-    lua_gettable(L, -2);
+    auto box = lgrabbablebox_check(L, 1);
+    auto x = luaL_checknumber(L, 2);
+    auto y = luaL_checknumber(L, 3);
+    lua_pushinteger(L, box->check_point({x, y}));
     return 1;
 }
 
-static luaL_Reg metamethods[] = {
-    {"__newindex", dunder_newindex},
-    {"__index", dunder_index},
-    {NULL, NULL}
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Methods
-static int get_start(lua_State *L)
-{
-    auto bb = lbrushbox_check(L, 1);
-    auto xyz = bb->p1();
-    lua_pushnumber(L, xyz.x);
-    lua_pushnumber(L, xyz.y);
-    lua_pushnumber(L, xyz.z);
-    return 3;
-}
-
-static int set_start(lua_State *L)
-{
-    auto bb = lbrushbox_check(L, 1);
-    auto x = luaL_checknumber(L, 2);
-    auto y = luaL_checknumber(L, 3);
-    auto z = luaL_checknumber(L, 4);
-    bb->p1({x, y, z});
-    return 0;
-}
-
-static int get_end(lua_State *L)
-{
-    auto bb = lbrushbox_check(L, 1);
-    auto xyz = bb->p2();
-    lua_pushnumber(L, xyz.x);
-    lua_pushnumber(L, xyz.y);
-    lua_pushnumber(L, xyz.z);
-    return 3;
-}
-
-static int set_end(lua_State *L)
-{
-    auto bb = lbrushbox_check(L, 1);
-    auto x = luaL_checknumber(L, 2);
-    auto y = luaL_checknumber(L, 3);
-    auto z = luaL_checknumber(L, 4);
-    bb->p2({x, y, z});
-    return 0;
-}
-
-static int do_nothing(lua_State *L)
-{
-    return 0;
-}
-
 static luaL_Reg methods[] = {
-    {"get_start", get_start},
-    {"set_start", set_start},
-    {"get_end", get_end},
-    {"set_end", set_end},
-
-    {"on_updated", do_nothing},
+    {"check_point", check_point},
     {NULL, NULL}
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int lbrushbox_new(lua_State *L, CLASSNAME *bb)
+int lgrabbablebox_new(lua_State *L, CLASSNAME *box)
 {
     // If we've already built an object for this pointer, just reuse it.
-    get_from_objectTable(L, bb);
+    get_from_objectTable(L, box);
     if (!lua_isnil(L, -1))
         return 1;
     else
@@ -144,39 +74,27 @@ int lbrushbox_new(lua_State *L, CLASSNAME *bb)
 
     // Create the Lua object.
     auto ptr = static_cast<CLASSNAME const **>(
-        lua_newuserdatauv(L, sizeof(CLASSNAME *), 1));
-    *ptr = bb;
-
-    // Add methods/data table.
-    lua_newtable(L);
-    luaL_setfuncs(L, methods, 0);
-    lua_setiuservalue(L, -2, 1);
+        lua_newuserdatauv(L, sizeof(CLASSNAME *), 0));
+    *ptr = box;
 
     // Set metatable.
     luaL_setmetatable(L, LIBRARY_NAME);
 
     // Add the object to the Lua registry, using the pointer as key. This is
     // needed for the C++ callbacks to know what object to call methods on.
-    add_to_objectTable(L, bb);
-
-    // Connect signals.
-    bb->signal_updated().connect(
-        [L, bb](){
-            get_from_objectTable(L, bb);
-            Lua::call_method(L, "on_updated");
-        });
+    add_to_objectTable(L, box);
 
     return 1;
 }
 
-CLASSNAME *lbrushbox_check(lua_State *L, int arg)
+CLASSNAME *lgrabbablebox_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
     luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
     return *static_cast<CLASSNAME **>(ud);
 }
 
-int luaopen_brushbox(lua_State *L)
+int luaopen_grabbablebox(lua_State *L)
 {
     // Table used to map C++ pointers to Lua objects.
     // TODO: References should be removed when the C++ objects are destroyed.
@@ -185,7 +103,23 @@ int luaopen_brushbox(lua_State *L)
     lua_pop(L, 1);
 
     luaL_newmetatable(L, LIBRARY_NAME);
-    luaL_setfuncs(L, metamethods, 0);
+    luaL_setfuncs(L, methods, 0);
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, -2);
+    lua_settable(L, -3);
 
-    return 0;
+    // Export enum values.
+    lua_newtable(L);
+    Lua::set_table(L, "NONE", (lua_Integer)Sickle::GrabbableBox::Area::NONE);
+    Lua::set_table(L, "BOX", (lua_Integer)Sickle::GrabbableBox::Area::BOX);
+    Lua::set_table(L, "N", (lua_Integer)Sickle::GrabbableBox::Area::N);
+    Lua::set_table(L, "NE", (lua_Integer)Sickle::GrabbableBox::Area::NE);
+    Lua::set_table(L, "E", (lua_Integer)Sickle::GrabbableBox::Area::E);
+    Lua::set_table(L, "SE", (lua_Integer)Sickle::GrabbableBox::Area::SE);
+    Lua::set_table(L, "S", (lua_Integer)Sickle::GrabbableBox::Area::S);
+    Lua::set_table(L, "SW", (lua_Integer)Sickle::GrabbableBox::Area::SW);
+    Lua::set_table(L, "W", (lua_Integer)Sickle::GrabbableBox::Area::W);
+    Lua::set_table(L, "NW", (lua_Integer)Sickle::GrabbableBox::Area::NW);
+
+    return 1;
 }

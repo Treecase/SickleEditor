@@ -36,8 +36,8 @@ int lselection_new(lua_State *L, Sickle::Editor::Selection *selection);
 Sickle::Editor::Selection *lselection_check(lua_State *L, int arg);
 
 int luaopen_brushbox(lua_State *L);
-int lbrushbox_new(lua_State *L, Sickle::Editor::BBox *selection);
-Sickle::Editor::BBox *lbrushbox_check(lua_State *L, int arg);
+int lbrushbox_new(lua_State *L, Sickle::Editor::BrushBox *selection);
+Sickle::Editor::BrushBox *lbrushbox_check(lua_State *L, int arg);
 
 int luaopen_editorbrush(lua_State *L);
 int leditorbrush_new(lua_State *L, Sickle::EditorBrush *brush);

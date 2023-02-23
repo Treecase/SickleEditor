@@ -123,6 +123,15 @@ static int pick_brush(lua_State *L)
     return 1;
 }
 
+static int set_cursor(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
+    auto cursor = luaL_checkstring(L, 2);
+    ma->get_window()->set_cursor(
+        Gdk::Cursor::create(ma->get_display(), cursor));
+    return 0;
+}
+
 static int set_draw_angle(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
@@ -157,6 +166,12 @@ static int set_transform(lua_State *L)
     return 0;
 }
 
+static int get_selection_box(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
+    return lgrabbablebox_new(L, &ma->get_box());
+}
+
 static int get_state(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
@@ -181,11 +196,13 @@ static luaL_Reg methods[] = {
     {"worldspace_to_drawspace", worldspace_to_drawspace},
     {"pick_brush", pick_brush},
 
+    {"set_cursor", set_cursor},
     {"set_draw_angle", set_draw_angle},
     {"get_draw_angle", get_draw_angle},
     {"get_editor", get_editor},
     {"get_transform", get_transform},
     {"set_transform", set_transform},
+    {"get_selection_box", get_selection_box},
     {"get_state", get_state},
     {"set_state", set_state},
 
@@ -238,37 +255,37 @@ int lmaparea2d_new(lua_State *L, CLASSNAME *maparea)
     maparea->signal_key_press_event().connect(
         [L, maparea](GdkEventKey const *e){
             get_from_objectTable(L, maparea);
-            Lua::call_method(L, "on_key_press_event", e);
+            Lua::call_method_r(L, 1, "on_key_press_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_key_release_event().connect(
         [L, maparea](GdkEventKey const *e){
             get_from_objectTable(L, maparea);
-            Lua::call_method(L, "on_key_release_event", e);
+            Lua::call_method_r(L, 1, "on_key_release_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_button_press_event().connect(
         [L, maparea](GdkEventButton const *e){
             get_from_objectTable(L, maparea);
-            Lua::call_method(L, "on_button_press_event", e);
+            Lua::call_method_r(L, 1, "on_button_press_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_button_release_event().connect(
         [L, maparea](GdkEventButton const *e){
             get_from_objectTable(L, maparea);
-            Lua::call_method(L, "on_button_release_event", e);
+            Lua::call_method_r(L, 1, "on_button_release_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_motion_notify_event().connect(
         [L, maparea](GdkEventMotion const *e){
             get_from_objectTable(L, maparea);
-            Lua::call_method(L, "on_motion_notify_event", e);
+            Lua::call_method_r(L, 1, "on_motion_notify_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_scroll_event().connect(
         [L, maparea](GdkEventScroll const *e){
             get_from_objectTable(L, maparea);
-            Lua::call_method(L, "on_scroll_event", e);
+            Lua::call_method_r(L, 1, "on_scroll_event", e);
             return lua_toboolean(L, -1);
         });
 
@@ -284,9 +301,10 @@ CLASSNAME *lmaparea2d_check(lua_State *L, int arg)
 
 int luaopen_maparea2d(lua_State *L)
 {
-    luaL_requiref(L, "transform2d", luaopen_transform2d, 1);
-    luaL_requiref(L, "state", luaopen_state, 1);
     luaL_requiref(L, "editor", luaopen_editor, 1);
+    luaL_requiref(L, "grabbablebox", luaopen_grabbablebox, 1);
+    luaL_requiref(L, "state", luaopen_state, 1);
+    luaL_requiref(L, "transform2d", luaopen_transform2d, 1);
 
     // Table used to map C++ pointers to Lua objects.
     // TODO: References should be removed when the C++ objects are destroyed.

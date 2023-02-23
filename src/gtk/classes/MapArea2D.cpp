@@ -24,36 +24,6 @@
 #include <algorithm>
 
 
-#define ZOOM_MULTIPLIER_SMOOTH  1.1
-#define MIN_ZOOM    (1.0 / 16.0)
-#define MAX_ZOOM    16.0
-
-
-/** Templated bounding box using glm vectors. */
-template<glm::length_t L, typename T>
-struct BBox
-{
-    using Point = glm::vec<L, T>;
-    Point min{INFINITY, INFINITY}, max{-INFINITY, -INFINITY};
-    T volume() const {
-        auto const wh = glm::abs(max - min);
-        return wh.x * wh.y;
-    }
-    bool contains(Point point) const {
-        return (
-            glm::all(glm::lessThanEqual(min, point))
-            && glm::all(glm::lessThanEqual(point, max))
-        );
-    }
-    void add(Point pt) {
-        for (glm::length_t i = 0; i < Point::length(); ++i)
-        {
-            if (pt[i] < min[i]) min[i] = pt[i];
-            if (pt[i] > max[i]) max[i] = pt[i];
-        }
-    }
-};
-
 struct DrawAnchor {
     bool top;
     bool left;
@@ -185,7 +155,7 @@ Sickle::MapArea2D::MapArea2D(Editor &ed)
     _editor.brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
     _editor.selected.signal_updated().connect(
-        sigc::mem_fun(*this, &MapArea2D::queue_draw));
+        sigc::mem_fun(*this, &MapArea2D::on_editor_selection_changed));
     _editor.signal_map_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_map_changed));
     property_grid_size().signal_changed().connect(
@@ -218,6 +188,20 @@ Sickle::MapArea2D::screenspace_to_drawspace(double x, double y) const
     };
 }
 
+glm::vec2
+Sickle::MapArea2D::drawspace_to_screenspace(
+    Sickle::MapArea2D::DrawSpacePoint const &v)
+const
+{
+    auto const &transform = property_transform().get_value();
+    auto const width = get_allocated_width();
+    auto const height = get_allocated_height();
+    return {
+        (v.x * transform.zoom) + transform.x + 0.5 * width,
+        (v.y * transform.zoom) + transform.y + 0.5 * height
+    };
+}
+
 MAP::Vertex
 Sickle::MapArea2D::drawspace_to_worldspace(DrawSpacePoint const &v) const
 {
@@ -244,16 +228,14 @@ Sickle::MapArea2D::worldspace_to_drawspace(MAP::Vertex const &v) const
 
 Sickle::EditorBrush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
 {
-    using BBox = BBox<DrawSpacePoint::length(), DrawSpacePoint::value_type>;
-
     EditorBrush *picked{nullptr};
-    BBox pbbox{};
+    BBox2 pbbox{};
 
     for (auto const &entity : _editor.get_map().entities)
     {
         for (auto const &brush : entity.brushes)
         {
-            BBox bbox{};
+            BBox2 bbox{};
             for (auto const &face : brush.planes)
                 for (auto const &vertex : face.vertices)
                     bbox.add(worldspace_to_drawspace(vertex));
@@ -291,42 +273,46 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 
     /* ===[ Grid ]=== */
     auto const &_transform = property_transform().get_value();
+    {
     cr->save();
         cr->set_antialias(Cairo::ANTIALIAS_NONE);
         cr->translate(width / 2.0, height / 2.0);
         cr->scale(_transform.zoom, _transform.zoom);
+        auto pixel = 1.0 / _transform.zoom;
 
         // Draw the grid
         cr->set_source_rgb(0.3, 0.3, 0.3);
-        cr->set_line_width(1 / _transform.zoom);
-        draw_grid(
-            cr,
-            width / _transform.zoom, height / _transform.zoom,
+        cr->set_line_width(pixel);
+        draw_grid(cr,
+            width*pixel, height*pixel,
             grid_size,
-            _transform.x / _transform.zoom, _transform.y / _transform.zoom);
+            _transform.x*pixel, _transform.y*pixel);
         cr->stroke();
 
         // Draw the x/y axes
         cr->set_source_rgb(0.5, 0.5, 0.5);
-        cr->set_line_width(2 / _transform.zoom);
-        draw_axes(
-            cr,
-            width / _transform.zoom, height / _transform.zoom,
-            _transform.x / _transform.zoom, _transform.y / _transform.zoom);
+        cr->set_line_width(2*pixel);
+        draw_axes(cr,
+            width*pixel, height*pixel,
+            _transform.x*pixel, _transform.y*pixel);
         cr->stroke();
+
     cr->restore();
+    }
 
 
     /* ===[ World-Space Drawing ]=== */
+    {
     cr->save();
         cr->set_antialias(Cairo::ANTIALIAS_NONE);
         cr->translate(width / 2.0, height / 2.0);
         cr->translate(_transform.x, _transform.y);
         cr->scale(_transform.zoom, _transform.zoom);
+        auto pixel = 1.0 / _transform.zoom;
 
         // Draw the map
         cr->set_source_rgb(1, 1, 1);
-        cr->set_line_width(1 / _transform.zoom);
+        cr->set_line_width(pixel);
         _draw_map(cr);
         cr->stroke();
 
@@ -338,23 +324,40 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
                 if (b.is_selected)
                 {
                     cr->set_source_rgb(1, 0, 0);
-                    cr->set_line_width(1 / _transform.zoom);
+                    cr->set_line_width(pixel);
                     _draw_brush(cr, b);
                     cr->stroke();
                 }
             }
         }
 
+        // Draw selected brushes bounding-box.
+        {
+        cr->set_source_rgb(1, 0, 0);
+        cr->set_line_width(pixel);
+        cr->set_dash(std::vector<double>{4*pixel, 4*pixel}, 0);
+        _box.draw_box(cr);
+        cr->stroke();
+
+        // Grab handles
+        cr->set_source_rgb(1, 1, 1);
+        cr->set_line_width(pixel);
+        _box.set_unit(pixel);
+        _box.draw_handles(cr);
+        cr->fill();
+        }
+
         // Draw the selection cube
         cr->set_source_rgb(1, 1, 1);
-        cr->set_line_width(1 / _transform.zoom);
-        cr->set_dash(std::vector<double>{4/_transform.zoom, 4/_transform.zoom}, 0);
+        cr->set_line_width(pixel);
+        cr->set_dash(std::vector<double>{4*pixel, 4*pixel}, 0);
         auto const p1 = worldspace_to_drawspace(_editor.brushbox.p1());
         auto const p2 = worldspace_to_drawspace(_editor.brushbox.p2());
         cr->rectangle(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
         cr->stroke();
 
     cr->restore();
+    }
 
 
     /* ===[ Screen-Space Overlay Drawing ]=== */
@@ -385,6 +388,17 @@ void Sickle::MapArea2D::on_editor_map_changed()
     queue_draw();
 }
 
+void Sickle::MapArea2D::on_editor_selection_changed()
+{
+    BBox2 selection_bounds{};
+    for (auto const &brush : _editor.selected)
+        for (auto const &face : brush->planes)
+            for (auto const &vertex : face.vertices)
+                selection_bounds.add(worldspace_to_drawspace(vertex));
+    _box.set_box(selection_bounds);
+    queue_draw();
+}
+
 void Sickle::MapArea2D::on_draw_angle_changed()
 {
     switch (property_draw_angle().get_value())
@@ -400,6 +414,14 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 {
     grab_focus();
     return true;
+}
+
+bool Sickle::MapArea2D::on_motion_notify_event(GdkEventMotion *event)
+{
+    auto state = property_state().get_value();
+    state.pointer_prev = glm::vec2{event->x, event->y};
+    property_state().set_value(state);
+    return false;
 }
 
 

@@ -21,7 +21,7 @@ if(EXISTS "${LOC_PATH}")
 endif()
 
 project("Sickle Editor"
-    VERSION 0.3.1
+    VERSION 0.4.0
     DESCRIPTION "Open-Source GoldSrc Editor"
     LANGUAGES CXX
 )

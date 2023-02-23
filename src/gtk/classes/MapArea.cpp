@@ -17,6 +17,7 @@
  */
 
 #include "MapArea.hpp"
+#include "utils/BoundingBox.hpp"
 
 
 #define DEFAULT_MOUSE_SENSITIVITY   0.75f
@@ -446,33 +447,8 @@ void Sickle::MapArea::_synchronize_glmap()
 }
 
 
-/** Templated bounding box using glm vectors. */
-template<glm::length_t L, typename T>
-struct BBox
-{
-    using Point = glm::vec<L, T>;
-    Point min{INFINITY}, max{-INFINITY};
-    T volume() const {
-        auto const wh = glm::abs(max - min);
-        return wh.x * wh.y;
-    }
-    bool contains(Point point) const {
-        return (
-            glm::all(glm::lessThanEqual(min, point))
-            && glm::all(glm::lessThanEqual(point, max))
-        );
-    }
-    void add(Point pt) {
-        for (typename Point::length_type i = 0; i < Point::length(); ++i)
-        {
-            if (pt[i] < min[i]) min[i] = pt[i];
-            if (pt[i] > max[i]) max[i] = pt[i];
-        }
-    }
-};
-
 bool
-raycast(glm::vec3 pos, glm::vec3 delta, BBox<3, float> const &bbox, float &t)
+raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
 {
     // https://people.csail.mit.edu/amy/papers/box-jgt.pdf
     float tmin, tmax, tymin, tymax, tzmin, tzmax;
@@ -534,8 +510,6 @@ Sickle::MapArea::screenspace_to_glspace(ScreenSpacePoint const &point) const
 
 Sickle::EditorBrush *Sickle::MapArea::pick_brush(glm::vec2 const &ssp)
 {
-    using BBox = BBox<MAP::Vertex::length(), MAP::Vertex::value_type>;
-
     EditorBrush *picked{nullptr};
     float pt = INFINITY;
 
@@ -551,7 +525,7 @@ Sickle::EditorBrush *Sickle::MapArea::pick_brush(glm::vec2 const &ssp)
     {
         for (auto const &brush : entity.brushes)
         {
-            BBox bbox{};
+            BBox3 bbox{};
             for (auto const &face : brush.planes)
                 for (auto const &vertex : face.vertices)
                     bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});

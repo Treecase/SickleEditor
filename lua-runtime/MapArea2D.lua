@@ -6,6 +6,7 @@ local function clamp(x, min, max)
 end
 
 -- Constants for panning/zoom control.
+local MOVE_SMOOTH = 8.0
 local MOVE_STEP = 64.0
 local ZOOM_MULTIPLIER_SMOOTH = 1.1
 local ZOOM_MULTIPLIER_STEP = 2.0
@@ -37,6 +38,13 @@ function gAppWin.topMapArea:on_key_press_event(keyval)
     -- Hold Ctrl to select multiple brushes.
     elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
         state:set_multiselect(true)
+        self.ctrl = true
+    elseif keyval == LuaGDK.GDK_KEY_Shift_L or keyval == LuaGDK.GDK_KEY_Shift_R then
+        self.shift = true
+
+    -- Pressing escape cancels any current actions.
+    elseif keyval == LuaGDK.GDK_KEY_Escape then
+        self.dragging_selection = nil
 
     else
         return false
@@ -55,34 +63,56 @@ function gAppWin.topMapArea:on_key_release_event(keyval)
         local state = self:get_state()
         state:set_multiselect(false)
         self:set_state(state)
-        return true
+        self.ctrl = false
+
+    elseif keyval == LuaGDK.GDK_KEY_Shift_L or keyval == LuaGDK.GDK_KEY_Shift_R then
+        self.shift = false
+
+    else
+        return false
     end
-    return false
+    return true
 end
 
 
 -- Mouse button pressed.
 function gAppWin.topMapArea:on_button_press_event(event)
     local state = self:get_state()
-    -- Left click can either be the start of a selection drag, or just a simple
-    -- click. Either way, we set the brushbox to be 0 width on the click, and
-    -- clear the state's `dragged` property.
+    local gbox = self:get_selection_box()
     if event.button == 1 then
-        local editor = self:get_editor()
-        local x,y,z = self:drawspace_to_worldspace(self:screenspace_to_drawspace(event.x, event.y))
-        editor:get_brushbox():set_start(x, y, z)
-        editor:get_brushbox():set_end(x, y, z)
-        state:set_dragged(false)
-        self:set_state(state)
-        return true
-    end
+        -- Clicking inside the selection box begins a selection drag.
+        if gbox:check_point(self:screenspace_to_drawspace(event.x, event.y)) == grabbablebox.BOX then
+            local drag = {}
+            drag.x = event.x
+            drag.y = event.y
+            drag.moved = false
+            drag.accum = {}
+            drag.accum.x = 0
+            drag.accum.y = 0
+            drag.accum.z = 0
+            self.dragging_selection = drag
+
+        -- Left click can either be the start of a brushbox draw, or just a
+        -- simple click. Either way, we set the brushbox to be 0 width on the
+        -- click, and clear the state's `dragged` property.
+        else
+            local editor = self:get_editor()
+            local x,y,z = self:drawspace_to_worldspace(self:screenspace_to_drawspace(event.x, event.y))
+            editor:get_brushbox():set_start(x, y, z)
+            editor:get_brushbox():set_end(x, y, z)
+            state:set_dragged(false)
+        end
+
     -- Middle click begins view panning.
-    if event.button == 2 then
+    elseif event.button == 2 then
         state:set_pointer_prev(event)
-        self:set_state(state)
-        return true
+
+    else
+        return false
     end
-    return false
+
+    self:set_state(state)
+    return true
 end
 
 
@@ -90,6 +120,21 @@ end
 function gAppWin.topMapArea:on_button_release_event(event)
     local state = self:get_state()
     local editor = self:get_editor()
+    -- Stop dragging selection.
+    if self.dragging_selection then
+        -- A selection drag occurred. We just have to clean up.
+        if self.dragging_selection.moved then
+            self.dragging_selection = nil
+            return true
+
+        -- If we clicked within the selection, but didn't drag, we want to
+        -- deselect the clicked brush.
+        else
+            self.dragging_selection = nil
+        end
+
+    end
+
     -- Select a brush on left click.
     if event.button == 1 and not state:get_dragged() then
         -- Clear selection if we're only picking one at a time.
@@ -115,29 +160,88 @@ end
 
 -- Mouse moved over widget.
 function gAppWin.topMapArea:on_motion_notify_event(event)
-    local transform = self:get_transform()
-    local state = self:get_state()
+    local ret = false
+
     local editor = self:get_editor()
+    local state = self:get_state()
+    local transform = self:get_transform()
 
-    -- Set selection box when dragging with left-click.
-    if event.state & LuaGDK.GDK_BUTTON1_MASK ~= 0 then
-        editor:get_brushbox():set_end(self:drawspace_to_worldspace(self:screenspace_to_drawspace(event.x, event.y)))
-        state:set_dragged(true)
-        editor:get_selection():clear()
-        self:set_state(state)
-        return true
-
-    -- Pan view when dragging with middle-click.
-    elseif event.state & LuaGDK.GDK_BUTTON2_MASK ~= 0 then
-        transform:set_x(transform:get_x() + event.x - state:get_pointer_prev().x)
-        transform:set_y(transform:get_y() + event.y - state:get_pointer_prev().y)
-        state:set_pointer_prev(event)
-        self:set_transform(transform)
-        self:set_state(state)
-        return true
+    local gbox = self:get_selection_box()
+    local hovered = gbox:check_point(self:screenspace_to_drawspace(event.x, event.y))
+    local cursor = "default"
+    if hovered == grabbablebox.BOX then
+        cursor = "crosshair"
+    elseif hovered == grabbablebox.NE then
+        cursor = "ne-resize"
+    elseif hovered == grabbablebox.NW then
+        cursor = "nw-resize"
+    elseif hovered == grabbablebox.SE then
+        cursor = "se-resize"
+    elseif hovered == grabbablebox.SW then
+        cursor = "sw-resize"
+    elseif hovered == grabbablebox.N then
+        cursor = "n-resize"
+    elseif hovered == grabbablebox.E then
+        cursor = "e-resize"
+    elseif hovered == grabbablebox.S then
+        cursor = "s-resize"
+    elseif hovered == grabbablebox.W then
+        cursor = "w-resize"
     end
 
-    return false
+    -- Selection Drag.
+    if self.dragging_selection then
+        local ex,ey,ez = self:drawspace_to_worldspace(self:screenspace_to_drawspace(event.x, event.y))
+        local px,py,pz = self:drawspace_to_worldspace(self:screenspace_to_drawspace(self.dragging_selection.x, self.dragging_selection.y))
+        local dx,dy,dz = ex-px,ey-py,ez-pz
+        local accum = {}
+        accum.x = self.dragging_selection.accum.x + dx
+        accum.y = self.dragging_selection.accum.y + dy
+        accum.z = self.dragging_selection.accum.z + dz
+
+        local grid = gAppWin:get_grid_size()
+        local rounded = {}
+        rounded.x = math.floor(accum.x / grid) * grid
+        rounded.y = math.floor(accum.y / grid) * grid
+        rounded.z = math.floor(accum.z / grid) * grid
+        local rounded_prev = {}
+        rounded_prev.x = math.floor(self.dragging_selection.accum.x / grid) * grid
+        rounded_prev.y = math.floor(self.dragging_selection.accum.y / grid) * grid
+        rounded_prev.z = math.floor(self.dragging_selection.accum.z / grid) * grid
+
+        local selection = self:get_editor():get_selection()
+        for brush in selection:iterate() do
+            brush:translate(-rounded_prev.x, -rounded_prev.y, -rounded_prev.z)
+            brush:translate(rounded.x, rounded.y, rounded.z)
+        end
+
+        self.dragging_selection.x = event.x
+        self.dragging_selection.y = event.y
+        self.dragging_selection.moved = true
+        self.dragging_selection.accum = accum
+        ret = true
+
+    else
+        -- Set selection box when dragging with left-click.
+        if event.state & LuaGDK.GDK_BUTTON1_MASK ~= 0 then
+            editor:get_brushbox():set_end(self:drawspace_to_worldspace(self:screenspace_to_drawspace(event.x, event.y)))
+            state:set_dragged(true)
+            editor:get_selection():clear()
+            ret = true
+
+        -- Pan view when dragging with middle-click.
+        elseif event.state & LuaGDK.GDK_BUTTON2_MASK ~= 0 then
+            transform:set_x(transform:get_x() + event.x - state:get_pointer_prev().x)
+            transform:set_y(transform:get_y() + event.y - state:get_pointer_prev().y)
+            state:set_pointer_prev(event)
+            ret = true
+        end
+    end
+
+    self:set_cursor(cursor)
+    self:set_state(state)
+    self:set_transform(transform)
+    return ret
 end
 
 
@@ -145,11 +249,35 @@ end
 function gAppWin.topMapArea:on_scroll_event(event)
     local transform = self:get_transform()
 
-    -- Zoom in/out with scrollwheel.
-    if event.direction == LuaGDK.GDK_SCROLL_DOWN then
-        transform:set_zoom(clamp(transform:get_zoom() / ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
-    elseif event.direction == LuaGDK.GDK_SCROLL_UP then
-        transform:set_zoom(clamp(transform:get_zoom() * ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
+    -- shift+ctrl+scroll = scroll vertical
+    if self.shift and self.ctrl then
+        if event.direction == LuaGDK.GDK_SCROLL_DOWN then
+            transform:set_y(transform:get_y() - MOVE_SMOOTH)
+        elseif event.direction == LuaGDK.GDK_SCROLL_UP then
+            transform:set_y(transform:get_y() + MOVE_SMOOTH)
+        end
+
+    -- shift+scroll = scroll horizontal
+    elseif self.shift and not self.ctrl then
+        if event.direction == LuaGDK.GDK_SCROLL_DOWN then
+            transform:set_x(transform:get_x() - MOVE_SMOOTH)
+        elseif event.direction == LuaGDK.GDK_SCROLL_UP then
+            transform:set_x(transform:get_x() + MOVE_SMOOTH)
+        end
+
+    -- scroll horizontal
+    elseif event.direction == LuaGDK.GDK_SCROLL_LEFT then
+        transform:set_x(transform:get_x() + MOVE_SMOOTH)
+    elseif event.direction == LuaGDK.GDK_SCROLL_RIGHT then
+        transform:set_x(transform:get_x() - MOVE_SMOOTH)
+
+    -- scroll = zoom in/out
+    else
+        if event.direction == LuaGDK.GDK_SCROLL_DOWN then
+            transform:set_zoom(clamp(transform:get_zoom() / ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
+        elseif event.direction == LuaGDK.GDK_SCROLL_UP then
+            transform:set_zoom(clamp(transform:get_zoom() * ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
+        end
     end
 
     self:set_transform(transform)

@@ -94,6 +94,18 @@ namespace Lua
         checkerror(L, lua_pcall(L, 1 + count, 0, 0));
     }
 
+    /**
+     * Call METHOD on the value at the top of the stack. R is the number of
+     * return values.
+     */
+    template<typename... Args>
+    void call_method_r(lua_State *L, int r, std::string const &method, Args... args)
+    {
+        get_method(L, method);
+        auto count = foreach(Pusher{L}, args...);
+        checkerror(L, lua_pcall(L, 1 + count, r, 0));
+    }
+
 
     /** Set table[KEY] = VALUE. Table is at the top of the stack. */
     template<typename K, typename V>

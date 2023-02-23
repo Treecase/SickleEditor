@@ -25,6 +25,7 @@
 namespace Sickle
 {
     class MapArea2D;
+    class GrabbableBox;
     namespace MapArea2Dx
     {
         struct Transform2D;
@@ -35,6 +36,10 @@ namespace Sickle
 int luaopen_maparea2d(lua_State *L);
 int lmaparea2d_new(lua_State *L, Sickle::MapArea2D *maparea);
 Sickle::MapArea2D *lmaparea2d_check(lua_State *L, int arg);
+
+int luaopen_grabbablebox(lua_State *L);
+int lgrabbablebox_new(lua_State *L, Sickle::GrabbableBox *box);
+Sickle::GrabbableBox *lgrabbablebox_check(lua_State *L, int arg);
 
 int luaopen_transform2d(lua_State *L);
 int ltransform2d_new(lua_State *L, Sickle::MapArea2Dx::Transform2D const &transform);
