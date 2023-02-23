@@ -19,7 +19,7 @@
 
 %require "3.2"  /* Don't want position.hh and stack.hh */
 %language "c++" /* Generate C++ parser */
-%header         /* Generate tokens header */
+%defines        /* Generate tokens header */
 %locations      /* Enable location tracking */
 
 %define api.namespace {FGD}

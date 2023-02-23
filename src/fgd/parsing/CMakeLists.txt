@@ -26,3 +26,4 @@ target_include_directories(fgd_parsing PRIVATE
 )
 target_include_directories(fgd_parsing PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(fgd_parsing PRIVATE "${FLEX_LIBRARIES}")
+target_compile_features(fgd_parsing PUBLIC cxx_std_17)
