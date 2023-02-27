@@ -120,7 +120,19 @@ Sickle::AppWin::AppWin()
     m_viewgrid.attach(m_drawarea_front, 0, 1);
     m_viewgrid.attach(m_drawarea_right, 1, 1);
 
+    m_infobar.set_show_close_button(true);
+    m_infobar.signal_response().connect(
+        [this](int){m_infobar.hide();});
+    m_infobar.set_message_type(Gtk::MessageType::MESSAGE_INFO);
+    m_infobar_label.set_text("Reloaded Lua scripts");
+    auto contentarea = dynamic_cast<Gtk::Container *>(
+        m_infobar.get_content_area());
+    contentarea->add(m_infobar_label);
+    signal_lua_reloaded().connect(
+        sigc::mem_fun(m_infobar, &Gtk::InfoBar::show));
+
     m_hbox.pack_end(m_gridsizelabel);
+    m_hbox.pack_start(m_infobar);
 
     m_grid.attach(m_viewgrid, 0, 0);
     m_grid.attach(m_hbox, 0, 1);
@@ -132,8 +144,11 @@ Sickle::AppWin::AppWin()
     m_luaconsolewindow.add(m_luaconsole);
     m_luaconsolewindow.show_all_children();
     m_luaconsolewindow.set_title(SE_CANON_NAME " - Lua Console");
+    signal_lua_reloaded().connect(
+        [this](){m_luaconsole.writeline("---Lua Reloaded---");});
 
     show_all_children();
+    m_infobar.hide();
 }
 
 void Sickle::AppWin::open(Gio::File const *file)
@@ -163,6 +178,7 @@ void Sickle::AppWin::reload_scripts()
         auto const &filepath = dir->get_path() + "/" + file->get_name();
         Lua::checkerror(L, luaL_dofile(L, filepath.c_str()));
     }
+    signal_lua_reloaded().emit();
 }
 
 void Sickle::AppWin::set_grid_size(guint grid_size)
