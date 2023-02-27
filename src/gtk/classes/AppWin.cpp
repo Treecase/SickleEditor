@@ -22,6 +22,7 @@
 
 #include "appid.hpp"
 #include "version.hpp"
+#include "LuaGeo.hpp"
 
 #include <algorithm>
 
@@ -57,6 +58,7 @@ Sickle::AppWin::AppWin()
     luaL_openlibs(L);
 
     luaL_requiref(L, "appwin", luaopen_appwin, 1);
+    luaL_requiref(L, "geo", luaopen_geo, 1);
 
     lappwin_new(L, this);
     lua_setglobal(L, "gAppWin");

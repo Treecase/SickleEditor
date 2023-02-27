@@ -129,42 +129,8 @@ int Sickle::LuaConsole::_L_customprint(lua_State *L)
     int nargs = lua_gettop(L);
     for (int i = 1; i <= nargs; ++i)
     {
-        switch (lua_type(L, i))
-        {
-        case LUA_TBOOLEAN:
-            str << (lua_toboolean(L, i)? "true" : "false");
-            break;
-        case LUA_TFUNCTION:
-            str << "<function>";
-            break;
-        case LUA_TLIGHTUSERDATA:
-            str << lua_touserdata(L, i);
-            break;
-        case LUA_TNIL:
-            str << "nil";
-            break;
-        case LUA_TNONE:
-            str << "<none>";
-            break;
-        case LUA_TNUMBER:
-            str << lua_tonumber(L, i);
-            break;
-        case LUA_TSTRING:
-            str << lua_tostring(L, i);
-            break;
-        case LUA_TTABLE:
-            str << "<table>";
-            break;
-        case LUA_TTHREAD:
-            str << "<thread>";
-            break;
-        case LUA_TUSERDATA:
-            str << lua_touserdata(L, i);
-            break;
-        default:
-            str << '?';
-            break;
-        }
+        str << luaL_tolstring(L, i, nullptr);
+        lua_pop(L, 1);
     }
     writeline(str.str());
     std::cout << str.str() << '\n';

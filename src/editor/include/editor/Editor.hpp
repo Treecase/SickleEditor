@@ -1,6 +1,6 @@
 /**
  * Editor.hpp - Map Editor class.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 #include "map/map.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <sigc++/signal.h>
 
 #include <unordered_set>
@@ -54,12 +55,16 @@ namespace Sickle
         :   MAP::Brush{brush}
         {
         }
-        void translate(MAP::Vector3 const &translation)
+        void transform(glm::mat4 const &matrix)
         {
             for (auto &face : planes)
                 for (auto &vertex : face.vertices)
-                    vertex += translation;
+                    vertex = glm::vec3{matrix * glm::vec4{vertex, 1.0}};
             signal_changed().emit();
+        }
+        void translate(MAP::Vector3 const &translation)
+        {
+            transform(glm::translate(glm::mat4{1.0}, translation));
         }
     private:
         sigc::signal<void()> _signal_changed{};

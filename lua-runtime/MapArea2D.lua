@@ -86,10 +86,7 @@ function gAppWin.topMapArea:on_button_press_event(event)
             drag.x = event.x
             drag.y = event.y
             drag.moved = false
-            drag.accum = {}
-            drag.accum.x = 0
-            drag.accum.y = 0
-            drag.accum.z = 0
+            drag.accum = geo.vector.new()
             self.dragging_selection = drag
 
         -- Left click can either be the start of a brushbox draw, or just a
@@ -120,6 +117,7 @@ end
 function gAppWin.topMapArea:on_button_release_event(event)
     local state = self:get_state()
     local editor = self:get_editor()
+
     -- Stop dragging selection.
     if self.dragging_selection then
         -- A selection drag occurred. We just have to clean up.
@@ -131,8 +129,8 @@ function gAppWin.topMapArea:on_button_release_event(event)
         -- deselect the clicked brush.
         else
             self.dragging_selection = nil
+            -- vvv Brush deselection done below. vvv
         end
-
     end
 
     -- Select a brush on left click.
@@ -166,6 +164,7 @@ function gAppWin.topMapArea:on_motion_notify_event(event)
     local state = self:get_state()
     local transform = self:get_transform()
 
+    -- Change cursor if we're hovering a GrabBox selection point.
     local gbox = self:get_selection_box()
     local hovered = gbox:check_point(self:screenspace_to_drawspace(event.x, event.y))
     local cursor = "default"
@@ -191,28 +190,19 @@ function gAppWin.topMapArea:on_motion_notify_event(event)
 
     -- Selection Drag.
     if self.dragging_selection then
-        local ex,ey,ez = self:drawspace_to_worldspace(self:screenspace_to_drawspace(event.x, event.y))
-        local px,py,pz = self:drawspace_to_worldspace(self:screenspace_to_drawspace(self.dragging_selection.x, self.dragging_selection.y))
-        local dx,dy,dz = ex-px,ey-py,ez-pz
-        local accum = {}
-        accum.x = self.dragging_selection.accum.x + dx
-        accum.y = self.dragging_selection.accum.y + dy
-        accum.z = self.dragging_selection.accum.z + dz
+        local curr = geo.vector.new(self:drawspace_to_worldspace(self:screenspace_to_drawspace(event.x, event.y)))
+        local prev = geo.vector.new(self:drawspace_to_worldspace(self:screenspace_to_drawspace(self.dragging_selection.x, self.dragging_selection.y)))
+
+        local delta = curr - prev
+        local accum = self.dragging_selection.accum + delta
 
         local grid = gAppWin:get_grid_size()
-        local rounded = {}
-        rounded.x = math.floor(accum.x / grid) * grid
-        rounded.y = math.floor(accum.y / grid) * grid
-        rounded.z = math.floor(accum.z / grid) * grid
-        local rounded_prev = {}
-        rounded_prev.x = math.floor(self.dragging_selection.accum.x / grid) * grid
-        rounded_prev.y = math.floor(self.dragging_selection.accum.y / grid) * grid
-        rounded_prev.z = math.floor(self.dragging_selection.accum.z / grid) * grid
+        local rounded = geo.vector.map(math.floor, accum / grid) * grid
+        local rounded_prev = geo.vector.map(math.floor, self.dragging_selection.accum / grid) * grid
 
         local selection = self:get_editor():get_selection()
         for brush in selection:iterate() do
-            brush:translate(-rounded_prev.x, -rounded_prev.y, -rounded_prev.z)
-            brush:translate(rounded.x, rounded.y, rounded.z)
+            brush:translate(rounded - rounded_prev)
         end
 
         self.dragging_selection.x = event.x

@@ -1,6 +1,6 @@
 /**
  * EditorBrush_Lua.cpp - EditorBrush Lua binding.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 
 #include "editor/Editor.hpp"
 #include "Editor_Lua.hpp"
+#include "LuaGeo.hpp"
 
 
 #define LIBRARY_NAME    "Sickle.editorbrush"
@@ -80,13 +81,19 @@ static int is_selected(lua_State *L)
     return 1;
 }
 
+static int transform(lua_State *L)
+{
+    auto brush = leditorbrush_check(L, 1);
+    auto mat = lgeo_checkmatrix(L, 2);
+    brush->transform(mat);
+    return 0;
+}
+
 static int translate(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
-    auto x = luaL_checknumber(L, 2);
-    auto y = luaL_checknumber(L, 3);
-    auto z = luaL_checknumber(L, 4);
-    brush->translate({x, y, z});
+    auto vec = lgeo_checkvector(L, 2);
+    brush->translate(vec);
     return 0;
 }
 
@@ -97,6 +104,7 @@ static int do_nothing(lua_State *L)
 
 static luaL_Reg methods[] = {
     {"is_selected", is_selected},
+    {"transform", transform},
     {"translate", translate},
 
     {"on_selected", do_nothing},

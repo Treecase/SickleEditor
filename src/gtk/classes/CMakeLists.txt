@@ -8,3 +8,5 @@ target_sources(sickle PRIVATE
     MapArea2D.cpp
     gtkglutils.cpp
 )
+
+target_link_libraries(sickle PRIVATE luageo)
