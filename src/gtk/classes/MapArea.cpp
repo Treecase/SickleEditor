@@ -21,16 +21,16 @@
 
 
 #define DEFAULT_MOUSE_SENSITIVITY   0.75f
-#define DEFAULT_MOVE_SPEED  1.0f
-#define DEFAULT_FOV 70.0f   // degrees
-#define MIN_FOV     30.0f   // degrees
-#define MAX_FOV     90.0f   // degrees
 
 #define TURN_RATE   120.0f  // degrees/second
 #define FOV_DELTA   1.0f    // degrees
 
 #define NEAR_PLANE  0.1f
 #define FAR_PLANE   1000.0f
+
+#define DEFAULT_CAMERA  {{0.0f, 0.0f, 0.0f}, {glm::radians(180.0f), 0.0f}, 70.0f, 1.0f, 30.0f, 90.0f}
+#define DEFAULT_TRANSFORM   {{0.0f, 0.0f, 0.0f}, {glm::radians(-90.0f), 0.0f, 0.0f}, {0.005f, 0.005f, 0.005f}}
+
 
 
 char const *const Sickle::MapArea::Debug::rayShaderVertexSource{
@@ -53,21 +53,67 @@ char const *const Sickle::MapArea::Debug::rayShaderFragmentSource{
 "}"
 };
 
+
+bool
+raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
+{
+    // https://people.csail.mit.edu/amy/papers/box-jgt.pdf
+    float tmin, tmax, tymin, tymax, tzmin, tzmax;
+    if (delta.x >= 0)
+    {
+        tmin = (bbox.min.x - pos.x) / delta.x;
+        tmax = (bbox.max.x - pos.x) / delta.x;
+    }
+    else
+    {
+        tmin = (bbox.max.x - pos.x) / delta.x;
+        tmax = (bbox.min.x - pos.x) / delta.x;
+    }
+    if (delta.y >= 0)
+    {
+        tymin = (bbox.min.y - pos.y) / delta.y;
+        tymax = (bbox.max.y - pos.y) / delta.y;
+    }
+    else
+    {
+        tymin = (bbox.max.y - pos.y) / delta.y;
+        tymax = (bbox.min.y - pos.y) / delta.y;
+    }
+    if ((tmin > tymax) || (tymin > tmax))
+        return false;
+    if (tymin > tmin)
+        tmin = tymin;
+    if (tymax < tmax)
+        tmax = tymax;
+    if (delta.z >= 0)
+    {
+        tzmin = (bbox.min.z - pos.z) / delta.z;
+        tzmax = (bbox.max.z - pos.z) / delta.z;
+    }
+    else
+    {
+        tzmin = (bbox.max.z - pos.z) / delta.z;
+        tzmax = (bbox.min.z - pos.z) / delta.z;
+    }
+    if ((tmin > tzmax) || (tzmin > tmax))
+        return false;
+    if (tzmin > tmin)
+        tmin = tzmin;
+    if (tzmax < tmax)
+        tmax = tzmax;
+    t = glm::min(tmin, tmax);
+    return (tmin < INFINITY) && (tmax > 0);
+}
+
+
 /* ===[ MapArea ]=== */
 Sickle::MapArea::MapArea(Editor &ed)
 :   Glib::ObjectBase{typeid(MapArea)}
 ,   Gtk::GLArea{}
 ,   _editor{ed}
-,   _camera{
-        {0.0f, 0.0f, 0.0f},
-        {0.0f, 0.0f},
-        DEFAULT_FOV,
-        DEFAULT_MOVE_SPEED,
-        MIN_FOV, MAX_FOV}
-,   _transform{
-        {0.0f, 0.0f, 0.0f},
-        {glm::radians(-90.0f), 0.0f, 0.0f},
-        {0.005f, 0.005f, 0.005f}}
+,   _prop_camera{*this, "camera", DEFAULT_CAMERA}
+,   _prop_state{*this, "state", {}}
+,   _prop_transform{*this, "transform", DEFAULT_TRANSFORM}
 ,   _prop_wireframe{*this, "wireframe", false}
 ,   _prop_shift_multiplier{*this, "grid-size", 2.0f}
 ,   _prop_mouse_sensitivity{
@@ -89,6 +135,13 @@ Sickle::MapArea::MapArea(Editor &ed)
     _editor.brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea::queue_render));
 
+    property_transform().signal_changed().connect(
+        sigc::mem_fun(*this, &MapArea::queue_render));
+    property_camera().signal_changed().connect(
+        sigc::mem_fun(*this, &MapArea::queue_render));
+    property_wireframe().signal_changed().connect(
+        sigc::mem_fun(*this, &MapArea::queue_render));
+
     add_events(
         Gdk::POINTER_MOTION_MASK
         | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
@@ -98,6 +151,55 @@ Sickle::MapArea::MapArea(Editor &ed)
         | Gdk::ENTER_NOTIFY_MASK);
 
     add_tick_callback(sigc::mem_fun(*this, &MapArea::tick_callback));
+}
+
+Sickle::EditorBrush *Sickle::MapArea::pick_brush(glm::vec2 const &ssp)
+{
+    EditorBrush *picked{nullptr};
+    float pt = INFINITY;
+
+    auto const &_camera = property_camera().get_value();
+    // TODO: For now we pick straight forward from the camera, without
+    // considering where the user actually clicked
+    auto const ray_delta = glm::normalize(_camera.getLookDirection());
+
+    // Camera is operating in GL space, map vertices are in map space. This is
+    // used to transform map vertices into GL space.
+    auto const modelview = property_transform().get_value().getMatrix();
+
+    for (auto const &entity : _editor.get_map().entities)
+    {
+        for (auto const &brush : entity.brushes)
+        {
+            BBox3 bbox{};
+            for (auto const &face : brush.planes)
+                for (auto const &vertex : face.vertices)
+                    bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
+
+            float t;
+            if (raycast(_camera.pos, ray_delta, bbox, t))
+            {
+                // We pick the first (ie. closest) brush our raycast hits.
+                if (t < pt)
+                {
+                    picked = const_cast<EditorBrush *>(&brush);
+                    pt = t;
+                }
+            }
+        }
+    }
+    debug.setRayPoints(_camera.pos, _camera.pos + ray_delta * pt);
+    return picked;
+}
+
+Sickle::MapArea::GLSpacePoint
+Sickle::MapArea::screenspace_to_glspace(ScreenSpacePoint const &point) const
+{
+    return {
+        point.x - 0.5*get_allocated_width(),
+        -(point.y - 0.5*get_allocated_height()),
+        0
+    };
 }
 
 void Sickle::MapArea::on_realize()
@@ -141,6 +243,8 @@ void Sickle::MapArea::on_unrealize()
 
 bool Sickle::MapArea::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 {
+    auto const &_camera = property_camera().get_value();
+
     throw_if_error();
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -152,7 +256,7 @@ bool Sickle::MapArea::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
         get_width() / (float)get_height(),
         NEAR_PLANE, FAR_PLANE);
 
-    auto const modelMatrix = _transform.getMatrix();
+    auto const modelMatrix = property_transform().get_value().getMatrix();
 
     // Draw models.
     _shader->use();
@@ -181,6 +285,7 @@ bool Sickle::MapArea::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 
 bool Sickle::MapArea::on_key_press_event(GdkEventKey *event)
 {
+    auto _state = property_state().get_value();
     switch (event->keyval)
     {
     case GDK_KEY_z:
@@ -190,7 +295,6 @@ bool Sickle::MapArea::on_key_press_event(GdkEventKey *event)
         glPolygonMode(
             GL_FRONT_AND_BACK,
             property_wireframe().get_value()? GL_LINE : GL_FILL);
-        queue_render();
         return true;
         break;
 
@@ -248,11 +352,13 @@ bool Sickle::MapArea::on_key_press_event(GdkEventKey *event)
         return Gtk::GLArea::on_key_press_event(event);
         break;
     }
+    property_state().set_value(_state);
     return true;
 }
 
 bool Sickle::MapArea::on_key_release_event(GdkEventKey *event)
 {
+    auto _state = property_state().get_value();
     switch (event->keyval)
     {
     case GDK_KEY_a:
@@ -305,6 +411,7 @@ bool Sickle::MapArea::on_key_release_event(GdkEventKey *event)
         return Gtk::GLArea::on_key_release_event(event);
         break;
     }
+    property_state().set_value(_state);
     return true;
 }
 
@@ -312,6 +419,9 @@ bool Sickle::MapArea::on_key_release_event(GdkEventKey *event)
 bool Sickle::MapArea::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
 {
     static constexpr float const USEC_TO_SECONDS = 0.000001f;
+
+    auto _camera = property_camera().get_value();
+    auto _state = property_state().get_value();
 
     auto const frame_time = clock->get_frame_time();
     auto const frame_delta = frame_time - _state.last_frame_time;
@@ -326,7 +436,6 @@ bool Sickle::MapArea::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
             * _camera.speed
             * (_state.gofast? property_shift_multiplier().get_value() : 1.0f));
         _camera.translate(motion * delta);
-        queue_render();
     }
 
     if (glm::length(_state.turn_rates) != 0.0f)
@@ -335,18 +444,21 @@ bool Sickle::MapArea::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
             _state.turn_rates
             * (_state.gofast? property_shift_multiplier().get_value() : 1.0f)
             * property_mouse_sensitivity().get_value() * delta);
-        queue_render();
     }
 
+    property_camera().set_value(_camera);
+    property_state().set_value(_state);
     return G_SOURCE_CONTINUE;
 }
 
 bool Sickle::MapArea::on_button_press_event(GdkEventButton *event)
 {
+    auto _state = property_state().get_value();
     if (event->button == 2)
     {
         _state.pointer_prev.x = event->x;
         _state.pointer_prev.y = event->y;
+        property_state().set_value(_state);
         return true;
     }
     return Gtk::GLArea::on_button_press_event(event);
@@ -354,6 +466,7 @@ bool Sickle::MapArea::on_button_press_event(GdkEventButton *event)
 
 bool Sickle::MapArea::on_button_release_event(GdkEventButton *event)
 {
+    auto const &_state = property_state().get_value();
     if (event->button == 1)
     {
         if (!_state.multiselect)
@@ -382,6 +495,8 @@ bool Sickle::MapArea::on_enter_notify_event(GdkEventCrossing *event)
 
 bool Sickle::MapArea::on_motion_notify_event(GdkEventMotion *event)
 {
+    auto _camera = property_camera().get_value();
+    auto _state = property_state().get_value();
     if (event->state & Gdk::BUTTON2_MASK)
     {
         auto dx = event->x - _state.pointer_prev.x;
@@ -390,7 +505,8 @@ bool Sickle::MapArea::on_motion_notify_event(GdkEventMotion *event)
             glm::vec2{dx, dy} * property_mouse_sensitivity().get_value());
         _state.pointer_prev.x = event->x;
         _state.pointer_prev.y = event->y;
-        queue_render();
+        property_camera().set_value(_camera);
+        property_state().set_value(_state);
         return true;
     }
     return Gtk::GLArea::on_motion_notify_event(event);
@@ -398,6 +514,7 @@ bool Sickle::MapArea::on_motion_notify_event(GdkEventMotion *event)
 
 bool Sickle::MapArea::on_scroll_event(GdkEventScroll *event)
 {
+    auto _camera = property_camera().get_value();
     if (event->state & Gdk::MOD1_MASK)
     {
         switch (event->direction)
@@ -409,7 +526,7 @@ bool Sickle::MapArea::on_scroll_event(GdkEventScroll *event)
             _camera.setFOV(_camera.fov - FOV_DELTA);
             break;
         }
-        queue_render();
+        property_camera().set_value(_camera);
         return true;
     }
     return Gtk::GLArea::on_scroll_event(event);
@@ -417,19 +534,9 @@ bool Sickle::MapArea::on_scroll_event(GdkEventScroll *event)
 
 void Sickle::MapArea::on_editor_map_changed()
 {
-    // TODO: Clean this up. Having to manually reset everything when the map
-    // changes is messy.
-    _state = State{};
-    _camera = {
-        {0.0f, 0.0f, 0.0f},
-        {0.0f, 0.0f},
-        DEFAULT_FOV,
-        DEFAULT_MOVE_SPEED,
-        MIN_FOV, MAX_FOV};
-    _transform = {
-        {0.0f, 0.0f, 0.0f},
-        {glm::radians(-90.0f), 0.0f, 0.0f},
-        {0.005f, 0.005f, 0.005f}};
+    property_state().reset_value();
+    property_camera().set_value(DEFAULT_CAMERA);
+    property_transform().set_value(DEFAULT_TRANSFORM);
     if (get_realized())
     {
         _synchronize_glmap();
@@ -444,104 +551,4 @@ void Sickle::MapArea::_synchronize_glmap()
     make_current();
     _mapview.reset(new MAP::GLMap{_editor.get_map()});
     queue_render();
-}
-
-
-bool
-raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
-{
-    // https://people.csail.mit.edu/amy/papers/box-jgt.pdf
-    float tmin, tmax, tymin, tymax, tzmin, tzmax;
-    if (delta.x >= 0)
-    {
-        tmin = (bbox.min.x - pos.x) / delta.x;
-        tmax = (bbox.max.x - pos.x) / delta.x;
-    }
-    else
-    {
-        tmin = (bbox.max.x - pos.x) / delta.x;
-        tmax = (bbox.min.x - pos.x) / delta.x;
-    }
-    if (delta.y >= 0)
-    {
-        tymin = (bbox.min.y - pos.y) / delta.y;
-        tymax = (bbox.max.y - pos.y) / delta.y;
-    }
-    else
-    {
-        tymin = (bbox.max.y - pos.y) / delta.y;
-        tymax = (bbox.min.y - pos.y) / delta.y;
-    }
-    if ((tmin > tymax) || (tymin > tmax))
-        return false;
-    if (tymin > tmin)
-        tmin = tymin;
-    if (tymax < tmax)
-        tmax = tymax;
-    if (delta.z >= 0)
-    {
-        tzmin = (bbox.min.z - pos.z) / delta.z;
-        tzmax = (bbox.max.z - pos.z) / delta.z;
-    }
-    else
-    {
-        tzmin = (bbox.max.z - pos.z) / delta.z;
-        tzmax = (bbox.min.z - pos.z) / delta.z;
-    }
-    if ((tmin > tzmax) || (tzmin > tmax))
-        return false;
-    if (tzmin > tmin)
-        tmin = tzmin;
-    if (tzmax < tmax)
-        tmax = tzmax;
-    t = glm::min(tmin, tmax);
-    return (tmin < INFINITY) && (tmax > 0);
-}
-
-Sickle::MapArea::GLSpacePoint
-Sickle::MapArea::screenspace_to_glspace(ScreenSpacePoint const &point) const
-{
-    return {
-        point.x - 0.5*get_allocated_width(),
-        -(point.y - 0.5*get_allocated_height()),
-        0
-    };
-}
-
-Sickle::EditorBrush *Sickle::MapArea::pick_brush(glm::vec2 const &ssp)
-{
-    EditorBrush *picked{nullptr};
-    float pt = INFINITY;
-
-    // TODO: For now we pick straight forward from the camera, without
-    // considering where the user actually clicked
-    auto const ray_delta = glm::normalize(_camera.getLookDirection());
-
-    // Camera is operating in GL space, map vertices are in map space. This is
-    // used to transform map vertices into GL space.
-    auto const modelview = _transform.getMatrix();
-
-    for (auto const &entity : _editor.get_map().entities)
-    {
-        for (auto const &brush : entity.brushes)
-        {
-            BBox3 bbox{};
-            for (auto const &face : brush.planes)
-                for (auto const &vertex : face.vertices)
-                    bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
-
-            float t;
-            if (raycast(_camera.pos, ray_delta, bbox, t))
-            {
-                // We pick the first (ie. closest) brush our raycast hits.
-                if (t < pt)
-                {
-                    picked = const_cast<EditorBrush *>(&brush);
-                    pt = t;
-                }
-            }
-        }
-    }
-    debug.setRayPoints(_camera.pos, _camera.pos + ray_delta * pt);
-    return picked;
 }
