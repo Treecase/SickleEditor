@@ -21,8 +21,8 @@
 
 #include "AppWin_Lua.hpp"
 #include "LuaConsole.hpp"
-#include "MapArea.hpp"
 #include "MapArea2D.hpp"
+#include "MapArea3D.hpp"
 #include "editor/Editor.hpp"
 
 #include <glibmm/property.h>
@@ -63,7 +63,7 @@ namespace Sickle
     protected:
         Gtk::Grid m_grid;
         Gtk::Grid m_viewgrid;
-        MapArea m_maparea;
+        MapArea3D m_maparea;
         MapArea2D m_drawarea_top, m_drawarea_front, m_drawarea_right;
         Gtk::HBox m_hbox;
         Gtk::Label m_gridsizelabel;

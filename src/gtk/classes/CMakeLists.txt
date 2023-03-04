@@ -4,8 +4,8 @@ target_sources(sickle PRIVATE
     About.cpp
     AppWin.cpp
     LuaConsole.cpp
-    MapArea.cpp
     MapArea2D.cpp
+    MapArea3D.cpp
     gtkglutils.cpp
 )
 

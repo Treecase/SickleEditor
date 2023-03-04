@@ -1,5 +1,5 @@
 /**
- * MapArea.cpp - Sickle editor main window GLArea.
+ * MapArea3D.cpp - Sickle editor main window GLArea.
  * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,14 +16,11 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "MapArea.hpp"
+#include "MapArea3D.hpp"
 #include "utils/BoundingBox.hpp"
 
 
 #define DEFAULT_MOUSE_SENSITIVITY   0.75f
-
-#define TURN_RATE   120.0f  // degrees/second
-#define FOV_DELTA   1.0f    // degrees
 
 #define NEAR_PLANE  0.1f
 #define FAR_PLANE   1000.0f
@@ -33,7 +30,7 @@
 
 
 
-char const *const Sickle::MapArea::Debug::rayShaderVertexSource{
+char const *const Sickle::MapArea3D::Debug::rayShaderVertexSource{
 "#version 430 core\n"
 "layout(location=0) in vec3 vPos;"
 "uniform mat4 view;"
@@ -43,7 +40,7 @@ char const *const Sickle::MapArea::Debug::rayShaderVertexSource{
 "    gl_Position = projection * view * vec4(vPos, 1.0);"
 "}"
 };
-char const *const Sickle::MapArea::Debug::rayShaderFragmentSource{
+char const *const Sickle::MapArea3D::Debug::rayShaderFragmentSource{
 "#version 430 core\n"
 "out vec4 FragColor;"
 "uniform vec3 color;"
@@ -106,9 +103,9 @@ raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
 }
 
 
-/* ===[ MapArea ]=== */
-Sickle::MapArea::MapArea(Editor &ed)
-:   Glib::ObjectBase{typeid(MapArea)}
+/* ===[ MapArea3D ]=== */
+Sickle::MapArea3D::MapArea3D(Editor &ed)
+:   Glib::ObjectBase{typeid(MapArea3D)}
 ,   Gtk::GLArea{}
 ,   _editor{ed}
 ,   _prop_camera{*this, "camera", DEFAULT_CAMERA}
@@ -129,18 +126,24 @@ Sickle::MapArea::MapArea(Editor &ed)
     set_can_focus(true);
 
     _editor.signal_map_changed().connect(
-        sigc::mem_fun(*this, &MapArea::on_editor_map_changed));
+        sigc::mem_fun(*this, &MapArea3D::on_editor_map_changed));
     _editor.selected.signal_updated().connect(
-        sigc::mem_fun(*this, &MapArea::queue_render));
+        sigc::mem_fun(*this, &MapArea3D::queue_render));
     _editor.brushbox.signal_updated().connect(
-        sigc::mem_fun(*this, &MapArea::queue_render));
+        sigc::mem_fun(*this, &MapArea3D::queue_render));
 
     property_transform().signal_changed().connect(
-        sigc::mem_fun(*this, &MapArea::queue_render));
+        sigc::mem_fun(*this, &MapArea3D::queue_render));
     property_camera().signal_changed().connect(
-        sigc::mem_fun(*this, &MapArea::queue_render));
+        sigc::mem_fun(*this, &MapArea3D::queue_render));
     property_wireframe().signal_changed().connect(
-        sigc::mem_fun(*this, &MapArea::queue_render));
+        sigc::mem_fun(*this, &MapArea3D::queue_render));
+    property_wireframe().signal_changed().connect(
+        sigc::mem_fun(*this, &MapArea3D::on_wireframe_changed));
+    property_wireframe().signal_changed().connect(
+        sigc::mem_fun(*this, &MapArea3D::on_wireframe_changed));
+    property_wireframe().signal_changed().connect(
+        sigc::mem_fun(*this, &MapArea3D::on_wireframe_changed));
 
     add_events(
         Gdk::POINTER_MOTION_MASK
@@ -150,10 +153,10 @@ Sickle::MapArea::MapArea(Editor &ed)
         | Gdk::SCROLL_MASK
         | Gdk::ENTER_NOTIFY_MASK);
 
-    add_tick_callback(sigc::mem_fun(*this, &MapArea::tick_callback));
+    add_tick_callback(sigc::mem_fun(*this, &MapArea3D::tick_callback));
 }
 
-Sickle::EditorBrush *Sickle::MapArea::pick_brush(glm::vec2 const &ssp)
+Sickle::EditorBrush *Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
 {
     EditorBrush *picked{nullptr};
     float pt = INFINITY;
@@ -192,8 +195,8 @@ Sickle::EditorBrush *Sickle::MapArea::pick_brush(glm::vec2 const &ssp)
     return picked;
 }
 
-Sickle::MapArea::GLSpacePoint
-Sickle::MapArea::screenspace_to_glspace(ScreenSpacePoint const &point) const
+Sickle::MapArea3D::GLSpacePoint
+Sickle::MapArea3D::screenspace_to_glspace(ScreenSpacePoint const &point) const
 {
     return {
         point.x - 0.5*get_allocated_width(),
@@ -202,7 +205,7 @@ Sickle::MapArea::screenspace_to_glspace(ScreenSpacePoint const &point) const
     };
 }
 
-void Sickle::MapArea::on_realize()
+void Sickle::MapArea3D::on_realize()
 {
     Gtk::GLArea::on_realize();
     make_current();
@@ -237,11 +240,11 @@ void Sickle::MapArea::on_realize()
     _synchronize_glmap();
 }
 
-void Sickle::MapArea::on_unrealize()
+void Sickle::MapArea3D::on_unrealize()
 {
 }
 
-bool Sickle::MapArea::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
+bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 {
     auto const &_camera = property_camera().get_value();
 
@@ -283,140 +286,8 @@ bool Sickle::MapArea::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     return true;
 }
 
-bool Sickle::MapArea::on_key_press_event(GdkEventKey *event)
-{
-    auto _state = property_state().get_value();
-    switch (event->keyval)
-    {
-    case GDK_KEY_z:
-    case GDK_KEY_Z:
-        make_current();
-        property_wireframe() = !property_wireframe().get_value();
-        glPolygonMode(
-            GL_FRONT_AND_BACK,
-            property_wireframe().get_value()? GL_LINE : GL_FILL);
-        return true;
-        break;
 
-    case GDK_KEY_a:
-    case GDK_KEY_A:
-        _state.move_direction.x = 1.0f;
-        break;
-    case GDK_KEY_d:
-    case GDK_KEY_D:
-        _state.move_direction.x = -1.0f;
-        break;
-
-    case GDK_KEY_w:
-    case GDK_KEY_W:
-        _state.move_direction.z = 1.0f;
-        break;
-    case GDK_KEY_s:
-    case GDK_KEY_S:
-        _state.move_direction.z = -1.0f;
-        break;
-
-    case GDK_KEY_q:
-    case GDK_KEY_Q:
-        _state.move_direction.y = 1.0f;
-        break;
-    case GDK_KEY_e:
-    case GDK_KEY_E:
-        _state.move_direction.y = -1.0f;
-        break;
-
-    case GDK_KEY_Shift_L:
-    case GDK_KEY_Shift_R:
-        _state.gofast = true;
-        break;
-
-    case GDK_KEY_Up:
-        _state.turn_rates.y = -TURN_RATE;
-        break;
-    case GDK_KEY_Down:
-        _state.turn_rates.y = TURN_RATE;
-        break;
-    case GDK_KEY_Left:
-        _state.turn_rates.x = -TURN_RATE;
-        break;
-    case GDK_KEY_Right:
-        _state.turn_rates.x = TURN_RATE;
-        break;
-
-    case GDK_KEY_Control_L:
-    case GDK_KEY_Control_R:
-        _state.multiselect = true;
-        break;
-
-    default:
-        return Gtk::GLArea::on_key_press_event(event);
-        break;
-    }
-    property_state().set_value(_state);
-    return true;
-}
-
-bool Sickle::MapArea::on_key_release_event(GdkEventKey *event)
-{
-    auto _state = property_state().get_value();
-    switch (event->keyval)
-    {
-    case GDK_KEY_a:
-    case GDK_KEY_A:
-        _state.move_direction.x = 0.0f;
-        break;
-    case GDK_KEY_d:
-    case GDK_KEY_D:
-        _state.move_direction.x = 0.0f;
-        break;
-
-    case GDK_KEY_s:
-    case GDK_KEY_S:
-        _state.move_direction.z = 0.0f;
-        break;
-    case GDK_KEY_w:
-    case GDK_KEY_W:
-        _state.move_direction.z = 0.0f;
-        break;
-
-    case GDK_KEY_e:
-    case GDK_KEY_E:
-        _state.move_direction.y = 0.0f;
-        break;
-    case GDK_KEY_q:
-    case GDK_KEY_Q:
-        _state.move_direction.y = 0.0f;
-        break;
-
-    case GDK_KEY_Shift_L:
-    case GDK_KEY_Shift_R:
-        _state.gofast = false;
-        break;
-
-    case GDK_KEY_Up:
-    case GDK_KEY_Down:
-        _state.turn_rates.y = 0.0f;
-        break;
-    case GDK_KEY_Left:
-    case GDK_KEY_Right:
-        _state.turn_rates.x = 0.0f;
-        break;
-
-    case GDK_KEY_Control_L:
-    case GDK_KEY_Control_R:
-        _state.multiselect = false;
-        break;
-
-    default:
-        return Gtk::GLArea::on_key_release_event(event);
-        break;
-    }
-    property_state().set_value(_state);
-    return true;
-}
-
-
-bool Sickle::MapArea::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
+bool Sickle::MapArea3D::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
 {
     static constexpr float const USEC_TO_SECONDS = 0.000001f;
 
@@ -451,88 +322,13 @@ bool Sickle::MapArea::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
     return G_SOURCE_CONTINUE;
 }
 
-bool Sickle::MapArea::on_button_press_event(GdkEventButton *event)
-{
-    auto _state = property_state().get_value();
-    if (event->button == 2)
-    {
-        _state.pointer_prev.x = event->x;
-        _state.pointer_prev.y = event->y;
-        property_state().set_value(_state);
-        return true;
-    }
-    return Gtk::GLArea::on_button_press_event(event);
-}
-
-bool Sickle::MapArea::on_button_release_event(GdkEventButton *event)
-{
-    auto const &_state = property_state().get_value();
-    if (event->button == 1)
-    {
-        if (!_state.multiselect)
-            _editor.selected.clear();
-        if (!_editor.get_map().entities.empty())
-        {
-            auto picked = pick_brush({event->x, event->y});
-            if (picked)
-            {
-                if (picked->is_selected)
-                    _editor.selected.remove(picked);
-                else
-                    _editor.selected.add(picked);
-            }
-        }
-        return true;
-    }
-    return Gtk::GLArea::on_button_release_event(event);
-}
-
-bool Sickle::MapArea::on_enter_notify_event(GdkEventCrossing *event)
+bool Sickle::MapArea3D::on_enter_notify_event(GdkEventCrossing *event)
 {
     grab_focus();
     return true;
 }
 
-bool Sickle::MapArea::on_motion_notify_event(GdkEventMotion *event)
-{
-    auto _camera = property_camera().get_value();
-    auto _state = property_state().get_value();
-    if (event->state & Gdk::BUTTON2_MASK)
-    {
-        auto dx = event->x - _state.pointer_prev.x;
-        auto dy = event->y - _state.pointer_prev.y;
-        _camera.rotate(
-            glm::vec2{dx, dy} * property_mouse_sensitivity().get_value());
-        _state.pointer_prev.x = event->x;
-        _state.pointer_prev.y = event->y;
-        property_camera().set_value(_camera);
-        property_state().set_value(_state);
-        return true;
-    }
-    return Gtk::GLArea::on_motion_notify_event(event);
-}
-
-bool Sickle::MapArea::on_scroll_event(GdkEventScroll *event)
-{
-    auto _camera = property_camera().get_value();
-    if (event->state & Gdk::MOD1_MASK)
-    {
-        switch (event->direction)
-        {
-        case GDK_SCROLL_DOWN:
-            _camera.setFOV(_camera.fov + FOV_DELTA);
-            break;
-        case GDK_SCROLL_UP:
-            _camera.setFOV(_camera.fov - FOV_DELTA);
-            break;
-        }
-        property_camera().set_value(_camera);
-        return true;
-    }
-    return Gtk::GLArea::on_scroll_event(event);
-}
-
-void Sickle::MapArea::on_editor_map_changed()
+void Sickle::MapArea3D::on_editor_map_changed()
 {
     property_state().reset_value();
     property_camera().set_value(DEFAULT_CAMERA);
@@ -545,8 +341,16 @@ void Sickle::MapArea::on_editor_map_changed()
     }
 }
 
+void Sickle::MapArea3D::on_wireframe_changed()
+{
+    make_current();
+    glPolygonMode(
+        GL_FRONT_AND_BACK,
+        property_wireframe().get_value()? GL_LINE : GL_FILL);
+}
 
-void Sickle::MapArea::_synchronize_glmap()
+
+void Sickle::MapArea3D::_synchronize_glmap()
 {
     make_current();
     _mapview.reset(new MAP::GLMap{_editor.get_map()});

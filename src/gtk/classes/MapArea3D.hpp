@@ -1,5 +1,5 @@
 /**
- * MapArea.hpp - Sickle editor main window GLArea.
+ * MapArea3D.hpp - Sickle editor main window GLArea.
  * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPAREA_HPP
-#define SE_MAPAREA_HPP
+#ifndef SE_MAPAREA3D_HPP
+#define SE_MAPAREA3D_HPP
 
 #include "gtkglutils.hpp"
 #include "editor/Editor.hpp"
@@ -33,7 +33,7 @@
 namespace Sickle
 {
     /** Displays .map files. */
-    class MapArea : public Gtk::GLArea
+    class MapArea3D : public Gtk::GLArea
     {
     public:
         using ScreenSpacePoint = glm::vec2;
@@ -95,10 +95,12 @@ namespace Sickle
 
         Debug debug{};
 
-        MapArea(Editor &ed);
+        MapArea3D(Editor &ed);
 
         EditorBrush *pick_brush(glm::vec2 const &P);
         GLSpacePoint screenspace_to_glspace(ScreenSpacePoint const &) const;
+
+        auto &get_editor() {return _editor;}
 
         auto property_camera() {return _prop_camera.get_proxy();}
         auto property_mouse_sensitivity()
@@ -117,21 +119,13 @@ namespace Sickle
         /** Draw everything we need. */
         bool on_render(Glib::RefPtr<Gdk::GLContext> const &context) override;
 
-        // Input Signals
-        bool on_key_press_event(GdkEventKey *event) override;
-        bool on_key_release_event(GdkEventKey *event) override;
-
     protected:
         bool tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock);
 
-        // Input Signals
-        bool on_button_press_event(GdkEventButton *event) override;
-        bool on_button_release_event(GdkEventButton *event) override;
-        bool on_enter_notify_event(GdkEventCrossing *event) override;
-        bool on_motion_notify_event(GdkEventMotion *event) override;
-        bool on_scroll_event(GdkEventScroll *event) override;
+        bool on_enter_notify_event(GdkEventCrossing *event);
 
         void on_editor_map_changed();
+        void on_wireframe_changed();
 
     private:
         Editor &_editor;

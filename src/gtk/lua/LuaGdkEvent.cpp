@@ -46,5 +46,7 @@ void Lua::Pusher::operator()(GdkEventMotion const *event)
 template<>
 void Lua::Pusher::operator()(GdkEventScroll const *event)
 {
-    make_table(L, std::make_pair("direction", (lua_Integer)event->direction));
+    make_table(L,
+        std::make_pair("direction", (lua_Integer)event->direction),
+        std::make_pair("state", (lua_Integer)event->state));
 }

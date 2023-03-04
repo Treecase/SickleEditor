@@ -20,6 +20,7 @@
 #include "AppWin_Lua.hpp"
 #include "LuaGdkEvent.hpp"
 #include "MapArea2D_Lua.hpp"
+#include "MapArea3D_Lua.hpp"
 
 
 #define LIBRARY_NAME    "Sickle.appwin"
@@ -129,6 +130,10 @@ int lappwin_new(lua_State *L, CLASSNAME *appwin)
     luaL_setmetatable(L, LIBRARY_NAME);
 
     // Add fields.
+    lua_pushliteral(L, "mapArea3D");
+    lmaparea3d_new(L, &appwin->m_maparea);
+    lua_settable(L, -3);
+
     lua_pushliteral(L, "topMapArea");
     lmaparea2d_new(L, &appwin->m_drawarea_top);
     lua_settable(L, -3);
@@ -172,6 +177,7 @@ CLASSNAME *lappwin_check(lua_State *L, int arg)
 int luaopen_appwin(lua_State *L)
 {
     luaL_requiref(L, "maparea2d", luaopen_maparea2d, 1);
+    luaL_requiref(L, "maparea3d", luaopen_maparea3d, 1);
 
     // Table used to map C++ pointers to Lua objects.
     // TODO: References should be removed when the C++ objects are destroyed.

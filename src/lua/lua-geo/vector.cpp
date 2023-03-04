@@ -22,7 +22,7 @@
 static void lgeo_checkvectorfast(lua_State *L, int arg);
 
 
-static int make_vector(lua_State *L, glm::vec4 const &vector)
+template<> void Lua::Pusher::operator()(glm::vec4 vector)
 {
     lua_newuserdatauv(L, 0, 1);
     luaL_setmetatable(L, "geo.vector");
@@ -32,7 +32,16 @@ static int make_vector(lua_State *L, glm::vec4 const &vector)
     Lua::set_table(L, "z", (lua_Number)vector.z);
     Lua::set_table(L, "w", (lua_Number)vector.w);
     lua_setiuservalue(L, -2, 1);
-    return 1;
+}
+
+template<> void Lua::Pusher::operator()(glm::vec3 vector)
+{
+    (*this)(glm::vec4{vector, 1.0});
+}
+
+template<> void Lua::Pusher::operator()(glm::vec2 vector)
+{
+    (*this)(glm::vec4{vector, 0.0, 1.0});
 }
 
 
@@ -40,25 +49,29 @@ static int make_vector(lua_State *L, glm::vec4 const &vector)
 // Metamethods
 static int vector_add(lua_State *L)
 {
-    return make_vector(L, lgeo_checkvector(L, 1) + lgeo_checkvector(L, 2));
+    Lua::Pusher{L}(lgeo_checkvector(L, 1) + lgeo_checkvector(L, 2));
+    return 1;
 }
 
 static int vector_sub(lua_State *L)
 {
-    return make_vector(L, lgeo_checkvector(L, 1) - lgeo_checkvector(L, 2));
+    Lua::Pusher{L}(lgeo_checkvector(L, 1) - lgeo_checkvector(L, 2));
+    return 1;
 }
 
 static int vector_mul(lua_State *L)
 {
     if (lua_isnumber(L, 1))
-        return make_vector(L, (float)luaL_checknumber(L, 1) * lgeo_checkvector(L, 2));
+        Lua::Pusher{L}((float)luaL_checknumber(L, 1) * lgeo_checkvector(L, 2));
     else
-        return make_vector(L, lgeo_checkvector(L, 1) * (float)luaL_checknumber(L, 2));
+        Lua::Pusher{L}(lgeo_checkvector(L, 1) * (float)luaL_checknumber(L, 2));
+    return 1;
 }
 
 static int vector_div(lua_State *L)
 {
-    return make_vector(L, lgeo_checkvector(L, 1) / (float)luaL_checknumber(L, 2));
+    Lua::Pusher{L}(lgeo_checkvector(L, 1) / (float)luaL_checknumber(L, 2));
+    return 1;
 }
 
 static int vector_index(lua_State *L)
@@ -106,27 +119,33 @@ int lgeo_vector_new(lua_State *L)
     switch (lua_gettop(L))
     {
     case 0:
-        return make_vector(L, glm::vec4{0, 0, 0, 1});
+        Lua::Pusher{L}(glm::vec4{0, 0, 0, 1});
+        break;
     case 2:
-        return make_vector(L, glm::vec4{
+        Lua::Pusher{L}(glm::vec4{
             luaL_checknumber(L, 1),
             luaL_checknumber(L, 2),
             0, 1});
+        break;
     case 3:
-        return make_vector(L, glm::vec4{
+        Lua::Pusher{L}(glm::vec4{
             luaL_checknumber(L, 1),
             luaL_checknumber(L, 2),
             luaL_checknumber(L, 3),
             1});
+        break;
     case 4:
-        return make_vector(L, glm::vec4{
+        Lua::Pusher{L}(glm::vec4{
             luaL_checknumber(L, 1),
             luaL_checknumber(L, 2),
             luaL_checknumber(L, 3),
             luaL_checknumber(L, 4)});
+        break;
+    default:
+        luaL_argcheck(L, false, 1, "invalid args");
+        return 0;
     }
-    luaL_argcheck(L, false, 1, "invalid args");
-    return 0;
+    return 1;
 }
 
 static int fn_vector_map(lua_State *L)
@@ -146,7 +165,8 @@ static int fn_vector_map(lua_State *L)
         v[i] = lua_tonumber(L, -1);
         lua_pop(L, 1);
     }
-    return make_vector(L, v);
+    Lua::Pusher{L}(v);
+    return 1;
 }
 
 static luaL_Reg functions[] = {

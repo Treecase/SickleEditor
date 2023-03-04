@@ -34,6 +34,9 @@ function gAppWin.topMapArea:on_key_press_event(keyval)
         transform:set_zoom(clamp(transform:get_zoom() * ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM))
     elseif keyval == LuaGDK.GDK_KEY_KP_Subtract then
         transform:set_zoom(clamp(transform:get_zoom() / ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM))
+    -- Reset zoom with 0.
+    elseif keyval == LuaGDK.GDK_KEY_0 then
+        transform:set_zoom(1.0)
 
     -- Hold Ctrl to select multiple brushes.
     elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
@@ -79,9 +82,11 @@ end
 function gAppWin.topMapArea:on_button_press_event(event)
     local state = self:get_state()
     local gbox = self:get_selection_box()
+
     if event.button == 1 then
+        local hovered = gbox:check_point(self:screenspace_to_drawspace(event.x, event.y))
         -- Clicking inside the selection box begins a selection drag.
-        if gbox:check_point(self:screenspace_to_drawspace(event.x, event.y)) == grabbablebox.BOX then
+        if hovered == grabbablebox.BOX then
             local drag = {}
             drag.x = event.x
             drag.y = event.y
@@ -167,26 +172,19 @@ function gAppWin.topMapArea:on_motion_notify_event(event)
     -- Change cursor if we're hovering a GrabBox selection point.
     local gbox = self:get_selection_box()
     local hovered = gbox:check_point(self:screenspace_to_drawspace(event.x, event.y))
-    local cursor = "default"
-    if hovered == grabbablebox.BOX then
-        cursor = "crosshair"
-    elseif hovered == grabbablebox.NE then
-        cursor = "ne-resize"
-    elseif hovered == grabbablebox.NW then
-        cursor = "nw-resize"
-    elseif hovered == grabbablebox.SE then
-        cursor = "se-resize"
-    elseif hovered == grabbablebox.SW then
-        cursor = "sw-resize"
-    elseif hovered == grabbablebox.N then
-        cursor = "n-resize"
-    elseif hovered == grabbablebox.E then
-        cursor = "e-resize"
-    elseif hovered == grabbablebox.S then
-        cursor = "s-resize"
-    elseif hovered == grabbablebox.W then
-        cursor = "w-resize"
-    end
+
+    local CURSORS = {
+        [grabbablebox.BOX] = "crosshair",
+        [grabbablebox.NE] = "ne-resize",
+        [grabbablebox.NW] = "nw-resize",
+        [grabbablebox.SE] = "se-resize",
+        [grabbablebox.SW] = "sw-resize",
+        [grabbablebox.N] = "n-resize",
+        [grabbablebox.E] = "e-resize",
+        [grabbablebox.S] = "s-resize",
+        [grabbablebox.W] = "w-resize"
+    }
+    local cursor = CURSORS[hovered] or "default"
 
     -- Selection Drag.
     if self.dragging_selection then

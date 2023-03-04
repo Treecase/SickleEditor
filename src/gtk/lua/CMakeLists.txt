@@ -17,3 +17,4 @@ target_link_libraries(sickle-gtk-lua PRIVATE
 )
 
 add_subdirectory(MapArea2D)
+add_subdirectory(MapArea3D)
