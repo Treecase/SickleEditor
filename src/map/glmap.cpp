@@ -176,6 +176,30 @@ void MAP::GLBrush::render() const
     }
 }
 
+void MAP::GLBrush::refresh(Brush const &brush, TextureManager &textures)
+{
+    planes.clear();
+    std::vector<GLfloat> vbodata{};
+    std::vector<GLuint> ebodata{};
+    for (auto const &mesh : mesh_from_brush(brush, textures))
+    {
+        planes.push_back({
+            *textures.at(mesh.tex).texture,
+            (GLsizei)mesh.ebo.size(),
+            (void *)(ebodata.size() * sizeof(GLuint))});
+        size_t const index = vbodata.size() / 5;
+        for (auto const &idx : mesh.ebo)
+            ebodata.push_back(index + idx);
+        vbodata.insert(vbodata.end(), mesh.vbo.cbegin(), mesh.vbo.cend());
+    }
+    vbo.bind();
+    vbo.update(vbodata);
+    vbo.unbind();
+    ebo.bind();
+    ebo.update(ebodata);
+    ebo.unbind();
+}
+
 
 /* ===[ GLMap ]=== */
 MAP::GLMap::GLMap(Map const &map)
@@ -192,7 +216,6 @@ MAP::GLMap::GLMap(Map const &map)
         return;
 
     auto const &wadpaths = worldspawn->properties.at("wad");
-    TextureManager textures{};
     for (size_t i = 0, j = 0; j != std::string::npos; i = j + 1)
     {
         j = wadpaths.find(';', i);
@@ -215,4 +238,15 @@ void MAP::GLMap::render()
     for (auto const &entity : entities)
         for (auto const &brush : entity.brushes)
             brush.render();
+}
+
+void MAP::GLMap::refresh(Map const &map)
+{
+    for (size_t i = 0; i < map.entities.size(); ++i)
+    {
+        auto const &e = map.entities[i];
+        auto &ent = entities[i];
+        for (size_t j = 0; j < e.brushes.size(); ++j)
+            ent.brushes[j].refresh(e.brushes[j], textures);
+    }
 }

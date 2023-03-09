@@ -69,10 +69,12 @@ namespace MAP
         static GLBrush new_from_brush(Brush const &brush, TextureManager &textures);
 
         void render() const;
+        void refresh(Brush const &brush, TextureManager &textures);
     };
 
     class GLMap : public TMap<GLBrush>
     {
+        TextureManager textures{};
     public:
         /** Transform map Brush to GL brush. */
         GLMap(Map const &map);
@@ -80,6 +82,7 @@ namespace MAP
 
         /** Draw a GLMap. */
         void render();
+        void refresh(Map const &map);
     };
 };
 

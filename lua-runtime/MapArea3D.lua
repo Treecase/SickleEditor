@@ -95,9 +95,6 @@ function gAppWin.mapArea3D:on_key_release_event(keyval)
     elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
         state:set_multiselect(false)
 
-    elseif keyval == LuaGDK.GDK_KEY_z or keyval == LuaGDK.GDK_KEY_Z then
-        self:set_wireframe(not self:get_wireframe())
-
     else
         return false
     end

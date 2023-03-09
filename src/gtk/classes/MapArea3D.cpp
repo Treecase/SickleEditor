@@ -261,6 +261,10 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 
     auto const modelMatrix = property_transform().get_value().getMatrix();
 
+    // TEMP: Ideally GLBrushes would be refreshed only when the underlying
+    // EditorBrush is modified.
+    _mapview->refresh(_editor.get_map());
+
     // Draw models.
     _shader->use();
     glActiveTexture(GL_TEXTURE0);
