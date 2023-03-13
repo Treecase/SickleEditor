@@ -24,6 +24,7 @@
 #include "map/glmap.hpp"
 #include "utils/Transform.hpp"
 #include "utils/FreeCam.hpp"
+#include "utils/DebugDrawer3D.hpp"
 
 #include <gdkmm/frameclock.h>
 #include <glibmm/property.h>
@@ -39,50 +40,6 @@ namespace Sickle
         using ScreenSpacePoint = glm::vec2;
         using GLSpacePoint = glm::vec3;
 
-        class Debug
-        {
-        public:
-            static char const *const rayShaderVertexSource;
-            static char const *const rayShaderFragmentSource;
-            std::shared_ptr<GLUtil::Program> rayShader{nullptr};
-            std::shared_ptr<GLUtil::VertexArray> rayVAO{nullptr};
-            std::shared_ptr<GLUtil::Buffer> rayVBO{nullptr};
-            void init()
-            {
-                rayShader.reset(
-                    new GLUtil::Program{{
-                        GLUtil::Shader{GL_VERTEX_SHADER, rayShaderVertexSource},
-                        GLUtil::Shader{GL_FRAGMENT_SHADER, rayShaderFragmentSource}
-                    }}
-                );
-                rayVAO.reset(new GLUtil::VertexArray{"DebugRayVAO"});
-                rayVBO.reset(new GLUtil::Buffer{GL_ARRAY_BUFFER, "DebugRayVAO"});
-                rayVAO->bind();
-                rayVBO->bind();
-                rayVBO->buffer(GL_DYNAMIC_DRAW, std::vector<float>{0,0,0, 0,0,0});
-                rayVAO->enableVertexAttribArray(0, 3, GL_FLOAT, 3*sizeof(float));
-                rayVBO->unbind();
-                rayVAO->unbind();
-            }
-            void setRayPoints(glm::vec3 const &start, glm::vec3 const &end)
-            {
-                rayVBO->bind();
-                rayVBO->update(std::vector<float>{
-                    start.x, start.y, start.z,
-                    end.x, end.y, end.z});
-                rayVBO->unbind();
-            }
-            void drawRay(glm::mat4 const &view, glm::mat4 const &proj)
-            {
-                rayVAO->bind();
-                rayShader->use();
-                rayShader->setUniformS("view", view);
-                rayShader->setUniformS("projection", proj);
-                rayShader->setUniformS("color", glm::vec3{1, 0, 0});
-                glDrawArrays(GL_LINES, 0, 2);
-            }
-        };
-
         struct State
         {
             glm::vec2 pointer_prev{0, 0};
@@ -93,7 +50,7 @@ namespace Sickle
             bool multiselect{false};
         };
 
-        Debug debug{};
+        DebugDrawer3D debug{};
 
         MapArea3D(Editor &ed);
 

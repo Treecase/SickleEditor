@@ -29,28 +29,6 @@
 #define DEFAULT_TRANSFORM   {{0.0f, 0.0f, 0.0f}, {glm::radians(-90.0f), 0.0f, 0.0f}, {0.005f, 0.005f, 0.005f}}
 
 
-
-char const *const Sickle::MapArea3D::Debug::rayShaderVertexSource{
-"#version 430 core\n"
-"layout(location=0) in vec3 vPos;"
-"uniform mat4 view;"
-"uniform mat4 projection;"
-"void main()"
-"{"
-"    gl_Position = projection * view * vec4(vPos, 1.0);"
-"}"
-};
-char const *const Sickle::MapArea3D::Debug::rayShaderFragmentSource{
-"#version 430 core\n"
-"out vec4 FragColor;"
-"uniform vec3 color;"
-"void main()"
-"{"
-"    FragColor = vec4(color, 1);"
-"}"
-};
-
-
 bool
 raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
 {
