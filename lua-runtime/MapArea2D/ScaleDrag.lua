@@ -1,7 +1,11 @@
+-- ScaleDrag
+--
+-- Scale the selected brushes.
 
-ScaleDrag = {}
+local ScaleDrag = {}
 ScaleDrag.metatable = {}
 ScaleDrag.metatable.__index = ScaleDrag.metatable
+
 
 function ScaleDrag.metatable:on_button_press_event(event)
 end
@@ -135,6 +139,7 @@ end
 function ScaleDrag.metatable:on_scroll_event(event)
 end
 
+
 function ScaleDrag.new(maparea, x, y, origin, handle)
     local scale_drag = {}
     scale_drag.maparea = maparea
@@ -149,3 +154,5 @@ function ScaleDrag.new(maparea, x, y, origin, handle)
 
     return scale_drag
 end
+
+return ScaleDrag

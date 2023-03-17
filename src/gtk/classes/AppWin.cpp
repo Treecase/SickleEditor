@@ -24,6 +24,8 @@
 #include "version.hpp"
 #include "LuaGeo.hpp"
 
+#include <glibmm/fileutils.h>
+
 #include <algorithm>
 
 
@@ -169,6 +171,18 @@ void Sickle::AppWin::reload_scripts()
 {
     // Run external scripts in the lua-runtime directory.
     auto dir = Gio::File::create_for_path(SE_DATA_DIR "lua-runtime");
+
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "path");
+    std::string oldpath{lua_tostring(L, -1)};
+    lua_pop(L, 1);
+    lua_pushstring(L, (
+        oldpath + ";"
+        + dir->get_path() + "/?;"
+        + dir->get_path() + "/?.lua").c_str());
+    lua_setfield(L, -2, "path");
+    lua_pop(L, 1);
+
     auto enumeration = dir->enumerate_children();
     for (
         auto file = enumeration->next_file();
@@ -176,6 +190,8 @@ void Sickle::AppWin::reload_scripts()
         file = enumeration->next_file())
     {
         auto const &filepath = dir->get_path() + "/" + file->get_name();
+        if (Glib::file_test(filepath, Glib::FileTest::FILE_TEST_IS_DIR))
+            continue;
         Lua::checkerror(L, luaL_dofile(L, filepath.c_str()));
     }
     signal_lua_reloaded().emit();
