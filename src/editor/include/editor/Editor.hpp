@@ -58,8 +58,16 @@ namespace Sickle
         void transform(glm::mat4 const &matrix)
         {
             for (auto &face : planes)
+            {
                 for (auto &vertex : face.vertices)
                     vertex = glm::vec3{matrix * glm::vec4{vertex, 1.0}};
+                if (face.vertices.size() >= 3)
+                {
+                    face.a = face.vertices.at(2);
+                    face.b = face.vertices.at(1);
+                    face.c = face.vertices.at(0);
+                }
+            }
             signal_changed().emit();
         }
         void translate(MAP::Vector3 const &translation)

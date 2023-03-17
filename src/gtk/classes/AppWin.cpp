@@ -167,7 +167,7 @@ void Sickle::AppWin::open(Gio::File const *file)
 void Sickle::AppWin::save(std::string const &filename)
 {
     std::ofstream out{filename};
-    MAP::save(out, _map);
+    MAP::save(out, editor.get_map());
 }
 
 void Sickle::AppWin::show_console_window()
