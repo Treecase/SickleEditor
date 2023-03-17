@@ -97,6 +97,22 @@ static int translate(lua_State *L)
     return 0;
 }
 
+static int get_vertices(lua_State *L)
+{
+    auto brush = leditorbrush_check(L, 1);
+    lua_newtable(L);
+    lua_Integer idx = 1;
+    for (auto const &plane : brush->planes)
+    {
+        for (auto const &vertex : plane.vertices)
+        {
+            Lua::Pusher{L}(vertex);
+            lua_seti(L, 2, idx++);
+        }
+    }
+    return 1;
+}
+
 static int do_nothing(lua_State *L)
 {
     return 0;
@@ -106,6 +122,7 @@ static luaL_Reg methods[] = {
     {"is_selected", is_selected},
     {"transform", transform},
     {"translate", translate},
+    {"get_vertices", get_vertices},
 
     {"on_selected", do_nothing},
     {NULL, NULL}

@@ -14,8 +14,27 @@ local MIN_ZOOM = 1.0 / 16.0
 local MAX_ZOOM = 16.0
 
 
+function addListener(maparea, listener)
+    table.insert(maparea.listeners, listener)
+end
+
+function removeListener(maparea, listener)
+    for i,l in ipairs(maparea.listeners) do
+        if l == listener then
+            table.remove(maparea.listeners, i)
+        end
+    end
+end
+
+
 -- Keyboard key pressed.
 function gAppWin.topMapArea:on_key_press_event(keyval)
+    local captured = false
+    for _,listener in ipairs(self.listeners) do
+        if listener:on_key_press_event(keyval) then captured = true end
+    end
+    if captured then return true end
+
     local transform = self:get_transform()
     local state = self:get_state()
 
@@ -61,6 +80,12 @@ end
 
 -- Keyboard key released.
 function gAppWin.topMapArea:on_key_release_event(keyval)
+    local captured = false
+    for _,listener in ipairs(self.listeners) do
+        if listener:on_key_release_event(keyval) then captured = true end
+    end
+    if captured then return true end
+
     -- Turn off multi-brush selecting when Ctrl is released.
     if keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
         local state = self:get_state()
@@ -80,6 +105,12 @@ end
 
 -- Mouse button pressed.
 function gAppWin.topMapArea:on_button_press_event(event)
+    local captured = false
+    for _,listener in ipairs(self.listeners) do
+        if listener:on_button_press_event(event) then captured = true end
+    end
+    if captured then return true end
+
     local state = self:get_state()
     local gbox = self:get_selection_box()
 
@@ -93,6 +124,19 @@ function gAppWin.topMapArea:on_button_press_event(event)
             drag.moved = false
             drag.accum = geo.vector.new()
             self.dragging_selection = drag
+
+        elseif hovered ~= grabbablebox.NONE then
+            local scale_drag = ScaleDrag.new(
+                self,
+                event.x,
+                event.y,
+                geo.vector.new(
+                    self:drawspace_to_worldspace(
+                        self:screenspace_to_drawspace(event.x, event.y))),
+                hovered
+            )
+            self:addListener(scale_drag)
+            scale_drag:on_button_press_event(event)
 
         -- Left click can either be the start of a brushbox draw, or just a
         -- simple click. Either way, we set the brushbox to be 0 width on the
@@ -120,6 +164,12 @@ end
 
 -- Mouse button released.
 function gAppWin.topMapArea:on_button_release_event(event)
+    local captured = false
+    for _,listener in ipairs(self.listeners) do
+        if listener:on_button_release_event(event) then captured = true end
+    end
+    if captured then return true end
+
     local state = self:get_state()
     local editor = self:get_editor()
 
@@ -129,13 +179,11 @@ function gAppWin.topMapArea:on_button_release_event(event)
         if self.dragging_selection.moved then
             self.dragging_selection = nil
             return true
-
+        end
         -- If we clicked within the selection, but didn't drag, we want to
         -- deselect the clicked brush.
-        else
-            self.dragging_selection = nil
-            -- vvv Brush deselection done below. vvv
-        end
+        self.dragging_selection = nil
+        -- vvv Brush deselection done below. vvv
     end
 
     -- Select a brush on left click.
@@ -163,6 +211,12 @@ end
 
 -- Mouse moved over widget.
 function gAppWin.topMapArea:on_motion_notify_event(event)
+    local captured = false
+    for _,listener in ipairs(self.listeners) do
+        if listener:on_motion_notify_event(event) then captured = true end
+    end
+    if captured then return true end
+
     local ret = false
 
     local editor = self:get_editor()
@@ -235,6 +289,12 @@ end
 
 -- Mouse scrolled on widget.
 function gAppWin.topMapArea:on_scroll_event(event)
+    local captured = false
+    for _,listener in ipairs(self.listeners) do
+        if listener:on_scroll_event(event) then captured = true end
+    end
+    if captured then return true end
+
     local transform = self:get_transform()
 
     -- shift+ctrl+scroll = scroll vertical
@@ -272,6 +332,16 @@ function gAppWin.topMapArea:on_scroll_event(event)
     return true
 end
 
+
+gAppWin.topMapArea.listeners = {}
+gAppWin.frontMapArea.listeners = {}
+gAppWin.rightMapArea.listeners = {}
+gAppWin.topMapArea.addListener = addListener
+gAppWin.frontMapArea.addListener = addListener
+gAppWin.rightMapArea.addListener = addListener
+gAppWin.topMapArea.removeListener = removeListener
+gAppWin.frontMapArea.removeListener = removeListener
+gAppWin.rightMapArea.removeListener = removeListener
 
 -- All MapAreas should act the same.
 gAppWin.frontMapArea.on_key_press_event = gAppWin.topMapArea.on_key_press_event

@@ -28,13 +28,16 @@ int luaopen_geo(lua_State *L);
 
 int luaopen_geo_vector(lua_State *L);
 int lgeo_vector_new(lua_State *L);
+glm::vec4 lgeo_checkvector(lua_State *L, int arg);
+glm::vec4 lgeo_tovector(lua_State *L, int i);
 template<> void Lua::Pusher::operator()(glm::vec4 vec);
 template<> void Lua::Pusher::operator()(glm::vec3 vec);
 template<> void Lua::Pusher::operator()(glm::vec2 vec);
-glm::vec4 lgeo_checkvector(lua_State *L, int arg);
 
 int luaopen_geo_matrix(lua_State *L);
 int lgeo_matrix_new(lua_State *L);
 glm::mat4 lgeo_checkmatrix(lua_State *L, int arg);
+glm::mat4 lgeo_tomatrix(lua_State *L, int i);
+template<> void Lua::Pusher::operator()(glm::mat4 mat);
 
 #endif
