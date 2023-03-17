@@ -52,6 +52,7 @@ void Sickle::App::on_startup()
     // File
     add_action("new", sigc::mem_fun(*this, &App::on_action_new));
     add_action("open", sigc::mem_fun(*this, &App::on_action_open));
+    add_action("save", sigc::mem_fun(*this, &App::on_action_save));
     add_action("exit", sigc::mem_fun(*this, &App::on_action_exit));
     // Edit
     add_action("setGameDef", sigc::mem_fun(*this, &App::on_action_setGameDef));
@@ -65,6 +66,7 @@ void Sickle::App::on_startup()
     // Add keyboard accelerators for the menu.
     set_accel_for_action("app.new", "<Ctrl>N");
     set_accel_for_action("app.open", "<Ctrl>O");
+    set_accel_for_action("app.save", "<Ctrl>S");
     set_accel_for_action("app.exit", "<Ctrl>Q");
     set_accel_for_action("app.openLuaConsole", "<Ctrl><Shift>C");
     set_accel_for_action("app.reloadLua", "<Ctrl><Shift>R");
@@ -118,6 +120,42 @@ void Sickle::App::on_action_open()
     {
     case Gtk::ResponseType::RESPONSE_ACCEPT:
         win->open(chooser->get_file().get());
+        break;
+    }
+}
+
+void Sickle::App::on_action_save()
+{
+    auto win = dynamic_cast<AppWin *>(get_active_window());
+
+    auto chooser = Gtk::FileChooserNative::create(
+        "Save", Gtk::FileChooserAction::FILE_CHOOSER_ACTION_SAVE, "Save",
+        "Cancel");
+    chooser->set_transient_for(*win);
+
+    auto all_filter = Gtk::FileFilter::create();
+    all_filter->add_pattern("*.*");
+    all_filter->set_name("All Files");
+    auto map_filter = Gtk::FileFilter::create();
+    map_filter->add_pattern("*.map");
+    map_filter->set_name("Game Maps");
+    chooser->add_filter(map_filter);
+    chooser->add_filter(all_filter);
+
+    int response = chooser->run();
+
+    auto filename = chooser->get_filename();
+    if (chooser->get_filter() == map_filter)
+    {
+        auto x = filename.rfind('.');
+        if (x == std::string::npos)
+            filename.append(".map");
+    }
+
+    switch (response)
+    {
+    case Gtk::ResponseType::RESPONSE_ACCEPT:
+        win->save(filename);
         break;
     }
 }

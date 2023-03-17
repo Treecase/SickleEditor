@@ -16,14 +16,16 @@ function MoveSelected.metatable:on_button_release_event(event)
 end
 
 function MoveSelected.metatable:on_key_press_event(keyval)
-    if keyval == LuaGDK.GDK_KEY_Alt_L then
+    if keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
         self.snapped = false
+        return true
     end
 end
 
 function MoveSelected.metatable:on_key_release_event(keyval)
-    if keyval == LuaGDK.GDK_KEY_Alt_L then
+    if keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
         self.snapped = true
+        return true
     end
 end
 

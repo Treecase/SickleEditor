@@ -23,10 +23,12 @@
 #include "appid.hpp"
 #include "version.hpp"
 #include "LuaGeo.hpp"
+#include "map/mapsaver.hpp"
 
 #include <glibmm/fileutils.h>
 
 #include <algorithm>
+#include <fstream>
 
 
 #define GRID_SIZE_MIN   1U
@@ -160,6 +162,12 @@ void Sickle::AppWin::open(Gio::File const *file)
     else
         _map = MAP::Map{};
     editor.set_map(_map);
+}
+
+void Sickle::AppWin::save(std::string const &filename)
+{
+    std::ofstream out{filename};
+    MAP::save(out, _map);
 }
 
 void Sickle::AppWin::show_console_window()

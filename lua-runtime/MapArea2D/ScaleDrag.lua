@@ -16,17 +16,25 @@ function ScaleDrag.metatable:on_button_release_event(event)
 end
 
 function ScaleDrag.metatable:on_key_press_event(keyval)
-    if keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
+    if keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
+        self.snapped = false
+    elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
         self.centered = true
-        return true
+    else
+        return false
     end
+    return true
 end
 
 function ScaleDrag.metatable:on_key_release_event(keyval)
-    if keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
+    if keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
+        self.snapped = true
+    elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
         self.centered = false
-        return true
+    else
+        return false
     end
+    return true
 end
 
 function ScaleDrag.metatable:on_motion_notify_event(event)
@@ -108,6 +116,12 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
         self.maparea:drawspace_to_worldspace(
             self.maparea:screenspace_to_drawspace(self.x, self.y)))
 
+    if self.snapped then
+        local grid = gAppWin:get_grid_size()
+        curr = geo.vector.map(math.floor, curr / grid) * grid
+        prev = geo.vector.map(math.floor, prev / grid) * grid
+    end
+
     -- Calculate distance from selection centerpoint
     local radius_curr = geo.vector.map(math.abs, curr - center)
     local radius_prev = geo.vector.map(
@@ -146,6 +160,7 @@ function ScaleDrag.new(maparea, x, y, origin, handle)
     scale_drag.x = x
     scale_drag.y = y
     scale_drag.moved = false
+    scale_drag.snapped = true
     scale_drag.centered = false
     scale_drag.origin = origin
     scale_drag.handle = handle

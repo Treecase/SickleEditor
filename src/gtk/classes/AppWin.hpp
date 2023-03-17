@@ -46,6 +46,8 @@ namespace Sickle
 
         /** Open a file. */
         void open(Gio::File const *file);
+        /** Save currently edited map. */
+        void save(std::string const &filename);
         /** Open the Lua console window. */
         void show_console_window();
         /** Reload Lua scripts. */

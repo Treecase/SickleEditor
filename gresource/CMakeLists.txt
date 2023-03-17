@@ -10,6 +10,20 @@ add_custom_command(
         --target=resources.cpp
         --sourcedir="${CMAKE_CURRENT_SOURCE_DIR}"
         --generate-source
+    DEPENDS
+        gtk/menus.ui
+        lua/gdkevents.lua
+        lua/gdkkeysyms.lua
+        lua/gdktypes.lua
+        shaders/fragment.frag
+        shaders/map.frag
+        shaders/map.vert
+        shaders/model.frag
+        shaders/model.vert
+        shaders/vertex.vert
+        logo.png
+        logo.svg
+        LuaConsole.css
 )
 add_library(resources OBJECT resources.cpp)
 target_link_libraries(resources PRIVATE PkgConfig::GTKMM)
