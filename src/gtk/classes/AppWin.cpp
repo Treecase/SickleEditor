@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 
 
 #define GRID_SIZE_MIN   1U
@@ -179,6 +180,15 @@ void Sickle::AppWin::reload_scripts()
 {
     // Run external scripts in the lua-runtime directory.
     auto dir = Gio::File::create_for_path(SE_DATA_DIR "lua-runtime");
+    if (!dir->query_exists())
+    {
+        dir = Gio::File::create_for_path("../share/lua-runtime");
+        if (!dir->query_exists())
+        {
+            std::cerr << "WARNING: Failed to load Lua scripts!\n";
+            return;
+        }
+    }
 
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "path");
