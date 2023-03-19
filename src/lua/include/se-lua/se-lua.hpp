@@ -19,7 +19,7 @@
 #ifndef SE_LUA_HPP
 #define SE_LUA_HPP
 
-#include "utils/TemplateUtils.hpp"
+#include <utils/TemplateUtils.hpp>
 
 extern "C" {
 #include <lua.h>
@@ -39,39 +39,20 @@ namespace Lua
         Error(std::string const &what);
     };
 
+
     /** Push a value onto the stack. */
+    template<typename T>
+    void push(lua_State *L, T *value)=delete;
+    void push(lua_State *L, bool value);
+    void push(lua_State *L, lua_Integer value);
+    void push(lua_State *L, lua_Number value);
+    void push(lua_State *L, char const *value);
+    void push(lua_State *L, std::string const &value);
+
     struct Pusher
     {
         lua_State *L;
-
-        /** Template to allow extension by adding specifications. */
-        template<typename T>
-        void operator()(T value)=delete;
-
-        void operator()(bool value)
-        {
-            lua_pushboolean(L, value);
-        }
-        void operator()(lua_Integer value)
-        {
-            lua_pushinteger(L, value);
-        }
-        void operator()(lua_Number value)
-        {
-            lua_pushnumber(L, value);
-        }
-        void operator()(void *value)
-        {
-            lua_pushlightuserdata(L, value);
-        }
-        void operator()(char const *value)
-        {
-            lua_pushstring(L, value);
-        }
-        void operator()(std::string const &value)
-        {
-            lua_pushlstring(L, value.c_str(), value.length());
-        }
+        template<typename T> void operator()(T value) {push(L, value);}
     };
 
 
@@ -111,9 +92,8 @@ namespace Lua
     template<typename K, typename V>
     void set_table(lua_State *L, K key, V value)
     {
-        Pusher push{L};
-        push(key);
-        push(value);
+        push(L, key);
+        push(L, value);
         lua_settable(L, -3);
     }
 
@@ -123,31 +103,6 @@ namespace Lua
     {
         lua_newtable(L);
         (set_table(L, c.first, c.second), ...);
-    }
-
-
-    /**
-     * Add the value at the top of the stack to the Lua registry, using KEY as
-     * the index.
-     */
-    template<typename T>
-    void add_to_registry(lua_State *L, T key)
-    {
-        lua_pushvalue(L, LUA_REGISTRYINDEX);
-        Pusher{L}(key);
-        lua_pushvalue(L, -3);
-        lua_settable(L, -3);
-        lua_pop(L, 1);
-    }
-
-    /** Get a value from the Lua registry, using KEY. */
-    template<typename T>
-    void get_from_registry(lua_State *L, T key)
-    {
-        lua_pushvalue(L, LUA_REGISTRYINDEX);
-        Pusher{L}(key);
-        lua_gettable(L, -2);
-        lua_remove(L, -2);
     }
 }
 

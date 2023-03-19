@@ -120,7 +120,8 @@ function gAppWin.topMapArea:on_button_press_event(event)
     local gbox = self:get_selection_box()
 
     if event.button == 1 then
-        local hovered = gbox:check_point(self:screenspace_to_drawspace(event.x, event.y))
+        local hovered = gbox:check_point(
+            self:screenspace_to_drawspace({event.x, event.y}))
         -- Clicking inside the selection box begins a selection drag.
         if hovered == grabbablebox.BOX then
             local drag = MoveSelected.new(self, event.x, event.y)
@@ -132,9 +133,9 @@ function gAppWin.topMapArea:on_button_press_event(event)
                 self,
                 event.x,
                 event.y,
-                geo.vector.new(
-                    self:drawspace_to_worldspace(
-                        self:screenspace_to_drawspace(event.x, event.y))),
+                self:drawspace_to_worldspace(
+                    self:screenspace_to_drawspace(
+                        {event.x, event.y})),
                 hovered
             )
             self:addListener(scale_drag)
@@ -145,9 +146,10 @@ function gAppWin.topMapArea:on_button_press_event(event)
         -- click, and clear the state's `dragged` property.
         else
             local editor = self:get_editor()
-            local x,y,z = self:drawspace_to_worldspace(self:screenspace_to_drawspace(event.x, event.y))
-            editor:get_brushbox():set_start(x, y, z)
-            editor:get_brushbox():set_end(x, y, z)
+            local xyz = self:drawspace_to_worldspace(
+                self:screenspace_to_drawspace({event.x, event.y}))
+            editor:get_brushbox():set_start(xyz)
+            editor:get_brushbox():set_end(xyz)
             state:set_dragged(false)
         end
 
@@ -182,8 +184,8 @@ function gAppWin.topMapArea:on_button_release_event(event)
             editor:get_selection():clear()
         end
         -- Pick a brush based on the click position.
-        local x,y = self:screenspace_to_drawspace(event.x, event.y)
-        local picked = self:pick_brush(x, y)
+        local xy = self:screenspace_to_drawspace({event.x, event.y})
+        local picked = self:pick_brush(xy)
         if picked then
             if picked:is_selected() then
                 editor:get_selection():remove(picked)
@@ -214,7 +216,8 @@ function gAppWin.topMapArea:on_motion_notify_event(event)
 
     -- Change cursor if we're hovering a GrabBox selection point.
     local gbox = self:get_selection_box()
-    local hovered = gbox:check_point(self:screenspace_to_drawspace(event.x, event.y))
+    local hovered = gbox:check_point(
+        self:screenspace_to_drawspace({event.x, event.y}))
 
     local CURSORS = {
         [grabbablebox.BOX] = "crosshair",
@@ -231,7 +234,9 @@ function gAppWin.topMapArea:on_motion_notify_event(event)
 
     -- Set selection box when dragging with left-click.
     if event.state & LuaGDK.GDK_BUTTON1_MASK ~= 0 then
-        editor:get_brushbox():set_end(self:drawspace_to_worldspace(self:screenspace_to_drawspace(event.x, event.y)))
+        editor:get_brushbox():set_end(
+            self:drawspace_to_worldspace(
+                self:screenspace_to_drawspace({event.x, event.y})))
         state:set_dragged(true)
         editor:get_selection():clear()
         ret = true

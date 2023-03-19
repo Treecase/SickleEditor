@@ -16,32 +16,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../classes/MapArea2D.hpp"
+#include "../../classes/MapArea2D.hpp"
 #include "MapArea2D_Lua.hpp"
 
+#include <se-lua/lua-utils.hpp>
+#include <LuaGeo.hpp>
 
-#define LIBRARY_NAME    "Sickle.grabbablebox"
-#define CLASSNAME       Sickle::GrabbableBox
 
-
-/** Add value at the top of the stack to the objectTable using KEY. */
-static void add_to_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_pushvalue(L, -3);
-    lua_settable(L, -3);
-    lua_pop(L, 1);
-}
-
-/** Get the Lua value associated with KEY from the objectTable. */
-static void get_from_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_gettable(L, -2);
-    lua_remove(L, -2);
-}
+static Lua::ReferenceManager refman{};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -49,9 +31,8 @@ static void get_from_objectTable(lua_State *L, CLASSNAME *key)
 static int check_point(lua_State *L)
 {
     auto box = lgrabbablebox_check(L, 1);
-    auto x = luaL_checknumber(L, 2);
-    auto y = luaL_checknumber(L, 3);
-    lua_pushinteger(L, box->check_point({x, y}));
+    auto xy = lgeo_tovector(L, 2);
+    lua_pushinteger(L, box->check_point(xy));
     return 1;
 }
 
@@ -63,50 +44,38 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int lgrabbablebox_new(lua_State *L, CLASSNAME *box)
+template<>
+void Lua::push(lua_State *L, Sickle::GrabbableBox *box)
 {
-    // If we've already built an object for this pointer, just reuse it.
-    get_from_objectTable(L, box);
+    refman.get(box);
     if (!lua_isnil(L, -1))
-        return 1;
+        return;
     else
         lua_pop(L, 1);
 
-    // Create the Lua object.
-    auto ptr = static_cast<CLASSNAME const **>(
-        lua_newuserdatauv(L, sizeof(CLASSNAME *), 0));
+    auto ptr = static_cast<Sickle::GrabbableBox const **>(
+        lua_newuserdatauv(L, sizeof(Sickle::GrabbableBox *), 0));
     *ptr = box;
+    luaL_setmetatable(L, "Sickle.maparea2d.grabbablebox");
 
-    // Set metatable.
-    luaL_setmetatable(L, LIBRARY_NAME);
-
-    // Add the object to the Lua registry, using the pointer as key. This is
-    // needed for the C++ callbacks to know what object to call methods on.
-    add_to_objectTable(L, box);
-
-    return 1;
+    refman.set(box, -1);
 }
 
-CLASSNAME *lgrabbablebox_check(lua_State *L, int arg)
+Sickle::GrabbableBox *lgrabbablebox_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
-    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
-    return *static_cast<CLASSNAME **>(ud);
+    void *ud = luaL_checkudata(L, arg, "Sickle.maparea2d.grabbablebox");
+    luaL_argcheck(L, ud != NULL, arg,
+        "`Sickle.maparea2d.grabbablebox' expected");
+    return *static_cast<Sickle::GrabbableBox **>(ud);
 }
 
 int luaopen_grabbablebox(lua_State *L)
 {
-    // Table used to map C++ pointers to Lua objects.
-    // TODO: References should be removed when the C++ objects are destroyed.
-    lua_newtable(L);
-    Lua::add_to_registry(L, LIBRARY_NAME".objectTable");
-    lua_pop(L, 1);
+    refman.init(L);
 
-    luaL_newmetatable(L, LIBRARY_NAME);
+    luaL_newmetatable(L, "Sickle.maparea2d.grabbablebox");
     luaL_setfuncs(L, methods, 0);
-    lua_pushliteral(L, "__index");
-    lua_pushvalue(L, -2);
-    lua_settable(L, -3);
+    lua_setfield(L, -1, "__index");
 
     // Export enum values.
     lua_newtable(L);

@@ -1,5 +1,5 @@
 /**
- * GdkEvent_Lua.cpp - Lua::Pusher specializations for GDK events.
+ * GdkEvent_Lua.cpp - Lua::push overloads for GDK events.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,13 @@
 
 
 template<>
-void Lua::Pusher::operator()(GdkEventKey const *event)
+void Lua::push(lua_State *L, GdkEventKey const *event)
 {
     lua_pushinteger(L, (lua_Integer)event->keyval);
 }
 
 template<>
-void Lua::Pusher::operator()(GdkEventButton const *event)
+void Lua::push(lua_State *L, GdkEventButton const *event)
 {
     make_table(L,
         std::make_pair("x", event->x),
@@ -35,7 +35,7 @@ void Lua::Pusher::operator()(GdkEventButton const *event)
 }
 
 template<>
-void Lua::Pusher::operator()(GdkEventMotion const *event)
+void Lua::push(lua_State *L, GdkEventMotion const *event)
 {
     make_table(L,
         std::make_pair("state", (lua_Integer)event->state),
@@ -44,7 +44,7 @@ void Lua::Pusher::operator()(GdkEventMotion const *event)
 }
 
 template<>
-void Lua::Pusher::operator()(GdkEventScroll const *event)
+void Lua::push(lua_State *L, GdkEventScroll const *event)
 {
     make_table(L,
         std::make_pair("direction", (lua_Integer)event->direction),

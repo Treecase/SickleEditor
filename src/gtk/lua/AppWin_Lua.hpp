@@ -19,7 +19,7 @@
 #ifndef SE_APPWIN_LUA_HPP
 #define SE_APPWIN_LUA_HPP
 
-#include "se-lua/se-lua.hpp"
+#include <se-lua/se-lua.hpp>
 
 
 namespace Sickle
@@ -28,7 +28,8 @@ namespace Sickle
 }
 
 int luaopen_appwin(lua_State *L);
-int lappwin_new(lua_State *L, Sickle::AppWin *appwin);
 Sickle::AppWin *lappwin_check(lua_State *L, int arg);
+
+template<> void Lua::push(lua_State *L, Sickle::AppWin *appwin);
 
 #endif

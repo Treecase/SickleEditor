@@ -60,7 +60,7 @@ namespace Sickle
         auto signal_lua_reloaded() {return _sig_lua_reloaded;}
 
         // Lua constructor needs access to private members.
-        friend int ::lappwin_new(lua_State *, AppWin *);
+        friend void Lua::push(lua_State *, AppWin *);
 
     protected:
         Gtk::Grid m_grid;

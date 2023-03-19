@@ -1,6 +1,6 @@
 /**
  * Editor_Lua.hpp - Editor Lua binding.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,19 +28,20 @@ namespace Sickle
 }
 
 int luaopen_editor(lua_State *L);
-int leditor_new(lua_State *L, Sickle::Editor *editor);
 Sickle::Editor *leditor_check(lua_State *L, int arg);
 
 int luaopen_selection(lua_State *L);
-int lselection_new(lua_State *L, Sickle::Editor::Selection *selection);
 Sickle::Editor::Selection *lselection_check(lua_State *L, int arg);
 
 int luaopen_brushbox(lua_State *L);
-int lbrushbox_new(lua_State *L, Sickle::Editor::BrushBox *selection);
 Sickle::Editor::BrushBox *lbrushbox_check(lua_State *L, int arg);
 
 int luaopen_editorbrush(lua_State *L);
-int leditorbrush_new(lua_State *L, Sickle::EditorBrush *brush);
 Sickle::EditorBrush *leditorbrush_check(lua_State *L, int arg);
+
+template<> void Lua::push(lua_State *L, Sickle::Editor *editor);
+template<> void Lua::push(lua_State *L, Sickle::Editor::Selection *selection);
+template<> void Lua::push(lua_State *L, Sickle::Editor::BrushBox *selection);
+template<> void Lua::push(lua_State *L, Sickle::EditorBrush *brush);
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * State_Lua.cpp - State Lua binding.
+ * State_Lua.cpp - MapArea2D State Lua binding.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,6 @@
 
 #include "../classes/MapArea2D.hpp"
 #include "MapArea2D_Lua.hpp"
-
-
-#define LIBRARY_NAME    "Sickle.maparea2d.state"
-#define CLASSNAME       Sickle::MapArea2Dx::State
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +45,7 @@ static int set_pointer_prev(lua_State *L)
 static int get_dragged(lua_State *L)
 {
     auto s = lstate_check(L, 1);
-    Lua::Pusher{L}(s->dragged);
+    Lua::push(L, s->dragged);
     return 1;
 }
 
@@ -64,7 +60,7 @@ static int set_dragged(lua_State *L)
 static int get_multiselect(lua_State *L)
 {
     auto s = lstate_check(L, 1);
-    Lua::Pusher{L}(s->multiselect);
+    Lua::push(L, s->multiselect);
     return 1;
 }
 
@@ -89,32 +85,25 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int lstate_new(lua_State *L, CLASSNAME const &state)
+void Lua::push(lua_State *L, Sickle::MapArea2Dx::State state)
 {
-    // Create the Lua object.
-    auto ptr = static_cast<CLASSNAME *>(
-        lua_newuserdatauv(L, sizeof(CLASSNAME), 0));
+    auto ptr = static_cast<Sickle::MapArea2Dx::State *>(
+        lua_newuserdatauv(L, sizeof(Sickle::MapArea2Dx::State), 0));
     *ptr = state;
-
-    // Set metatable.
-    luaL_setmetatable(L, LIBRARY_NAME);
-
-    return 1;
+    luaL_setmetatable(L, "Sickle.maparea2d.state");
 }
 
-CLASSNAME *lstate_check(lua_State *L, int arg)
+Sickle::MapArea2Dx::State *lstate_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
-    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
-    return static_cast<CLASSNAME *>(ud);
+    void *ud = luaL_checkudata(L, arg, "Sickle.maparea2d.state");
+    luaL_argcheck(L, ud != NULL, arg, "`Sickle.maparea2d.state' expected");
+    return static_cast<Sickle::MapArea2Dx::State *>(ud);
 }
 
 int luaopen_state(lua_State *L)
 {
-    luaL_newmetatable(L, LIBRARY_NAME);
+    luaL_newmetatable(L, "Sickle.maparea2d.state");
     luaL_setfuncs(L, methods, 0);
-    lua_pushliteral(L, "__index");
-    lua_pushvalue(L, -2);
-    lua_settable(L, -3);
+    lua_setfield(L, -1, "__index");
     return 0;
 }

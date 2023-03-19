@@ -1,5 +1,5 @@
 /**
- * GdkEvent_Lua.hpp - Lua::Pusher specializations for GDK events.
+ * GdkEvent_Lua.hpp - Lua::push overloads for GDK events.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -19,21 +19,13 @@
 #ifndef SE_GDKEVENT_LUA_HPP
 #define SE_GDKEVENT_LUA_HPP
 
-#include "se-lua/se-lua.hpp"
-
 #include <gdkmm/event.h>
+#include <se-lua/se-lua.hpp>
 
 
-template<>
-void Lua::Pusher::operator()(GdkEventKey const *event);
-
-template<>
-void Lua::Pusher::operator()(GdkEventButton const *event);
-
-template<>
-void Lua::Pusher::operator()(GdkEventMotion const *event);
-
-template<>
-void Lua::Pusher::operator()(GdkEventScroll const *event);
+template<> void Lua::push(lua_State *L, GdkEventKey const *event);
+template<> void Lua::push(lua_State *L, GdkEventButton const *event);
+template<> void Lua::push(lua_State *L, GdkEventMotion const *event);
+template<> void Lua::push(lua_State *L, GdkEventScroll const *event);
 
 #endif

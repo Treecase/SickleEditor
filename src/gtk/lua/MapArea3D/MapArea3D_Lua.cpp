@@ -18,32 +18,13 @@
 
 #include "MapArea3D_Lua.hpp"
 #include "LuaGdkEvent.hpp"
-#include "LuaGeo.hpp"
 #include "Editor_Lua.hpp"
 
+#include <LuaGeo.hpp>
+#include <se-lua/lua-utils.hpp>
 
-#define LIBRARY_NAME    "Sickle.maparea3d"
-#define CLASSNAME       Sickle::MapArea3D
 
-
-/** Add value at the top of the stack to the objectTable using KEY. */
-static void add_to_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_pushvalue(L, -3);
-    lua_settable(L, -3);
-    lua_pop(L, 1);
-}
-
-/** Get the Lua value associated with KEY from the objectTable. */
-static void get_from_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_gettable(L, -2);
-    lua_remove(L, -2);
-}
+static Lua::ReferenceManager refman{};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,7 +62,7 @@ static int pick_brush(lua_State *L)
     auto xy = lgeo_checkvector(L, 2);
     auto brush = m3d->pick_brush(xy);
     if (brush)
-        leditorbrush_new(L, brush);
+        Lua::push(L, brush);
     else
         lua_pushnil(L);
     return 1;
@@ -92,7 +73,7 @@ static int screenspace_to_glspace(lua_State *L)
     auto m3d = lmaparea3d_check(L, 1);
     auto const &xy = lgeo_checkvector(L, 2);
     auto const &p = m3d->screenspace_to_glspace(xy);
-    Lua::Pusher{L}(p);
+    Lua::push(L, p);
     return 1;
 }
 
@@ -100,7 +81,7 @@ static int get_camera(lua_State *L)
 {
     auto m3d = lmaparea3d_check(L, 1);
     auto cam = m3d->property_camera().get_value();
-    Lua::Pusher{L}(cam);
+    Lua::push(L, cam);
     return 1;
 }
 
@@ -115,7 +96,8 @@ static int set_camera(lua_State *L)
 static int get_editor(lua_State *L)
 {
     auto m3d = lmaparea3d_check(L, 1);
-    return leditor_new(L, &m3d->get_editor());
+    Lua::push(L, &m3d->get_editor());
+    return 1;
 }
 
 static int get_mouse_sensitivity(lua_State *L)
@@ -149,7 +131,7 @@ static int set_shift_multiplier(lua_State *L)
 static int get_state(lua_State *L)
 {
     auto m3d = lmaparea3d_check(L, 1);
-    Lua::Pusher{L}(m3d->property_state().get_value());
+    Lua::push(L, m3d->property_state().get_value());
     return 1;
 }
 
@@ -212,78 +194,72 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int lmaparea3d_new(lua_State *L, Sickle::MapArea3D *maparea)
+template<>
+void Lua::push(lua_State *L, Sickle::MapArea3D *maparea)
 {
-    // If we've already built an object for this pointer, just reuse it.
-    get_from_objectTable(L, maparea);
+    refman.get(maparea);
     if (!lua_isnil(L, -1))
-        return 1;
+        return;
     else
         lua_pop(L, 1);
 
-    // Create the Lua object.
-    auto ptr = static_cast<CLASSNAME const **>(
-        lua_newuserdatauv(L, sizeof(CLASSNAME *), 1));
+    auto ptr = static_cast<Sickle::MapArea3D const **>(
+        lua_newuserdatauv(L, sizeof(Sickle::MapArea3D *), 1));
     *ptr = maparea;
+    luaL_setmetatable(L, "Sickle.maparea3d");
 
     // Add methods/data table.
+    // TODO: individual data, shared methods
     lua_newtable(L);
     luaL_setfuncs(L, methods, 0);
     lua_setiuservalue(L, -2, 1);
 
-    // Set metatable.
-    luaL_setmetatable(L, LIBRARY_NAME);
-
-    // Add the object to the Lua registry, using the pointer as key. This is
-    // needed for the C++ callbacks to know what object to call methods on.
-    add_to_objectTable(L, maparea);
-
     // Connect signals.
     maparea->signal_key_press_event().connect(
         [L, maparea](GdkEventKey const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_key_press_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_key_release_event().connect(
         [L, maparea](GdkEventKey const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_key_release_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_button_press_event().connect(
         [L, maparea](GdkEventButton const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_button_press_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_button_release_event().connect(
         [L, maparea](GdkEventButton const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_button_release_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_motion_notify_event().connect(
         [L, maparea](GdkEventMotion const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_motion_notify_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_scroll_event().connect(
         [L, maparea](GdkEventScroll const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_scroll_event", e);
             return lua_toboolean(L, -1);
         });
 
-    return 1;
+    refman.set(maparea, -1);
 }
 
-CLASSNAME *lmaparea3d_check(lua_State *L, int arg)
+Sickle::MapArea3D *lmaparea3d_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
-    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
-    return *static_cast<CLASSNAME **>(ud);
+    void *ud = luaL_checkudata(L, arg, "Sickle.maparea3d");
+    luaL_argcheck(L, ud != NULL, arg, "`Sickle.maparea3d' expected");
+    return *static_cast<Sickle::MapArea3D **>(ud);
 }
 
 int luaopen_maparea3d(lua_State *L)
@@ -291,13 +267,9 @@ int luaopen_maparea3d(lua_State *L)
     luaL_requiref(L, "Sickle.maparea3d.state", luaopen_maparea3d_state, 0);
     luaL_requiref(L, "Sickle.freecam", luaopen_freecam, 0);
 
-    // Table used to map C++ pointers to Lua objects.
-    // TODO: References should be removed when the C++ objects are destroyed.
-    lua_newtable(L);
-    Lua::add_to_registry(L, LIBRARY_NAME".objectTable");
-    lua_pop(L, 1);
+    refman.init(L);
 
-    luaL_newmetatable(L, LIBRARY_NAME);
+    luaL_newmetatable(L, "Sickle.maparea3d");
     luaL_setfuncs(L, metamethods, 0);
 
     return 0;

@@ -26,6 +26,7 @@
 #include "map/mapsaver.hpp"
 
 #include <glibmm/fileutils.h>
+#include <gtkmm/messagedialog.h>
 
 #include <algorithm>
 #include <fstream>
@@ -65,7 +66,7 @@ Sickle::AppWin::AppWin()
     luaL_requiref(L, "appwin", luaopen_appwin, 1);
     luaL_requiref(L, "geo", luaopen_geo, 1);
 
-    lappwin_new(L, this);
+    Lua::push(L, this);
     lua_setglobal(L, "gAppWin");
 
     // Run internal scripts from GResources.
@@ -185,6 +186,9 @@ void Sickle::AppWin::reload_scripts()
         dir = Gio::File::create_for_path("../share/lua-runtime");
         if (!dir->query_exists())
         {
+            Gtk::MessageDialog d{"Failed to load Lua scripts!", false, Gtk::MessageType::MESSAGE_WARNING};
+            d.set_title("Warning");
+            d.run();
             std::cerr << "WARNING: Failed to load Lua scripts!\n";
             return;
         }

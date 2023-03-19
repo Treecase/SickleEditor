@@ -20,16 +20,12 @@
 #include "MapArea2D_Lua.hpp"
 
 
-#define LIBRARY_NAME    "Sickle.maparea2d.transform2d"
-#define CLASSNAME       Sickle::MapArea2Dx::Transform2D
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
 static int get_x(lua_State *L)
 {
     auto t = ltransform2d_check(L, 1);
-    Lua::Pusher{L}(t->x);
+    Lua::push(L, t->x);
     return 1;
 }
 
@@ -43,7 +39,7 @@ static int set_x(lua_State *L)
 static int get_y(lua_State *L)
 {
     auto t = ltransform2d_check(L, 1);
-    Lua::Pusher{L}(t->y);
+    Lua::push(L, t->y);
     return 1;
 }
 
@@ -57,7 +53,7 @@ static int set_y(lua_State *L)
 static int get_zoom(lua_State *L)
 {
     auto t = ltransform2d_check(L, 1);
-    Lua::Pusher{L}(t->zoom);
+    Lua::push(L, t->zoom);
     return 1;
 }
 
@@ -81,32 +77,25 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int ltransform2d_new(lua_State *L, CLASSNAME const &transform)
+void Lua::push(lua_State *L, Sickle::MapArea2Dx::Transform2D transform)
 {
-    // Create the Lua object.
-    auto ptr = static_cast<CLASSNAME *>(
-        lua_newuserdatauv(L, sizeof(CLASSNAME), 0));
+    auto ptr = static_cast<Sickle::MapArea2Dx::Transform2D *>(
+        lua_newuserdatauv(L, sizeof(Sickle::MapArea2Dx::Transform2D), 0));
     *ptr = transform;
-
-    // Set metatable.
-    luaL_setmetatable(L, LIBRARY_NAME);
-
-    return 1;
+    luaL_setmetatable(L, "Sickle.maparea2d.transform2d");
 }
 
-CLASSNAME *ltransform2d_check(lua_State *L, int arg)
+Sickle::MapArea2Dx::Transform2D *ltransform2d_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
-    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
-    return static_cast<CLASSNAME *>(ud);
+    void *ud = luaL_checkudata(L, arg, "Sickle.maparea2d.transform2d");
+    luaL_argcheck(L, ud != NULL, arg, "`" "Sickle.maparea2d.transform2d" "' expected");
+    return static_cast<Sickle::MapArea2Dx::Transform2D *>(ud);
 }
 
 int luaopen_transform2d(lua_State *L)
 {
-    luaL_newmetatable(L, LIBRARY_NAME);
+    luaL_newmetatable(L, "Sickle.maparea2d.transform2d");
     luaL_setfuncs(L, methods, 0);
-    lua_pushliteral(L, "__index");
-    lua_pushvalue(L, -2);
-    lua_settable(L, -3);
+    lua_setfield(L, -1, "__index");
     return 0;
 }

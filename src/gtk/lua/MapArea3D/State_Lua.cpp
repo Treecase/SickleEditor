@@ -25,7 +25,7 @@
 static int get_pointer_prev(lua_State *L)
 {
     auto s = lmaparea3d_state_check(L, 1);
-    Lua::Pusher{L}(s->pointer_prev);
+    Lua::push(L, s->pointer_prev);
     return 1;
 }
 
@@ -47,7 +47,7 @@ static int get_last_frame_time(lua_State *L)
 static int get_move_direction(lua_State *L)
 {
     auto s = lmaparea3d_state_check(L, 1);
-    Lua::Pusher{L}(s->move_direction);
+    Lua::push(L, s->move_direction);
     return 1;
 }
 
@@ -62,7 +62,7 @@ static int set_move_direction(lua_State *L)
 static int get_turn_rates(lua_State *L)
 {
     auto s = lmaparea3d_state_check(L, 1);
-    Lua::Pusher{L}(s->turn_rates);
+    Lua::push(L, s->turn_rates);
     return 1;
 }
 
@@ -121,14 +121,11 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-template<> void Lua::Pusher::operator()(Sickle::MapArea3D::State state)
+void Lua::push(lua_State *L, Sickle::MapArea3D::State state)
 {
-    // Create the Lua object.
     auto ptr = static_cast<Sickle::MapArea3D::State *>(
         lua_newuserdatauv(L, sizeof(Sickle::MapArea3D::State), 0));
     *ptr = state;
-
-    // Set metatable.
     luaL_setmetatable(L, "Sickle.maparea3d.state");
 }
 
@@ -143,8 +140,6 @@ int luaopen_maparea3d_state(lua_State *L)
 {
     luaL_newmetatable(L, "Sickle.maparea3d.state");
     luaL_setfuncs(L, methods, 0);
-    lua_pushliteral(L, "__index");
-    lua_pushvalue(L, -2);
-    lua_settable(L, -3);
+    lua_setfield(L, -1, "__index");
     return 0;
 }

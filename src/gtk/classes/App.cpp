@@ -75,6 +75,7 @@ void Sickle::App::on_startup()
 void Sickle::App::on_activate()
 {
     auto appwindow = _create_appwindow();
+    appwindow->maximize();
     appwindow->present();
 }
 
@@ -91,6 +92,7 @@ void Sickle::App::on_open(
     // Assuming files won't be empty, since if it was, `on_activate` would be
     // used instead
     appwindow->open(files[0].get());
+    appwindow->maximize();
     appwindow->present();
 }
 

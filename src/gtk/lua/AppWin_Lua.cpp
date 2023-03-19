@@ -22,29 +22,10 @@
 #include "MapArea2D_Lua.hpp"
 #include "MapArea3D_Lua.hpp"
 
-
-#define LIBRARY_NAME    "Sickle.appwin"
-#define CLASSNAME       Sickle::AppWin
+#include <se-lua/lua-utils.hpp>
 
 
-/** Add value at the top of the stack to the objectTable using KEY. */
-static void add_to_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_pushvalue(L, -3);
-    lua_settable(L, -3);
-    lua_pop(L, 1);
-}
-
-/** Get the Lua value associated with KEY from the objectTable. */
-static void get_from_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_gettable(L, -2);
-    lua_remove(L, -2);
-}
+static Lua::ReferenceManager refman{};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -107,71 +88,60 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int lappwin_new(lua_State *L, CLASSNAME *appwin)
+template<>
+void Lua::push(lua_State *L, Sickle::AppWin *appwin)
 {
-    // If we've already built an object for this pointer, just reuse it.
-    get_from_objectTable(L, appwin);
+    refman.get(appwin);
     if (!lua_isnil(L, -1))
-        return 1;
+        return;
     else
         lua_pop(L, 1);
 
-    // Create the Lua object.
-    auto ptr = static_cast<CLASSNAME const **>(
-        lua_newuserdatauv(L, sizeof(CLASSNAME *), 1));
+    auto ptr = static_cast<Sickle::AppWin const **>(
+        lua_newuserdatauv(L, sizeof(Sickle::AppWin *), 1));
     *ptr = appwin;
+    luaL_setmetatable(L, "Sickle.appwin");
 
     // Add methods/data table.
+    // TODO: methods should be shared, data should be individual.
     lua_newtable(L);
     luaL_setfuncs(L, methods, 0);
     lua_setiuservalue(L, -2, 1);
 
-    // Set metatable.
-    luaL_setmetatable(L, LIBRARY_NAME);
-
     // Add fields.
-    lua_pushliteral(L, "mapArea3D");
-    lmaparea3d_new(L, &appwin->m_maparea);
-    lua_settable(L, -3);
+    Lua::push(L, &appwin->m_maparea);
+    lua_setfield(L, -2, "mapArea3D");
 
-    lua_pushliteral(L, "topMapArea");
-    lmaparea2d_new(L, &appwin->m_drawarea_top);
-    lua_settable(L, -3);
+    Lua::push(L, &appwin->m_drawarea_top);
+    lua_setfield(L, -2, "topMapArea");
 
-    lua_pushliteral(L, "frontMapArea");
-    lmaparea2d_new(L, &appwin->m_drawarea_front);
-    lua_settable(L, -3);
+    Lua::push(L, &appwin->m_drawarea_front);
+    lua_setfield(L, -2, "frontMapArea");
 
-    lua_pushliteral(L, "rightMapArea");
-    lmaparea2d_new(L, &appwin->m_drawarea_right);
-    lua_settable(L, -3);
-
-
-    // Add the object to the Lua registry, using the pointer as key. This is
-    // needed for the C++ callbacks to know what object to call methods on.
-    add_to_objectTable(L, appwin);
+    Lua::push(L, &appwin->m_drawarea_right);
+    lua_setfield(L, -2, "rightMapArea");
 
     // Connect signals.
     appwin->property_grid_size().signal_changed().connect(
         [L, appwin](){
-            get_from_objectTable(L, appwin);
+            refman.get(appwin);
             Lua::call_method(L, "on_grid_size_changed");
         });
     appwin->signal_key_press_event().connect(
         [L, appwin](GdkEventKey const *e){
-            get_from_objectTable(L, appwin);
+            refman.get(appwin);
             Lua::call_method(L, "on_key_press_event", e);
             return lua_toboolean(L, -1);
         });
 
-    return 1;
+    refman.set(appwin, -1);
 }
 
-CLASSNAME *lappwin_check(lua_State *L, int arg)
+Sickle::AppWin *lappwin_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
-    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
-    return *static_cast<CLASSNAME **>(ud);
+    void *ud = luaL_checkudata(L, arg, "Sickle.appwin");
+    luaL_argcheck(L, ud != NULL, arg, "`Sickle.appwin' expected");
+    return *static_cast<Sickle::AppWin **>(ud);
 }
 
 int luaopen_appwin(lua_State *L)
@@ -179,13 +149,10 @@ int luaopen_appwin(lua_State *L)
     luaL_requiref(L, "maparea2d", luaopen_maparea2d, 1);
     luaL_requiref(L, "maparea3d", luaopen_maparea3d, 1);
 
-    // Table used to map C++ pointers to Lua objects.
     // TODO: References should be removed when the C++ objects are destroyed.
-    lua_newtable(L);
-    Lua::add_to_registry(L, LIBRARY_NAME".objectTable");
-    lua_pop(L, 1);
+    refman.init(L);
 
-    luaL_newmetatable(L, LIBRARY_NAME);
+    luaL_newmetatable(L, "Sickle.appwin");
     luaL_setfuncs(L, metamethods, 0);
 
     return 0;

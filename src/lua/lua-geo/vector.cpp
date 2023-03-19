@@ -22,7 +22,7 @@
 static void lgeo_checkvectorfast(lua_State *L, int arg);
 
 
-template<> void Lua::Pusher::operator()(glm::vec4 vector)
+void Lua::push(lua_State *L, glm::vec4 vector)
 {
     lua_newuserdatauv(L, 0, 1);
     luaL_setmetatable(L, "geo.vector");
@@ -34,14 +34,14 @@ template<> void Lua::Pusher::operator()(glm::vec4 vector)
     lua_setiuservalue(L, -2, 1);
 }
 
-template<> void Lua::Pusher::operator()(glm::vec3 vector)
+void Lua::push(lua_State *L, glm::vec3 vector)
 {
-    (*this)(glm::vec4{vector, 0.0});
+    push(L, glm::vec4{vector, 0.0});
 }
 
-template<> void Lua::Pusher::operator()(glm::vec2 vector)
+void Lua::push(lua_State *L, glm::vec2 vector)
 {
-    (*this)(glm::vec4{vector, 0.0, 0.0});
+    push(L, glm::vec4{vector, 0.0, 0.0});
 }
 
 
@@ -49,41 +49,41 @@ template<> void Lua::Pusher::operator()(glm::vec2 vector)
 // Metamethods
 static int vector_add(lua_State *L)
 {
-    Lua::Pusher{L}(lgeo_checkvector(L, 1) + lgeo_checkvector(L, 2));
+    Lua::push(L, lgeo_checkvector(L, 1) + lgeo_checkvector(L, 2));
     return 1;
 }
 
 static int vector_sub(lua_State *L)
 {
-    Lua::Pusher{L}(lgeo_checkvector(L, 1) - lgeo_checkvector(L, 2));
+    Lua::push(L, lgeo_checkvector(L, 1) - lgeo_checkvector(L, 2));
     return 1;
 }
 
 static int vector_mul(lua_State *L)
 {
     if (lua_isnumber(L, 1))
-        Lua::Pusher{L}((float)lua_tonumber(L, 1) * lgeo_checkvector(L, 2));
+        Lua::push(L, (float)lua_tonumber(L, 1) * lgeo_checkvector(L, 2));
     else if (lua_isnumber(L, 2))
-        Lua::Pusher{L}(lgeo_checkvector(L, 1) * (float)lua_tonumber(L, 2));
+        Lua::push(L, lgeo_checkvector(L, 1) * (float)lua_tonumber(L, 2));
     else
-        Lua::Pusher{L}(lgeo_checkvector(L, 1) * lgeo_checkvector(L, 2));
+        Lua::push(L, lgeo_checkvector(L, 1) * lgeo_checkvector(L, 2));
     return 1;
 }
 
 static int vector_div(lua_State *L)
 {
     if (lua_isnumber(L, 1))
-        Lua::Pusher{L}((float)luaL_checknumber(L, 1) / lgeo_checkvector(L, 2));
+        Lua::push(L, (float)luaL_checknumber(L, 1) / lgeo_checkvector(L, 2));
     else if (lua_isnumber(L, 2))
-        Lua::Pusher{L}(lgeo_checkvector(L, 1) / (float)luaL_checknumber(L, 2));
+        Lua::push(L, lgeo_checkvector(L, 1) / (float)luaL_checknumber(L, 2));
     else
-        Lua::Pusher{L}(lgeo_checkvector(L, 1) / lgeo_checkvector(L, 2));
+        Lua::push(L, lgeo_checkvector(L, 1) / lgeo_checkvector(L, 2));
     return 1;
 }
 
 static int vector_negate(lua_State *L)
 {
-    Lua::Pusher{L}(-lgeo_checkvector(L, 1));
+    Lua::push(L, -lgeo_checkvector(L, 1));
     return 1;
 }
 
@@ -133,21 +133,21 @@ int lgeo_vector_new(lua_State *L)
     switch (lua_gettop(L))
     {
     case 0:
-        Lua::Pusher{L}(glm::vec4{0, 0, 0, 0});
+        Lua::push(L, glm::vec4{0, 0, 0, 0});
         break;
     case 2:
-        Lua::Pusher{L}(glm::vec4{
+        Lua::push(L, glm::vec4{
             luaL_checknumber(L, 1), luaL_checknumber(L, 2), 0, 0});
         break;
     case 3:
-        Lua::Pusher{L}(glm::vec4{
+        Lua::push(L, glm::vec4{
             luaL_checknumber(L, 1),
             luaL_checknumber(L, 2),
             luaL_checknumber(L, 3),
             0});
         break;
     case 4:
-        Lua::Pusher{L}(glm::vec4{
+        Lua::push(L, glm::vec4{
             luaL_checknumber(L, 1),
             luaL_checknumber(L, 2),
             luaL_checknumber(L, 3),
@@ -175,29 +175,7 @@ static int fn_vector_map(lua_State *L)
         v[i] = lua_tonumber(L, -1);
         lua_pop(L, 1);
     }
-    Lua::Pusher{L}(v);
-    return 1;
-}
-
-static int fn_vector_map2(lua_State *L)
-{
-    auto a = lgeo_checkvector(L, 2);
-    auto b = lgeo_checkvector(L, 3);
-    for (size_t i = 0; i < 4; ++i)
-    {
-        // Duplicate the callable
-        lua_pushvalue(L, 1);
-        // Push a's i-th value
-        lua_pushnumber(L, a[i]);
-        // Push b's i-th value
-        lua_pushnumber(L, b[i]);
-        // Call the function
-        lua_call(L, 1, 1);
-        // Set result's i-th value
-        a[i] = lua_tonumber(L, -1);
-        lua_pop(L, 1);
-    }
-    Lua::Pusher{L}(a);
+    Lua::push(L, v);
     return 1;
 }
 
@@ -211,7 +189,6 @@ static int fn_vector_length(lua_State *L)
 static luaL_Reg functions[] = {
     {"new", lgeo_vector_new},
     {"map", fn_vector_map},
-    {"map2", fn_vector_map2},
     {"length", fn_vector_length},
     {NULL, NULL}
 };
@@ -228,15 +205,33 @@ glm::vec4 lgeo_checkvector(lua_State *L, int arg)
     return lgeo_tovector(L, arg);
 }
 
-glm::vec4 lgeo_tovector(lua_State *L, int i)
+glm::vec4 lgeo_tovector(lua_State *L, int idx)
 {
+    luaL_argcheck(L, lua_istable(L, idx) || lua_isuserdata(L, idx), idx,
+        "expected table or userdata");
+
+    auto i = idx;
     if (i < 0)
         i = lua_gettop(L) + i + 1;
 
-    lua_pushliteral(L, "x"); lua_gettable(L, i);
-    lua_pushliteral(L, "y"); lua_gettable(L, i);
-    lua_pushliteral(L, "z"); lua_gettable(L, i);
-    lua_pushliteral(L, "w"); lua_gettable(L, i);
+    // If the value has an 'x' field, interpret it as a table-style vector.
+    lua_getfield(L, i, "x");
+    if (!lua_isnil(L, -1))
+    {
+        lua_getfield(L, i, "y");
+        lua_getfield(L, i, "z");
+        lua_getfield(L, i, "w");
+    }
+    // Otherwise, interpret as a list-style vector.
+    else
+    {
+        lua_pop(L, 1);
+        lua_geti(L, i, 1);
+        luaL_argcheck(L, !lua_isnil(L, -1), idx, "not a vector-like object");
+        lua_geti(L, i, 2);
+        lua_geti(L, i, 3);
+        lua_geti(L, i, 4);
+    }
 
     auto x = lua_tonumber(L, -4);
     auto y = lua_tonumber(L, -3);

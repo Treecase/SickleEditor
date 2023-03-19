@@ -30,12 +30,10 @@ function MoveSelected.metatable:on_key_release_event(keyval)
 end
 
 function MoveSelected.metatable:on_motion_notify_event(event)
-    local curr = geo.vector.new(
-        self.maparea:drawspace_to_worldspace(
-            self.maparea:screenspace_to_drawspace(event.x, event.y)))
-    local prev = geo.vector.new(
-        self.maparea:drawspace_to_worldspace(
-            self.maparea:screenspace_to_drawspace(self.x, self.y)))
+    local curr = self.maparea:drawspace_to_worldspace(
+        self.maparea:screenspace_to_drawspace({event.x, event.y}))
+    local prev = self.maparea:drawspace_to_worldspace(
+        self.maparea:screenspace_to_drawspace({self.x, self.y}))
 
     local delta = curr - prev
     local accum = self.accum + delta

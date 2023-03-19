@@ -24,16 +24,19 @@
 static void lgeo_checkmatrixfast(lua_State *L, int arg);
 
 
-template<> void Lua::Pusher::operator()(glm::mat4 matrix)
+void Lua::push(lua_State *L, glm::mat4 matrix)
 {
     lua_newuserdatauv(L, 0, 1);
     luaL_setmetatable(L, "geo.matrix");
     lua_newtable(L);
-    Lua::Pusher push{L};
-    push(matrix[0]); lua_rawseti(L, -2, 0);
-    push(matrix[1]); lua_rawseti(L, -2, 1);
-    push(matrix[2]); lua_rawseti(L, -2, 2);
-    push(matrix[3]); lua_rawseti(L, -2, 3);
+    Lua::push(L, matrix[0]);
+    Lua::push(L, matrix[1]);
+    Lua::push(L, matrix[2]);
+    Lua::push(L, matrix[3]);
+    lua_rawseti(L, -5, 3);
+    lua_rawseti(L, -4, 2);
+    lua_rawseti(L, -3, 1);
+    lua_rawseti(L, -2, 0);
     lua_setiuservalue(L, -2, 1);
 }
 
@@ -42,7 +45,7 @@ template<> void Lua::Pusher::operator()(glm::mat4 matrix)
 // Metamethods
 static int matrix_mul(lua_State *L)
 {
-    Lua::Pusher{L}(lgeo_checkmatrix(L, 1) * lgeo_checkmatrix(L, 2));
+    Lua::push(L, lgeo_checkmatrix(L, 1) * lgeo_checkmatrix(L, 2));
     return 1;
 }
 
@@ -93,7 +96,7 @@ static luaL_Reg metamethods[] = {
 // Functions
 int lgeo_matrix_new(lua_State *L)
 {
-    Lua::Pusher{L}(glm::mat4{1.0});
+    Lua::push(L, glm::mat4{1.0});
     return 1;
 }
 
@@ -101,7 +104,7 @@ static int matrix_translate(lua_State *L)
 {
     auto m = lgeo_checkmatrix(L, 1);
     auto v = lgeo_checkvector(L, 2);
-    Lua::Pusher{L}(glm::translate(m, glm::vec3{v}));
+    Lua::push(L, glm::translate(m, glm::vec3{v}));
     return 1;
 }
 
@@ -110,7 +113,7 @@ static int matrix_rotate(lua_State *L)
     auto m = lgeo_checkmatrix(L, 1);
     float angle = glm::radians(luaL_checknumber(L, 2));
     auto v = lgeo_checkvector(L, 3);
-    Lua::Pusher{L}(glm::rotate(m, angle, glm::vec3{v}));
+    Lua::push(L, glm::rotate(m, angle, glm::vec3{v}));
     return 1;
 }
 
@@ -118,7 +121,7 @@ static int matrix_scale(lua_State *L)
 {
     auto m = lgeo_checkmatrix(L, 1);
     auto v = lgeo_checkvector(L, 2);
-    Lua::Pusher{L}(glm::scale(m, glm::vec3{v}));
+    Lua::push(L, glm::scale(m, glm::vec3{v}));
     return 1;
 }
 

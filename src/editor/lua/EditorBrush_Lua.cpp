@@ -20,56 +20,10 @@
 #include "Editor_Lua.hpp"
 #include "LuaGeo.hpp"
 
-
-#define LIBRARY_NAME    "Sickle.editorbrush"
-#define CLASSNAME       Sickle::EditorBrush
+#include <se-lua/lua-utils.hpp>
 
 
-/** Add value at the top of the stack to the objectTable using KEY. */
-static void add_to_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_pushvalue(L, -3);
-    lua_settable(L, -3);
-    lua_pop(L, 1);
-}
-
-/** Get the Lua value associated with KEY from the objectTable. */
-static void get_from_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_gettable(L, -2);
-    lua_remove(L, -2);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Metamethods
-static int dunder_newindex(lua_State *L)
-{
-    leditorbrush_check(L, 1);
-    lua_getiuservalue(L, -3, 1);
-    lua_rotate(L, -3, 1);
-    lua_settable(L, -3);
-    return 0;
-}
-
-static int dunder_index(lua_State *L)
-{
-    leditorbrush_check(L, 1);
-    lua_getiuservalue(L, 1, 1);
-    lua_rotate(L, -2, 1);
-    lua_gettable(L, -2);
-    return 1;
-}
-
-static luaL_Reg metamethods[] = {
-    {"__newindex", dunder_newindex},
-    {"__index", dunder_index},
-    {NULL, NULL}
-};
+static Lua::ReferenceManager refman{};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +60,7 @@ static int get_vertices(lua_State *L)
     {
         for (auto const &vertex : plane.vertices)
         {
-            Lua::Pusher{L}(vertex);
+            Lua::push(L, vertex);
             lua_seti(L, 2, idx++);
         }
     }
@@ -131,59 +85,45 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int leditorbrush_new(lua_State *L, CLASSNAME *brush)
+template<>
+void Lua::push(lua_State *L, Sickle::EditorBrush *brush)
 {
-    // If we've already built an object for this pointer, just reuse it.
-    get_from_objectTable(L, brush);
+    refman.get(brush);
     if (!lua_isnil(L, -1))
-        return 1;
+        return;
     else
         lua_pop(L, 1);
 
-    // Create the Lua object.
-    auto ptr = static_cast<CLASSNAME const **>(
-        lua_newuserdatauv(L, sizeof(CLASSNAME *), 1));
+    auto ptr = static_cast<Sickle::EditorBrush const **>(
+        lua_newuserdatauv(L, sizeof(Sickle::EditorBrush *), 0));
     *ptr = brush;
+    luaL_setmetatable(L, "Sickle.editorbrush");
 
-    // Add methods/data table.
-    lua_newtable(L);
-    luaL_setfuncs(L, methods, 0);
-    lua_setiuservalue(L, -2, 1);
-
-    // Set metatable.
-    luaL_setmetatable(L, LIBRARY_NAME);
-
-    // Add the object to the Lua registry, using the pointer as key. This is
-    // needed for the C++ callbacks to know what object to call methods on.
-    add_to_objectTable(L, brush);
-
-    // Connect signals.
     brush->is_selected.signal_changed().connect(
         [L, brush](){
-            get_from_objectTable(L, brush);
+            refman.get(brush);
             Lua::call_method(L, "on_selected");
         });
 
-    return 1;
+    refman.set(brush, -1);
 }
 
-CLASSNAME *leditorbrush_check(lua_State *L, int arg)
+Sickle::EditorBrush *leditorbrush_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
-    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
-    return *static_cast<CLASSNAME **>(ud);
+    void *ud = luaL_checkudata(L, arg, "Sickle.editorbrush");
+    luaL_argcheck(L, ud != NULL, arg, "`Sickle.editorbrush' expected");
+    return *static_cast<Sickle::EditorBrush **>(ud);
 }
 
 int luaopen_editorbrush(lua_State *L)
 {
-    // Table used to map C++ pointers to Lua objects.
     // TODO: References should be removed when the C++ objects are destroyed.
-    lua_newtable(L);
-    Lua::add_to_registry(L, LIBRARY_NAME".objectTable");
-    lua_pop(L, 1);
+    refman.init(L);
 
-    luaL_newmetatable(L, LIBRARY_NAME);
-    luaL_setfuncs(L, metamethods, 0);
+    luaL_newmetatable(L, "Sickle.editorbrush");
+    lua_newtable(L);
+    luaL_setfuncs(L, methods, 0);
+    lua_setfield(L, -2, "__index");
 
     return 0;
 }

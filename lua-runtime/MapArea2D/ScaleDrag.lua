@@ -58,11 +58,11 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
 
         for brush in self.maparea:get_editor():get_selection():iterate() do
             for _,v in ipairs(brush:get_vertices()) do
-                local x,y = self.maparea:worldspace_to_drawspace(v.x, v.y, v.z)
-                if not min_x or x < min_x then min_x = x end
-                if not max_x or x > max_x then max_x = x end
-                if not min_y or y < min_y then min_y = y end
-                if not max_y or y > max_y then max_y = y end
+                local xy = self.maparea:worldspace_to_drawspace(v)
+                if not min_x or xy.x < min_x then min_x = xy.x end
+                if not max_x or xy.x > max_x then max_x = xy.x end
+                if not min_y or xy.y < min_y then min_y = xy.y end
+                if not max_y or xy.y > max_y then max_y = xy.y end
             end
         end
 
@@ -88,9 +88,8 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
         }
 
         local coords = COORD_MAPPING[self.handle]
-        center = geo.vector.new(
-            self.maparea:drawspace_to_worldspace(
-                minmax[coords[2]], minmax[coords[1]]))
+        center = self.maparea:drawspace_to_worldspace(
+            {minmax[coords[2]], minmax[coords[1]]})
     end
 
     local SCALE_FACTOR_FACTOR = {
@@ -103,18 +102,16 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
         [grabbablebox.S ] = {0, 1},
         [grabbablebox.W ] = {1, 0}
     }
-    local scale_factor_factor = geo.vector.map(math.abs,
-        geo.vector.new(
-            self.maparea:drawspace_to_worldspace(
-                SCALE_FACTOR_FACTOR[self.handle][1],
-                SCALE_FACTOR_FACTOR[self.handle][2])))
+    local scale_factor_factor = geo.vector.map(
+        math.abs,
+        self.maparea:drawspace_to_worldspace({
+            SCALE_FACTOR_FACTOR[self.handle][1],
+            SCALE_FACTOR_FACTOR[self.handle][2]}))
 
-    local curr = geo.vector.new(
-        self.maparea:drawspace_to_worldspace(
-            self.maparea:screenspace_to_drawspace(event.x, event.y)))
-    local prev = geo.vector.new(
-        self.maparea:drawspace_to_worldspace(
-            self.maparea:screenspace_to_drawspace(self.x, self.y)))
+    local curr = self.maparea:drawspace_to_worldspace(
+        self.maparea:screenspace_to_drawspace({event.x, event.y}))
+    local prev = self.maparea:drawspace_to_worldspace(
+        self.maparea:screenspace_to_drawspace({self.x, self.y}))
 
     if self.snapped then
         local grid = gAppWin:get_grid_size()

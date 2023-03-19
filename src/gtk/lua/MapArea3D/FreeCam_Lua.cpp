@@ -17,7 +17,8 @@
  */
 
 #include "MapArea3D_Lua.hpp"
-#include "LuaGeo.hpp"
+
+#include <LuaGeo.hpp>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -39,7 +40,7 @@ static int translate(lua_State *L)
 static int get_angle(lua_State *L)
 {
     auto c = lfreecam_check(L, 1);
-    Lua::Pusher{L}(c->angle);
+    Lua::push(L, c->angle);
     return 1;
 }
 
@@ -79,14 +80,11 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-template<> void Lua::Pusher::operator()(FreeCam camera)
+void Lua::push(lua_State *L, FreeCam camera)
 {
-    // Create the Lua object.
     auto ptr = static_cast<FreeCam *>(
         lua_newuserdatauv(L, sizeof(FreeCam), 0));
     *ptr = camera;
-
-    // Set metatable.
     luaL_setmetatable(L, "Sickle.freecam");
 }
 
@@ -101,8 +99,6 @@ int luaopen_freecam(lua_State *L)
 {
     luaL_newmetatable(L, "Sickle.freecam");
     luaL_setfuncs(L, methods, 0);
-    lua_pushliteral(L, "__index");
-    lua_pushvalue(L, -2);
-    lua_settable(L, -3);
+    lua_setfield(L, -1, "__index");
     return 0;
 }

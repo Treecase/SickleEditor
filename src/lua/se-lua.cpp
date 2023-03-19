@@ -25,6 +25,32 @@ Lua::Error::Error(std::string const &what)
 }
 
 
+void Lua::push(lua_State *L, bool value)
+{
+    lua_pushboolean(L, value);
+}
+
+void Lua::push(lua_State *L, lua_Integer value)
+{
+    lua_pushinteger(L, value);
+}
+
+void Lua::push(lua_State *L, lua_Number value)
+{
+    lua_pushnumber(L, value);
+}
+
+void Lua::push(lua_State *L, char const *value)
+{
+    lua_pushstring(L, value);
+}
+
+void Lua::push(lua_State *L, std::string const &value)
+{
+    lua_pushlstring(L, value.c_str(), value.length());
+}
+
+
 void Lua::checkerror(lua_State *L, int status)
 {
     if (status != LUA_OK)

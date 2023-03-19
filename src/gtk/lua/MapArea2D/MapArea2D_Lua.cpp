@@ -16,34 +16,16 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../classes/MapArea2D.hpp"
+#include "../../classes/MapArea2D.hpp"
 #include "Editor_Lua.hpp"
 #include "LuaGdkEvent.hpp"
 #include "MapArea2D_Lua.hpp"
 
+#include <se-lua/lua-utils.hpp>
+#include <LuaGeo.hpp>
 
-#define LIBRARY_NAME    "Sickle.maparea2d"
-#define CLASSNAME       Sickle::MapArea2D
 
-
-/** Add value at the top of the stack to the objectTable using KEY. */
-static void add_to_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_pushvalue(L, -3);
-    lua_settable(L, -3);
-    lua_pop(L, 1);
-}
-
-/** Get the Lua value associated with KEY from the objectTable. */
-static void get_from_objectTable(lua_State *L, CLASSNAME *key)
-{
-    Lua::get_from_registry(L, LIBRARY_NAME".objectTable");
-    lua_pushlightuserdata(L, key);
-    lua_gettable(L, -2);
-    lua_remove(L, -2);
-}
+static Lua::ReferenceManager refman{};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,46 +60,37 @@ static luaL_Reg metamethods[] = {
 static int screenspace_to_drawspace(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto x = luaL_checknumber(L, 2);
-    auto y = luaL_checknumber(L, 3);
-    auto xy = ma->screenspace_to_drawspace(x, y);
-    lua_pushnumber(L, xy.x);
-    lua_pushnumber(L, xy.y);
-    return 2;
+    auto ss = lgeo_tovector(L, 2);
+    auto ds = ma->screenspace_to_drawspace(ss.x, ss.y);
+    Lua::push(L, ds);
+    return 1;
 }
 
 static int drawspace_to_worldspace(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto x = luaL_checknumber(L, 2);
-    auto y = luaL_checknumber(L, 3);
-    auto xyz = ma->drawspace_to_worldspace({x, y});
-    lua_pushnumber(L, xyz.x);
-    lua_pushnumber(L, xyz.y);
-    lua_pushnumber(L, xyz.z);
-    return 3;
+    auto ds = lgeo_tovector(L, 2);
+    auto ws = ma->drawspace_to_worldspace(ds);
+    Lua::push(L, ws);
+    return 1;
 }
 
 static int worldspace_to_drawspace(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto x = luaL_checknumber(L, 2);
-    auto y = luaL_checknumber(L, 3);
-    auto z = luaL_checknumber(L, 4);
-    auto xy = ma->worldspace_to_drawspace({x, y, z});
-    lua_pushnumber(L, xy.x);
-    lua_pushnumber(L, xy.y);
-    return 2;
+    auto ws = lgeo_tovector(L, 2);
+    auto ds = ma->worldspace_to_drawspace(ws);
+    Lua::push(L, ds);
+    return 1;
 }
 
 static int pick_brush(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto x = luaL_checknumber(L, 2);
-    auto y = luaL_checknumber(L, 3);
-    auto picked = ma->pick_brush({x, y});
+    auto xy = lgeo_tovector(L, 2);
+    auto picked = ma->pick_brush(xy);
     if (picked)
-        leditorbrush_new(L, picked);
+        Lua::push(L, picked);
     else
         lua_pushnil(L);
     return 1;
@@ -149,14 +122,15 @@ static int get_draw_angle(lua_State *L)
 static int get_editor(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto &ed = ma->get_editor();
-    return leditor_new(L, &ed);
+    Lua::push(L, &ma->get_editor());
+    return 1;
 }
 
 static int get_transform(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    return ltransform2d_new(L, ma->property_transform().get_value());
+    Lua::push(L, ma->property_transform().get_value());
+    return 1;
 }
 
 static int set_transform(lua_State *L)
@@ -169,13 +143,15 @@ static int set_transform(lua_State *L)
 static int get_selection_box(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    return lgrabbablebox_new(L, &ma->get_box());
+    Lua::push(L, &ma->get_box());
+    return 1;
 }
 
 static int get_state(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    return lstate_new(L, ma->property_state().get_value());
+    Lua::push(L, ma->property_state().get_value());
+    return 1;
 }
 
 static int set_state(lua_State *L)
@@ -225,78 +201,71 @@ static luaL_Reg functions[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-int lmaparea2d_new(lua_State *L, CLASSNAME *maparea)
+template<>
+void Lua::push(lua_State *L, Sickle::MapArea2D *maparea)
 {
-    // If we've already built an object for this pointer, just reuse it.
-    get_from_objectTable(L, maparea);
+    refman.get(maparea);
     if (!lua_isnil(L, -1))
-        return 1;
+        return;
     else
         lua_pop(L, 1);
 
-    // Create the Lua object.
-    auto ptr = static_cast<CLASSNAME const **>(
-        lua_newuserdatauv(L, sizeof(CLASSNAME *), 1));
+    auto ptr = static_cast<Sickle::MapArea2D const **>(
+        lua_newuserdatauv(L, sizeof(Sickle::MapArea2D *), 1));
     *ptr = maparea;
+    luaL_setmetatable(L, "Sickle.maparea2d");
 
     // Add methods/data table.
+    // TODO: shared methods, individual data
     lua_newtable(L);
     luaL_setfuncs(L, methods, 0);
     lua_setiuservalue(L, -2, 1);
 
-    // Set metatable.
-    luaL_setmetatable(L, LIBRARY_NAME);
-
-    // Add the object to the Lua registry, using the pointer as key. This is
-    // needed for the C++ callbacks to know what object to call methods on.
-    add_to_objectTable(L, maparea);
-
-    // Connect signals.
     maparea->signal_key_press_event().connect(
         [L, maparea](GdkEventKey const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_key_press_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_key_release_event().connect(
         [L, maparea](GdkEventKey const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_key_release_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_button_press_event().connect(
         [L, maparea](GdkEventButton const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_button_press_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_button_release_event().connect(
         [L, maparea](GdkEventButton const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_button_release_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_motion_notify_event().connect(
         [L, maparea](GdkEventMotion const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_motion_notify_event", e);
             return lua_toboolean(L, -1);
         });
     maparea->signal_scroll_event().connect(
         [L, maparea](GdkEventScroll const *e){
-            get_from_objectTable(L, maparea);
+            refman.get(maparea);
             Lua::call_method_r(L, 1, "on_scroll_event", e);
             return lua_toboolean(L, -1);
         });
 
-    return 1;
+    refman.set(maparea, -1);
 }
 
-CLASSNAME *lmaparea2d_check(lua_State *L, int arg)
+Sickle::MapArea2D *lmaparea2d_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, LIBRARY_NAME);
-    luaL_argcheck(L, ud != NULL, arg, "`" LIBRARY_NAME "' expected");
-    return *static_cast<CLASSNAME **>(ud);
+    void *ud = luaL_checkudata(L, arg, "Sickle.maparea2d");
+    luaL_argcheck(L, ud != NULL, arg, "`Sickle.maparea2d' expected");
+    return *static_cast<Sickle::MapArea2D **>(ud);
 }
 
 int luaopen_maparea2d(lua_State *L)
@@ -306,13 +275,9 @@ int luaopen_maparea2d(lua_State *L)
     luaL_requiref(L, "state", luaopen_state, 1);
     luaL_requiref(L, "transform2d", luaopen_transform2d, 1);
 
-    // Table used to map C++ pointers to Lua objects.
-    // TODO: References should be removed when the C++ objects are destroyed.
-    lua_newtable(L);
-    Lua::add_to_registry(L, LIBRARY_NAME".objectTable");
-    lua_pop(L, 1);
+    refman.init(L);
 
-    luaL_newmetatable(L, LIBRARY_NAME);
+    luaL_newmetatable(L, "Sickle.maparea2d");
     luaL_setfuncs(L, metamethods, 0);
 
     // Export DrawAngle enum values.
