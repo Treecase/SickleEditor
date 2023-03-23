@@ -63,32 +63,6 @@ Sickle::AppWin::AppWin()
     luaL_checkversion(L);
     luaL_openlibs(L);
 
-    luaL_requiref(L, "appwin", luaopen_appwin, 1);
-    luaL_requiref(L, "geo", luaopen_geo, 1);
-
-    Lua::push(L, this);
-    lua_setglobal(L, "gAppWin");
-
-    // Run internal scripts from GResources.
-    std::vector<std::string> lua_scripts{
-        "lua/gdkevents.lua",
-        "lua/gdkkeysyms.lua",
-        "lua/gdktypes.lua",
-    };
-    for (auto const &path : lua_scripts)
-    {
-        auto const &res = Gio::Resource::lookup_data_global(
-            SE_GRESOURCE_PREFIX + path);
-        gsize _size;
-        Lua::checkerror(
-            L,
-            luaL_dostring(L, static_cast<char const *>(res->get_data(_size))));
-    }
-
-    reload_scripts();
-
-    lua_pop(L, lua_gettop(L));
-
 
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
@@ -152,6 +126,30 @@ Sickle::AppWin::AppWin()
     m_luaconsolewindow.set_title(SE_CANON_NAME " - Lua Console");
     signal_lua_reloaded().connect(
         [this](){m_luaconsole.writeline("---Lua Reloaded---");});
+
+    // Set up Lua.
+    luaL_requiref(L, "appwin", luaopen_appwin, 1);
+    luaL_requiref(L, "geo", luaopen_geo, 1);
+
+    Lua::push(L, this);
+    lua_setglobal(L, "gAppWin");
+
+    // Run internal scripts from GResources.
+    std::vector<std::string> lua_scripts{
+        "lua/gdkevents.lua",
+        "lua/gdkkeysyms.lua",
+        "lua/gdktypes.lua",
+    };
+    for (auto const &path : lua_scripts)
+    {
+        auto const &res = Gio::Resource::lookup_data_global(
+            SE_GRESOURCE_PREFIX + path);
+        gsize _size;
+        Lua::checkerror(L,
+            luaL_dostring(L, static_cast<char const *>(res->get_data(_size))));
+    }
+    reload_scripts();
+    lua_pop(L, lua_gettop(L));
 
     show_all_children();
     m_infobar.hide();

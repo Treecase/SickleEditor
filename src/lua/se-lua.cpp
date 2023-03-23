@@ -18,6 +18,8 @@
 
 #include "se-lua/se-lua.hpp"
 
+#include <unordered_map>
+
 
 Lua::Error::Error(std::string const &what)
 :   std::runtime_error{what}
@@ -51,13 +53,35 @@ void Lua::push(lua_State *L, std::string const &value)
 }
 
 
+// TODO: Better way to do this?
+static std::unordered_map<lua_State *, std::function<void(lua_State *)>>
+error_handlers{};
+
+void Lua::set_error_handler(lua_State *L, std::function<void(lua_State *)> fn)
+{
+    error_handlers[L] = fn;
+}
+
+void Lua::clear_error_handler(lua_State *L)
+{
+    error_handlers.erase(L);
+}
+
+static void default_error_handler(lua_State *L)
+{
+    auto err = lua_tostring(L, -1);
+    lua_pop(L, 1);
+    throw Lua::Error{err};
+}
+
 void Lua::checkerror(lua_State *L, int status)
 {
     if (status != LUA_OK)
     {
-        auto err = lua_tostring(L, -1);
-        lua_pop(L, 1);
-        throw Error{err};
+        if (error_handlers.count(L) != 0)
+            error_handlers.at(L)(L);
+        else
+            default_error_handler(L);
     }
 }
 

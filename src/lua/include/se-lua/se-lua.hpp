@@ -20,6 +20,7 @@
 #define SE_LUA_HPP
 
 #include <utils/TemplateUtils.hpp>
+#include <functional>
 
 extern "C" {
 #include <lua.h>
@@ -55,6 +56,18 @@ namespace Lua
         template<typename T> void operator()(T value) {push(L, value);}
     };
 
+
+    /**
+     * Set the error handler for this lua_State. The default handler just
+     * throws a Lua::Error.
+     */
+    void set_error_handler(lua_State *L, std::function<void(lua_State *)> fn);
+
+    /**
+     * Restore default error handler for this lua_State. The default handler
+     * just throws a Lua::Error.
+     */
+    void clear_error_handler(lua_State *L);
 
     /** Check a Lua status error. */
     void checkerror(lua_State *L, int status);

@@ -33,23 +33,33 @@ namespace Sickle
     class LuaConsole : public Gtk::Box
     {
     public:
+        struct DebugInfo
+        {
+            int line_number{-1};
+            std::string where;
+        };
+
         LuaConsole();
 
         auto property_lua_state() {return _prop_lua_state.get_proxy();}
 
         void write(std::string const &str);
         void writeline(std::string const &str);
-        int _L_customprint(lua_State *L);
+        int _print_override();
+        void _debug_hook(lua_Debug *ar);
     protected:
         Gtk::ScrolledWindow m_scroll;
         Gtk::TextView m_output;
         Gtk::Entry m_input;
 
+        void error_handler(lua_State *L);
+
         void on_input_activated();
     private:
         Glib::Property<gpointer> _prop_lua_state;
-        lua_State *L;
-        FILE *_fp;
+        DebugInfo debug{};
+        lua_State *L{nullptr};
+        FILE *_fp{nullptr};
 
         void _on_lua_state_changed();
     };
