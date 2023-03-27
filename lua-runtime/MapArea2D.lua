@@ -1,4 +1,5 @@
 
+local moremath = require "moremath"
 local ScaleDrag = require 'MapArea2D/ScaleDrag'
 local MoveSelected = require 'MapArea2D/MoveSelected'
 
@@ -10,13 +11,6 @@ local ZOOM_MULTIPLIER_SMOOTH = 1.1
 local ZOOM_MULTIPLIER_STEP = 2.0
 local MIN_ZOOM = 1.0 / 16.0
 local MAX_ZOOM = 16.0
-
-
-local function clamp(x, min, max)
-    if x < min then return min
-    elseif x > max then return max
-    else return x end
-end
 
 
 function addListener(maparea, listener)
@@ -55,9 +49,17 @@ function gAppWin.topMapArea:on_key_press_event(keyval)
 
     -- Zoom in/out with keypad +/-.
     elseif keyval == LuaGDK.GDK_KEY_KP_Add then
-        transform:set_zoom(clamp(transform:get_zoom() * ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM))
+        transform:set_zoom(
+            moremath.clamp(
+                transform:get_zoom() * ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM
+            )
+        )
     elseif keyval == LuaGDK.GDK_KEY_KP_Subtract then
-        transform:set_zoom(clamp(transform:get_zoom() / ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM))
+        transform:set_zoom(
+            moremath.clamp(
+                transform:get_zoom() / ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM
+            )
+        )
     -- Reset zoom with 0.
     elseif keyval == LuaGDK.GDK_KEY_0 then
         transform:set_zoom(1.0)
@@ -129,15 +131,7 @@ function gAppWin.topMapArea:on_button_press_event(event)
             drag:on_button_press_event(event)
 
         elseif hovered ~= grabbablebox.NONE then
-            local scale_drag = ScaleDrag.new(
-                self,
-                event.x,
-                event.y,
-                self:drawspace_to_worldspace(
-                    self:screenspace_to_drawspace(
-                        {event.x, event.y})),
-                hovered
-            )
+            local scale_drag = ScaleDrag.new(self, event.x, event.y, hovered)
             self:addListener(scale_drag)
             scale_drag:on_button_press_event(event)
 
@@ -291,9 +285,9 @@ function gAppWin.topMapArea:on_scroll_event(event)
     -- scroll = zoom in/out
     else
         if event.direction == LuaGDK.GDK_SCROLL_DOWN then
-            transform:set_zoom(clamp(transform:get_zoom() / ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
+            transform:set_zoom(moremath.clamp(transform:get_zoom() / ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
         elseif event.direction == LuaGDK.GDK_SCROLL_UP then
-            transform:set_zoom(clamp(transform:get_zoom() * ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
+            transform:set_zoom(moremath.clamp(transform:get_zoom() * ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
         end
     end
 

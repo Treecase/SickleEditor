@@ -1,6 +1,7 @@
 -- ScaleDrag
 --
 -- Scale the selected brushes.
+-- Hold Ctrl to scale from the center of the brush.
 
 local ScaleDrag = {}
 ScaleDrag.metatable = {}
@@ -8,6 +9,7 @@ ScaleDrag.metatable.__index = ScaleDrag.metatable
 
 
 function ScaleDrag.metatable:on_button_press_event(event)
+    return true
 end
 
 function ScaleDrag.metatable:on_button_release_event(event)
@@ -59,10 +61,10 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
         for brush in self.maparea:get_editor():get_selection():iterate() do
             for _,v in ipairs(brush:get_vertices()) do
                 local xy = self.maparea:worldspace_to_drawspace(v)
-                if not min_x or xy.x < min_x then min_x = xy.x end
-                if not max_x or xy.x > max_x then max_x = xy.x end
-                if not min_y or xy.y < min_y then min_y = xy.y end
-                if not max_y or xy.y > max_y then max_y = xy.y end
+                if min_x == nil or xy.x < min_x then min_x = xy.x end
+                if max_x == nil or xy.x > max_x then max_x = xy.x end
+                if min_y == nil or xy.y < min_y then min_y = xy.y end
+                if max_y == nil or xy.y > max_y then max_y = xy.y end
             end
         end
 
@@ -115,8 +117,8 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
 
     if self.snapped then
         local grid = gAppWin:get_grid_size()
-        curr = geo.vector.map(math.floor, curr / grid) * grid
-        prev = geo.vector.map(math.floor, prev / grid) * grid
+        curr = geo.vector.map(round_to_grid, curr)
+        prev = geo.vector.map(round_to_grid, prev)
     end
 
     -- Calculate distance from selection centerpoint
@@ -151,19 +153,16 @@ function ScaleDrag.metatable:on_scroll_event(event)
 end
 
 
-function ScaleDrag.new(maparea, x, y, origin, handle)
+function ScaleDrag.new(maparea, x, y, handle)
     local scale_drag = {}
     scale_drag.maparea = maparea
     scale_drag.x = x
     scale_drag.y = y
+    scale_drag.handle = handle
     scale_drag.moved = false
     scale_drag.snapped = true
     scale_drag.centered = false
-    scale_drag.origin = origin
-    scale_drag.handle = handle
-
     setmetatable(scale_drag, ScaleDrag.metatable)
-
     return scale_drag
 end
 

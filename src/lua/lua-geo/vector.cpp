@@ -135,6 +135,9 @@ int lgeo_vector_new(lua_State *L)
     case 0:
         Lua::push(L, glm::vec4{0, 0, 0, 0});
         break;
+    case 1:
+        Lua::push(L, lgeo_tovector(L, 1));
+        break;
     case 2:
         Lua::push(L, glm::vec4{
             luaL_checknumber(L, 1), luaL_checknumber(L, 2), 0, 0});
