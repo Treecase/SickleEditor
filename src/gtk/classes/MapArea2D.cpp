@@ -51,22 +51,24 @@ void draw_grid(
     Cairo::RefPtr<Cairo::Context> const &cr, double width, double height,
     double grid_size, double _transform_x, double _transform_y)
 {
+    auto const half_w = 0.5 * width;
+    auto const half_h = 0.5 * height;
     auto const dx = std::fmod(_transform_x, grid_size);
     auto const dy = std::fmod(_transform_y, grid_size);
-    int const count_x = std::ceil((width / 2) / grid_size);
-    int const count_y = std::ceil((height / 2) / grid_size);
+    int const count_x = std::ceil((0.5 * width) / grid_size);
+    int const count_y = std::ceil((0.5 * height) / grid_size);
     for (int i = 0; i <= count_x; ++i)
     {
-        cr->move_to(i*grid_size + dx, -height/2);
+        cr->move_to(half_w + i*grid_size + dx, 0);
         cr->rel_line_to(0, height);
-        cr->move_to(-i*grid_size + dx, -height/2);
+        cr->move_to(half_w - i*grid_size + dx, 0);
         cr->rel_line_to(0, height);
     }
     for (int i = 0; i <= count_y; ++i)
     {
-        cr->move_to(-width/2, i*grid_size + dy);
+        cr->move_to(0, half_h + i*grid_size + dy);
         cr->rel_line_to(width, 0);
-        cr->move_to(-width/2, -i*grid_size + dy);
+        cr->move_to(0, half_h - i*grid_size + dy);
         cr->rel_line_to(width, 0);
     }
 }
@@ -76,9 +78,9 @@ void draw_axes(
     Cairo::RefPtr<Cairo::Context> const &cr, double width, double height,
     double _transform_x, double _transform_y)
 {
-    cr->move_to(_transform_x, -height / 2.0);
+    cr->move_to(0.5 * width + _transform_x, 0);
     cr->rel_line_to(0, height);
-    cr->move_to(-width / 2.0, _transform_y);
+    cr->move_to(0, 0.5 * height + _transform_y);
     cr->rel_line_to(width, 0);
 }
 
@@ -189,9 +191,7 @@ Sickle::MapArea2D::screenspace_to_drawspace(double x, double y) const
 }
 
 glm::vec2
-Sickle::MapArea2D::drawspace_to_screenspace(
-    Sickle::MapArea2D::DrawSpacePoint const &v)
-const
+Sickle::MapArea2D::drawspace_to_screenspace(DrawSpacePoint const &v) const
 {
     auto const &transform = property_transform().get_value();
     auto const width = get_allocated_width();
@@ -260,53 +260,43 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 {
     auto const grid_size = property_grid_size().get_value();
     auto const name = property_name().get_value();
+    auto const &clear_color = property_clear_color().get_value();
+    auto const &_transform = property_transform().get_value();
 
     auto const width = get_allocated_width();
     auto const height = get_allocated_height();
 
-    // Clear to black
-    auto const &clear_color = property_clear_color().get_value();
+    // Clear background
     cr->set_source_rgb(
         clear_color.get_red(), clear_color.get_green(), clear_color.get_blue());
     cr->paint();
 
 
     /* ===[ Grid ]=== */
-    auto const &_transform = property_transform().get_value();
-    {
-    cr->save();
-        cr->set_antialias(Cairo::ANTIALIAS_NONE);
-        cr->translate(width / 2.0, height / 2.0);
-        cr->scale(_transform.zoom, _transform.zoom);
-        auto pixel = 1.0 / _transform.zoom;
+    // Grid squares
+    cr->set_source_rgb(0.3, 0.3, 0.3);
+    draw_grid(cr,
+        width, height,
+        grid_size * _transform.zoom,
+        _transform.x * _transform.zoom, _transform.y * _transform.zoom);
+    cr->stroke();
 
-        // Draw the grid
-        cr->set_source_rgb(0.3, 0.3, 0.3);
-        cr->set_line_width(pixel);
-        draw_grid(cr,
-            width*pixel, height*pixel,
-            grid_size,
-            _transform.x*pixel, _transform.y*pixel);
-        cr->stroke();
-
-        // Draw the x/y axes
-        cr->set_source_rgb(0.5, 0.5, 0.5);
-        cr->set_line_width(2*pixel);
-        draw_axes(cr,
-            width*pixel, height*pixel,
-            _transform.x*pixel, _transform.y*pixel);
-        cr->stroke();
-
-    cr->restore();
-    }
+    // x/y axes
+    cr->set_source_rgb(0.5, 0.5, 0.5);
+    draw_axes(cr,
+        width, height,
+        _transform.x * _transform.zoom, _transform.y * _transform.zoom);
+    cr->stroke();
 
 
     /* ===[ World-Space Drawing ]=== */
     {
     cr->save();
         cr->set_antialias(Cairo::ANTIALIAS_NONE);
-        cr->translate(width / 2.0, height / 2.0);
-        cr->translate(_transform.x, _transform.y);
+        cr->translate(0.5 * width, 0.5 * height);
+        cr->translate(
+            _transform.x * _transform.zoom,
+            _transform.y * _transform.zoom);
         cr->scale(_transform.zoom, _transform.zoom);
         auto pixel = 1.0 / _transform.zoom;
 
@@ -383,6 +373,8 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 
 void Sickle::MapArea2D::on_editor_map_changed()
 {
+    _editor.brushbox.signal_updated().connect(
+        sigc::mem_fun(*this, &MapArea2D::queue_draw));
     property_transform().reset_value();
     property_state().reset_value();
     queue_draw();

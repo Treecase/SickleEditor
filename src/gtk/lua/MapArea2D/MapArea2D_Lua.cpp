@@ -282,15 +282,12 @@ int luaopen_maparea2d(lua_State *L)
 
     // Export DrawAngle enum values.
     luaL_newlib(L, functions);
-    lua_pushliteral(L, "TOP");
     lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::TOP);
-    lua_settable(L, -3);
-    lua_pushliteral(L, "FRONT");
+    lua_setfield(L, -2, "TOP");
     lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::FRONT);
-    lua_settable(L, -3);
-    lua_pushliteral(L, "RIGHT");
+    lua_setfield(L, -2, "FRONT");
     lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::RIGHT);
-    lua_settable(L, -3);
+    lua_setfield(L, -2, "RIGHT");;
 
     return 1;
 }

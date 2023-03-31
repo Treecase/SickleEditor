@@ -1,7 +1,8 @@
 
 local moremath = require "moremath"
-local ScaleDrag = require 'MapArea2D/ScaleDrag'
-local MoveSelected = require 'MapArea2D/MoveSelected'
+local BrushBoxDrag = require "MapArea2D/BrushBoxDrag"
+local MoveSelected = require "MapArea2D/MoveSelected"
+local ScaleDrag = require "MapArea2D/ScaleDrag"
 
 
 -- Constants for panning/zoom control.
@@ -135,16 +136,11 @@ function gAppWin.topMapArea:on_button_press_event(event)
             self:addListener(scale_drag)
             scale_drag:on_button_press_event(event)
 
-        -- Left click can either be the start of a brushbox draw, or just a
-        -- simple click. Either way, we set the brushbox to be 0 width on the
-        -- click, and clear the state's `dragged` property.
+        -- Start of a BrushBox drag
         else
-            local editor = self:get_editor()
-            local xyz = self:drawspace_to_worldspace(
-                self:screenspace_to_drawspace({event.x, event.y}))
-            editor:get_brushbox():set_start(xyz)
-            editor:get_brushbox():set_end(xyz)
-            state:set_dragged(false)
+            local brushbox_drag = BrushBoxDrag.new(self, event.x, event.y)
+            self:addListener(brushbox_drag)
+            brushbox_drag:on_button_press_event(event)
         end
 
     -- Middle click begins view panning.
@@ -172,7 +168,7 @@ function gAppWin.topMapArea:on_button_release_event(event)
     local editor = self:get_editor()
 
     -- Select a brush on left click.
-    if event.button == 1 and not state:get_dragged() then
+    if event.button == 1 then
         -- Clear selection if we're only picking one at a time.
         if not state:get_multiselect() then
             editor:get_selection():clear()
@@ -226,17 +222,8 @@ function gAppWin.topMapArea:on_motion_notify_event(event)
     }
     local cursor = CURSORS[hovered] or "default"
 
-    -- Set selection box when dragging with left-click.
-    if event.state & LuaGDK.GDK_BUTTON1_MASK ~= 0 then
-        editor:get_brushbox():set_end(
-            self:drawspace_to_worldspace(
-                self:screenspace_to_drawspace({event.x, event.y})))
-        state:set_dragged(true)
-        editor:get_selection():clear()
-        ret = true
-
     -- Pan view when dragging with middle-click.
-    elseif event.state & LuaGDK.GDK_BUTTON2_MASK ~= 0 then
+    if event.state & LuaGDK.GDK_BUTTON2_MASK ~= 0 then
         transform:set_x(transform:get_x() + event.x - state:get_pointer_prev().x)
         transform:set_y(transform:get_y() + event.y - state:get_pointer_prev().y)
         state:set_pointer_prev(event)

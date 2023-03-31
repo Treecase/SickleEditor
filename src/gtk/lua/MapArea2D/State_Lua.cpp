@@ -35,25 +35,10 @@ static int set_pointer_prev(lua_State *L)
 {
     auto s = lstate_check(L, 1);
     luaL_argcheck(L, lua_istable(L, 2), 2, "`table' expected");
-    lua_pushliteral(L, "x"); lua_gettable(L, -2);
-    lua_pushliteral(L, "y"); lua_gettable(L, -3);
+    lua_getfield(L, -1, "x");
+    lua_getfield(L, -2, "y");
     s->pointer_prev.x = lua_tonumber(L, -2);
     s->pointer_prev.y = lua_tonumber(L, -1);
-    return 0;
-}
-
-static int get_dragged(lua_State *L)
-{
-    auto s = lstate_check(L, 1);
-    Lua::push(L, s->dragged);
-    return 1;
-}
-
-static int set_dragged(lua_State *L)
-{
-    auto s = lstate_check(L, 1);
-    luaL_argcheck(L, lua_isboolean(L, 2), 2, "`boolean' expected");
-    s->dragged = lua_toboolean(L, 2);
     return 0;
 }
 
@@ -75,8 +60,6 @@ static int set_multiselect(lua_State *L)
 static luaL_Reg methods[] = {
     {"get_pointer_prev", get_pointer_prev},
     {"set_pointer_prev", set_pointer_prev},
-    {"get_dragged", get_dragged},
-    {"set_dragged", set_dragged},
     {"get_multiselect", get_multiselect},
     {"set_multiselect", set_multiselect},
     {NULL, NULL}

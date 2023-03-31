@@ -42,7 +42,6 @@ namespace Sickle
         struct State
         {
             glm::vec2 pointer_prev{0, 0};
-            bool dragged{false};
             bool multiselect{false};
         };
     }
