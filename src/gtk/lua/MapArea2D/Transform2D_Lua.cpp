@@ -97,5 +97,5 @@ int luaopen_transform2d(lua_State *L)
     luaL_newmetatable(L, "Sickle.maparea2d.transform2d");
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -1, "__index");
-    return 0;
+    return 1;
 }

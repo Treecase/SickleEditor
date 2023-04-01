@@ -89,15 +89,18 @@ Sickle::Editor *leditor_check(lua_State *L, int arg)
 
 int luaopen_editor(lua_State *L)
 {
-    luaL_requiref(L, "selection", luaopen_selection, 1);
-    luaL_requiref(L, "brushbox", luaopen_brushbox, 1);
-
     // TODO: References should be removed when the C++ objects are destroyed.
     refman.init(L);
 
     luaL_newmetatable(L, "Sickle.editor");
+
     lua_newtable(L);
     luaL_setfuncs(L, methods, 0);
+    luaL_requiref(L, "selection", luaopen_selection, 0);
+    luaL_requiref(L, "brushbox", luaopen_brushbox, 0);
+
+    lua_setfield(L, -4, "brushbox");
+    lua_setfield(L, -3, "selection");
     lua_setfield(L, -2, "__index");
 
     return 0;

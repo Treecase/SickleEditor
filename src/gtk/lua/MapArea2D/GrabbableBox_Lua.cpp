@@ -73,22 +73,26 @@ int luaopen_grabbablebox(lua_State *L)
 {
     refman.init(L);
 
+    // Export enum values.
+    Lua::make_table(L,
+        std::make_pair("NONE", (lua_Integer)Sickle::GrabbableBox::Area::NONE),
+        std::make_pair("BOX", (lua_Integer)Sickle::GrabbableBox::Area::BOX),
+        std::make_pair("N", (lua_Integer)Sickle::GrabbableBox::Area::N),
+        std::make_pair("NE", (lua_Integer)Sickle::GrabbableBox::Area::NE),
+        std::make_pair("E", (lua_Integer)Sickle::GrabbableBox::Area::E),
+        std::make_pair("SE", (lua_Integer)Sickle::GrabbableBox::Area::SE),
+        std::make_pair("S", (lua_Integer)Sickle::GrabbableBox::Area::S),
+        std::make_pair("SW", (lua_Integer)Sickle::GrabbableBox::Area::SW),
+        std::make_pair("W", (lua_Integer)Sickle::GrabbableBox::Area::W),
+        std::make_pair("NW", (lua_Integer)Sickle::GrabbableBox::Area::NW)
+    );
+
     luaL_newmetatable(L, "Sickle.maparea2d.grabbablebox");
     luaL_setfuncs(L, methods, 0);
+    lua_pushvalue(L, -1);
     lua_setfield(L, -1, "__index");
 
-    // Export enum values.
-    lua_newtable(L);
-    Lua::set_table(L, "NONE", (lua_Integer)Sickle::GrabbableBox::Area::NONE);
-    Lua::set_table(L, "BOX", (lua_Integer)Sickle::GrabbableBox::Area::BOX);
-    Lua::set_table(L, "N", (lua_Integer)Sickle::GrabbableBox::Area::N);
-    Lua::set_table(L, "NE", (lua_Integer)Sickle::GrabbableBox::Area::NE);
-    Lua::set_table(L, "E", (lua_Integer)Sickle::GrabbableBox::Area::E);
-    Lua::set_table(L, "SE", (lua_Integer)Sickle::GrabbableBox::Area::SE);
-    Lua::set_table(L, "S", (lua_Integer)Sickle::GrabbableBox::Area::S);
-    Lua::set_table(L, "SW", (lua_Integer)Sickle::GrabbableBox::Area::SW);
-    Lua::set_table(L, "W", (lua_Integer)Sickle::GrabbableBox::Area::W);
-    Lua::set_table(L, "NW", (lua_Integer)Sickle::GrabbableBox::Area::NW);
+    lua_setfield(L, -2, "metatable");
 
     return 1;
 }

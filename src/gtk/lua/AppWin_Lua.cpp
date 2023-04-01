@@ -42,9 +42,18 @@ static int dunder_newindex(lua_State *L)
 static int dunder_index(lua_State *L)
 {
     lappwin_check(L, 1);
+    // Try data table first.
     lua_getiuservalue(L, 1, 1);
-    lua_rotate(L, -2, 1);
+    lua_pushvalue(L, 2);
     lua_gettable(L, -2);
+    // Not in data table, try the metatable.
+    if (lua_isnil(L, -1))
+    {
+        lua_pop(L, 2);
+        luaL_getmetatable(L, "Sickle.appwin");
+        lua_pushvalue(L, 2);
+        lua_gettable(L, -2);
+    }
     return 1;
 }
 
@@ -102,10 +111,8 @@ void Lua::push(lua_State *L, Sickle::AppWin *appwin)
     *ptr = appwin;
     luaL_setmetatable(L, "Sickle.appwin");
 
-    // Add methods/data table.
-    // TODO: methods should be shared, data should be individual.
+    // Add data table.
     lua_newtable(L);
-    luaL_setfuncs(L, methods, 0);
     lua_setiuservalue(L, -2, 1);
 
     // Add fields.
@@ -148,12 +155,17 @@ int luaopen_appwin(lua_State *L)
 {
     luaL_requiref(L, "maparea2d", luaopen_maparea2d, 1);
     luaL_requiref(L, "maparea3d", luaopen_maparea3d, 1);
+    lua_pop(L, 2);
 
     // TODO: References should be removed when the C++ objects are destroyed.
     refman.init(L);
 
+    lua_newtable(L);
+
     luaL_newmetatable(L, "Sickle.appwin");
     luaL_setfuncs(L, metamethods, 0);
+    luaL_setfuncs(L, methods, 0);
+    lua_setfield(L, -2, "metatable");
 
-    return 0;
+    return 1;
 }

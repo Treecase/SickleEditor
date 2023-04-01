@@ -14,21 +14,120 @@ local MIN_ZOOM = 1.0 / 16.0
 local MAX_ZOOM = 16.0
 
 
-function addListener(maparea, listener)
-    table.insert(maparea.listeners, listener)
+function maparea2d.metatable:addListener(listener)
+    table.insert(self.listeners, listener)
 end
 
-function removeListener(maparea, listener)
-    for i,l in ipairs(maparea.listeners) do
+function maparea2d.metatable:removeListener(listener)
+    for i,l in ipairs(self.listeners) do
         if l == listener then
-            table.remove(maparea.listeners, i)
+            table.remove(self.listeners, i)
         end
     end
 end
 
+function maparea2d.metatable:clearListeners()
+    for i,_ in ipairs(self.listeners) do
+        table.remove(self.listeners, i)
+    end
+end
+
+
+-- Mouse button pressed.
+function maparea2d.metatable:on_button_press_event(event)
+    local captured = false
+    for _,listener in ipairs(self.listeners) do
+        if listener:on_button_press_event(event) then captured = true end
+    end
+    if captured then return true end
+
+    local state = self:get_state()
+    local gbox = self:get_selection_box()
+
+    if event.button == 1 then
+        local hovered = gbox:check_point(
+            self:screenspace_to_drawspace({event.x, event.y}))
+        -- Clicking inside the selection box begins a selection drag.
+        if hovered == maparea2d.grabbablebox.BOX then
+            local drag = MoveSelected.new(self, event.x, event.y)
+            self:addListener(drag)
+            drag:on_button_press_event(event)
+
+        elseif hovered ~= maparea2d.grabbablebox.NONE then
+            local scale_drag = ScaleDrag.new(
+                self, event.x, event.y, hovered)
+            self:addListener(scale_drag)
+            scale_drag:on_button_press_event(event)
+
+        -- Start of a BrushBox drag
+        else
+            local brushbox_drag = BrushBoxDrag.new(self, event.x, event.y, self.alt ~= true)
+            self:addListener(brushbox_drag)
+            brushbox_drag:on_button_press_event(event)
+        end
+
+    -- Middle click begins view panning.
+    elseif event.button == 2 then
+        state:set_pointer_prev(event)
+
+    else
+        return false
+    end
+
+    self:set_state(state)
+    return true
+end
+
+
+-- Mouse button released.
+function maparea2d.metatable:on_button_release_event(event)
+    local captured = false
+    for _,listener in ipairs(self.listeners) do
+        if listener:on_button_release_event(event) then captured = true end
+    end
+    if captured then return true end
+
+    local state = self:get_state()
+    local editor = self:get_editor()
+
+    -- Select a brush on left click.
+    if event.button == 1 then
+        -- Clear selection if we're only picking one at a time.
+        if not state:get_multiselect() then
+            editor:get_selection():clear()
+        end
+        -- Pick a brush based on the click position.
+        local xy = self:screenspace_to_drawspace({event.x, event.y})
+        local picked = self:pick_brush(xy)
+        if picked then
+            if picked:is_selected() then
+                editor:get_selection():remove(picked)
+            else
+                editor:get_selection():add(picked)
+            end
+        end
+        self:set_state(state)
+        return true
+    end
+    return false
+end
+
 
 -- Keyboard key pressed.
-function gAppWin.topMapArea:on_key_press_event(keyval)
+function maparea2d.metatable:on_key_press_event(keyval)
+    -- These always need to work, and so are done before listeners.
+    if keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
+        self.ctrl = true
+    elseif keyval == LuaGDK.GDK_KEY_Shift_L or keyval == LuaGDK.GDK_KEY_Shift_R then
+        self.shift = true
+    elseif keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
+        self.alt = true
+    -- Pressing escape cancels any current actions.
+    elseif keyval == LuaGDK.GDK_KEY_Escape then
+        self:clearListeners()
+    end
+
+    -- Process listeners. If any return true, we're done.
     local captured = false
     for _,listener in ipairs(self.listeners) do
         if listener:on_key_press_event(keyval) then captured = true end
@@ -68,13 +167,6 @@ function gAppWin.topMapArea:on_key_press_event(keyval)
     -- Hold Ctrl to select multiple brushes.
     elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
         state:set_multiselect(true)
-        self.ctrl = true
-    elseif keyval == LuaGDK.GDK_KEY_Shift_L or keyval == LuaGDK.GDK_KEY_Shift_R then
-        self.shift = true
-
-    -- Pressing escape cancels any current actions.
-    elseif keyval == LuaGDK.GDK_KEY_Escape then
-        self.dragging_selection = nil
 
     else
         return false
@@ -87,7 +179,17 @@ end
 
 
 -- Keyboard key released.
-function gAppWin.topMapArea:on_key_release_event(keyval)
+function maparea2d.metatable:on_key_release_event(keyval)
+    -- These always need to work, and so are done before listeners.
+    if keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
+        self.ctrl = false
+    elseif keyval == LuaGDK.GDK_KEY_Shift_L or keyval == LuaGDK.GDK_KEY_Shift_R then
+        self.shift = false
+    elseif keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
+        self.alt = false
+    end
+
+    -- Process listeners. If any return true, we're done.
     local captured = false
     for _,listener in ipairs(self.listeners) do
         if listener:on_key_release_event(keyval) then captured = true end
@@ -99,99 +201,16 @@ function gAppWin.topMapArea:on_key_release_event(keyval)
         local state = self:get_state()
         state:set_multiselect(false)
         self:set_state(state)
-        self.ctrl = false
-
-    elseif keyval == LuaGDK.GDK_KEY_Shift_L or keyval == LuaGDK.GDK_KEY_Shift_R then
-        self.shift = false
 
     else
         return false
     end
     return true
-end
-
-
--- Mouse button pressed.
-function gAppWin.topMapArea:on_button_press_event(event)
-    local captured = false
-    for _,listener in ipairs(self.listeners) do
-        if listener:on_button_press_event(event) then captured = true end
-    end
-    if captured then return true end
-
-    local state = self:get_state()
-    local gbox = self:get_selection_box()
-
-    if event.button == 1 then
-        local hovered = gbox:check_point(
-            self:screenspace_to_drawspace({event.x, event.y}))
-        -- Clicking inside the selection box begins a selection drag.
-        if hovered == grabbablebox.BOX then
-            local drag = MoveSelected.new(self, event.x, event.y)
-            self:addListener(drag)
-            drag:on_button_press_event(event)
-
-        elseif hovered ~= grabbablebox.NONE then
-            local scale_drag = ScaleDrag.new(self, event.x, event.y, hovered)
-            self:addListener(scale_drag)
-            scale_drag:on_button_press_event(event)
-
-        -- Start of a BrushBox drag
-        else
-            local brushbox_drag = BrushBoxDrag.new(self, event.x, event.y)
-            self:addListener(brushbox_drag)
-            brushbox_drag:on_button_press_event(event)
-        end
-
-    -- Middle click begins view panning.
-    elseif event.button == 2 then
-        state:set_pointer_prev(event)
-
-    else
-        return false
-    end
-
-    self:set_state(state)
-    return true
-end
-
-
--- Mouse button released.
-function gAppWin.topMapArea:on_button_release_event(event)
-    local captured = false
-    for _,listener in ipairs(self.listeners) do
-        if listener:on_button_release_event(event) then captured = true end
-    end
-    if captured then return true end
-
-    local state = self:get_state()
-    local editor = self:get_editor()
-
-    -- Select a brush on left click.
-    if event.button == 1 then
-        -- Clear selection if we're only picking one at a time.
-        if not state:get_multiselect() then
-            editor:get_selection():clear()
-        end
-        -- Pick a brush based on the click position.
-        local xy = self:screenspace_to_drawspace({event.x, event.y})
-        local picked = self:pick_brush(xy)
-        if picked then
-            if picked:is_selected() then
-                editor:get_selection():remove(picked)
-            else
-                editor:get_selection():add(picked)
-            end
-        end
-        self:set_state(state)
-        return true
-    end
-    return false
 end
 
 
 -- Mouse moved over widget.
-function gAppWin.topMapArea:on_motion_notify_event(event)
+function maparea2d.metatable:on_motion_notify_event(event)
     local captured = false
     for _,listener in ipairs(self.listeners) do
         if listener:on_motion_notify_event(event) then captured = true end
@@ -205,20 +224,19 @@ function gAppWin.topMapArea:on_motion_notify_event(event)
     local transform = self:get_transform()
 
     -- Change cursor if we're hovering a GrabBox selection point.
-    local gbox = self:get_selection_box()
-    local hovered = gbox:check_point(
+    local hovered = self:get_selection_box():check_point(
         self:screenspace_to_drawspace({event.x, event.y}))
 
     local CURSORS = {
-        [grabbablebox.BOX] = "crosshair",
-        [grabbablebox.NE] = "ne-resize",
-        [grabbablebox.NW] = "nw-resize",
-        [grabbablebox.SE] = "se-resize",
-        [grabbablebox.SW] = "sw-resize",
-        [grabbablebox.N] = "n-resize",
-        [grabbablebox.E] = "e-resize",
-        [grabbablebox.S] = "s-resize",
-        [grabbablebox.W] = "w-resize"
+        [maparea2d.grabbablebox.BOX] = "crosshair",
+        [maparea2d.grabbablebox.NE] = "ne-resize",
+        [maparea2d.grabbablebox.NW] = "nw-resize",
+        [maparea2d.grabbablebox.SE] = "se-resize",
+        [maparea2d.grabbablebox.SW] = "sw-resize",
+        [maparea2d.grabbablebox.N] = "n-resize",
+        [maparea2d.grabbablebox.E] = "e-resize",
+        [maparea2d.grabbablebox.S] = "s-resize",
+        [maparea2d.grabbablebox.W] = "w-resize"
     }
     local cursor = CURSORS[hovered] or "default"
 
@@ -238,7 +256,7 @@ end
 
 
 -- Mouse scrolled on widget.
-function gAppWin.topMapArea:on_scroll_event(event)
+function maparea2d.metatable:on_scroll_event(event)
     local captured = false
     for _,listener in ipairs(self.listeners) do
         if listener:on_scroll_event(event) then captured = true end
@@ -282,28 +300,6 @@ function gAppWin.topMapArea:on_scroll_event(event)
     return true
 end
 
-
 gAppWin.topMapArea.listeners = {}
-gAppWin.frontMapArea.listeners = {}
 gAppWin.rightMapArea.listeners = {}
-gAppWin.topMapArea.addListener = addListener
-gAppWin.frontMapArea.addListener = addListener
-gAppWin.rightMapArea.addListener = addListener
-gAppWin.topMapArea.removeListener = removeListener
-gAppWin.frontMapArea.removeListener = removeListener
-gAppWin.rightMapArea.removeListener = removeListener
-
--- All MapAreas should act the same.
-gAppWin.frontMapArea.on_key_press_event = gAppWin.topMapArea.on_key_press_event
-gAppWin.frontMapArea.on_key_release_event = gAppWin.topMapArea.on_key_release_event
-gAppWin.frontMapArea.on_button_press_event = gAppWin.topMapArea.on_button_press_event
-gAppWin.frontMapArea.on_button_release_event = gAppWin.topMapArea.on_button_release_event
-gAppWin.frontMapArea.on_motion_notify_event = gAppWin.topMapArea.on_motion_notify_event
-gAppWin.frontMapArea.on_scroll_event = gAppWin.topMapArea.on_scroll_event
-
-gAppWin.rightMapArea.on_key_press_event = gAppWin.topMapArea.on_key_press_event
-gAppWin.rightMapArea.on_key_release_event = gAppWin.topMapArea.on_key_release_event
-gAppWin.rightMapArea.on_button_press_event = gAppWin.topMapArea.on_button_press_event
-gAppWin.rightMapArea.on_button_release_event = gAppWin.topMapArea.on_button_release_event
-gAppWin.rightMapArea.on_motion_notify_event = gAppWin.topMapArea.on_motion_notify_event
-gAppWin.rightMapArea.on_scroll_event = gAppWin.topMapArea.on_scroll_event
+gAppWin.frontMapArea.listeners = {}

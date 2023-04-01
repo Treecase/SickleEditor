@@ -130,6 +130,7 @@ Sickle::AppWin::AppWin()
     // Set up Lua.
     luaL_requiref(L, "appwin", luaopen_appwin, 1);
     luaL_requiref(L, "geo", luaopen_geo, 1);
+    lua_pop(L, 2);
 
     Lua::push(L, this);
     lua_setglobal(L, "gAppWin");

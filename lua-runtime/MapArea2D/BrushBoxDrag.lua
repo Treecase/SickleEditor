@@ -51,13 +51,14 @@ function BrushBoxDrag.metatable:on_scroll_event(event)
 end
 
 
-function BrushBoxDrag.new(maparea, x, y)
-    local click_pos = geo.vector.map(
-        round_to_grid,
+function BrushBoxDrag.new(maparea, x, y, snapped)
+    local click_pos = geo.vector.new(
         maparea:drawspace_to_worldspace(
-            maparea:screenspace_to_drawspace({x, y})
-        )
-    )
+            maparea:screenspace_to_drawspace({x, y})))
+
+    if snapped then
+        click_pos = geo.vector.map(round_to_grid, click_pos)
+    end
 
     local brushbox = maparea:get_editor():get_brushbox()
     brushbox:set_start(click_pos)

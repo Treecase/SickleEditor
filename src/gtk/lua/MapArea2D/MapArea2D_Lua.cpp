@@ -42,9 +42,18 @@ static int dunder_newindex(lua_State *L)
 static int dunder_index(lua_State *L)
 {
     lmaparea2d_check(L, 1);
+    // Try data table first.
     lua_getiuservalue(L, 1, 1);
-    lua_rotate(L, -2, 1);
+    lua_pushvalue(L, 2);
     lua_gettable(L, -2);
+    // Not in data table, try the metatable.
+    if (lua_isnil(L, -1))
+    {
+        lua_pop(L, 2);
+        luaL_getmetatable(L, "Sickle.maparea2d");
+        lua_pushvalue(L, 2);
+        lua_gettable(L, -2);
+    }
     return 1;
 }
 
@@ -193,13 +202,6 @@ static luaL_Reg methods[] = {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Functions
-static luaL_Reg functions[] = {
-    {NULL, NULL}
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
 void Lua::push(lua_State *L, Sickle::MapArea2D *maparea)
@@ -215,10 +217,8 @@ void Lua::push(lua_State *L, Sickle::MapArea2D *maparea)
     *ptr = maparea;
     luaL_setmetatable(L, "Sickle.maparea2d");
 
-    // Add methods/data table.
-    // TODO: shared methods, individual data
+    // Add data table.
     lua_newtable(L);
-    luaL_setfuncs(L, methods, 0);
     lua_setiuservalue(L, -2, 1);
 
     maparea->signal_key_press_event().connect(
@@ -271,23 +271,29 @@ Sickle::MapArea2D *lmaparea2d_check(lua_State *L, int arg)
 int luaopen_maparea2d(lua_State *L)
 {
     luaL_requiref(L, "editor", luaopen_editor, 1);
-    luaL_requiref(L, "grabbablebox", luaopen_grabbablebox, 1);
-    luaL_requiref(L, "state", luaopen_state, 1);
-    luaL_requiref(L, "transform2d", luaopen_transform2d, 1);
 
     refman.init(L);
 
+    lua_newtable(L);
+
+    luaL_requiref(L, "grabbablebox", luaopen_grabbablebox, 0);
+    luaL_requiref(L, "state", luaopen_state, 0);
+    luaL_requiref(L, "transform2d", luaopen_transform2d, 0);
+    lua_setfield(L, -4, "transfrom2d");
+    lua_setfield(L, -3, "state");
+    lua_setfield(L, -2, "grabbablebox");
+
     luaL_newmetatable(L, "Sickle.maparea2d");
     luaL_setfuncs(L, metamethods, 0);
+    luaL_setfuncs(L, methods, 0);
+    lua_setfield(L, -2, "metatable");
 
-    // Export DrawAngle enum values.
-    luaL_newlib(L, functions);
     lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::TOP);
-    lua_setfield(L, -2, "TOP");
     lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::FRONT);
-    lua_setfield(L, -2, "FRONT");
     lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::RIGHT);
-    lua_setfield(L, -2, "RIGHT");;
+    lua_setfield(L, -4, "RIGHT");
+    lua_setfield(L, -3, "FRONT");
+    lua_setfield(L, -2, "TOP");
 
     return 1;
 }
