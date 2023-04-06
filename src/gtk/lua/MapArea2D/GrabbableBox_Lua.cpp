@@ -19,11 +19,12 @@
 #include "../../classes/MapArea2D.hpp"
 #include "MapArea2D_Lua.hpp"
 
-#include <se-lua/lua-utils.hpp>
+#include <se-lua/utils/RefBuilder.hpp>
 #include <LuaGeo.hpp>
 
 
-static Lua::ReferenceManager refman{};
+static Lua::RefBuilder<Sickle::GrabbableBox> builder{
+    "Sickle.maparea2d.grabbablebox"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,18 +48,9 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Sickle::GrabbableBox *box)
 {
-    refman.get(box);
-    if (!lua_isnil(L, -1))
+    if (builder.pushnew(box))
         return;
-    else
-        lua_pop(L, 1);
-
-    auto ptr = static_cast<Sickle::GrabbableBox const **>(
-        lua_newuserdatauv(L, sizeof(Sickle::GrabbableBox *), 0));
-    *ptr = box;
-    luaL_setmetatable(L, "Sickle.maparea2d.grabbablebox");
-
-    refman.set(box, -1);
+    builder.finish();
 }
 
 Sickle::GrabbableBox *lgrabbablebox_check(lua_State *L, int arg)
@@ -71,8 +63,6 @@ Sickle::GrabbableBox *lgrabbablebox_check(lua_State *L, int arg)
 
 int luaopen_grabbablebox(lua_State *L)
 {
-    refman.init(L);
-
     // Export enum values.
     Lua::make_table(L,
         std::make_pair("NONE", (lua_Integer)Sickle::GrabbableBox::Area::NONE),
@@ -91,8 +81,8 @@ int luaopen_grabbablebox(lua_State *L)
     luaL_setfuncs(L, methods, 0);
     lua_pushvalue(L, -1);
     lua_setfield(L, -1, "__index");
-
     lua_setfield(L, -2, "metatable");
 
+    builder.setLua(L);
     return 1;
 }

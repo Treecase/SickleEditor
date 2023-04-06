@@ -23,9 +23,9 @@
 #include <se-lua/se-lua.hpp>
 
 
-template<> void Lua::push(lua_State *L, GdkEventKey const *event);
-template<> void Lua::push(lua_State *L, GdkEventButton const *event);
-template<> void Lua::push(lua_State *L, GdkEventMotion const *event);
-template<> void Lua::push(lua_State *L, GdkEventScroll const *event);
+template<> void Lua::push(lua_State *L, GdkEventKey *event);
+template<> void Lua::push(lua_State *L, GdkEventButton *event);
+template<> void Lua::push(lua_State *L, GdkEventMotion *event);
+template<> void Lua::push(lua_State *L, GdkEventScroll *event);
 
 #endif

@@ -40,7 +40,7 @@ namespace Sickle
     {
     public:
         Editor editor;
-        lua_State *L;
+        lua_State *const L;
 
         AppWin();
 
@@ -74,6 +74,8 @@ namespace Sickle
         Gtk::InfoBar m_infobar{};
         Gtk::Label m_infobar_label{};
 
+        void setup_lua_state();
+
     private:
         MAP::Map _map;
         Glib::Property<guint> _prop_grid_size;
@@ -81,6 +83,16 @@ namespace Sickle
             _binding_grid_size_front,
             _binding_grid_size_right;
         sigc::signal<void()> _sig_lua_reloaded{};
+
+        std::vector<std::string> _lua_script_dirs{
+            SE_DATA_DIR "lua-runtime",
+            "../share/lua-runtime",
+        };
+        std::vector<std::string> const _internal_scripts{
+            "lua/gdkevents.lua",
+            "lua/gdkkeysyms.lua",
+            "lua/gdktypes.lua",
+        };
 
         void _on_grid_size_changed();
     };

@@ -21,47 +21,11 @@
 #include "LuaGdkEvent.hpp"
 #include "MapArea2D_Lua.hpp"
 
-#include <se-lua/lua-utils.hpp>
+#include <se-lua/utils/RefBuilder.hpp>
 #include <LuaGeo.hpp>
 
 
-static Lua::ReferenceManager refman{};
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Metamethods
-static int dunder_newindex(lua_State *L)
-{
-    lmaparea2d_check(L, 1);
-    lua_getiuservalue(L, -3, 1);
-    lua_rotate(L, -3, 1);
-    lua_settable(L, -3);
-    return 0;
-}
-
-static int dunder_index(lua_State *L)
-{
-    lmaparea2d_check(L, 1);
-    // Try data table first.
-    lua_getiuservalue(L, 1, 1);
-    lua_pushvalue(L, 2);
-    lua_gettable(L, -2);
-    // Not in data table, try the metatable.
-    if (lua_isnil(L, -1))
-    {
-        lua_pop(L, 2);
-        luaL_getmetatable(L, "Sickle.maparea2d");
-        lua_pushvalue(L, 2);
-        lua_gettable(L, -2);
-    }
-    return 1;
-}
-
-static luaL_Reg metamethods[] = {
-    {"__newindex", dunder_newindex},
-    {"__index", dunder_index},
-    {NULL, NULL}
-};
+static Lua::RefBuilder<Sickle::MapArea2D> builder{"Sickle.maparea2d"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -206,59 +170,22 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Sickle::MapArea2D *maparea)
 {
-    refman.get(maparea);
-    if (!lua_isnil(L, -1))
+    if (builder.pushnew(maparea))
         return;
-    else
-        lua_pop(L, 1);
 
-    auto ptr = static_cast<Sickle::MapArea2D const **>(
-        lua_newuserdatauv(L, sizeof(Sickle::MapArea2D *), 1));
-    *ptr = maparea;
-    luaL_setmetatable(L, "Sickle.maparea2d");
+    builder.addSignalHandler(
+        maparea->signal_key_press_event(), "on_key_press_event");
+    builder.addSignalHandler(
+        maparea->signal_key_release_event(), "on_key_release_event");
+    builder.addSignalHandler(
+        maparea->signal_button_press_event(), "on_button_press_event");
+    builder.addSignalHandler(
+        maparea->signal_button_release_event(), "on_button_release_event");
+    builder.addSignalHandler(
+        maparea->signal_motion_notify_event(), "on_motion_notify_event");
+    builder.addSignalHandler(maparea->signal_scroll_event(), "on_scroll_event");
 
-    // Add data table.
-    lua_newtable(L);
-    lua_setiuservalue(L, -2, 1);
-
-    maparea->signal_key_press_event().connect(
-        [L, maparea](GdkEventKey const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_key_press_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_key_release_event().connect(
-        [L, maparea](GdkEventKey const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_key_release_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_button_press_event().connect(
-        [L, maparea](GdkEventButton const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_button_press_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_button_release_event().connect(
-        [L, maparea](GdkEventButton const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_button_release_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_motion_notify_event().connect(
-        [L, maparea](GdkEventMotion const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_motion_notify_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_scroll_event().connect(
-        [L, maparea](GdkEventScroll const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_scroll_event", e);
-            return lua_toboolean(L, -1);
-        });
-
-    refman.set(maparea, -1);
+    builder.finish();
 }
 
 Sickle::MapArea2D *lmaparea2d_check(lua_State *L, int arg)
@@ -271,8 +198,7 @@ Sickle::MapArea2D *lmaparea2d_check(lua_State *L, int arg)
 int luaopen_maparea2d(lua_State *L)
 {
     luaL_requiref(L, "editor", luaopen_editor, 1);
-
-    refman.init(L);
+    lua_pop(L, 1);
 
     lua_newtable(L);
 
@@ -284,7 +210,6 @@ int luaopen_maparea2d(lua_State *L)
     lua_setfield(L, -2, "grabbablebox");
 
     luaL_newmetatable(L, "Sickle.maparea2d");
-    luaL_setfuncs(L, metamethods, 0);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
 
@@ -295,5 +220,6 @@ int luaopen_maparea2d(lua_State *L)
     lua_setfield(L, -3, "FRONT");
     lua_setfield(L, -2, "TOP");
 
+    builder.setLua(L);
     return 1;
 }

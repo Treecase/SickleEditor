@@ -19,10 +19,11 @@
 #include "editor/Editor.hpp"
 #include "Editor_Lua.hpp"
 
-#include <se-lua/lua-utils.hpp>
+#include <se-lua/utils/RefBuilder.hpp>
 
 
-static Lua::ReferenceManager refman{};
+static Lua::RefBuilder<Sickle::Editor::Selection> builder{
+    "Sickle.editor.selection"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -104,25 +105,10 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Sickle::Editor::Selection *selection)
 {
-    refman.get(selection);
-    if (!lua_isnil(L, -1))
+    if (builder.pushnew(selection))
         return;
-    else
-        lua_pop(L, 1);
-
-    auto ptr = static_cast<Sickle::Editor::Selection const **>(
-        lua_newuserdatauv(L, sizeof(Sickle::Editor::Selection *), 0));
-    *ptr = selection;
-    luaL_setmetatable(L, "Sickle.editor.selection");
-
-    // Connect signals.
-    selection->signal_updated().connect(
-        [L, selection](){
-            refman.get(selection);
-            Lua::call_method(L, "on_updated");
-        });
-
-    refman.set(selection, -1);
+    builder.addSignalHandler(selection->signal_updated(), "on_updated");
+    builder.finish();
 }
 
 Sickle::Editor::Selection *lselection_check(lua_State *L, int arg)
@@ -134,16 +120,13 @@ Sickle::Editor::Selection *lselection_check(lua_State *L, int arg)
 
 int luaopen_selection(lua_State *L)
 {
-    // TODO: References should be removed when the C++ objects are destroyed.
-    refman.init(L);
-
-    luaL_newmetatable(L, "Sickle.editor.selection");
-
     lua_newtable(L);
-    luaL_setfuncs(L, methods, 0);
     luaL_requiref(L, "editorbrush", luaopen_editorbrush, 0);
+    lua_setfield(L, -2, "editorbrush");
+    luaL_newmetatable(L, "Sickle.editor.selection");
+    luaL_setfuncs(L, methods, 0);
+    lua_setfield(L, -2, "metatable");
 
-    lua_setfield(L, -3, "editorbrush");
-    lua_setfield(L, -2, "__index");
-    return 0;
+    builder.setLua(L);
+    return 1;
 }

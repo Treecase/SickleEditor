@@ -22,46 +22,10 @@
 #include "MapArea2D_Lua.hpp"
 #include "MapArea3D_Lua.hpp"
 
-#include <se-lua/lua-utils.hpp>
+#include <se-lua/utils/RefBuilder.hpp>
 
 
-static Lua::ReferenceManager refman{};
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Metamethods
-static int dunder_newindex(lua_State *L)
-{
-    lappwin_check(L, 1);
-    lua_getiuservalue(L, -3, 1);
-    lua_rotate(L, -3, 1);
-    lua_settable(L, -3);
-    return 0;
-}
-
-static int dunder_index(lua_State *L)
-{
-    lappwin_check(L, 1);
-    // Try data table first.
-    lua_getiuservalue(L, 1, 1);
-    lua_pushvalue(L, 2);
-    lua_gettable(L, -2);
-    // Not in data table, try the metatable.
-    if (lua_isnil(L, -1))
-    {
-        lua_pop(L, 2);
-        luaL_getmetatable(L, "Sickle.appwin");
-        lua_pushvalue(L, 2);
-        lua_gettable(L, -2);
-    }
-    return 1;
-}
-
-static luaL_Reg metamethods[] = {
-    {"__newindex", dunder_newindex},
-    {"__index", dunder_index},
-    {NULL, NULL}
-};
+static Lua::RefBuilder<Sickle::AppWin> builder{"Sickle.appwin"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -100,48 +64,20 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Sickle::AppWin *appwin)
 {
-    refman.get(appwin);
-    if (!lua_isnil(L, -1))
+    if (builder.pushnew(appwin))
         return;
-    else
-        lua_pop(L, 1);
 
-    auto ptr = static_cast<Sickle::AppWin const **>(
-        lua_newuserdatauv(L, sizeof(Sickle::AppWin *), 1));
-    *ptr = appwin;
-    luaL_setmetatable(L, "Sickle.appwin");
+    builder.addField("mapArea3D", &appwin->m_maparea);
+    builder.addField("topMapArea", &appwin->m_drawarea_top);
+    builder.addField("frontMapArea", &appwin->m_drawarea_front);
+    builder.addField("rightMapArea", &appwin->m_drawarea_right);
 
-    // Add data table.
-    lua_newtable(L);
-    lua_setiuservalue(L, -2, 1);
+    builder.addSignalHandler(
+        appwin->property_grid_size().signal_changed(), "on_grid_size_changed");
+    builder.addSignalHandler(
+        appwin->signal_key_press_event(), "on_key_press_event");
 
-    // Add fields.
-    Lua::push(L, &appwin->m_maparea);
-    lua_setfield(L, -2, "mapArea3D");
-
-    Lua::push(L, &appwin->m_drawarea_top);
-    lua_setfield(L, -2, "topMapArea");
-
-    Lua::push(L, &appwin->m_drawarea_front);
-    lua_setfield(L, -2, "frontMapArea");
-
-    Lua::push(L, &appwin->m_drawarea_right);
-    lua_setfield(L, -2, "rightMapArea");
-
-    // Connect signals.
-    appwin->property_grid_size().signal_changed().connect(
-        [L, appwin](){
-            refman.get(appwin);
-            Lua::call_method(L, "on_grid_size_changed");
-        });
-    appwin->signal_key_press_event().connect(
-        [L, appwin](GdkEventKey const *e){
-            refman.get(appwin);
-            Lua::call_method(L, "on_key_press_event", e);
-            return lua_toboolean(L, -1);
-        });
-
-    refman.set(appwin, -1);
+    builder.finish();
 }
 
 Sickle::AppWin *lappwin_check(lua_State *L, int arg)
@@ -157,15 +93,11 @@ int luaopen_appwin(lua_State *L)
     luaL_requiref(L, "maparea3d", luaopen_maparea3d, 1);
     lua_pop(L, 2);
 
-    // TODO: References should be removed when the C++ objects are destroyed.
-    refman.init(L);
-
     lua_newtable(L);
-
     luaL_newmetatable(L, "Sickle.appwin");
-    luaL_setfuncs(L, metamethods, 0);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
 
+    builder.setLua(L);
     return 1;
 }

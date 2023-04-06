@@ -6,7 +6,7 @@ local FOV_DELTA = 1.0
 
 
 -- Keyboard key pressed.
-function gAppWin.mapArea3D:on_key_press_event(keyval)
+function maparea3d.metatable:on_key_press_event(keyval)
     local state = self:get_state()
     local move = state:get_move_direction()
     local turn = state:get_turn_rates()
@@ -58,7 +58,7 @@ end
 
 
 -- Keyboard key released.
-function gAppWin.mapArea3D:on_key_release_event(keyval)
+function maparea3d.metatable:on_key_release_event(keyval)
     local state = self:get_state()
     local move = state:get_move_direction()
     local turn = state:get_turn_rates()
@@ -107,7 +107,7 @@ end
 
 
 -- Mouse button pressed.
-function gAppWin.mapArea3D:on_button_press_event(event)
+function maparea3d.metatable:on_button_press_event(event)
     local state = self:get_state()
     -- Begin camera turn via middle mouse drag
     if event.button == 2 then
@@ -121,7 +121,7 @@ end
 
 
 -- Mouse button released.
-function gAppWin.mapArea3D:on_button_release_event(event)
+function maparea3d.metatable:on_button_release_event(event)
     -- Select/deselect a brush with left click.
     if event.button == 1 then
         local state = self:get_state()
@@ -147,7 +147,7 @@ end
 
 
 -- Mouse moved over widget.
-function gAppWin.mapArea3D:on_motion_notify_event(event)
+function maparea3d.metatable:on_motion_notify_event(event)
     local camera = self:get_camera()
     local state = self:get_state()
     if event.state & LuaGDK.GDK_BUTTON2_MASK ~= 0 then
@@ -164,7 +164,7 @@ end
 
 
 -- Mouse scrolled on widget.
-function gAppWin.mapArea3D:on_scroll_event(event)
+function maparea3d.metatable:on_scroll_event(event)
     local camera = self:get_camera()
     if event.state & LuaGDK.GDK_MOD1_MASK ~= 0 then
         if event.direction == LuaGDK.GDK_SCROLL_DOWN then

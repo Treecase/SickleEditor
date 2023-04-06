@@ -42,13 +42,16 @@ namespace Lua
 
 
     /** Push a value onto the stack. */
-    template<typename T>
-    void push(lua_State *L, T *value)=delete;
+    template<typename T> void push(lua_State *L, T value);
     void push(lua_State *L, bool value);
     void push(lua_State *L, lua_Integer value);
     void push(lua_State *L, lua_Number value);
     void push(lua_State *L, char const *value);
     void push(lua_State *L, std::string const &value);
+
+    /** Get a value from the stack. */
+    template<typename T>
+    T get_as(lua_State *L, int idx)=delete;
 
     struct Pusher
     {
@@ -118,5 +121,11 @@ namespace Lua
         (set_table(L, c.first, c.second), ...);
     }
 }
+
+template<> bool Lua::get_as(lua_State *L, int idx);
+template<> lua_Integer Lua::get_as(lua_State *L, int idx);
+template<> lua_Number Lua::get_as(lua_State *L, int idx);
+template<> char const *Lua::get_as(lua_State *L, int idx);
+template<> std::string Lua::get_as(lua_State *L, int idx);
 
 #endif

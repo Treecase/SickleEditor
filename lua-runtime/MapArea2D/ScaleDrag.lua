@@ -141,6 +141,10 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
     local distance = geo.vector.map(math.abs, click_pos - center)
     local scale = safe_vector_divide(distance, self.base_distance)
 
+    if self.centered then
+        scale = scale * 2
+    end
+
     -- Prevent scaling to 0, otherwise we won't be able to scale back up!
     for _,i in ipairs({"x", "y", "z", "w"}) do
         if scale_directions[i] == 0 then

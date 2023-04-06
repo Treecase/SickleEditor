@@ -53,6 +53,32 @@ void Lua::push(lua_State *L, std::string const &value)
 }
 
 
+template<> bool Lua::get_as(lua_State *L, int idx)
+{
+    return lua_toboolean(L, idx);
+}
+
+template<> lua_Integer Lua::get_as(lua_State *L, int idx)
+{
+    return lua_tointeger(L, idx);
+}
+
+template<> lua_Number Lua::get_as(lua_State *L, int idx)
+{
+    return lua_tonumber(L, idx);
+}
+
+template<> char const *Lua::get_as(lua_State *L, int idx)
+{
+    return lua_tostring(L, idx);
+}
+
+template<> std::string Lua::get_as(lua_State *L, int idx)
+{
+    return std::string{lua_tostring(L, idx)};
+}
+
+
 // TODO: Better way to do this?
 static std::unordered_map<lua_State *, std::function<void(lua_State *)>>
 error_handlers{};

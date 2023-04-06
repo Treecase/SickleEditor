@@ -21,37 +21,10 @@
 #include "Editor_Lua.hpp"
 
 #include <LuaGeo.hpp>
-#include <se-lua/lua-utils.hpp>
+#include <se-lua/utils/RefBuilder.hpp>
 
 
-static Lua::ReferenceManager refman{};
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Metamethods
-static int dunder_newindex(lua_State *L)
-{
-    lmaparea3d_check(L, 1);
-    lua_getiuservalue(L, -3, 1);
-    lua_rotate(L, -3, 1);
-    lua_settable(L, -3);
-    return 0;
-}
-
-static int dunder_index(lua_State *L)
-{
-    lmaparea3d_check(L, 1);
-    lua_getiuservalue(L, 1, 1);
-    lua_rotate(L, -2, 1);
-    lua_gettable(L, -2);
-    return 1;
-}
-
-static luaL_Reg metamethods[] = {
-    {"__newindex", dunder_newindex},
-    {"__index", dunder_index},
-    {NULL, NULL}
-};
+static Lua::RefBuilder<Sickle::MapArea3D> builder{"Sickle.maparea3d"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -197,62 +170,22 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Sickle::MapArea3D *maparea)
 {
-    refman.get(maparea);
-    if (!lua_isnil(L, -1))
+    if (builder.pushnew(maparea))
         return;
-    else
-        lua_pop(L, 1);
 
-    auto ptr = static_cast<Sickle::MapArea3D const **>(
-        lua_newuserdatauv(L, sizeof(Sickle::MapArea3D *), 1));
-    *ptr = maparea;
-    luaL_setmetatable(L, "Sickle.maparea3d");
+    builder.addSignalHandler(
+        maparea->signal_key_press_event(), "on_key_press_event");
+    builder.addSignalHandler(
+        maparea->signal_key_release_event(), "on_key_release_event");
+    builder.addSignalHandler(
+        maparea->signal_button_press_event(), "on_button_press_event");
+    builder.addSignalHandler(
+        maparea->signal_button_release_event(), "on_button_release_event");
+    builder.addSignalHandler(
+        maparea->signal_motion_notify_event(), "on_motion_notify_event");
+    builder.addSignalHandler(maparea->signal_scroll_event(), "on_scroll_event");
 
-    // Add methods/data table.
-    // TODO: individual data, shared methods
-    lua_newtable(L);
-    luaL_setfuncs(L, methods, 0);
-    lua_setiuservalue(L, -2, 1);
-
-    // Connect signals.
-    maparea->signal_key_press_event().connect(
-        [L, maparea](GdkEventKey const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_key_press_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_key_release_event().connect(
-        [L, maparea](GdkEventKey const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_key_release_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_button_press_event().connect(
-        [L, maparea](GdkEventButton const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_button_press_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_button_release_event().connect(
-        [L, maparea](GdkEventButton const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_button_release_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_motion_notify_event().connect(
-        [L, maparea](GdkEventMotion const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_motion_notify_event", e);
-            return lua_toboolean(L, -1);
-        });
-    maparea->signal_scroll_event().connect(
-        [L, maparea](GdkEventScroll const *e){
-            refman.get(maparea);
-            Lua::call_method_r(L, 1, "on_scroll_event", e);
-            return lua_toboolean(L, -1);
-        });
-
-    refman.set(maparea, -1);
+    builder.finish();
 }
 
 Sickle::MapArea3D *lmaparea3d_check(lua_State *L, int arg)
@@ -266,11 +199,13 @@ int luaopen_maparea3d(lua_State *L)
 {
     luaL_requiref(L, "Sickle.maparea3d.state", luaopen_maparea3d_state, 0);
     luaL_requiref(L, "Sickle.freecam", luaopen_freecam, 0);
+    lua_pop(L, 2);
 
-    refman.init(L);
-
+    lua_newtable(L);
     luaL_newmetatable(L, "Sickle.maparea3d");
-    luaL_setfuncs(L, metamethods, 0);
+    luaL_setfuncs(L, methods, 0);
+    lua_setfield(L, -2, "metatable");
 
-    return 0;
+    builder.setLua(L);
+    return 1;
 }

@@ -127,30 +127,8 @@ Sickle::AppWin::AppWin()
     signal_lua_reloaded().connect(
         [this](){m_luaconsole.writeline("---Lua Reloaded---");});
 
-    // Set up Lua.
-    luaL_requiref(L, "appwin", luaopen_appwin, 1);
-    luaL_requiref(L, "geo", luaopen_geo, 1);
-    lua_pop(L, 2);
-
-    Lua::push(L, this);
-    lua_setglobal(L, "gAppWin");
-
-    // Run internal scripts from GResources.
-    std::vector<std::string> lua_scripts{
-        "lua/gdkevents.lua",
-        "lua/gdkkeysyms.lua",
-        "lua/gdktypes.lua",
-    };
-    for (auto const &path : lua_scripts)
-    {
-        auto const &res = Gio::Resource::lookup_data_global(
-            SE_GRESOURCE_PREFIX + path);
-        gsize _size;
-        Lua::checkerror(L,
-            luaL_dostring(L, static_cast<char const *>(res->get_data(_size))));
-    }
+    setup_lua_state();
     reload_scripts();
-    lua_pop(L, lua_gettop(L));
 
     show_all_children();
     m_infobar.hide();
@@ -178,43 +156,25 @@ void Sickle::AppWin::show_console_window()
 
 void Sickle::AppWin::reload_scripts()
 {
-    // Run external scripts in the lua-runtime directory.
-    auto dir = Gio::File::create_for_path(SE_DATA_DIR "lua-runtime");
-    if (!dir->query_exists())
+    auto pre = lua_gettop(L);
+    for (auto const &path : _lua_script_dirs)
     {
-        dir = Gio::File::create_for_path("../share/lua-runtime");
+        auto dir = Gio::File::create_for_path(path);
         if (!dir->query_exists())
+            continue;
+        auto enumeration = dir->enumerate_children();
+        for (
+            auto file = enumeration->next_file();
+            file;
+            file = enumeration->next_file())
         {
-            Gtk::MessageDialog d{"Failed to load Lua scripts!", false, Gtk::MessageType::MESSAGE_WARNING};
-            d.set_title("Warning");
-            d.run();
-            std::cerr << "WARNING: Failed to load Lua scripts!\n";
-            return;
+            auto const &filepath = dir->get_path() + "/" + file->get_name();
+            if (Glib::file_test(filepath, Glib::FileTest::FILE_TEST_IS_DIR))
+                continue;
+            Lua::checkerror(L, luaL_dofile(L, filepath.c_str()));
         }
     }
-
-    lua_getglobal(L, "package");
-    lua_getfield(L, -1, "path");
-    std::string oldpath{lua_tostring(L, -1)};
-    lua_pop(L, 1);
-    lua_pushstring(L, (
-        oldpath + ";"
-        + dir->get_path() + "/?;"
-        + dir->get_path() + "/?.lua").c_str());
-    lua_setfield(L, -2, "path");
-    lua_pop(L, 1);
-
-    auto enumeration = dir->enumerate_children();
-    for (
-        auto file = enumeration->next_file();
-        file;
-        file = enumeration->next_file())
-    {
-        auto const &filepath = dir->get_path() + "/" + file->get_name();
-        if (Glib::file_test(filepath, Glib::FileTest::FILE_TEST_IS_DIR))
-            continue;
-        Lua::checkerror(L, luaL_dofile(L, filepath.c_str()));
-    }
+    lua_pop(L, lua_gettop(L) - pre);
     signal_lua_reloaded().emit();
 }
 
@@ -226,6 +186,63 @@ void Sickle::AppWin::set_grid_size(guint grid_size)
 guint Sickle::AppWin::get_grid_size()
 {
     return property_grid_size().get_value();
+}
+
+
+void Sickle::AppWin::setup_lua_state()
+{
+    luaL_requiref(L, "appwin", luaopen_appwin, 1);
+    luaL_requiref(L, "geo", luaopen_geo, 1);
+    lua_pop(L, 2);
+
+    Lua::push(L, this);
+    lua_setglobal(L, "gAppWin");
+
+    // Run internal GResource scripts.
+    for (auto const &path : _internal_scripts)
+    {
+        auto const &res = Gio::Resource::lookup_data_global(
+            SE_GRESOURCE_PREFIX + path);
+        gsize _size;
+        Lua::checkerror(L,
+            luaL_dostring(L, static_cast<char const *>(res->get_data(_size))));
+    }
+
+    // Get Lua scripts directory(s).
+    std::vector<Glib::RefPtr<Gio::File>> dirs{};
+    for (auto const &path : _lua_script_dirs)
+    {
+        auto dir = Gio::File::create_for_path(path);
+        if (dir->query_exists())
+            dirs.push_back(dir);
+    }
+    if (dirs.empty())
+    {
+        Gtk::MessageDialog d{
+            "Failed to load Lua scripts!",
+            false,
+            Gtk::MessageType::MESSAGE_WARNING};
+        d.set_title("Warning");
+        d.run();
+        std::cerr << "WARNING: Failed to load Lua scripts!\n";
+        return;
+    }
+
+    // Add script dirs to Lua path.
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "path");
+    std::string oldpath{lua_tostring(L, -1)};
+    lua_pop(L, 1);
+
+    std::stringstream paths{};
+    for (auto const &dir : dirs)
+    {
+        paths << dir->get_path() + "/?;";
+        paths << dir->get_path() + "/?.lua;";
+    }
+    Lua::push(L, oldpath + ";" + paths.str());
+    lua_setfield(L, -2, "path");
+    lua_pop(L, 1);
 }
 
 

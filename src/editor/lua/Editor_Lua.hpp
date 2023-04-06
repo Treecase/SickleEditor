@@ -19,13 +19,10 @@
 #ifndef SE_EDITOR_LUA_HPP
 #define SE_EDITOR_LUA_HPP
 
-#include "se-lua/se-lua.hpp"
+#include "editor/Editor.hpp"
 
+#include <se-lua/se-lua.hpp>
 
-namespace Sickle
-{
-    class Editor;
-}
 
 int luaopen_editor(lua_State *L);
 Sickle::Editor *leditor_check(lua_State *L, int arg);
@@ -41,7 +38,7 @@ Sickle::EditorBrush *leditorbrush_check(lua_State *L, int arg);
 
 template<> void Lua::push(lua_State *L, Sickle::Editor *editor);
 template<> void Lua::push(lua_State *L, Sickle::Editor::Selection *selection);
-template<> void Lua::push(lua_State *L, Sickle::Editor::BrushBox *selection);
+template<> void Lua::push(lua_State *L, Sickle::Editor::BrushBox *brushbox);
 template<> void Lua::push(lua_State *L, Sickle::EditorBrush *brush);
 
 #endif

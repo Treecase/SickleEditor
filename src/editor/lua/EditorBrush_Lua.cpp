@@ -20,10 +20,10 @@
 #include "Editor_Lua.hpp"
 #include "LuaGeo.hpp"
 
-#include <se-lua/lua-utils.hpp>
+#include <se-lua/utils/RefBuilder.hpp>
 
 
-static Lua::ReferenceManager refman{};
+static Lua::RefBuilder<Sickle::EditorBrush> builder{"Sickle.editorbrush"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,24 +88,11 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Sickle::EditorBrush *brush)
 {
-    refman.get(brush);
-    if (!lua_isnil(L, -1))
+    if (builder.pushnew(brush))
         return;
-    else
-        lua_pop(L, 1);
-
-    auto ptr = static_cast<Sickle::EditorBrush const **>(
-        lua_newuserdatauv(L, sizeof(Sickle::EditorBrush *), 0));
-    *ptr = brush;
-    luaL_setmetatable(L, "Sickle.editorbrush");
-
-    brush->is_selected.signal_changed().connect(
-        [L, brush](){
-            refman.get(brush);
-            Lua::call_method(L, "on_selected");
-        });
-
-    refman.set(brush, -1);
+    builder.addSignalHandler(
+        brush->is_selected.signal_changed(), "on_selected");
+    builder.finish();
 }
 
 Sickle::EditorBrush *leditorbrush_check(lua_State *L, int arg)
@@ -117,13 +104,11 @@ Sickle::EditorBrush *leditorbrush_check(lua_State *L, int arg)
 
 int luaopen_editorbrush(lua_State *L)
 {
-    // TODO: References should be removed when the C++ objects are destroyed.
-    refman.init(L);
-
-    luaL_newmetatable(L, "Sickle.editorbrush");
     lua_newtable(L);
+    luaL_newmetatable(L, "Sickle.editorbrush");
     luaL_setfuncs(L, methods, 0);
-    lua_setfield(L, -2, "__index");
+    lua_setfield(L, -2, "metatable");
 
-    return 0;
+    builder.setLua(L);
+    return 1;
 }
