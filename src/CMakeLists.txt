@@ -10,6 +10,7 @@ add_subdirectory(gtk)
 add_subdirectory(lua)
 add_subdirectory(map)
 add_subdirectory(mdl)
+add_subdirectory(rmf)
 add_subdirectory(utils)
 add_subdirectory(wad)
 

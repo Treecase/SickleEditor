@@ -19,11 +19,13 @@
 #include "AppWin.hpp"
 #include "AppWin_Lua.hpp"
 #include "MapArea2D_Lua.hpp"
-
 #include "appid.hpp"
 #include "version.hpp"
-#include "LuaGeo.hpp"
-#include "map/mapsaver.hpp"
+
+#include <LuaGeo.hpp>
+#include <map/mapsaver.hpp>
+#include <rmf/rmf.hpp>
+#include <rmf/rmf2map.hpp>
 
 #include <glibmm/fileutils.h>
 #include <gtkmm/messagedialog.h>
@@ -134,10 +136,41 @@ Sickle::AppWin::AppWin()
     m_infobar.hide();
 }
 
-void Sickle::AppWin::open(Gio::File const *file)
+MAP::Map loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
+{
+    std::string maperror{};
+    std::string rmferror{};
+    try
+    {
+        return convertRMF(RMF::load(file->get_path()));
+    }
+    catch (RMF::LoadError const &e)
+    {
+        rmferror = e.what();
+    }
+    try
+    {
+        return MAP::load(file->get_path());
+    }
+    catch (MAP::LoadError const &e)
+    {
+        maperror = e.what();
+    }
+    Gtk::MessageDialog d{
+        "Failed to load " + file->get_path() + ":\n"
+        + ".map: " + maperror + "\n"
+        + ".rmf: " + rmferror,
+        false,
+        Gtk::MessageType::MESSAGE_ERROR};
+    d.set_title("File Load Error");
+    d.run();
+    return MAP::Map{};
+}
+
+void Sickle::AppWin::open(Glib::RefPtr<Gio::File> const &file)
 {
     if (file)
-        _map = MAP::load(file->get_path());
+        _map = loadAnyMapFile(file);
     else
         _map = MAP::Map{};
     editor.set_map(_map);

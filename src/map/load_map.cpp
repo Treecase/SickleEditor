@@ -1,6 +1,6 @@
 /**
  * load_map.cpp - Load .map files.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,14 +54,6 @@ struct Token
 class MAPTokenizer
 {
 private:
-    struct TokenizeError : std::runtime_error
-    {
-        TokenizeError(std::string const &what)
-        :   std::runtime_error{what}
-        {
-        }
-    };
-
     struct IOWrapper
     {
     private:
@@ -124,7 +116,7 @@ private:
         for (size_t i = 1; i < expected.size(); ++i)
             msg << " or '" << expected[i] << "'";
         msg << ", got '" << ch << "'";
-        throw TokenizeError{msg.str()};
+        throw MAP::TokenizeError{msg.str()};
     }
 
 
@@ -140,7 +132,7 @@ private:
     void s_RequiredWhitespace()
     {
         if (!isspace(_io.peek()))
-            throw TokenizeError{"Expected whitespace"};
+            throw MAP::TokenizeError{"Expected whitespace"};
         while (isspace(_io.peek()))
             _io.get();
     }
@@ -323,14 +315,6 @@ public:
 class MAPParser
 {
 private:
-    struct ParseError : std::runtime_error
-    {
-        ParseError(std::string const &what)
-        :   std::runtime_error{what}
-        {
-        }
-    };
-
     size_t _i;
     std::vector<Token> const &_tokens;
     MAP::Map _result;
@@ -354,7 +338,7 @@ private:
         MAP::Entity entity{};
         auto t = _next();
         if (t.type != '{')
-            throw ParseError{"Expected LBRACE"};
+            throw MAP::ParseError{"Expected LBRACE"};
         while ((t = _peek()).type != '}')
         {
             if (t.type == '{')
@@ -362,10 +346,10 @@ private:
             else if (t.type == KEY)
                 entity.properties.insert(_Property());
             else
-                throw ParseError{"Expected BRUSH or PROPERTY"};
+                throw MAP::ParseError{"Expected BRUSH or PROPERTY"};
         }
         if (_next().type != '}')
-            throw ParseError{"Expected RBRACE"};
+            throw MAP::ParseError{"Expected RBRACE"};
         return entity;
     }
 
@@ -378,7 +362,7 @@ private:
     {
         auto key = _next();
         if (key.type != KEY)
-            throw ParseError{"Expected KEY"};
+            throw MAP::ParseError{"Expected KEY"};
         return key.text;
     }
 
@@ -386,21 +370,21 @@ private:
     {
         auto value = _next();
         if (value.type != VALUE)
-            throw ParseError{"Expected VALUE"};
+            throw MAP::ParseError{"Expected VALUE"};
         return value.text;
     }
 
     MAP::Brush _Brush()
     {
         if (_next().type != '{')
-            throw ParseError{"Expected LBRACE"};
+            throw MAP::ParseError{"Expected LBRACE"};
         MAP::Brush brush{};
         while (_peek().type == '(')
             brush.planes.push_back(_Plane());
         brush_add_vertices(brush);
         auto t = _next();
         if (t.type != '}')
-            throw ParseError{"Expected RBRACE"};
+            throw MAP::ParseError{"Expected RBRACE"};
         return brush;
     }
 
@@ -424,10 +408,10 @@ private:
     MAP::Vertex _Point()
     {
         if (_next().type != '(')
-            throw ParseError{"Expected LPAREN"};
+            throw MAP::ParseError{"Expected LPAREN"};
         MAP::Vertex pt{_Number(), _Number(), _Number()};
         if (_next().type != ')')
-            throw ParseError{"Expected RPAREN"};
+            throw MAP::ParseError{"Expected RPAREN"};
         return pt;
     }
 
@@ -435,7 +419,7 @@ private:
     {
         auto const &n = _next();
         if (n.type != NUMBER)
-            throw ParseError{"Expected NUMBER"};
+            throw MAP::ParseError{"Expected NUMBER"};
         return std::stof(n.text);
     }
 
@@ -443,17 +427,17 @@ private:
     {
         auto &t = _next();
         if (t.type != MIPTEX)
-            throw ParseError{"Expected MIPTEX"};
+            throw MAP::ParseError{"Expected MIPTEX"};
         return t.text;
     }
 
     std::array<float, 4> _Off()
     {
         if (_next().type != '[')
-            throw ParseError{"Expected LBRACKET"};
+            throw MAP::ParseError{"Expected LBRACKET"};
         std::array<float, 4> off{_Number(), _Number(), _Number(), _Number()};
         if (_next().type != ']')
-            throw ParseError{"Expected RBRACKET"};
+            throw MAP::ParseError{"Expected RBRACKET"};
         return off;
     }
 
@@ -475,7 +459,7 @@ MAP::Map MAP::load(std::string const &path)
 {
     std::ifstream f{path, std::ios::in | std::ios::binary};
     if (!f.is_open())
-        throw std::runtime_error{"Failed to open '" + path + "'"};
+        throw MAP::LoadError{"Failed to open '" + path + "'"};
 
     // Reset tokenizer state.
     MAPTokenizer tokenizer{f};

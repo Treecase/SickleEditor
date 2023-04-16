@@ -91,7 +91,7 @@ void Sickle::App::on_open(
         appwindow = _create_appwindow();
     // Assuming files won't be empty, since if it was, `on_activate` would be
     // used instead
-    appwindow->open(files[0].get());
+    appwindow->open(files[0]);
     appwindow->maximize();
     appwindow->present();
 }
@@ -99,7 +99,7 @@ void Sickle::App::on_open(
 void Sickle::App::on_action_new()
 {
     auto win = dynamic_cast<AppWin *>(get_active_window());
-    win->open(nullptr);
+    win->open(Glib::RefPtr<Gio::File>{nullptr});
 }
 
 void Sickle::App::on_action_open()
@@ -112,16 +112,21 @@ void Sickle::App::on_action_open()
     auto all_filter = Gtk::FileFilter::create();
     all_filter->add_pattern("*.*");
     all_filter->set_name("All Files");
+    chooser->add_filter(all_filter);
     auto map_filter = Gtk::FileFilter::create();
     map_filter->add_pattern("*.map");
     map_filter->set_name("Game Maps");
     chooser->add_filter(map_filter);
-    chooser->add_filter(all_filter);
+    auto rmf_filter = Gtk::FileFilter::create();
+    rmf_filter->add_pattern("*.rmf");
+    rmf_filter->set_name("Hammer/Worldcraft Maps");
+    chooser->add_filter(rmf_filter);
+    chooser->set_filter(rmf_filter);
     int response = chooser->run();
     switch (response)
     {
     case Gtk::ResponseType::RESPONSE_ACCEPT:
-        win->open(chooser->get_file().get());
+        win->open(chooser->get_file());
         break;
     }
 }

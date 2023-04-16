@@ -45,7 +45,7 @@ namespace Sickle
         AppWin();
 
         /** Open a file. */
-        void open(Gio::File const *file);
+        void open(Glib::RefPtr<Gio::File> const &file);
         /** Save currently edited map. */
         void save(std::string const &filename);
         /** Open the Lua console window. */

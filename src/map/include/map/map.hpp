@@ -1,6 +1,6 @@
 /**
  * load_map.hpp - .map format data.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include <glm/glm.hpp>
 
 #include <array>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -29,6 +30,22 @@
 
 namespace MAP
 {
+    struct LoadError : std::runtime_error
+    {
+        LoadError(std::string const &what): std::runtime_error{what} {}
+    };
+
+    struct TokenizeError : LoadError
+    {
+        TokenizeError(std::string const &what): LoadError{what} {}
+    };
+
+    struct ParseError : LoadError
+    {
+        ParseError(std::string const &what): LoadError{what} {}
+    };
+
+
     typedef glm::vec3 Vertex;
     typedef glm::vec3 Vector3;
     typedef glm::vec2 Vector2;

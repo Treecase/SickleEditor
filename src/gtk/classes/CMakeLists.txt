@@ -9,4 +9,4 @@ target_sources(sickle PRIVATE
     gtkglutils.cpp
 )
 
-target_link_libraries(sickle PRIVATE luageo)
+target_link_libraries(sickle PRIVATE luageo rmf)
