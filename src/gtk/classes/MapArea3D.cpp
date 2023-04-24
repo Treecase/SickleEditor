@@ -82,7 +82,7 @@ raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
 
 
 /* ===[ MapArea3D ]=== */
-Sickle::MapArea3D::MapArea3D(Editor &ed)
+Sickle::MapArea3D::MapArea3D(Editor::Editor &ed)
 :   Glib::ObjectBase{typeid(MapArea3D)}
 ,   Gtk::GLArea{}
 ,   _editor{ed}
@@ -134,9 +134,9 @@ Sickle::MapArea3D::MapArea3D(Editor &ed)
     add_tick_callback(sigc::mem_fun(*this, &MapArea3D::tick_callback));
 }
 
-Sickle::EditorBrush *Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
+Sickle::Editor::Brush *Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
 {
-    EditorBrush *picked{nullptr};
+    Editor::Brush *picked{nullptr};
     float pt = INFINITY;
 
     auto const &_camera = property_camera().get_value();
@@ -153,7 +153,7 @@ Sickle::EditorBrush *Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
         for (auto const &brush : entity.brushes)
         {
             BBox3 bbox{};
-            for (auto const &face : brush.planes)
+            for (auto const &face : brush.faces)
                 for (auto const &vertex : face.vertices)
                     bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
 
@@ -163,7 +163,7 @@ Sickle::EditorBrush *Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
                 // We pick the first (ie. closest) brush our raycast hits.
                 if (t < pt)
                 {
-                    picked = const_cast<EditorBrush *>(&brush);
+                    picked = const_cast<Editor::Brush *>(&brush);
                     pt = t;
                 }
             }
@@ -239,6 +239,9 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 
     auto const modelMatrix = property_transform().get_value().getMatrix();
 
+    if (!_mapview)
+        return false;
+
     // TEMP: Ideally GLBrushes would be refreshed only when the underlying
     // EditorBrush is modified.
     _mapview->refresh(_editor.get_map());
@@ -253,13 +256,13 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     // TODO: Do this properly, very brittle right now
     for (size_t e = 0; e < _mapview->entities.size(); ++e)
     {
-        for (size_t b = 0; b < _mapview->entities[e].brushes.size(); ++b)
+        for (size_t b = 0; b < _mapview->entities.at(e).brushes.size(); ++b)
         {
-            if (_editor.get_map().entities[e].brushes[b].is_selected)
+            if (_editor.get_map().entities.at(e).brushes.at(b).is_selected)
                 _shader->setUniformS("modulate", glm::vec3{1, 0, 0});
             else
                 _shader->setUniformS("modulate", glm::vec3{1, 1, 1});
-            _mapview->entities[e].brushes[b].render();
+            _mapview->entities.at(e).brushes.at(b).render();
         }
     }
 

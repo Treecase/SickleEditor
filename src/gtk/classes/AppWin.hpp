@@ -39,7 +39,7 @@ namespace Sickle
     class AppWin : public Gtk::ApplicationWindow
     {
     public:
-        Editor editor;
+        Editor::Editor editor;
         lua_State *const L;
 
         AppWin();
@@ -77,7 +77,6 @@ namespace Sickle
         void setup_lua_state();
 
     private:
-        MAP::Map _map;
         Glib::Property<guint> _prop_grid_size;
         Glib::RefPtr<Glib::Binding> _binding_grid_size_top,
             _binding_grid_size_front,

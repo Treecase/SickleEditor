@@ -52,9 +52,9 @@ namespace Sickle
 
         DebugDrawer3D debug{};
 
-        MapArea3D(Editor &ed);
+        MapArea3D(Editor::Editor &ed);
 
-        EditorBrush *pick_brush(glm::vec2 const &P);
+        Editor::Brush *pick_brush(glm::vec2 const &P);
         GLSpacePoint screenspace_to_glspace(ScreenSpacePoint const &) const;
 
         auto &get_editor() {return _editor;}
@@ -85,7 +85,7 @@ namespace Sickle
         void on_wireframe_changed();
 
     private:
-        Editor &_editor;
+        Editor::Editor &_editor;
         std::shared_ptr<GLUtil::Program> _shader{nullptr};
         std::unique_ptr<MAP::GLMap> _mapview{nullptr};
 

@@ -25,7 +25,6 @@
 #include <LuaGeo.hpp>
 #include <map/mapsaver.hpp>
 #include <rmf/rmf.hpp>
-#include <rmf/rmf2map.hpp>
 
 #include <glibmm/fileutils.h>
 #include <gtkmm/messagedialog.h>
@@ -54,7 +53,6 @@ Sickle::AppWin::AppWin()
 ,   m_luaconsole{}
 ,   m_hbox{}
 ,   m_gridsizelabel{}
-,   _map{}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _binding_grid_size_top{}
 ,   _binding_grid_size_front{}
@@ -136,13 +134,13 @@ Sickle::AppWin::AppWin()
     m_infobar.hide();
 }
 
-MAP::Map loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
+Sickle::Editor::Map loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
 {
     std::string maperror{};
     std::string rmferror{};
     try
     {
-        return convertRMF(RMF::load(file->get_path()));
+        return RMF::load(file->get_path());
     }
     catch (RMF::LoadError const &e)
     {
@@ -164,16 +162,15 @@ MAP::Map loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
         Gtk::MessageType::MESSAGE_ERROR};
     d.set_title("File Load Error");
     d.run();
-    return MAP::Map{};
+    return {};
 }
 
 void Sickle::AppWin::open(Glib::RefPtr<Gio::File> const &file)
 {
     if (file)
-        _map = loadAnyMapFile(file);
+        editor.set_map(loadAnyMapFile(file));
     else
-        _map = MAP::Map{};
-    editor.set_map(_map);
+        editor.set_map({});
 }
 
 void Sickle::AppWin::save(std::string const &filename)

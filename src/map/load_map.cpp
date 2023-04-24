@@ -382,6 +382,9 @@ private:
         while (_peek().type == '(')
             brush.planes.push_back(_Plane());
         brush_add_vertices(brush);
+        for (auto const &plane : brush.planes)
+            if (plane.vertices.empty())
+                throw MAP::FormatError("Brush is missing vertices");
         auto t = _next();
         if (t.type != '}')
             throw MAP::ParseError{"Expected RBRACE"};

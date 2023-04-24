@@ -139,7 +139,7 @@ void draw_text(
 
 
 /* ===[ MapArea2D ]=== */
-Sickle::MapArea2D::MapArea2D(Editor &ed)
+Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
 :   Glib::ObjectBase{typeid(MapArea2D)}
 ,   Gtk::DrawingArea{}
 ,   _editor{ed}
@@ -226,9 +226,9 @@ Sickle::MapArea2D::worldspace_to_drawspace(MAP::Vertex const &v) const
     throw std::logic_error{"bad DrawAngle value"};
 }
 
-Sickle::EditorBrush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
+Sickle::Editor::Brush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
 {
-    EditorBrush *picked{nullptr};
+    Editor::Brush *picked{nullptr};
     BBox2 pbbox{};
 
     for (auto const &entity : _editor.get_map().entities)
@@ -236,7 +236,7 @@ Sickle::EditorBrush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
         for (auto const &brush : entity.brushes)
         {
             BBox2 bbox{};
-            for (auto const &face : brush.planes)
+            for (auto const &face : brush.faces)
                 for (auto const &vertex : face.vertices)
                     bbox.add(worldspace_to_drawspace(vertex));
 
@@ -247,7 +247,7 @@ Sickle::EditorBrush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
                 // logical enough.
                 if (bbox.volume() < pbbox.volume())
                 {
-                    picked = const_cast<EditorBrush *>(&brush);
+                    picked = const_cast<Editor::Brush *>(&brush);
                     pbbox = bbox;
                 }
             }
@@ -384,7 +384,7 @@ void Sickle::MapArea2D::on_editor_selection_changed()
 {
     BBox2 selection_bounds{};
     for (auto const &brush : _editor.selected)
-        for (auto const &face : brush->planes)
+        for (auto const &face : brush->faces)
             for (auto const &vertex : face.vertices)
                 selection_bounds.add(worldspace_to_drawspace(vertex));
     _box.set_box(selection_bounds);
@@ -410,10 +410,10 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 
 
 void Sickle::MapArea2D::_draw_brush(
-    Cairo::RefPtr<Cairo::Context> const &cr, EditorBrush const &brush)
+    Cairo::RefPtr<Cairo::Context> const &cr, Editor::Brush const &brush)
 const
 {
-    for (auto const &face : brush.planes)
+    for (auto const &face : brush.faces)
     {
         if (face.vertices.empty())
             continue;

@@ -22,13 +22,13 @@
 
 
 /* ===[ Editor::BrushBox ]=== */
-void Sickle::Editor::BrushBox::p1(MAP::Vertex v)
+void Sickle::Editor::Editor::BrushBox::p1(MAP::Vertex v)
 {
     _p1 = v;
     signal_updated().emit();
 }
 
-void Sickle::Editor::BrushBox::p2(MAP::Vertex v)
+void Sickle::Editor::Editor::BrushBox::p2(MAP::Vertex v)
 {
     _p2 = v;
     signal_updated().emit();
@@ -36,7 +36,7 @@ void Sickle::Editor::BrushBox::p2(MAP::Vertex v)
 
 
 /* ===[ Editor::Selection ]=== */
-void Sickle::Editor::Selection::clear() {
+void Sickle::Editor::Editor::Selection::clear() {
     std::for_each(
         _selected.begin(), _selected.end(),
         [](auto brush){brush->is_selected = false;});
@@ -44,19 +44,19 @@ void Sickle::Editor::Selection::clear() {
     signal_updated().emit();
 }
 
-void Sickle::Editor::Selection::add(Item *item) {
+void Sickle::Editor::Editor::Selection::add(Item *item) {
     _selected.emplace(item);
     item->is_selected = true;
     item->signal_changed().connect([this](){signal_updated().emit();});
     signal_updated().emit();
 }
 
-void Sickle::Editor::Selection::remove(Item *item) {
+void Sickle::Editor::Editor::Selection::remove(Item *item) {
     _selected.erase(item);
     item->is_selected = false;
     signal_updated().emit();
 }
 
-bool Sickle::Editor::Selection::contains(Item *item) const {
+bool Sickle::Editor::Editor::Selection::contains(Item *item) const {
     return _selected.count(item) != 0;
 }

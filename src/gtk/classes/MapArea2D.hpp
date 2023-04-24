@@ -241,7 +241,7 @@ namespace Sickle
 
         enum DrawAngle {TOP, FRONT, RIGHT};
 
-        MapArea2D(Editor &ed);
+        MapArea2D(Editor::Editor &ed);
 
         /** Convert screen-space coordinates to draw-space coordinates. */
         DrawSpacePoint screenspace_to_drawspace(double x, double y) const;
@@ -252,7 +252,7 @@ namespace Sickle
         /** Convert world-space coordinates to draw-space coordinates. */
         DrawSpacePoint worldspace_to_drawspace(MAP::Vertex const &v) const;
         /** Pick an EditorBrush based on the given point. */
-        EditorBrush *pick_brush(DrawSpacePoint point);
+        Editor::Brush *pick_brush(DrawSpacePoint point);
 
         auto property_clear_color() {return _prop_clear_color.get_proxy();}
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
@@ -278,7 +278,7 @@ namespace Sickle
         bool on_enter_notify_event(GdkEventCrossing *event) override;
 
     private:
-        Editor &_editor;
+        Editor::Editor &_editor;
 
         GrabbableBox _box;
 
@@ -291,7 +291,7 @@ namespace Sickle
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,
-            EditorBrush const &brush) const;
+            Editor::Brush const &brush) const;
         void _draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const;
     };
 }

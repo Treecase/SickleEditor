@@ -45,6 +45,11 @@ namespace MAP
         ParseError(std::string const &what): LoadError{what} {}
     };
 
+    struct FormatError : LoadError
+    {
+        FormatError(std::string const &what): LoadError{what} {}
+    };
+
 
     typedef glm::vec3 Vertex;
     typedef glm::vec3 Vector3;

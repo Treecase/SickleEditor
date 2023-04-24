@@ -22,7 +22,7 @@
 #include <se-lua/utils/RefBuilder.hpp>
 
 
-static Lua::RefBuilder<Sickle::Editor> builder{"Sickle.editor"};
+static Lua::RefBuilder<Sickle::Editor::Editor> builder{"Sickle.editor"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::Editor *editor)
+void Lua::push(lua_State *L, Sickle::Editor::Editor *editor)
 {
     if (builder.pushnew(editor))
         return;
@@ -66,11 +66,11 @@ void Lua::push(lua_State *L, Sickle::Editor *editor)
     builder.finish();
 }
 
-Sickle::Editor *leditor_check(lua_State *L, int arg)
+Sickle::Editor::Editor *leditor_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, "Sickle.editor");
     luaL_argcheck(L, ud != NULL, arg, "`Sickle.editor' expected");
-    return *static_cast<Sickle::Editor **>(ud);
+    return *static_cast<Sickle::Editor::Editor **>(ud);
 }
 
 int luaopen_editor(lua_State *L)

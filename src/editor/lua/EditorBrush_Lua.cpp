@@ -1,5 +1,5 @@
 /**
- * EditorBrush_Lua.cpp - EditorBrush Lua binding.
+ * EditorBrush_Lua.cpp - Editor  Brush Lua binding.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 #include <se-lua/utils/RefBuilder.hpp>
 
 
-static Lua::RefBuilder<Sickle::EditorBrush> builder{"Sickle.editorbrush"};
+static Lua::RefBuilder<Sickle::Editor::Brush> builder{"Sickle.editorbrush"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,9 +56,9 @@ static int get_vertices(lua_State *L)
     auto brush = leditorbrush_check(L, 1);
     lua_newtable(L);
     lua_Integer idx = 1;
-    for (auto const &plane : brush->planes)
+    for (auto const &face : brush->faces)
     {
-        for (auto const &vertex : plane.vertices)
+        for (auto const &vertex : face.vertices)
         {
             Lua::push(L, vertex);
             lua_seti(L, 2, idx++);
@@ -86,7 +86,7 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::EditorBrush *brush)
+void Lua::push(lua_State *L, Sickle::Editor::Brush *brush)
 {
     if (builder.pushnew(brush))
         return;
@@ -95,11 +95,11 @@ void Lua::push(lua_State *L, Sickle::EditorBrush *brush)
     builder.finish();
 }
 
-Sickle::EditorBrush *leditorbrush_check(lua_State *L, int arg)
+Sickle::Editor::Brush *leditorbrush_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, "Sickle.editorbrush");
     luaL_argcheck(L, ud != NULL, arg, "`Sickle.editorbrush' expected");
-    return *static_cast<Sickle::EditorBrush **>(ud);
+    return *static_cast<Sickle::Editor::Brush **>(ud);
 }
 
 int luaopen_editorbrush(lua_State *L)
