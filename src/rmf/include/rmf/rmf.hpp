@@ -29,7 +29,14 @@ namespace RMF
 {
     struct LoadError : public std::runtime_error
     {
-        LoadError(std::string const &what): std::runtime_error{what} {}
+        LoadError(std::streampos where, std::string const &what)
+        :   std::runtime_error{_make_what(where, what)}
+        {
+        }
+
+    private:
+        static std::string
+        _make_what(std::streampos where, std::string const &what);
     };
 
 
