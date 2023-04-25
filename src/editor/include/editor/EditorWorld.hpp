@@ -237,6 +237,7 @@ namespace Editor
             worldspawn.properties = map.worldspawn_properties;
             worldspawn.properties["classname"] = map.worldspawn_name;
             // TEMP -- needed by GLMap
+#if WIN32
             worldspawn.properties["wad"] = (
                 "C:/Program Files (x86)/Steam/steamapps/common/Half-Life SDK/Texture Wad Files/decals.wad;"
                 "C:/Program Files (x86)/Steam/steamapps/common/Half-Life SDK/Texture Wad Files/halflife.wad;"
@@ -244,6 +245,16 @@ namespace Editor
                 "C:/Program Files (x86)/Steam/steamapps/common/Half-Life SDK/Texture Wad Files/spraypaint.wad;"
                 "C:/Program Files (x86)/Steam/steamapps/common/Half-Life SDK/Texture Wad Files/xeno.wad"
             );
+#else
+            std::string home{getenv("HOME")};
+            worldspawn.properties["wad"] = (
+                home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/decals.wad;"
+                + home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/halflife.wad;"
+                + home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/liquids.wad;"
+                + home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/spraypaint.wad;"
+                + home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/xeno.wad"
+            );
+#endif
 
             std::stack<RMF::Group> groups{};
             groups.push(map.objects);

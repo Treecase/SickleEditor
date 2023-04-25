@@ -169,7 +169,7 @@ void Sickle::LuaConsole::_on_lua_state_changed()
     L = static_cast<lua_State *>(property_lua_state().get_value());
 
     Lua::set_error_handler(L, std::bind(
-        Sickle::LuaConsole::error_handler, this, std::placeholders::_1));
+        &Sickle::LuaConsole::error_handler, this, std::placeholders::_1));
 
     lua_sethook(L, debug_hook, LUA_MASKLINE, 0);
 
