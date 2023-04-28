@@ -185,8 +185,8 @@ Sickle::MapArea2D::screenspace_to_drawspace(double x, double y) const
     auto const width = get_allocated_width();
     auto const height = get_allocated_height();
     return {
-        ((x - 0.5 * width ) - transform.x) / transform.zoom,
-        ((y - 0.5 * height) - transform.y) / transform.zoom
+        ((x - 0.5 * width ) / transform.zoom) - transform.x,
+        ((y - 0.5 * height) / transform.zoom) - transform.y
     };
 }
 
