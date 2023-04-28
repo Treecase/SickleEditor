@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../../classes/MapArea2D.hpp"
+#include "../../classes/maparea2d/GrabbableBox.hpp"
 #include "MapArea2D_Lua.hpp"
 
 #include <se-lua/utils/RefBuilder.hpp>

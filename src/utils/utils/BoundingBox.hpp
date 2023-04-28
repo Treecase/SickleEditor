@@ -30,6 +30,7 @@ struct BBox
 {
     using Point = glm::vec<L, T>;
     Point min{INFINITY}, max{-INFINITY};
+    BBox()=default;
     BBox(std::initializer_list<Point> const &points)
     {
         for (auto const &point : points)
