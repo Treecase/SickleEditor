@@ -35,7 +35,7 @@ static int pick_brush(lua_State *L)
     auto xy = lgeo_checkvector(L, 2);
     auto brush = m3d->pick_brush(xy);
     if (brush)
-        Lua::push(L, brush);
+        Lua::push(L, brush.get());
     else
         lua_pushnil(L);
     return 1;

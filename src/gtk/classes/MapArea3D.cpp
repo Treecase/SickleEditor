@@ -134,9 +134,10 @@ Sickle::MapArea3D::MapArea3D(Editor::Editor &ed)
     add_tick_callback(sigc::mem_fun(*this, &MapArea3D::tick_callback));
 }
 
-Sickle::Editor::Brush *Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
+std::shared_ptr<Sickle::Editor::Brush>
+Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
 {
-    Editor::Brush *picked{nullptr};
+    std::shared_ptr<Sickle::Editor::Brush> picked{nullptr};
     float pt = INFINITY;
 
     auto const &_camera = property_camera().get_value();
@@ -153,7 +154,7 @@ Sickle::Editor::Brush *Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
         for (auto const &brush : entity.brushes)
         {
             BBox3 bbox{};
-            for (auto const &face : brush.faces)
+            for (auto const &face : brush->faces)
                 for (auto const &vertex : face.vertices)
                     bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
 
@@ -163,7 +164,7 @@ Sickle::Editor::Brush *Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
                 // We pick the first (ie. closest) brush our raycast hits.
                 if (t < pt)
                 {
-                    picked = const_cast<Editor::Brush *>(&brush);
+                    picked = brush;
                     pt = t;
                 }
             }
@@ -258,7 +259,7 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     {
         for (size_t b = 0; b < _mapview->entities.at(e).brushes.size(); ++b)
         {
-            if (_editor.get_map().entities.at(e).brushes.at(b).is_selected)
+            if (_editor.get_map().entities.at(e).brushes.at(b)->is_selected)
                 _shader->setUniformS("modulate", glm::vec3{1, 0, 0});
             else
                 _shader->setUniformS("modulate", glm::vec3{1, 1, 1});

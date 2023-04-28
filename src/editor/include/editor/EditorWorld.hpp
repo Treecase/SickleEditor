@@ -26,6 +26,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <sigc++/signal.h>
 
+#include <memory>
 #include <stack>
 #include <unordered_map>
 
@@ -184,7 +185,7 @@ namespace Editor
     {
     public:
         std::unordered_map<std::string, std::string> properties{};
-        std::vector<Brush> brushes{};
+        std::vector<std::shared_ptr<Brush>> brushes{};
 
         Entity()=default;
 
@@ -192,7 +193,7 @@ namespace Editor
         :   properties{entity.properties}
         {
             for (auto const &brush : entity.brushes)
-                brushes.push_back(brush);
+                brushes.emplace_back(std::make_shared<Brush>(brush));
         }
 
         Entity(RMF::Entity const &entity)
@@ -200,7 +201,7 @@ namespace Editor
         {
             properties["classname"] = entity.classname;
             for (auto const &brush : entity.brushes)
-                brushes.push_back(brush);
+                brushes.emplace_back(std::make_shared<Brush>(brush));
         }
 
         // TEMP
@@ -209,7 +210,7 @@ namespace Editor
             MAP::Entity out{};
             out.properties = properties;
             for (auto const &brush : brushes)
-                out.brushes.push_back(brush);
+                out.brushes.push_back(*brush);
             return out;
         }
 
@@ -263,7 +264,7 @@ namespace Editor
                 auto group = groups.top();
                 groups.pop();
                 for (auto const &brush : group.brushes)
-                    worldspawn.brushes.push_back(brush);
+                    worldspawn.brushes.emplace_back(std::make_shared<Brush>(brush));
                 for (auto const &entity : group.entities)
                     entities.push_back(entity);
                 for (auto group2 : group.groups)

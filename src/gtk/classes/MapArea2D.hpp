@@ -252,7 +252,7 @@ namespace Sickle
         /** Convert world-space coordinates to draw-space coordinates. */
         DrawSpacePoint worldspace_to_drawspace(MAP::Vertex const &v) const;
         /** Pick an EditorBrush based on the given point. */
-        Editor::Brush *pick_brush(DrawSpacePoint point);
+        std::shared_ptr<Editor::Brush> pick_brush(DrawSpacePoint point);
 
         auto property_clear_color() {return _prop_clear_color.get_proxy();}
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
@@ -291,7 +291,7 @@ namespace Sickle
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,
-            Editor::Brush const &brush) const;
+            std::shared_ptr<Editor::Brush> const &brush) const;
         void _draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const;
     };
 }

@@ -226,9 +226,10 @@ Sickle::MapArea2D::worldspace_to_drawspace(MAP::Vertex const &v) const
     throw std::logic_error{"bad DrawAngle value"};
 }
 
-Sickle::Editor::Brush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
+std::shared_ptr<Sickle::Editor::Brush>
+Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
 {
-    Editor::Brush *picked{nullptr};
+    std::shared_ptr<Editor::Brush> picked{nullptr};
     BBox2 pbbox{};
 
     for (auto const &entity : _editor.get_map().entities)
@@ -236,7 +237,7 @@ Sickle::Editor::Brush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
         for (auto const &brush : entity.brushes)
         {
             BBox2 bbox{};
-            for (auto const &face : brush.faces)
+            for (auto const &face : brush->faces)
                 for (auto const &vertex : face.vertices)
                     bbox.add(worldspace_to_drawspace(vertex));
 
@@ -247,7 +248,7 @@ Sickle::Editor::Brush *Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
                 // logical enough.
                 if (bbox.volume() < pbbox.volume())
                 {
-                    picked = const_cast<Editor::Brush *>(&brush);
+                    picked = brush;
                     pbbox = bbox;
                 }
             }
@@ -311,7 +312,7 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         {
             for (auto const &b : e.brushes)
             {
-                if (b.is_selected)
+                if (b->is_selected)
                 {
                     cr->set_source_rgb(1, 0, 0);
                     cr->set_line_width(pixel);
@@ -410,10 +411,11 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 
 
 void Sickle::MapArea2D::_draw_brush(
-    Cairo::RefPtr<Cairo::Context> const &cr, Editor::Brush const &brush)
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    std::shared_ptr<Editor::Brush> const &brush)
 const
 {
-    for (auto const &face : brush.faces)
+    for (auto const &face : brush->faces)
     {
         if (face.vertices.empty())
             continue;

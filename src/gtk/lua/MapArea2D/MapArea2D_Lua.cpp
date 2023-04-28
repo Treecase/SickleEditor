@@ -63,7 +63,7 @@ static int pick_brush(lua_State *L)
     auto xy = lgeo_tovector(L, 2);
     auto picked = ma->pick_brush(xy);
     if (picked)
-        Lua::push(L, picked);
+        Lua::push(L, picked.get());
     else
         lua_pushnil(L);
     return 1;
