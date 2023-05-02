@@ -33,15 +33,11 @@ Sickle::GrabbableBox *lgrabbablebox_check(lua_State *L, int arg);
 int luaopen_transform2d(lua_State *L);
 Sickle::MapArea2Dx::Transform2D *ltransform2d_check(lua_State *L, int arg);
 
-int luaopen_state(lua_State *L);
-Sickle::MapArea2Dx::State *lstate_check(lua_State *L, int arg);
-
 template<> void Lua::push(lua_State *L, Sickle::MapArea2D *maparea);
 template<> void Lua::push(lua_State *L, Sickle::GrabbableBox *box);
 namespace Lua
 {
     void push(lua_State *L, Sickle::MapArea2Dx::Transform2D transform);
-    void push(lua_State *L, Sickle::MapArea2Dx::State state);
 }
 
 #endif

@@ -39,12 +39,6 @@ namespace Sickle
             double x{0}, y{0};
             double zoom{1};
         };
-
-        struct State
-        {
-            glm::vec2 pointer_prev{0, 0};
-            bool multiselect{false};
-        };
     }
 
     /** Displays .map files. */
@@ -74,7 +68,6 @@ namespace Sickle
         auto property_draw_angle() const {return _prop_draw_angle.get_proxy();}
         auto property_transform() {return _prop_transform.get_proxy();}
         auto property_transform() const {return _prop_transform.get_proxy();}
-        auto property_state() {return _prop_state.get_proxy();}
 
         void set_draw_angle(DrawAngle angle){property_draw_angle().set_value(angle);}
         auto get_draw_angle() {return property_draw_angle().get_value();};
@@ -102,7 +95,6 @@ namespace Sickle
         Glib::Property<int> _prop_grid_size;
         Glib::Property<DrawAngle> _prop_draw_angle;
         Glib::Property<MapArea2Dx::Transform2D> _prop_transform;
-        Glib::Property<MapArea2Dx::State> _prop_state;
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,

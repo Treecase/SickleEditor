@@ -3,6 +3,7 @@ local moremath = require "moremath"
 local BrushBoxDrag = require "MapArea2D/BrushBoxDrag"
 local MoveSelected = require "MapArea2D/MoveSelected"
 local ScaleDrag = require "MapArea2D/ScaleDrag"
+local ViewDrag = require "MapArea2D/ViewDrag"
 
 
 -- Constants for panning/zoom control.
@@ -41,7 +42,6 @@ function maparea2d.metatable:on_button_press_event(event)
     end
     if captured then return true end
 
-    local state = self:get_state()
     local gbox = self:get_selection_box()
 
     if event.button == 1 then
@@ -68,13 +68,13 @@ function maparea2d.metatable:on_button_press_event(event)
 
     -- Middle click begins view panning.
     elseif event.button == 2 then
-        state:set_pointer_prev(event)
+        local view_drag = ViewDrag.new(self, event.x, event.y)
+        self:addListener(view_drag)
 
     else
         return false
     end
 
-    self:set_state(state)
     return true
 end
 
@@ -87,13 +87,12 @@ function maparea2d.metatable:on_button_release_event(event)
     end
     if captured then return true end
 
-    local state = self:get_state()
     local editor = self:get_editor()
 
     -- Select a brush on left click.
     if event.button == 1 then
         -- Clear selection if we're only picking one at a time.
-        if not state:get_multiselect() then
+        if not self.multiselect then
             editor:get_selection():clear()
         end
         -- Pick a brush based on the click position.
@@ -106,7 +105,6 @@ function maparea2d.metatable:on_button_release_event(event)
                 editor:get_selection():add(picked)
             end
         end
-        self:set_state(state)
         return true
     end
     return false
@@ -135,7 +133,6 @@ function maparea2d.metatable:on_key_press_event(keyval)
     if captured then return true end
 
     local transform = self:get_transform()
-    local state = self:get_state()
 
     -- Pan view using arrow keys.
     if keyval == LuaGDK.GDK_KEY_Up then
@@ -166,14 +163,13 @@ function maparea2d.metatable:on_key_press_event(keyval)
 
     -- Hold Ctrl to select multiple brushes.
     elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
-        state:set_multiselect(true)
+        self.multiselect = true
 
     else
         return false
     end
 
     self:set_transform(transform)
-    self:set_state(state)
     return true
 end
 
@@ -198,9 +194,7 @@ function maparea2d.metatable:on_key_release_event(keyval)
 
     -- Turn off multi-brush selecting when Ctrl is released.
     if keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
-        local state = self:get_state()
-        state:set_multiselect(false)
-        self:set_state(state)
+        self.multiselect = false
 
     else
         return false
@@ -217,11 +211,8 @@ function maparea2d.metatable:on_motion_notify_event(event)
     end
     if captured then return true end
 
-    local ret = false
 
     local editor = self:get_editor()
-    local state = self:get_state()
-    local transform = self:get_transform()
 
     -- Change cursor if we're hovering a GrabBox selection point.
     local hovered = self:get_selection_box():check_point(
@@ -240,18 +231,8 @@ function maparea2d.metatable:on_motion_notify_event(event)
     }
     local cursor = CURSORS[hovered] or "default"
 
-    -- Pan view when dragging with middle-click.
-    if event.state & LuaGDK.GDK_BUTTON2_MASK ~= 0 then
-        transform:set_x(transform:get_x() + event.x - state:get_pointer_prev().x)
-        transform:set_y(transform:get_y() + event.y - state:get_pointer_prev().y)
-        state:set_pointer_prev(event)
-        ret = true
-    end
-
     self:set_cursor(cursor)
-    self:set_state(state)
-    self:set_transform(transform)
-    return ret
+    return true
 end
 
 

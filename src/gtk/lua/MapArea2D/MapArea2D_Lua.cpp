@@ -120,20 +120,6 @@ static int get_selection_box(lua_State *L)
     return 1;
 }
 
-static int get_state(lua_State *L)
-{
-    auto ma = lmaparea2d_check(L, 1);
-    Lua::push(L, ma->property_state().get_value());
-    return 1;
-}
-
-static int set_state(lua_State *L)
-{
-    auto ma = lmaparea2d_check(L, 1);
-    ma->property_state().set_value(*lstate_check(L, 2));
-    return 0;
-}
-
 static int do_nothing(lua_State *L)
 {
     return 0;
@@ -152,8 +138,6 @@ static luaL_Reg methods[] = {
     {"get_transform", get_transform},
     {"set_transform", set_transform},
     {"get_selection_box", get_selection_box},
-    {"get_state", get_state},
-    {"set_state", set_state},
 
     {"on_key_press_event", do_nothing},
     {"on_key_release_event", do_nothing},
@@ -203,10 +187,8 @@ int luaopen_maparea2d(lua_State *L)
     lua_newtable(L);
 
     luaL_requiref(L, "grabbablebox", luaopen_grabbablebox, 0);
-    luaL_requiref(L, "state", luaopen_state, 0);
     luaL_requiref(L, "transform2d", luaopen_transform2d, 0);
-    lua_setfield(L, -4, "transfrom2d");
-    lua_setfield(L, -3, "state");
+    lua_setfield(L, -3, "transfrom2d");
     lua_setfield(L, -2, "grabbablebox");
 
     luaL_newmetatable(L, "Sickle.maparea2d");

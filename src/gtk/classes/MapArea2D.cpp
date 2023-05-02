@@ -147,7 +147,6 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _prop_draw_angle{*this, "draw-angle", DrawAngle::TOP}
 ,   _prop_transform{*this, "transform", {}}
-,   _prop_state{*this, "state", {}}
 {
     set_hexpand(true);
     set_vexpand(true);
@@ -365,7 +364,6 @@ void Sickle::MapArea2D::on_editor_map_changed()
     _editor.brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
     property_transform().reset_value();
-    property_state().reset_value();
     queue_draw();
 }
 
