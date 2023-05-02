@@ -23,6 +23,9 @@
 #include <cmath>
 #include <algorithm>
 
+// Test function for the Xspace_to_Yspace methods.
+void _test_space_conversions(Sickle::MapArea2D const &maparea);
+
 
 struct DrawAnchor {
     bool top;
@@ -196,8 +199,8 @@ Sickle::MapArea2D::drawspace_to_screenspace(DrawSpacePoint const &v) const
     auto const width = get_allocated_width();
     auto const height = get_allocated_height();
     return {
-        (v.x * transform.zoom) + transform.x + 0.5 * width,
-        (v.y * transform.zoom) + transform.y + 0.5 * height
+        (v.x + transform.x) * transform.zoom + 0.5 * width,
+        (v.y + transform.y) * transform.zoom + 0.5 * height
     };
 }
 
@@ -258,6 +261,10 @@ Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
 
 bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 {
+#if !NDEBUG
+    _test_space_conversions(*this);
+#endif
+
     auto const grid_size = property_grid_size().get_value();
     auto const name = property_name().get_value();
     auto const &clear_color = property_clear_color().get_value();
@@ -421,4 +428,23 @@ void Sickle::MapArea2D::_draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const
     for (auto const &e : _editor.get_map().entities)
         for (auto const &brush : e.brushes)
             _draw_brush(cr, brush);
+}
+
+
+
+void _test_space_conversions(Sickle::MapArea2D const &maparea)
+{
+    static constexpr float EPSILON = 0.001f;
+
+    glm::vec2 ss{
+        (float)rand() / (float)RAND_MAX,
+        (float)rand() / (float)RAND_MAX};
+    auto ss2ds = maparea.screenspace_to_drawspace(ss.x, ss.y);
+    auto ss2ds2ss = maparea.drawspace_to_screenspace(ss2ds);
+    assert(glm::all(glm::epsilonEqual(ss2ds2ss, ss, EPSILON)));
+
+    auto ds = ss2ds;
+    auto ds2ws = maparea.drawspace_to_worldspace(ds);
+    auto ds2ws2ds = maparea.worldspace_to_drawspace(ds2ws);
+    assert(glm::all(glm::epsilonEqual(ds2ws2ds, ds, EPSILON)));
 }
