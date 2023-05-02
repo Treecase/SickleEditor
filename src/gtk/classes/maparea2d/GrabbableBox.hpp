@@ -47,19 +47,25 @@ namespace Sickle
 
         struct Handle
         {
-            /// Anchor point of the handle.
-            glm::vec2 anchor;
-            /// Expand direction of the handle.
-            glm::vec2 direction;
+            // Anchor point of the handle.
+            glm::vec2 position;
+            // Expand direction of the handle.
+            glm::vec2 offset;
+            // Size of the handle.
+            glm::vec2 size;
+
             BBox2 bounds(float unit) const
             {
-                return BBox2{anchor, anchor + direction * unit};
+                auto const &size_scaled = 0.5f * size * unit;
+                return BBox2{
+                    position - size_scaled + offset * size_scaled,
+                    position + size_scaled + offset * size_scaled};
             }
         };
 
-        /// Size of handles
+        // Size of handles
         glm::vec2 const grab_size{8};
-        /// Handle scale factor.
+        // Handle scale factor.
         float unit;
 
 
@@ -71,41 +77,22 @@ namespace Sickle
             auto const width = box.max.x - box.min.x;
             auto const height = box.max.y - box.min.y;
 
-            _handles[Area::NW] = Handle{box.min, -grab_size};
+            _handles[Area::NW] = Handle{box.min, {-1.5, -1.5}, grab_size};
             _handles[Area::NE] = Handle{
-                {box.max.x, box.min.y},
-                grab_size * glm::vec2{1, -1}
-            };
+                {box.max.x, box.min.y}, {1.5, -1.5}, grab_size};
             _handles[Area::SW] = Handle{
-                {box.min.x, box.max.y},
-                grab_size * glm::vec2{-1, 1}
-            };
-            _handles[Area::SE] = Handle{box.max, grab_size};
+                {box.min.x, box.max.y}, {-1.5, 1.5}, grab_size};
+            _handles[Area::SE] = Handle{box.max, {1.5, 1.5}, grab_size};
 
             _handles[Area::N] = Handle{
-                box.min
-                    + glm::vec2{width / 2.0, 0}
-                    + grab_size * glm::vec2{-0.5, -1},
-                grab_size * glm::vec2{0.5, 0}
-            };
+                box.min + glm::vec2{width / 2.0, 0}, {0, -1.5}, grab_size};
             _handles[Area::E] = Handle{
-                box.min
-                    + glm::vec2{width, height / 2.0}
-                    + grab_size * glm::vec2{1, -0.5},
-                grab_size * glm::vec2{0, 0.5}
-            };
+                box.min + glm::vec2{width, height / 2.0}, {1.5, 0}, grab_size};
             _handles[Area::S] = Handle{
-                glm::vec2{box.min.x, box.max.y}
-                    + glm::vec2{width / 2.0, 0}
-                    + grab_size * glm::vec2{-0.5, 1},
-                grab_size * glm::vec2{0.5, 0}
-            };
+                glm::vec2{box.min.x, box.max.y} + glm::vec2{width / 2.0, 0},
+                {0, 1.5}, grab_size};
             _handles[Area::W] = Handle{
-                box.min
-                    + glm::vec2{0, height / 2.0}
-                    + grab_size * glm::vec2{-1, -0.5},
-                grab_size * glm::vec2{0, 0.5}
-            };
+                box.min + glm::vec2{0, height / 2.0}, {-1.5, 0}, grab_size};
         }
 
         /** Get main bounding-box. */
@@ -116,7 +103,16 @@ namespace Sickle
 
         auto get_handles() const
         {
-            return _handles;
+            return std::vector{
+                _handles[Area::N],
+                _handles[Area::NE],
+                _handles[Area::E],
+                _handles[Area::SE],
+                _handles[Area::S],
+                _handles[Area::SW],
+                _handles[Area::W],
+                _handles[Area::NW],
+            };
         }
 
         /**
@@ -132,11 +128,12 @@ namespace Sickle
         }
 
     private:
-        // Handles & box areas
+        // Core box area.
         BBox2 _center{};
-        // Handle definitions
+        // Grab Handles.
         std::array<Handle, Area::COUNT> _handles{};
     };
+
 
     /** GrabbableBox view. */
     class GrabbableBoxView
@@ -145,24 +142,25 @@ namespace Sickle
         GrabbableBoxView()=default;
         virtual ~GrabbableBoxView()=default;
 
+        /** Draw a GrabbableBox. */
         void draw(
             Cairo::RefPtr<Cairo::Context> const &cr, GrabbableBox const &gb)
         {
             cr->set_source_rgb(1, 0, 0);
             cr->set_line_width(gb.unit);
             cr->set_dash(std::vector<double>{4*gb.unit, 4*gb.unit}, 0);
-            drawRect(cr, gb.get_box());
+            _drawRect(cr, gb.get_box());
             cr->stroke();
 
             cr->set_source_rgb(1, 1, 1);
             cr->set_line_width(gb.unit);
             for (auto const &handle : gb.get_handles())
-                drawRect(cr, handle.bounds(gb.unit));
+                _drawRect(cr, handle.bounds(gb.unit));
             cr->fill();
         }
 
-        /** Draw a BBox2. */
-        void drawRect(Cairo::RefPtr<Cairo::Context> const &cr, BBox2 const &box)
+    private:
+        void _drawRect(Cairo::RefPtr<Cairo::Context> const &cr, BBox2 const &box)
         {
             auto const width = box.max.x - box.min.x;
             auto const height = box.max.y - box.min.y;

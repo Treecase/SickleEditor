@@ -301,13 +301,13 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         cr->scale(_transform.zoom, _transform.zoom);
         auto pixel = 1.0 / _transform.zoom;
 
-        // Draw the map
+        // Draw all brushes.
         cr->set_source_rgb(1, 1, 1);
         cr->set_line_width(pixel);
         _draw_map(cr);
         cr->stroke();
 
-        // Draw the selected brush
+        // Draw selected brushes.
         for (auto const &e : _editor.get_map().entities)
         {
             for (auto const &b : e.brushes)
@@ -322,12 +322,11 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
             }
         }
 
-        // Draw selected brushes bounding-box.
+        // Selected brushes grab handles.
         _box.unit = pixel;
-        GrabbableBoxView view{};
-        view.draw(cr, _box);
+        _box_view.draw(cr, _box);
 
-        // Draw the selection cube
+        // Draw the brush box
         cr->set_source_rgb(1, 1, 1);
         cr->set_line_width(pixel);
         cr->set_dash(std::vector<double>{4*pixel, 4*pixel}, 0);

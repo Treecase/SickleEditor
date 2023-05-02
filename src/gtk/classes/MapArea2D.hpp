@@ -94,7 +94,8 @@ namespace Sickle
     private:
         Editor::Editor &_editor;
 
-        GrabbableBox _box;
+        GrabbableBox _box{};
+        GrabbableBoxView _box_view{};
 
         // Properties
         Glib::Property<Gdk::RGBA> _prop_clear_color;
