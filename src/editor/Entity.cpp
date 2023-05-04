@@ -1,5 +1,5 @@
 /**
- * Editor.cpp - Editor::Editor.
+ * Entity.cpp - Editor::Entity.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,34 +16,32 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
+#include "editor/EditorWorld.hpp"
 
 
-Sickle::Editor::Editor::Editor()
+
+Sickle::Editor::Entity::Entity(MAP::Entity const &entity)
+:   properties{entity.properties}
 {
-    signal_map_changed().connect(
-        sigc::mem_fun(*this, &Editor::_on_map_changed));
+    for (auto const &brush : entity.brushes)
+        brushes.emplace_back(std::make_shared<Brush>(brush));
 }
 
 
-
-void Sickle::Editor::Editor::set_map(Map const &map)
+Sickle::Editor::Entity::Entity(RMF::Entity const &entity)
+:   properties{entity.kv_pairs}
 {
-    _map = map;
-    signal_map_changed().emit();
+    properties["classname"] = entity.classname;
+    for (auto const &brush : entity.brushes)
+        brushes.emplace_back(std::make_shared<Brush>(brush));
 }
 
 
-
-Sickle::Editor::Map &Sickle::Editor::Editor::get_map()
+Sickle::Editor::Entity::operator MAP::Entity() const
 {
-    return _map;
-}
-
-
-
-void Sickle::Editor::Editor::_on_map_changed()
-{
-    brushbox = BrushBox{};
-    selected.clear();
+    MAP::Entity out{};
+    out.properties = properties;
+    for (auto const &brush : brushes)
+        out.brushes.push_back(*brush);
+    return out;
 }

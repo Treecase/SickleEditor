@@ -13,6 +13,7 @@ add_subdirectory(mdl)
 add_subdirectory(rmf)
 add_subdirectory(utils)
 add_subdirectory(wad)
+add_subdirectory(world3d)
 
 target_sources(sickle PRIVATE main.cpp)
 

@@ -20,11 +20,12 @@
 #define SE_MAPAREA3D_HPP
 
 #include "gtkglutils.hpp"
-#include "editor/Editor.hpp"
-#include "map/glmap.hpp"
-#include "utils/Transform.hpp"
-#include "utils/FreeCam.hpp"
-#include "utils/DebugDrawer3D.hpp"
+
+#include <editor/Editor.hpp>
+#include <utils/Transform.hpp>
+#include <utils/FreeCam.hpp>
+#include <utils/DebugDrawer3D.hpp>
+#include <world3d/world3d.hpp>
 
 #include <gdkmm/frameclock.h>
 #include <glibmm/property.h>
@@ -87,7 +88,7 @@ namespace Sickle
     private:
         Editor::Editor &_editor;
         std::shared_ptr<GLUtil::Program> _shader{nullptr};
-        std::unique_ptr<MAP::GLMap> _mapview{nullptr};
+        std::unique_ptr<World3D::World3D> _mapview{nullptr};
 
         // Properties
         Glib::Property<FreeCam> _prop_camera;

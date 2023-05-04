@@ -17,7 +17,8 @@
  */
 
 #include "MapArea3D.hpp"
-#include "utils/BoundingBox.hpp"
+
+#include <utils/BoundingBox.hpp>
 
 
 #define DEFAULT_MOUSE_SENSITIVITY   0.75f
@@ -155,7 +156,7 @@ Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
         {
             BBox3 bbox{};
             for (auto const &face : brush->faces)
-                for (auto const &vertex : face.vertices)
+                for (auto const &vertex : face->vertices)
                     bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
 
             float t;
@@ -243,10 +244,6 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     if (!_mapview)
         return false;
 
-    // TEMP: Ideally GLBrushes would be refreshed only when the underlying
-    // EditorBrush is modified.
-    _mapview->refresh(_editor.get_map());
-
     // Draw models.
     _shader->use();
     glActiveTexture(GL_TEXTURE0);
@@ -255,15 +252,15 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     _shader->setUniformS("tex", 0);
     _shader->setUniformS("model", modelMatrix);
     // TODO: Do this properly, very brittle right now
-    for (size_t e = 0; e < _mapview->entities.size(); ++e)
+    for (auto const &entity : _mapview->entities)
     {
-        for (size_t b = 0; b < _mapview->entities.at(e).brushes.size(); ++b)
+        for (auto const &brush : entity.brushes)
         {
-            if (_editor.get_map().entities.at(e).brushes.at(b)->is_selected)
+            if (brush.is_selected())
                 _shader->setUniformS("modulate", glm::vec3{1, 0, 0});
             else
                 _shader->setUniformS("modulate", glm::vec3{1, 1, 1});
-            _mapview->entities.at(e).brushes.at(b).render();
+            brush.render();
         }
     }
 
@@ -339,6 +336,6 @@ void Sickle::MapArea3D::on_wireframe_changed()
 void Sickle::MapArea3D::_synchronize_glmap()
 {
     make_current();
-    _mapview.reset(new MAP::GLMap{_editor.get_map()});
+    _mapview = std::make_unique<World3D::World3D>(_editor.get_map());
     queue_render();
 }

@@ -28,17 +28,17 @@ int luaopen_editor(lua_State *L);
 Sickle::Editor::Editor *leditor_check(lua_State *L, int arg);
 
 int luaopen_selection(lua_State *L);
-Sickle::Editor::Editor::Selection *lselection_check(lua_State *L, int arg);
+Sickle::Editor::Selection *lselection_check(lua_State *L, int arg);
 
 int luaopen_brushbox(lua_State *L);
-Sickle::Editor::Editor::BrushBox *lbrushbox_check(lua_State *L, int arg);
+Sickle::Editor::BrushBox *lbrushbox_check(lua_State *L, int arg);
 
 int luaopen_editorbrush(lua_State *L);
 Sickle::Editor::Brush *leditorbrush_check(lua_State *L, int arg);
 
 template<> void Lua::push(lua_State *L, Sickle::Editor::Editor *editor);
-template<> void Lua::push(lua_State *L, Sickle::Editor::Editor::Selection *selection);
-template<> void Lua::push(lua_State *L, Sickle::Editor::Editor::BrushBox *brushbox);
+template<> void Lua::push(lua_State *L, Sickle::Editor::Selection *selection);
+template<> void Lua::push(lua_State *L, Sickle::Editor::BrushBox *brushbox);
 template<> void Lua::push(lua_State *L, Sickle::Editor::Brush *brush);
 
 #endif
