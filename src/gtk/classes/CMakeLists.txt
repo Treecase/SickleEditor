@@ -9,4 +9,4 @@ target_sources(sickle PRIVATE
     gtkglutils.cpp
 )
 
-target_link_libraries(sickle PRIVATE luageo rmf)
+target_link_libraries(sickle PRIVATE luageo rmf world3d)

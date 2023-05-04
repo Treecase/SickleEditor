@@ -238,7 +238,7 @@ Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
         {
             BBox2 bbox{};
             for (auto const &face : brush->faces)
-                for (auto const &vertex : face.vertices)
+                for (auto const &vertex : face->vertices)
                     bbox.add(worldspace_to_drawspace(vertex));
 
             if (bbox.contains(point))
@@ -375,7 +375,7 @@ void Sickle::MapArea2D::on_editor_selection_changed()
     BBox2 selection_bounds{};
     for (auto const &brush : _editor.selected)
         for (auto const &face : brush->faces)
-            for (auto const &vertex : face.vertices)
+            for (auto const &vertex : face->vertices)
                 selection_bounds.add(worldspace_to_drawspace(vertex));
     _box.set_box(selection_bounds);
     queue_draw();
@@ -406,11 +406,11 @@ const
 {
     for (auto const &face : brush->faces)
     {
-        if (face.vertices.empty())
+        if (face->vertices.empty())
             continue;
-        auto const p0 = worldspace_to_drawspace(face.vertices[0]);
+        auto const p0 = worldspace_to_drawspace(face->vertices[0]);
         cr->move_to(p0.x, p0.y);
-        for (auto const &vertex : face.vertices)
+        for (auto const &vertex : face->vertices)
         {
             auto const p = worldspace_to_drawspace(vertex);
             cr->line_to(p.x, p.y);

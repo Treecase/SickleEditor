@@ -22,7 +22,7 @@
 #include <se-lua/utils/RefBuilder.hpp>
 
 
-static Lua::RefBuilder<Sickle::Editor::Editor::Selection> builder{
+static Lua::RefBuilder<Sickle::Editor::Selection> builder{
     "Sickle.editor.selection"};
 
 
@@ -103,7 +103,7 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::Editor::Editor::Selection *selection)
+void Lua::push(lua_State *L, Sickle::Editor::Selection *selection)
 {
     if (builder.pushnew(selection))
         return;
@@ -111,11 +111,11 @@ void Lua::push(lua_State *L, Sickle::Editor::Editor::Selection *selection)
     builder.finish();
 }
 
-Sickle::Editor::Editor::Selection *lselection_check(lua_State *L, int arg)
+Sickle::Editor::Selection *lselection_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, "Sickle.editor.selection");
     luaL_argcheck(L, ud != NULL, arg, "`Sickle.editor.selection' expected");
-    return *static_cast<Sickle::Editor::Editor::Selection **>(ud);
+    return *static_cast<Sickle::Editor::Selection **>(ud);
 }
 
 int luaopen_selection(lua_State *L)

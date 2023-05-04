@@ -1,5 +1,5 @@
 /**
- * Editor.cpp - Editor::Editor.
+ * BrushBox.cpp - Editor::BrushBox.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -19,31 +19,15 @@
 #include "editor/Editor.hpp"
 
 
-Sickle::Editor::Editor::Editor()
+void Sickle::Editor::BrushBox::p1(MAP::Vertex v)
 {
-    signal_map_changed().connect(
-        sigc::mem_fun(*this, &Editor::_on_map_changed));
+    _p1 = v;
+    signal_updated().emit();
 }
 
 
-
-void Sickle::Editor::Editor::set_map(Map const &map)
+void Sickle::Editor::BrushBox::p2(MAP::Vertex v)
 {
-    _map = map;
-    signal_map_changed().emit();
-}
-
-
-
-Sickle::Editor::Map &Sickle::Editor::Editor::get_map()
-{
-    return _map;
-}
-
-
-
-void Sickle::Editor::Editor::_on_map_changed()
-{
-    brushbox = BrushBox{};
-    selected.clear();
+    _p2 = v;
+    signal_updated().emit();
 }

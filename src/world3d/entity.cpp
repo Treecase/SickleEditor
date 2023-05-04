@@ -1,5 +1,5 @@
 /**
- * Editor.cpp - Editor::Editor.
+ * entity.cpp - World3D::Entity class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,34 +16,25 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
+#include "world3d/world3d.hpp"
 
 
-Sickle::Editor::Editor::Editor()
+World3D::Entity::Entity(World3D &parent, Sickle::Editor::Entity &src)
+:   _parent{parent}
 {
-    signal_map_changed().connect(
-        sigc::mem_fun(*this, &Editor::_on_map_changed));
+    for (auto &brush : src.brushes)
+        brushes.emplace_back(*this, brush);
 }
 
 
-
-void Sickle::Editor::Editor::set_map(Map const &map)
+World3D::TextureManager &World3D::Entity::texman() const
 {
-    _map = map;
-    signal_map_changed().emit();
+    return _parent.texman;
 }
 
 
-
-Sickle::Editor::Map &Sickle::Editor::Editor::get_map()
+void World3D::Entity::render() const
 {
-    return _map;
-}
-
-
-
-void Sickle::Editor::Editor::_on_map_changed()
-{
-    brushbox = BrushBox{};
-    selected.clear();
+    for (auto const &brush : brushes)
+        brush.render();
 }

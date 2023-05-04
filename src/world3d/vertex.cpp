@@ -1,5 +1,5 @@
 /**
- * Editor.cpp - Editor::Editor.
+ * vertex.cpp - World3D::Vertex class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,34 +16,17 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
+#include "world3d/world3d.hpp"
 
 
-Sickle::Editor::Editor::Editor()
+World3D::Vertex::Vertex(glm::vec3 pos, glm::vec2 uv)
+:   position{pos}
+,   uv{uv}
 {
-    signal_map_changed().connect(
-        sigc::mem_fun(*this, &Editor::_on_map_changed));
 }
 
 
-
-void Sickle::Editor::Editor::set_map(Map const &map)
+std::array<GLfloat, World3D::Vertex::ELEMENTS> World3D::Vertex::as_vbo() const
 {
-    _map = map;
-    signal_map_changed().emit();
-}
-
-
-
-Sickle::Editor::Map &Sickle::Editor::Editor::get_map()
-{
-    return _map;
-}
-
-
-
-void Sickle::Editor::Editor::_on_map_changed()
-{
-    brushbox = BrushBox{};
-    selected.clear();
+    return {position.x, position.y, position.z, uv.x, uv.y};
 }

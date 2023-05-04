@@ -58,7 +58,7 @@ static int get_vertices(lua_State *L)
     lua_Integer idx = 1;
     for (auto const &face : brush->faces)
     {
-        for (auto const &vertex : face.vertices)
+        for (auto const &vertex : face->vertices)
         {
             Lua::push(L, vertex);
             lua_seti(L, 2, idx++);

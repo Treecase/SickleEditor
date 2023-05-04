@@ -23,7 +23,7 @@
 #include <LuaGeo.hpp>
 
 
-static Lua::RefBuilder<Sickle::Editor::Editor::BrushBox> builder{
+static Lua::RefBuilder<Sickle::Editor::BrushBox> builder{
     "Sickle.editor.brushbox"};
 
 
@@ -76,7 +76,7 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::Editor::Editor::BrushBox *bb)
+void Lua::push(lua_State *L, Sickle::Editor::BrushBox *bb)
 {
     if (builder.pushnew(bb))
         return;
@@ -84,11 +84,11 @@ void Lua::push(lua_State *L, Sickle::Editor::Editor::BrushBox *bb)
     builder.finish();
 }
 
-Sickle::Editor::Editor::BrushBox *lbrushbox_check(lua_State *L, int arg)
+Sickle::Editor::BrushBox *lbrushbox_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, "Sickle.editor.brushbox");
     luaL_argcheck(L, ud != NULL, arg, "`Sickle.editor.brushbox' expected");
-    return *static_cast<Sickle::Editor::Editor::BrushBox **>(ud);
+    return *static_cast<Sickle::Editor::BrushBox **>(ud);
 }
 
 int luaopen_brushbox(lua_State *L)

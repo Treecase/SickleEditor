@@ -39,6 +39,7 @@ namespace Sickle
     public:
         Property()=default;
         Property(T init): _value{init} {}
+        template<typename... Ts> Property(Ts... args): _value{args...} {}
         auto &signal_changed() {return _signal_changed;}
         void set(T value) {_value = value; signal_changed().emit();}
         T operator=(T value) {set(value); return _value;}
@@ -57,19 +58,14 @@ namespace Editor
 {
     class Face
     {
+        sigc::signal<void()> _vertices_changed{};
     public:
         std::vector<glm::vec3> vertices{};
-        std::string texture{};
-        glm::vec3 u{0.0f}, v{0.0f};
-        glm::vec2 shift{0.0f, 0.0f};
-        glm::vec2 scale{1.0f, 1.0f};
-        float rotation{0.0f};
-
-        // Sorted same direction as VERTICES list.
-        std::array<glm::vec3, 3> get_plane_points() const
-        {
-            return {vertices.at(0), vertices.at(1), vertices.at(2)};
-        }
+        Property<std::string> texture{};
+        Property<glm::vec3> u{0.0f}, v{0.0f};
+        Property<glm::vec2> shift{0.0f, 0.0f};
+        Property<glm::vec2> scale{1.0f, 1.0f};
+        Property<float> rotation{0.0f};
 
         Face(
             std::vector<glm::vec3> vertices,
@@ -78,99 +74,32 @@ namespace Editor
             glm::vec3 v,
             glm::vec2 shift,
             glm::vec2 scale,
-            float rotation)
-        :   vertices{vertices}
-        ,   texture{texture}
-        ,   u{u}
-        ,   v{v}
-        ,   shift{shift}
-        ,   scale{scale}
-        ,   rotation{rotation}
-        {
-            if (vertices.size() < 3)
-                throw std::runtime_error{"not enough points for a face"};
-        }
+            float rotation);
 
-        operator MAP::Plane() const
-        {
-            auto abc = get_plane_points();
-            MAP::Plane out{
-                abc[0], abc[1], abc[2],
-                vertices,
-                texture,
-                u, v,
-                shift,
-                rotation,
-                scale
-            };
-            return out;
-        }
+        operator MAP::Plane() const;
+
+        auto &signal_vertices_changed() {return _vertices_changed;}
+
+        // Sorted same direction as VERTICES list.
+        std::array<glm::vec3, 3> get_plane_points() const;
+
+        void set_vertex(size_t index, glm::vec3 vertex);
     };
 
-    /** Editor Brush interface. */
+
     class Brush
     {
     public:
         Property<bool> is_selected{false};
-        std::vector<Face> faces{};
+        std::vector<std::shared_ptr<Face>> faces{};
 
-        auto &signal_changed() {return _signal_changed;}
+        Brush(MAP::Brush const &brush);
+        Brush(RMF::Solid const &solid);
 
-        void transform(glm::mat4 const &matrix)
-        {
-            for (auto &face : faces)
-                for (auto &vertex : face.vertices)
-                    vertex = glm::vec3{matrix * glm::vec4{vertex, 1.0}};
-            signal_changed().emit();
-        }
+        operator MAP::Brush() const;
 
-        void translate(glm::vec3 const &translation)
-        {
-            transform(glm::translate(glm::mat4{1.0}, translation));
-        }
-
-        Brush(MAP::Brush const &brush)
-        {
-            for (auto const &plane : brush.planes)
-            {
-                faces.emplace_back(
-                    plane.vertices,
-                    plane.miptex,
-                    plane.s, plane.t,
-                    plane.offsets,
-                    plane.scale,
-                    plane.rotation);
-            }
-        }
-
-        Brush(RMF::Solid const &solid)
-        {
-            for (auto const &face : solid.faces)
-            {
-                std::vector<glm::vec3> verts{};
-                for (auto const &vert : face.vertices)
-                    verts.emplace(verts.begin(), vert.x, vert.y, vert.z);
-                faces.emplace_back(
-                    verts,
-                    face.texture_name,
-                    glm::vec3{
-                        face.texture_u.x, face.texture_u.y, face.texture_u.z},
-                    glm::vec3{
-                        face.texture_v.x, face.texture_v.y, face.texture_v.z},
-                    glm::vec2{face.texture_x_shift, face.texture_y_shift},
-                    glm::vec2{face.texture_x_scale, face.texture_y_scale},
-                    face.texture_rotation);
-            }
-        }
-
-        // TEMP
-        operator MAP::Brush() const
-        {
-            MAP::Brush out{};
-            for (auto const &face : faces)
-                out.planes.push_back(face);
-            return out;
-        }
+        void transform(glm::mat4 const &matrix);
+        void translate(glm::vec3 const &translation);
 
     private:
         sigc::signal<void()> _signal_changed{};
@@ -181,6 +110,7 @@ namespace Editor
         // ^ these are only used by worldspawn brushes?
     };
 
+
     class Entity
     {
     public:
@@ -188,31 +118,10 @@ namespace Editor
         std::vector<std::shared_ptr<Brush>> brushes{};
 
         Entity()=default;
+        Entity(MAP::Entity const &entity);
+        Entity(RMF::Entity const &entity);
 
-        Entity(MAP::Entity const &entity)
-        :   properties{entity.properties}
-        {
-            for (auto const &brush : entity.brushes)
-                brushes.emplace_back(std::make_shared<Brush>(brush));
-        }
-
-        Entity(RMF::Entity const &entity)
-        :   properties{entity.kv_pairs}
-        {
-            properties["classname"] = entity.classname;
-            for (auto const &brush : entity.brushes)
-                brushes.emplace_back(std::make_shared<Brush>(brush));
-        }
-
-        // TEMP
-        operator MAP::Entity() const
-        {
-            MAP::Entity out{};
-            out.properties = properties;
-            for (auto const &brush : brushes)
-                out.brushes.push_back(*brush);
-            return out;
-        }
+        operator MAP::Entity() const;
 
         // TODO:
         // - visgroup id
@@ -225,62 +134,10 @@ namespace Editor
         std::vector<Entity> entities{};
 
         Map()=default;
+        Map(MAP::Map const &map);
+        Map(RMF::RichMap const &map);
 
-        Map(MAP::Map const &map)
-        {
-            for (auto const &entity : map.entities)
-                entities.push_back(entity);
-        }
-
-        Map(RMF::RichMap const &map)
-        {
-            Entity worldspawn{};
-            worldspawn.properties = map.worldspawn_properties;
-            worldspawn.properties["classname"] = map.worldspawn_name;
-            // TEMP -- needed by GLMap
-#if WIN32
-            worldspawn.properties["wad"] = (
-                "C:/Program Files (x86)/Steam/steamapps/common/Half-Life SDK/Texture Wad Files/decals.wad;"
-                "C:/Program Files (x86)/Steam/steamapps/common/Half-Life SDK/Texture Wad Files/halflife.wad;"
-                "C:/Program Files (x86)/Steam/steamapps/common/Half-Life SDK/Texture Wad Files/liquids.wad;"
-                "C:/Program Files (x86)/Steam/steamapps/common/Half-Life SDK/Texture Wad Files/spraypaint.wad;"
-                "C:/Program Files (x86)/Steam/steamapps/common/Half-Life SDK/Texture Wad Files/xeno.wad"
-            );
-#else
-            std::string home{getenv("HOME")};
-            worldspawn.properties["wad"] = (
-                home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/decals.wad;"
-                + home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/halflife.wad;"
-                + home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/liquids.wad;"
-                + home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/spraypaint.wad;"
-                + home + "/.steam/steam/steamapps/common/Half-Life SDK/Texture Wad Files/xeno.wad"
-            );
-#endif
-
-            std::stack<RMF::Group> groups{};
-            groups.push(map.objects);
-            while (!groups.empty())
-            {
-                auto group = groups.top();
-                groups.pop();
-                for (auto const &brush : group.brushes)
-                    worldspawn.brushes.emplace_back(std::make_shared<Brush>(brush));
-                for (auto const &entity : group.entities)
-                    entities.push_back(entity);
-                for (auto group2 : group.groups)
-                    groups.push(group2);
-            }
-            entities.emplace_back(worldspawn);
-        }
-
-        // TEMP
-        operator MAP::Map() const
-        {
-            MAP::Map out{};
-            for (auto const &entity : entities)
-                out.entities.push_back(entity);
-            return out;
-        }
+        operator MAP::Map() const;
 
     private:
         // TODO:
