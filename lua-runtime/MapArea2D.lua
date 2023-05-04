@@ -300,6 +300,15 @@ function maparea2d.metatable:on_scroll_event(event)
     return true
 end
 
-gAppWin.topMapArea.listeners = {}
-gAppWin.rightMapArea.listeners = {}
-gAppWin.frontMapArea.listeners = {}
+
+local function setup(maparea)
+    maparea.shift = false
+    maparea.ctrl = false
+    maparea.alt = false
+    maparea.listeners = {}
+end
+
+
+setup(gAppWin.topMapArea)
+setup(gAppWin.rightMapArea)
+setup(gAppWin.frontMapArea)

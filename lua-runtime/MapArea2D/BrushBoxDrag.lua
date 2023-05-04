@@ -36,13 +36,12 @@ function BrushBoxDrag.metatable:on_motion_notify_event(event)
     -- click, too.
     self.maparea:get_editor():get_selection():clear()
 
-    local curr = self.maparea:drawspace_to_worldspace(
-        self.maparea:screenspace_to_drawspace({event.x, event.y})
-    )
+    local curr = self.maparea:screenspace_to_drawspace({event.x, event.y})
     if self.snapped then
         curr = geo.vector.map(round_to_grid, curr)
     end
-    self.maparea:get_editor():get_brushbox():set_end(curr)
+    self.maparea:get_editor():get_brushbox():set_end(
+        self.maparea:drawspace_to_worldspace(curr))
     self.moved = true
     return true
 end
@@ -52,17 +51,15 @@ end
 
 
 function BrushBoxDrag.new(maparea, x, y, snapped)
-    local click_pos = geo.vector.new(
-        maparea:drawspace_to_worldspace(
-            maparea:screenspace_to_drawspace({x, y})))
+    local click_pos = maparea:screenspace_to_drawspace({x, y})
 
     if snapped then
         click_pos = geo.vector.map(round_to_grid, click_pos)
     end
 
     local brushbox = maparea:get_editor():get_brushbox()
-    brushbox:set_start(click_pos)
-    brushbox:set_end(click_pos)
+    brushbox:set_start(maparea:drawspace_to_worldspace(click_pos))
+    brushbox:set_end(maparea:drawspace_to_worldspace(click_pos))
 
     local drag = {}
     drag.maparea = maparea

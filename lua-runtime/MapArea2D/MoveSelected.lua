@@ -4,6 +4,8 @@
 -- Snaps to the bounding-box corner closest to where the user clicked to start
 -- the drag.
 
+
+-- Calculate the top-left and bottom-right corners of the given brushes.
 local function find_corners(brushes)
     local topleft = {nil, nil}
     local bottomright = {nil, nil}
@@ -56,15 +58,17 @@ function MoveSelected.metatable:on_key_release_event(keyval)
 end
 
 function MoveSelected.metatable:on_motion_notify_event(event)
-    local curr = self.maparea:drawspace_to_worldspace(
-        self.maparea:screenspace_to_drawspace({event.x, event.y}))
+    local curr = self.maparea:screenspace_to_drawspace({event.x, event.y})
 
     local newcorner = curr
     if self.snapped then
         newcorner = geo.vector.map(round_to_grid, curr)
     end
 
-    local translation = newcorner - self.corner
+    local translation = (
+        self.maparea:drawspace_to_worldspace(newcorner)
+        - self.maparea:drawspace_to_worldspace(self.corner)
+    )
     for brush in self.maparea:get_editor():get_selection():iterate() do
         brush:translate(translation - self.prev_translation)
     end
@@ -79,11 +83,14 @@ end
 
 
 function MoveSelected.new(maparea, x, y)
-    local click_pos = maparea:drawspace_to_worldspace(
-        maparea:screenspace_to_drawspace({x, y}))
+    local click_pos = maparea:screenspace_to_drawspace({x, y})
 
     local topleft, bottomright = find_corners(
         maparea:get_editor():get_selection():iterate())
+
+    topleft = maparea:worldspace_to_drawspace(topleft)
+    bottomright = maparea:worldspace_to_drawspace(bottomright)
+
     local corners = {
         topleft,
         geo.vector.new(bottomright.x, topleft.y),
