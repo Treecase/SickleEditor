@@ -8,5 +8,11 @@
       <description>"Path to the game's .fgd file"</description>
     </key>
 
+    <key name="wad-paths" type="as">
+      <default>[]</default>
+      <summary>"Texture .WAD file paths"</summary>
+      <description>"List of paths to texture .WADs"</description>
+    </key>
+
   </schema>
 </schemalist>

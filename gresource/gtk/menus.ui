@@ -33,6 +33,10 @@
           <attribute name="label" translatable="yes">_Set Game Definition</attribute>
           <attribute name="action">app.setGameDef</attribute>
         </item>
+        <item>
+          <attribute name="label" translatable="yes">_WAD Paths</attribute>
+          <attribute name="action">app.setWADPaths</attribute>
+        </item>
       </section>
     </submenu>
 

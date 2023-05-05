@@ -17,6 +17,7 @@
  */
 
 #include "App.hpp"
+#include "WADDialog.hpp"
 
 #include "About.hpp"
 #include "appid.hpp"
@@ -36,11 +37,13 @@ Sickle::App::App()
         SE_APPLICATION_ID, Gio::ApplicationFlags::APPLICATION_HANDLES_OPEN}
 ,   m_settings{Gio::Settings::create(SE_APPLICATION_ID)}
 ,   _prop_fgd_path{*this, "fgd-path", ""}
+,   _prop_wad_paths{*this, "wad-paths", {}}
 ,   _game_definition{}
 {
     property_fgd_path().signal_changed().connect(
         sigc::mem_fun(*this, &App::_on_fgd_path_changed));
     m_settings->bind("fgd-path", property_fgd_path());
+    m_settings->bind("wad-paths", property_wad_paths());
 }
 
 void Sickle::App::on_startup()
@@ -56,6 +59,8 @@ void Sickle::App::on_startup()
     add_action("exit", sigc::mem_fun(*this, &App::on_action_exit));
     // Edit
     add_action("setGameDef", sigc::mem_fun(*this, &App::on_action_setGameDef));
+    add_action("setWADPaths",
+        sigc::mem_fun(*this, &App::on_action_setWADPaths));
     // Edit
     add_action(
         "openLuaConsole", sigc::mem_fun(*this, &App::on_action_openLuaConsole));
@@ -195,6 +200,13 @@ void Sickle::App::on_action_setGameDef()
         property_fgd_path().set_value(chooser->get_filename());
         break;
     }
+}
+
+void Sickle::App::on_action_setWADPaths()
+{
+    auto waddialog = WADDialog{*get_active_window()};
+    waddialog.set_transient_for(*get_active_window());
+    auto response = waddialog.run();
 }
 
 void Sickle::App::on_action_openLuaConsole()

@@ -34,6 +34,7 @@ namespace Sickle
         static Glib::RefPtr<App> create();
 
         auto property_fgd_path() {return _prop_fgd_path.get_proxy();}
+        auto property_wad_paths() {return _prop_wad_paths.get_proxy();}
 
     protected:
         Glib::RefPtr<Gio::Settings> m_settings;
@@ -56,6 +57,7 @@ namespace Sickle
         void on_action_exit();
         // Edit
         void on_action_setGameDef();
+        void on_action_setWADPaths();
         // Tools
         void on_action_openLuaConsole();
         void on_action_reloadLua();
@@ -69,6 +71,7 @@ namespace Sickle
 
         // Properties
         Glib::Property<Glib::ustring> _prop_fgd_path;
+        Glib::Property<std::vector<Glib::ustring>> _prop_wad_paths;
 
         // Signal Handlers
         void _on_hide_window(Gtk::Window *window);
