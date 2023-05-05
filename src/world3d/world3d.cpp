@@ -21,25 +21,9 @@
 #include <wad/lumps.hpp>
 
 
-/**
- * Split a string on ';' characters.
- * TODO: temp
- */
-auto split_wadpaths(std::string const &str)
-{
-    std::vector<std::string> wad_paths{};
-    for (size_t i = 0, j = 0; j != std::string::npos; i = j + 1)
-    {
-        j = str.find(';', i);
-        auto const n = (j == std::string::npos? j : j - i);
-        wad_paths.emplace_back(str.substr(i, n));
-    }
-    return wad_paths;
-}
-
-
-
-World3D::World3D::World3D(Sickle::Editor::Map &src)
+World3D::World3D::World3D(
+    Sickle::Editor::Map &src,
+    std::vector<std::string> const &wads)
 {
     Sickle::Editor::Entity const *worldspawn{nullptr};
     for (auto const &entity : src.entities)
@@ -48,10 +32,7 @@ World3D::World3D::World3D(Sickle::Editor::Map &src)
     if (!worldspawn)
         return;
 
-    // TODO: WAD paths will be configured in-editor, map WAD info should be
-    // ignored
-    auto paths = split_wadpaths(worldspawn->properties.at("wad"));
-    for (auto const &path : paths)
+    for (auto const &path : wads)
         texman.add_wad(WAD::load(path));
 
     for (auto &entity : src.entities)

@@ -207,6 +207,12 @@ void Sickle::App::on_action_setWADPaths()
     auto waddialog = WADDialog{*get_active_window()};
     waddialog.set_transient_for(*get_active_window());
     auto response = waddialog.run();
+
+    auto settings = Gio::Settings::create(SE_APPLICATION_ID);
+    std::vector<std::string> wadpaths{settings->get_string_array("wad-paths")};
+
+    auto win = dynamic_cast<AppWin *>(get_active_window());
+    win->editor.wads.set(wadpaths);
 }
 
 void Sickle::App::on_action_openLuaConsole()

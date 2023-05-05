@@ -336,6 +336,8 @@ void Sickle::MapArea3D::on_wireframe_changed()
 void Sickle::MapArea3D::_synchronize_glmap()
 {
     make_current();
-    _mapview = std::make_unique<World3D::World3D>(_editor.get_map());
+    _mapview = std::make_unique<World3D::World3D>(
+        _editor.get_map(),
+        _editor.wads);
     queue_render();
 }

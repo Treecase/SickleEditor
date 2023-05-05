@@ -89,6 +89,8 @@ namespace Editor
         BrushBox brushbox{};
         /** Selected brushes/entities. */
         Selection selected{};
+        /** WAD paths. */
+        Property<std::vector<std::string>> wads{};
 
         auto &signal_map_changed() {return _signal_map_changed;}
 

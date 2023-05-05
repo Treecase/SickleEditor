@@ -132,7 +132,7 @@ namespace World3D
 
         void render() const;
 
-        World3D(Sickle::Editor::Map &src);
+        World3D(Sickle::Editor::Map &src, std::vector<std::string> const &wads);
     };
 }
 
