@@ -68,6 +68,7 @@ namespace Sickle
         FGD::GameDef _game_definition;
 
         AppWin *_create_appwindow();
+        void _sync_wadpaths(AppWin *appwin);
 
         // Properties
         Glib::Property<Glib::ustring> _prop_fgd_path;

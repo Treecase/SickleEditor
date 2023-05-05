@@ -207,12 +207,7 @@ void Sickle::App::on_action_setWADPaths()
     auto waddialog = WADDialog{*get_active_window()};
     waddialog.set_transient_for(*get_active_window());
     auto response = waddialog.run();
-
-    auto settings = Gio::Settings::create(SE_APPLICATION_ID);
-    std::vector<std::string> wadpaths{settings->get_string_array("wad-paths")};
-
-    auto win = dynamic_cast<AppWin *>(get_active_window());
-    win->editor.wads.set(wadpaths);
+    _sync_wadpaths(dynamic_cast<AppWin *>(get_active_window()));
 }
 
 void Sickle::App::on_action_openLuaConsole()
@@ -242,11 +237,18 @@ void Sickle::App::on_action_about()
 Sickle::AppWin *Sickle::App::_create_appwindow()
 {
     auto appwindow = new AppWin{};
+    _sync_wadpaths(appwindow);
     add_window(*appwindow);
     // Delete the window when it is hidden.
     appwindow->signal_hide().connect(
         sigc::bind(sigc::mem_fun(*this, &App::_on_hide_window), appwindow));
     return appwindow;
+}
+
+void Sickle::App::_sync_wadpaths(AppWin *appwin)
+{
+    auto settings = Gio::Settings::create(SE_APPLICATION_ID);
+    appwin->editor.wads.set(settings->get_string_array("wad-paths"));
 }
 
 void Sickle::App::_on_hide_window(Gtk::Window *window)
