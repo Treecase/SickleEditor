@@ -20,6 +20,8 @@
 
 #include <utils/BoundingBox.hpp>
 
+#include <gtkmm/messagedialog.h>
+
 
 #define DEFAULT_MOUSE_SENSITIVITY   0.75f
 
@@ -110,6 +112,11 @@ Sickle::MapArea3D::MapArea3D(Editor::Editor &ed)
         sigc::mem_fun(*this, &MapArea3D::queue_render));
     _editor.brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea3D::queue_render));
+
+    World3D::World3D::signal_wad_load_error().connect(
+        sigc::mem_fun(*this, &MapArea3D::on_world3d_wad_load_error));
+    World3D::Face::signal_missing_texture().connect(
+        sigc::mem_fun(*this, &MapArea3D::on_world3d_face_missing_texture));
 
     property_transform().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea3D::queue_render));
@@ -332,12 +339,47 @@ void Sickle::MapArea3D::on_wireframe_changed()
         property_wireframe().get_value()? GL_LINE : GL_FILL);
 }
 
+void Sickle::MapArea3D::on_world3d_wad_load_error(std::string const &what)
+{
+    _error_tracker.missing_wads.insert(what);
+}
+
+void Sickle::MapArea3D::on_world3d_face_missing_texture(std::string const &what)
+{
+    _error_tracker.missing_textures.insert(what);
+}
+
+
+void Sickle::MapArea3D::_check_errors()
+{
+    if (_error_tracker.error_occurred())
+    {
+        std::string msg = "<big><b>World3D Error(s):</b></big>";
+        if (!_error_tracker.missing_wads.empty())
+        {
+            msg += "\nMissing WADs:";
+            for (auto const &wad : _error_tracker.missing_wads)
+                msg += "\n<small>" + wad + "</small>";
+        }
+        if (!_error_tracker.missing_textures.empty())
+        {
+            msg += "\nMissing textures:";
+            for (auto const &texture : _error_tracker.missing_textures)
+                msg += "\n<small>" + texture + "</small>";
+        }
+        Gtk::MessageDialog d{msg, true, Gtk::MessageType::MESSAGE_WARNING};
+        d.set_title("World3D Error(s)");
+        d.run();
+    }
+}
 
 void Sickle::MapArea3D::_synchronize_glmap()
 {
     make_current();
+    _error_tracker = ErrorTracker{};
     _mapview = std::make_unique<World3D::World3D>(
         _editor.get_map(),
         _editor.wads);
+    _check_errors();
     queue_render();
 }

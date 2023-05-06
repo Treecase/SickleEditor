@@ -19,6 +19,9 @@
 #include "world3d/world3d.hpp"
 
 
+sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};
+
+
 World3D::Face::Face(
     Brush &parent, std::shared_ptr<Sickle::Editor::Face> &face)
 :   _parent{parent}
@@ -30,8 +33,8 @@ World3D::Face::Face(
     }
     catch (std::out_of_range const &e)
     {
-        // TODO: Emit a "missing textures" signal?
         texture = Texture::make_missing_texture();
+        signal_missing_texture().emit(face->texture);
     }
 
     _sync_vertices();

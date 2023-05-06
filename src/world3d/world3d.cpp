@@ -23,6 +23,9 @@
 #include <iostream>
 
 
+sigc::signal<void(std::string)> World3D::World3D::_signal_wad_load_error{};
+
+
 World3D::World3D::World3D(
     Sickle::Editor::Map &src,
     std::vector<std::string> const &wads)
@@ -42,8 +45,7 @@ World3D::World3D::World3D(
         }
         catch (std::runtime_error const &e)
         {
-            // TODO: Emit a "WAD load error" signal?
-            std::cerr << "ERROR: WAD::load -- " << e.what() << '\n';
+            signal_wad_load_error().emit(path);
         }
     }
 

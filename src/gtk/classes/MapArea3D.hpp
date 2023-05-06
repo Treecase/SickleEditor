@@ -84,11 +84,26 @@ namespace Sickle
 
         void on_editor_map_changed();
         void on_wireframe_changed();
+        void on_world3d_wad_load_error(std::string const &what);
+        void on_world3d_face_missing_texture(std::string const &what);
 
     private:
+        struct ErrorTracker
+        {
+            std::unordered_set<std::string> missing_wads{};
+            std::unordered_set<std::string> missing_textures{};
+
+            bool error_occurred() const
+            {
+                return (
+                    !missing_wads.empty() && !missing_textures.empty());
+            }
+        };
+
         Editor::Editor &_editor;
         std::shared_ptr<GLUtil::Program> _shader{nullptr};
         std::unique_ptr<World3D::World3D> _mapview{nullptr};
+        ErrorTracker _error_tracker{};
 
         // Properties
         Glib::Property<FreeCam> _prop_camera;
@@ -98,6 +113,7 @@ namespace Sickle
         Glib::Property<Transform> _prop_transform;
         Glib::Property<bool> _prop_wireframe;
 
+        void _check_errors();
         void _synchronize_glmap();
     };
 }

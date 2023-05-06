@@ -71,6 +71,7 @@ namespace World3D
         Brush &_parent;
         std::shared_ptr<Sickle::Editor::Face> _src{nullptr};
 
+        static sigc::signal<void(std::string)> _signal_missing_texture;
         sigc::signal<void()> _signal_verts_changed{};
 
         void _sync_vertices();
@@ -83,6 +84,7 @@ namespace World3D
         std::vector<Vertex> vertices{};
         GLint offset; // offset into _PARENT's VBO.
 
+        static auto &signal_missing_texture() {return _signal_missing_texture;}
         auto &signal_verts_changed() {return _signal_verts_changed;}
 
         TextureManager &texman() const;
@@ -132,9 +134,13 @@ namespace World3D
 
     class World3D
     {
+        static sigc::signal<void(std::string)> _signal_wad_load_error;
+
     public:
         TextureManager texman{};
         std::vector<Entity> entities{};
+
+        static auto &signal_wad_load_error() {return _signal_wad_load_error;}
 
         void render() const;
 
