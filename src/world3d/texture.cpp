@@ -44,11 +44,11 @@ auto texlump_to_rgba(WAD::TexLump const &lump)
 }
 
 
-/** Make a GL Texture from a WAD lump. */
-auto texture_from_lump(WAD::TexLump const &texlump)
+/** Create a GLUtil::Texture shared_ptr. */
+auto make_texture(std::string const &name)
 {
     auto texture = std::make_shared<GLUtil::Texture>(
-        GL_TEXTURE_2D, texlump.name);
+        GL_TEXTURE_2D, name);
     texture->bind();
     texture->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     texture->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -56,6 +56,14 @@ auto texture_from_lump(WAD::TexLump const &texlump)
     texture->setParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
     texture->setParameter(GL_TEXTURE_BASE_LEVEL, 0);
     texture->setParameter(GL_TEXTURE_MAX_LEVEL, 3);
+    return texture;
+}
+
+
+/** Make a GL Texture from a WAD lump. */
+auto texture_from_lump(WAD::TexLump const &texlump)
+{
+    auto texture = make_texture(texlump.name);
     auto mipmaps = texlump_to_rgba(texlump);
     for (size_t mipmap = 0; mipmap < mipmaps.size(); ++mipmap)
     {
@@ -76,4 +84,46 @@ World3D::Texture::Texture(WAD::TexLump const &texlump)
 ,   width{(int)texlump.width}
 ,   height{(int)texlump.height}
 {
+}
+
+
+World3D::Texture World3D::Texture::make_missing_texture()
+{
+    static Texture missing{};
+    // Resuse the existing texture if its already been generated.
+    if (missing.texture)
+        return missing;
+
+    constexpr int SIZE = 128;
+    constexpr int HSIZE = 0.5 * SIZE;
+    missing.width = SIZE;
+    missing.height = SIZE;
+    missing.texture = make_texture("MISSING");
+    uint8_t pixels[SIZE*SIZE * 4];
+    for (size_t y = 0; y < SIZE; ++y)
+    {
+        for (size_t x = 0; x < SIZE; ++x)
+        {
+            auto idx = 4 * (y * SIZE + x);
+            if (x < HSIZE && y < HSIZE || x >= HSIZE && y >= HSIZE)
+            {
+                pixels[idx+0] = 0x00;
+                pixels[idx+1] = 0x00;
+                pixels[idx+2] = 0x00;
+            }
+            else
+            {
+                pixels[idx+0] = 0xff;
+                pixels[idx+1] = 0x00;
+                pixels[idx+2] = 0xff;
+            }
+            pixels[idx+3] = 0xff;
+        }
+    }
+    glTexImage2D(
+        missing.texture->type(), 0, GL_RGBA,
+        missing.width, missing.height, 0,
+        GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glGenerateMipmap(missing.texture->type());
+    return missing;
 }

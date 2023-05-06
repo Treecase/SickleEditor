@@ -23,8 +23,17 @@ World3D::Face::Face(
     Brush &parent, std::shared_ptr<Sickle::Editor::Face> &face)
 :   _parent{parent}
 ,   _src{face}
-,   texture{texman().at(face->texture)}
 {
+    try
+    {
+        texture = texman().at(face->texture);
+    }
+    catch (std::out_of_range const &e)
+    {
+        // TODO: Emit a "missing textures" signal?
+        texture = Texture::make_missing_texture();
+    }
+
     _sync_vertices();
 
     _verts_changed_connection = _src->signal_vertices_changed().connect(

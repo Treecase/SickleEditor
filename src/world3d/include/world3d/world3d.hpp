@@ -36,6 +36,12 @@ namespace World3D
         std::shared_ptr<GLUtil::Texture> texture{nullptr};
         int width, height;
 
+        /**
+         * Get the "Missing Texture" texture. It will only be generated once,
+         * and will be reused on subsequent calls.
+         */
+        static Texture make_missing_texture();
+
         Texture()=default;
         Texture(WAD::TexLump const &texlump);
     };
