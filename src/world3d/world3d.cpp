@@ -20,6 +20,8 @@
 
 #include <wad/lumps.hpp>
 
+#include <iostream>
+
 
 World3D::World3D::World3D(
     Sickle::Editor::Map &src,
@@ -33,7 +35,17 @@ World3D::World3D::World3D(
         return;
 
     for (auto const &path : wads)
-        texman.add_wad(WAD::load(path));
+    {
+        try
+        {
+            texman.add_wad(WAD::load(path));
+        }
+        catch (std::runtime_error const &e)
+        {
+            // TODO: Emit a "WAD load error" signal?
+            std::cerr << "ERROR: WAD::load -- " << e.what() << '\n';
+        }
+    }
 
     for (auto &entity : src.entities)
         entities.emplace_back(*this, entity);
