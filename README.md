@@ -1,7 +1,12 @@
 
 # Sickle Editor
 
-An open-source editor for GoldSrc maps. Currently, only .MAP files are supported. Sickle Editor is released under the [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html) license.
+An open-source editor for GoldSrc maps. Both `.MAP` and `.RMF` formats are supported. Sickle Editor is released under the [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html) license.
+
+
+## Getting Started
+
+GoldSrc maps use external data files called WADs to store texture data. Sickle doesn't know where these files are, so you'll have to point it to them. To do this, click `Edit` in the menu and select `WAD Paths`. This will open a dialog where you can add or remove WADs to Sickle. Add the WAD paths, then click `Done`.
 
 
 ## Building
