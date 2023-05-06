@@ -26,6 +26,12 @@ project("Sickle Editor"
     LANGUAGES CXX
 )
 
+if(CMAKE_BUILD_TYPE STREQUAL "")
+    message("CMAKE_BUILD_TYPE is unset, defaulting to Release")
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+
 # Application ID
 set(APPLICATION_ID com.github.treecase.sicklegtk)
 # GResource prefix
@@ -103,7 +109,7 @@ target_link_libraries(sickle PRIVATE
 
 
 install(TARGETS sickle)
-install(DIRECTORY lua-runtime TYPE DATA)
+install(DIRECTORY sickle TYPE DATA)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_ID}.desktop"
     DESTINATION share/applications
 )
@@ -112,7 +118,7 @@ if(WIN32)
         DESTINATION share/glib-2.0/schemas
     )
 else()
-    install(FILES sicklegtk.gschema.xml
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sicklegtk.gschema.xml"
         DESTINATION share/glib-2.0/schemas
         RENAME ${APPLICATION_ID}.gschema.xml
     )

@@ -50,12 +50,16 @@ FL_LIBRARY:FILEPATH=C:/msys64/usr/lib/libfl.a
 
 ## Installing
 
+To install to `/usr/local`, run:
+
 ```shell
 $ cmake --install .
+# To install somewhere else:
+$ cmake --install . --prefix=<install prefix>
 ```
 
-or,
+On Linux, you'll also have to install the settings schema:
 
 ```shell
-$ cmake --install . --prefix=<install path>
+$ glib-compile-schemas <install prefix>/share/glib-2.0/schemas
 ```

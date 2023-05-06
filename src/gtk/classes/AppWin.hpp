@@ -84,8 +84,8 @@ namespace Sickle
         sigc::signal<void()> _sig_lua_reloaded{};
 
         std::vector<std::string> _lua_script_dirs{
-            SE_DATA_DIR "lua-runtime",
-            "../share/lua-runtime",
+            SE_DATA_DIR "sickle/lua-runtime",
+            "../share/sickle/lua-runtime",
         };
         std::vector<std::string> const _internal_scripts{
             "lua/gdkevents.lua",
