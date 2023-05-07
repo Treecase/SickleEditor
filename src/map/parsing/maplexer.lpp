@@ -1,0 +1,60 @@
+/**
+ * maplexer.lpp - .map scanner.
+ * Copyright (C) 2023 Trevor Last
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+%{
+#include "MAPParser.hpp"
+#include "MAPScanner.hpp"
+
+using token = MAP::MAPParser::token;
+%}
+
+%option debug nodefault noyywrap
+%option c++
+%option prefix="map"
+%option yyclass="MAP::Scanner"
+
+%{
+/* Update location on pattern match. */
+#define YY_USER_ACTION  yylloc->step(); yylloc->columns(yyleng);
+%}
+
+STRING_CHAR [^"\n]
+/* Should properly be [[:alnum:][:punct:]], but that causes overlap issues with NUMBER and braces/brackets/curlies matching. */
+TEXTURE_CHAR [[:alnum:]!#$%&'*+,-/:;<=>?@\^_`{|}~]
+
+
+%%
+\n                  yylloc->lines();
+[[:space:]]
+
+[()[\]{}]  return *yytext;
+
+-?[[:digit:]]+(\.[[:digit:]]+)?  %{
+    yylval->emplace<float>(std::stof(yytext));
+    return token::NUMBER;
+    %}
+
+\"{STRING_CHAR}*\"  %{
+    yylval->emplace<std::string>(yytext);
+    return token::STRING;
+    %}
+
+{TEXTURE_CHAR}+  %{
+    yylval->emplace<std::string>(yytext);
+    return token::TEXTURE;
+    %}

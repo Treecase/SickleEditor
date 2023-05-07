@@ -1,6 +1,6 @@
 /**
- * load_map.cpp - Load .map files.
- * Copyright (C) 2022-2023 Trevor Last
+ * MAPScanner.hpp - Flex .map scanner.
+ * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,18 +16,32 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "map/map.hpp"
-#include "parsing/MAPDriver.hpp"
+#ifndef MAP_SCANNER_HPP
+#define MAP_SCANNER_HPP
 
-#include <fstream>
+#include "location.hh"
+#include "MAPParser.hpp"
+
+#ifndef yyFlexLexerOnce
+#undef yyFlexLexer
+#define yyFlexLexer mapFlexLexer
+#include <FlexLexer.h>
+#endif
+
+#undef YY_DECL
+#define YY_DECL int MAP::MAPScanner::next_token(MAPParser::semantic_type *yylval, MAPParser::location_type *yylloc)
 
 
-MAP::Map MAP::load(std::string const &path)
+namespace MAP
 {
-    std::ifstream f{path, std::ios::in | std::ios::binary};
-    if (!f.is_open())
-        throw MAP::LoadError{"Failed to open '" + path + "'"};
-    MAPDriver driver{};
-    driver.parse(f);
-    return driver.get_result();
+    class MAPScanner : public yyFlexLexer
+    {
+    public:
+        MAPScanner(std::istream *in): yyFlexLexer{in} {}
+        int next_token(
+            MAPParser::semantic_type *yylval,
+            MAPParser::location_type *yylloc);
+    };
 }
+
+#endif

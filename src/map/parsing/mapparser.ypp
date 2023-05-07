@@ -1,0 +1,141 @@
+/**
+ * mapparser.ypp - .map parser.
+ * Copyright (C) 2023 Trevor Last
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+%require "3.2"  /* Don't want position.hh and stack.hh */
+%language "c++" /* Generate C++ parser */
+%defines        /* Generate tokens header */
+%locations      /* Enable location tracking */
+
+%define api.namespace {MAP}
+%define api.parser.class {MAPParser}
+%define api.prefix {map}
+%define api.value.type variant
+%define parse.assert            /* Enable parser runtime asserts */
+%define parse.error detailed    /* Detailed error messages */
+%define parse.trace             /* Enable parser tracing */
+
+/* Pass scanner and driver into yylex. */
+%parse-param {MAPScanner &scanner}
+%parse-param {MAPDriver &driver}
+
+%code requires {
+    namespace MAP
+    {
+        class MAPDriver;
+        class MAPScanner;
+    }
+    #include "map/map.hpp"
+}
+
+%code top {
+#include "MAPDriver.hpp"
+
+#undef maplex
+#define maplex scanner.next_token
+
+// Forward declare vertexmap function.
+void brush_add_vertices(MAP::Brush &hbrush);
+}
+
+
+%token <float> NUMBER
+%token <std::string> STRING
+%token <std::string> TEXTURE
+
+%nterm <std::vector<MAP::Entity>> entities
+%nterm <MAP::Entity> entity
+%nterm <std::unordered_map<std::string, std::string>> properties
+%nterm <std::string> key
+%nterm <std::string> value
+%nterm <std::vector<MAP::Brush>> brushes
+%nterm <MAP::Brush> brush
+%nterm <std::vector<MAP::Plane>> planes
+%nterm <MAP::Plane> plane
+%nterm <MAP::Vertex> point
+%nterm <std::array<float, 4>> vector
+
+
+%%
+map: entities   { driver.result = {$1}; };
+
+entities:
+    %empty          { $$ = {}; }
+|   entities entity { $$ = $1; $$.push_back($2); }
+;
+
+entity:
+    '{' properties '}'          { $$ = {$2, {}}; }
+|   '{' properties brushes '}'  { $$ = {$2, $3}; }
+;
+
+properties:
+    key value               { $$ = {{$1, $2}}; }
+|   properties key value    { $$ = $1; $$[$2] = $3; }
+;
+
+key: STRING { $$ = $1; };
+value: STRING   { $$ = $1; };
+
+brushes:
+    brush           { brush_add_vertices($1); $$ = {$1}; }
+|   brushes brush   { $$ = $1; brush_add_vertices($2); $$.push_back($2); }
+;
+
+brush:
+    '{' plane plane plane plane planes '}'
+    {
+        $$ = {{$2, $3, $4, $5}};
+        $$.planes.insert($$.planes.end(), $6.cbegin(), $6.cend());
+    }
+;
+
+planes:
+    %empty          { $$ = {}; }
+|   planes plane    { $$ = $1; $$.push_back($2); }
+;
+
+plane:
+    point point point TEXTURE vector vector NUMBER NUMBER NUMBER
+    { $$ = {
+        $1, $2, $3,
+        {},
+        $4,
+        {$5[0], $5[1], $5[2]},
+        {$6[0], $6[2], $6[2]},
+        {$5[3], $6[3]},
+        $7,
+        {$8, $9}
+    };
+    }
+;
+
+point:
+    '(' NUMBER NUMBER NUMBER ')'    { $$ = {$2, $3, $4}; }
+;
+
+vector:
+    '[' NUMBER NUMBER NUMBER NUMBER ']' { $$ = {$2, $3, $4, $5}; }
+;
+
+
+%%
+void
+MAP::MAPParser::error(location_type const &l, std::string const &err_message)
+{
+    std::cerr << "Error @ " << l << ": " << err_message << '\n';
+}

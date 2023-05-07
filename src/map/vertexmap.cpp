@@ -153,5 +153,6 @@ void brush_add_vertices(MAP::Brush &hbrush)
                     plane.vertices.cbegin(), plane.vertices.cend()),
                 plane
             });
+        assert(plane.vertices.size() >= 3);
     }
 }

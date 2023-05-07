@@ -1,6 +1,6 @@
 /**
- * load_map.cpp - Load .map files.
- * Copyright (C) 2022-2023 Trevor Last
+ * MAPDriver.cpp - Flex/Bison .map parser driver.
+ * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,18 +16,36 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "map/map.hpp"
-#include "parsing/MAPDriver.hpp"
+#include "MAPDriver.hpp"
 
+#include <stdexcept>
 #include <fstream>
 
 
-MAP::Map MAP::load(std::string const &path)
+void MAP::MAPDriver::set_debug(bool debug)
 {
-    std::ifstream f{path, std::ios::in | std::ios::binary};
-    if (!f.is_open())
-        throw MAP::LoadError{"Failed to open '" + path + "'"};
-    MAPDriver driver{};
-    driver.parse(f);
-    return driver.get_result();
+    debug_enabled = debug;
 }
+
+void MAP::MAPDriver::parse(std::istream &iss)
+{
+    _scanner.reset(new MAP::MAPScanner{&iss});
+    _parser.reset(new MAP::MAPParser{*_scanner, *this});
+
+    std::ofstream dbgstream{};
+    if (debug_enabled)
+    {
+        dbgstream.open("debug.txt");
+        _parser->set_debug_level(1);
+        _parser->set_debug_stream(dbgstream);
+    }
+
+    if (_parser->parse() != 0)
+        throw std::runtime_error{"parse failed"};
+}
+
+MAP::Map MAP::MAPDriver::get_result() const
+{
+    return result;
+}
+

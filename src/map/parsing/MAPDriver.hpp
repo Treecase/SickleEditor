@@ -1,6 +1,6 @@
 /**
- * load_map.cpp - Load .map files.
- * Copyright (C) 2022-2023 Trevor Last
+ * MAPDriver.hpp - Flex/Bison .map parser driver.
+ * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,18 +16,32 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef MAP_DRIVER_HPP
+#define MAP_DRIVER_HPP
+
+#include "MAPParser.hpp"
+#include "MAPScanner.hpp"
 #include "map/map.hpp"
-#include "parsing/MAPDriver.hpp"
 
-#include <fstream>
+#include <istream>
+#include <memory>
 
 
-MAP::Map MAP::load(std::string const &path)
+namespace MAP
 {
-    std::ifstream f{path, std::ios::in | std::ios::binary};
-    if (!f.is_open())
-        throw MAP::LoadError{"Failed to open '" + path + "'"};
-    MAPDriver driver{};
-    driver.parse(f);
-    return driver.get_result();
+    class MAPDriver
+    {
+    public:
+        void set_debug(bool debug);
+        void parse(std::istream &iss);
+        Map get_result() const;
+        Map result{};
+
+    protected:
+        bool debug_enabled{false};
+        std::unique_ptr<MAPParser> _parser;
+        std::unique_ptr<MAPScanner> _scanner;
+    };
 }
+
+#endif
