@@ -5,12 +5,8 @@
     <file>lua/gdkevents.lua</file>
     <file>lua/gdkkeysyms.lua</file>
     <file>lua/gdktypes.lua</file>
-    <file>shaders/fragment.frag</file>
     <file>shaders/map.frag</file>
     <file>shaders/map.vert</file>
-    <file>shaders/model.frag</file>
-    <file>shaders/model.vert</file>
-    <file>shaders/vertex.vert</file>
     <file>logo.png</file>
     <file>logo.svg</file>
     <file>LuaConsole.css</file>

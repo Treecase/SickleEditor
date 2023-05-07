@@ -15,12 +15,8 @@ add_custom_command(
         lua/gdkevents.lua
         lua/gdkkeysyms.lua
         lua/gdktypes.lua
-        shaders/fragment.frag
         shaders/map.frag
         shaders/map.vert
-        shaders/model.frag
-        shaders/model.vert
-        shaders/vertex.vert
         logo.png
         logo.svg
         LuaConsole.css
