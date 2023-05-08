@@ -77,6 +77,7 @@ namespace Sickle
     protected:
         // Signal handlers
         bool on_draw(Cairo::RefPtr<Cairo::Context> const &cr) override;
+        void on_editor_brushbox_changed();
         void on_editor_map_changed();
         void on_editor_selection_changed();
         void on_draw_angle_changed();
@@ -88,7 +89,9 @@ namespace Sickle
         Editor::Editor &_editor;
 
         GrabbableBox _box{};
-        GrabbableBoxView _box_view{};
+        GrabbableBoxView _box_view;
+        GrabbableBox _brushbox{};
+        GrabbableBoxView _brushbox_view;
 
         // Properties
         Glib::Property<Gdk::RGBA> _prop_clear_color;

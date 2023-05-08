@@ -25,6 +25,8 @@
 #include <glm/glm.hpp>
 
 #include <array>
+#include <functional>
+#include <memory>
 
 
 namespace Sickle
@@ -101,17 +103,22 @@ namespace Sickle
             return _center;
         }
 
-        auto get_handles() const
+        auto get_handle(Area area) const
+        {
+            return _handles.at(area);
+        }
+
+        static auto get_handle_areas()
         {
             return std::vector{
-                _handles[Area::N],
-                _handles[Area::NE],
-                _handles[Area::E],
-                _handles[Area::SE],
-                _handles[Area::S],
-                _handles[Area::SW],
-                _handles[Area::W],
-                _handles[Area::NW],
+                Area::N,
+                Area::NE,
+                Area::E,
+                Area::SE,
+                Area::S,
+                Area::SW,
+                Area::W,
+                Area::NW,
             };
         }
 
@@ -135,36 +142,83 @@ namespace Sickle
     };
 
 
-    /** GrabbableBox view. */
-    class GrabbableBoxView
+    /** BBox2 View. */
+    class BBox2View
     {
     public:
-        GrabbableBoxView()=default;
-        virtual ~GrabbableBoxView()=default;
+        virtual ~BBox2View()=default;
 
-        /** Draw a GrabbableBox. */
-        void draw(
-            Cairo::RefPtr<Cairo::Context> const &cr, GrabbableBox const &gb)
-        {
-            cr->set_source_rgb(1, 0, 0);
-            cr->set_line_width(gb.unit);
-            cr->set_dash(std::vector<double>{4*gb.unit, 4*gb.unit}, 0);
-            _drawRect(cr, gb.get_box());
-            cr->stroke();
-
-            cr->set_source_rgb(1, 1, 1);
-            cr->set_line_width(gb.unit);
-            for (auto const &handle : gb.get_handles())
-                _drawRect(cr, handle.bounds(gb.unit));
-            cr->fill();
-        }
-
-    private:
-        void _drawRect(Cairo::RefPtr<Cairo::Context> const &cr, BBox2 const &box)
+        /** Draw the BBox2. */
+        virtual void draw(
+            Cairo::RefPtr<Cairo::Context> const &cr,
+            BBox2 const &box,
+            float unit)
         {
             auto const width = box.max.x - box.min.x;
             auto const height = box.max.y - box.min.y;
             cr->rectangle(box.min.x, box.min.y, width, height);
+        }
+    };
+
+    /** BBox2 View which calls functions before and after drawing. */
+    class BBox2ViewCustom : public BBox2View
+    {
+    public:
+        using Func = std::function<
+            void(Cairo::RefPtr<Cairo::Context> const &,
+            BBox2 const &,
+            float)>;
+
+        BBox2ViewCustom(Func pre, Func post): pre{pre}, post{post} {}
+        virtual ~BBox2ViewCustom()=default;
+
+        virtual void draw(
+            Cairo::RefPtr<Cairo::Context> const &cr,
+            BBox2 const &box,
+            float unit) override
+        {
+            pre(cr, box, unit);
+            BBox2View::draw(cr, box, unit);
+            post(cr, box, unit);
+        }
+    private:
+        Func pre{}, post{};
+    };
+
+    /** GrabbableBox view. */
+    class GrabbableBoxView
+    {
+        using Area = GrabbableBox::Area;
+        std::array<std::shared_ptr<BBox2View>, Area::COUNT> _views{};
+    public:
+        GrabbableBoxView()=default;
+        GrabbableBoxView(
+            std::shared_ptr<BBox2View> const &box,
+            std::shared_ptr<BBox2View> const &handles)
+        {
+            for (auto &area : _views)
+                area = handles;
+            _views[Area::BOX] = box;
+        }
+
+        virtual ~GrabbableBoxView()=default;
+
+        /** Draw a GrabbableBox. */
+        virtual void draw(
+            Cairo::RefPtr<Cairo::Context> const &cr, GrabbableBox const &gb)
+        {
+            if (_views[Area::BOX])
+                _views[Area::BOX]->draw(cr, gb.get_box(), gb.unit);
+            for (auto area : gb.get_handle_areas())
+            {
+                if (_views[area])
+                {
+                    _views[area]->draw(
+                        cr,
+                        gb.get_handle(area).bounds(gb.unit),
+                        gb.unit);
+                }
+            }
         }
     };
 }

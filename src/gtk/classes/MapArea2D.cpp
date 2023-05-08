@@ -150,6 +150,36 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _prop_draw_angle{*this, "draw-angle", DrawAngle::TOP}
 ,   _prop_transform{*this, "transform", {}}
+,   _box_view{
+        std::make_shared<BBox2ViewCustom>(
+            [](auto cr, auto box, auto unit){
+                cr->set_source_rgb(1, 0, 0);
+                cr->set_line_width(unit);
+                cr->set_dash(std::vector<double>{4*unit, 4*unit}, 0);},
+            [](auto cr, auto box, auto unit){cr->stroke();}
+        ),
+        std::make_shared<BBox2ViewCustom>(
+            [](auto cr, auto box, auto unit){
+                cr->set_source_rgb(1, 1, 1);
+                cr->set_line_width(unit);},
+            [](auto cr, auto box, auto unit){cr->fill();}
+        )
+    }
+,   _brushbox_view{
+        std::make_shared<BBox2ViewCustom>(
+            [](auto cr, auto box, auto unit){
+                cr->set_source_rgb(1, 1, 1);
+                cr->set_line_width(unit);
+                cr->set_dash(std::vector<double>{4*unit, 4*unit}, 0);},
+            [](auto cr, auto box, auto unit){cr->stroke();}
+        ),
+        std::make_shared<BBox2ViewCustom>(
+            [](auto cr, auto box, auto unit){
+                cr->set_source_rgb(1, 1, 1);
+                cr->set_line_width(unit);},
+            [](auto cr, auto box, auto unit){cr->fill();}
+        )
+    }
 {
     set_hexpand(true);
     set_vexpand(true);
@@ -157,7 +187,7 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
     set_can_focus(true);
 
     _editor.brushbox.signal_updated().connect(
-        sigc::mem_fun(*this, &MapArea2D::queue_draw));
+        sigc::mem_fun(*this, &MapArea2D::on_editor_brushbox_changed));
     _editor.selected.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_selection_changed));
     _editor.signal_map_changed().connect(
@@ -332,14 +362,12 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         _box.unit = pixel;
         _box_view.draw(cr, _box);
 
-        // Draw the brush box
-        cr->set_source_rgb(1, 1, 1);
-        cr->set_line_width(pixel);
-        cr->set_dash(std::vector<double>{4*pixel, 4*pixel}, 0);
-        auto const p1 = worldspace_to_drawspace(_editor.brushbox.p1());
-        auto const p2 = worldspace_to_drawspace(_editor.brushbox.p2());
-        cr->rectangle(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
-        cr->stroke();
+        // Draw the brushbox.
+        if (_editor.brushbox.p1() != _editor.brushbox.p2())
+        {
+            _brushbox.unit = pixel;
+            _brushbox_view.draw(cr, _brushbox);
+        }
 
     cr->restore();
     }
@@ -366,10 +394,20 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
     return true;
 }
 
+void Sickle::MapArea2D::on_editor_brushbox_changed()
+{
+    auto const p1 = worldspace_to_drawspace(_editor.brushbox.p1());
+    auto const p2 = worldspace_to_drawspace(_editor.brushbox.p2());
+    _brushbox.set_box(BBox2{p1, p2});
+    queue_draw();
+}
+
 void Sickle::MapArea2D::on_editor_map_changed()
 {
     _editor.brushbox.signal_updated().connect(
-        sigc::mem_fun(*this, &MapArea2D::queue_draw));
+        sigc::mem_fun(*this, &MapArea2D::on_editor_brushbox_changed));
+    _editor.selected.signal_updated().connect(
+        sigc::mem_fun(*this, &MapArea2D::on_editor_selection_changed));
     property_transform().reset_value();
     queue_draw();
 }
