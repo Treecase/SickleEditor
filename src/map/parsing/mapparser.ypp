@@ -66,6 +66,7 @@ void brush_add_vertices(MAP::Brush &hbrush);
 %nterm <MAP::Brush> brush
 %nterm <std::vector<MAP::Plane>> planes
 %nterm <MAP::Plane> plane
+%nterm <std::array<MAP::Vertex, 3>> start_plane
 %nterm <MAP::Vertex> point
 %nterm <std::array<float, 4>> vector
 
@@ -110,18 +111,22 @@ planes:
 ;
 
 plane:
-    point point point TEXTURE vector vector NUMBER NUMBER NUMBER
-    { $$ = {
-        $1, $2, $3,
-        {},
-        $4,
-        {$5[0], $5[1], $5[2]},
-        {$6[0], $6[2], $6[2]},
-        {$5[3], $6[3]},
-        $7,
-        {$8, $9}
-    };
+    start_plane TEXTURE vector vector NUMBER NUMBER NUMBER
+    {   $$ = {
+            $1[0], $1[1], $1[2],
+            {},
+            $2,
+            {$3[0], $3[1], $3[2]},
+            {$4[0], $4[2], $4[2]},
+            {$3[3], $4[3]},
+            $5,
+            {$6, $7}
+        };
     }
+;
+
+start_plane:
+    point point point { $$ = {$1, $2, $3}; scanner.expect_texture(); }
 ;
 
 point:

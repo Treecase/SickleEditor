@@ -36,11 +36,13 @@ namespace MAP
 {
     class MAPScanner : public yyFlexLexer
     {
+        bool _expect_texture{false};
     public:
         MAPScanner(std::istream *in): yyFlexLexer{in} {}
         int next_token(
             MAPParser::semantic_type *yylval,
             MAPParser::location_type *yylloc);
+        void expect_texture() { _expect_texture = true; }
     };
 }
 
