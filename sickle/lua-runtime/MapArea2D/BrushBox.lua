@@ -2,9 +2,9 @@
 --
 -- Manage BrushBox interactions.
 
-local BrushBoxCreate = require "MapArea2D/BrushBox/BrushBoxCreate"
-local BrushBoxHandleDrag = require "MapArea2D/BrushBox/BrushBoxHandleDrag"
-local BrushBoxMoveDrag = require "MapArea2D/BrushBox/BrushBoxMoveDrag"
+local Create = require "MapArea2D/BrushBox/Create"
+local HandleDrag = require "MapArea2D/BrushBox/HandleDrag"
+local MoveDrag = require "MapArea2D/BrushBox/MoveDrag"
 local EventListener = require "EventListener"
 
 
@@ -23,17 +23,14 @@ function BrushBox.metatable:on_button_press_event(event)
 
     if event.button == 1 then
         if hovered == maparea2d.grabbablebox.NONE then
-            self:addListener(
-                BrushBoxCreate.new(self, self.maparea, event.x, event.y))
+            self:addListener(Create.new(self, self.maparea, event.x, event.y))
 
         elseif hovered == maparea2d.grabbablebox.BOX then
-            self:addListener(
-                BrushBoxMoveDrag.new(self, self.maparea, event.x, event.y))
+            self:addListener(MoveDrag.new(self, self.maparea, event.x, event.y))
 
         else
             self:addListener(
-                BrushBoxHandleDrag.new(
-                    self, self.maparea, event.x, event.y, hovered))
+                HandleDrag.new(self, self.maparea, event.x, event.y, hovered))
 
         end
     end

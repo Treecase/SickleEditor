@@ -1,55 +1,31 @@
--- BrushBoxHandleDrag
+-- BrushBox.HandleDrag
 --
 -- BrushBox handle dragged.
 
-
-local BrushBoxHandleDrag = {}
-BrushBoxHandleDrag.metatable = {}
-BrushBoxHandleDrag.metatable.__index = BrushBoxHandleDrag.metatable
+local utils = require "MapArea2D/BrushBox/utils"
 
 
-local function corners(box, maparea)
-    local points = {box:get_start(), box:get_end()}
-
-    local northwest = maparea:worldspace_to_drawspace(points[1])
-    local southeast = maparea:worldspace_to_drawspace(points[1])
-
-    for _,point in ipairs(points) do
-        local point = maparea:worldspace_to_drawspace(point)
-        if point.x < northwest.x then
-            northwest.x = point.x
-        end
-        if point.y < northwest.y then
-            northwest.y = point.y
-        end
-        if point.x > southeast.x then
-            southeast.x = point.x
-        end
-        if point.y > southeast.y then
-            southeast.y = point.y
-        end
-    end
-
-    return {northwest, southeast}
-end
+local HandleDrag = {}
+HandleDrag.metatable = {}
+HandleDrag.metatable.__index = HandleDrag.metatable
 
 
-function BrushBoxHandleDrag.metatable:on_button_press_event(event)
+function HandleDrag.metatable:on_button_press_event(event)
     return true
 end
 
-function BrushBoxHandleDrag.metatable:on_button_release_event(event)
+function HandleDrag.metatable:on_button_release_event(event)
     self.parent:removeListener(self)
     return self.moved
 end
 
-function BrushBoxHandleDrag.metatable:on_key_press_event(keyval)
+function HandleDrag.metatable:on_key_press_event(keyval)
 end
 
-function BrushBoxHandleDrag.metatable:on_key_release_event(keyval)
+function HandleDrag.metatable:on_key_release_event(keyval)
 end
 
-function BrushBoxHandleDrag.metatable:on_motion_notify_event(event)
+function HandleDrag.metatable:on_motion_notify_event(event)
     local snapped = (self.maparea.alt ~= true)
     local mousepos = self.maparea:screenspace_to_drawspace(event)
     if snapped then
@@ -72,13 +48,14 @@ function BrushBoxHandleDrag.metatable:on_motion_notify_event(event)
 end
 
 
-function BrushBoxHandleDrag.new(parent, maparea, x, y, handle)
-    local corners_ = corners(maparea:get_editor():get_brushbox(), maparea)
+function HandleDrag.new(parent, maparea, x, y, handle)
+    local northwest,southeast = utils.find_corners(
+        maparea:get_editor():get_brushbox(), maparea)
     local CARDINAL = {
-        ["N"] = geo.vector.new(0, corners_[1].y),
-        ["E"] = geo.vector.new(corners_[2].x, 0),
-        ["S"] = geo.vector.new(0, corners_[2].y),
-        ["W"] = geo.vector.new(corners_[1].x, 0),
+        ["N"] = geo.vector.new(0, northwest.y),
+        ["E"] = geo.vector.new(southeast.x, 0),
+        ["S"] = geo.vector.new(0, southeast.y),
+        ["W"] = geo.vector.new(northwest.x, 0),
     }
     local OPPOSITE_CORNER = {
         [maparea2d.grabbablebox.NE] = CARDINAL.S + CARDINAL.W,
@@ -98,8 +75,8 @@ function BrushBoxHandleDrag.new(parent, maparea, x, y, handle)
     drag.handle = handle
     drag.anchor = OPPOSITE_CORNER[handle]
     drag.orig_cardinals = CARDINAL
-    setmetatable(drag, BrushBoxHandleDrag.metatable)
+    setmetatable(drag, HandleDrag.metatable)
     return drag
 end
 
-return BrushBoxHandleDrag
+return HandleDrag

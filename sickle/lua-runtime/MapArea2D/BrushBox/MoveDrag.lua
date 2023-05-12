@@ -1,29 +1,31 @@
--- BrushBoxMoveDrag
+-- BrushBox.MoveDrag
 --
 -- Move the BrushBox.
 
-
-local BrushBoxMoveDrag = {}
-BrushBoxMoveDrag.metatable = {}
-BrushBoxMoveDrag.metatable.__index = BrushBoxMoveDrag.metatable
+local utils = require "MapArea2D/BrushBox/utils"
 
 
-function BrushBoxMoveDrag.metatable:on_button_press_event(event)
+local MoveDrag = {}
+MoveDrag.metatable = {}
+MoveDrag.metatable.__index = MoveDrag.metatable
+
+
+function MoveDrag.metatable:on_button_press_event(event)
     return true
 end
 
-function BrushBoxMoveDrag.metatable:on_button_release_event(event)
+function MoveDrag.metatable:on_button_release_event(event)
     self.parent:removeListener(self)
     return self.moved
 end
 
-function BrushBoxMoveDrag.metatable:on_key_press_event(keyval)
+function MoveDrag.metatable:on_key_press_event(keyval)
 end
 
-function BrushBoxMoveDrag.metatable:on_key_release_event(keyval)
+function MoveDrag.metatable:on_key_release_event(keyval)
 end
 
-function BrushBoxMoveDrag.metatable:on_motion_notify_event(event)
+function MoveDrag.metatable:on_motion_notify_event(event)
     local snapped = (self.maparea.alt ~= true)
     local mousepos = self.maparea:screenspace_to_drawspace(event)
     if snapped then
@@ -43,21 +45,37 @@ function BrushBoxMoveDrag.metatable:on_motion_notify_event(event)
 end
 
 
-function BrushBoxMoveDrag.new(parent, maparea, x, y)
+function MoveDrag.new(parent, maparea, x, y)
     local click_pos = maparea:screenspace_to_drawspace({x, y})
     local snapped = (maparea.alt ~= true)
     if snapped then
         click_pos = geo.vector.map(round_to_grid, click_pos)
     end
     local brushbox = maparea:get_editor():get_brushbox()
+
+    local northwest, southeast = utils.find_corners(brushbox, maparea)
+    local corners = {
+        northwest,
+        geo.vector.new(southeast.x, northwest.y),
+        geo.vector.new(northwest.x, southeast.y),
+        southeast
+    }
+    local closest = {corners[1], math.maxinteger}
+    for _,corner in ipairs(corners) do
+        local distance = geo.vector.length(corner - click_pos)
+        if distance < closest[2] then
+            closest = {corner, distance}
+        end
+    end
+
     local drag = {}
     drag.parent = parent
     drag.maparea = maparea
     drag.moved = false
-    drag.origin = click_pos
+    drag.origin = closest[1]
     drag.bb_origin = {brushbox:get_start(), brushbox:get_end()}
-    setmetatable(drag, BrushBoxMoveDrag.metatable)
+    setmetatable(drag, MoveDrag.metatable)
     return drag
 end
 
-return BrushBoxMoveDrag
+return MoveDrag

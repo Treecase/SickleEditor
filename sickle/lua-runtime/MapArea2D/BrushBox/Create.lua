@@ -1,29 +1,29 @@
--- BrushBoxCreate
+-- BrushBox.Create
 --
 -- Create the brush box.
 
 
-local BrushBoxCreate = {}
-BrushBoxCreate.metatable = {}
-BrushBoxCreate.metatable.__index = BrushBoxCreate.metatable
+local Create = {}
+Create.metatable = {}
+Create.metatable.__index = Create.metatable
 
 
-function BrushBoxCreate.metatable:on_button_press_event(event)
+function Create.metatable:on_button_press_event(event)
     return true
 end
 
-function BrushBoxCreate.metatable:on_button_release_event(event)
+function Create.metatable:on_button_release_event(event)
     self.parent:removeListener(self)
     return self.moved
 end
 
-function BrushBoxCreate.metatable:on_key_press_event(keyval)
+function Create.metatable:on_key_press_event(keyval)
 end
 
-function BrushBoxCreate.metatable:on_key_release_event(keyval)
+function Create.metatable:on_key_release_event(keyval)
 end
 
-function BrushBoxCreate.metatable:on_motion_notify_event(event)
+function Create.metatable:on_motion_notify_event(event)
     local snapped = (self.maparea.alt ~= true)
 
     -- Selection is cleared here since this drag can be triggered by a simple
@@ -40,11 +40,11 @@ function BrushBoxCreate.metatable:on_motion_notify_event(event)
     return true
 end
 
-function BrushBoxCreate.metatable:on_scroll_event(event)
+function Create.metatable:on_scroll_event(event)
 end
 
 
-function BrushBoxCreate.new(parent, maparea, x, y)
+function Create.new(parent, maparea, x, y)
     local click_pos = maparea:screenspace_to_drawspace({x, y})
     local snapped = (maparea.alt ~= true)
     if snapped then
@@ -59,8 +59,8 @@ function BrushBoxCreate.new(parent, maparea, x, y)
     drag.parent = parent
     drag.maparea = maparea
     drag.moved = false
-    setmetatable(drag, BrushBoxCreate.metatable)
+    setmetatable(drag, Create.metatable)
     return drag
 end
 
-return BrushBoxCreate
+return Create
