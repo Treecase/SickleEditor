@@ -72,7 +72,8 @@ namespace Sickle
         void set_draw_angle(DrawAngle angle){property_draw_angle().set_value(angle);}
         auto get_draw_angle() {return property_draw_angle().get_value();};
         auto &get_editor() {return _editor;}
-        auto &get_box() {return _box;}
+        auto &get_selected_box() {return _selected_box;}
+        auto &get_brushbox() {return _brushbox;}
 
     protected:
         // Signal handlers
@@ -88,8 +89,8 @@ namespace Sickle
     private:
         Editor::Editor &_editor;
 
-        GrabbableBox _box{};
-        GrabbableBoxView _box_view;
+        GrabbableBox _selected_box{};
+        GrabbableBoxView _selected_box_view;
         GrabbableBox _brushbox{};
         GrabbableBoxView _brushbox_view;
 

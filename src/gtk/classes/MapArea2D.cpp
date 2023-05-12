@@ -150,7 +150,7 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _prop_draw_angle{*this, "draw-angle", DrawAngle::TOP}
 ,   _prop_transform{*this, "transform", {}}
-,   _box_view{
+,   _selected_box_view{
         std::make_shared<BBox2ViewCustom>(
             [](auto cr, auto box, auto unit){
                 cr->set_source_rgb(1, 0, 0);
@@ -359,8 +359,8 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         }
 
         // Selected brushes grab handles.
-        _box.unit = pixel;
-        _box_view.draw(cr, _box);
+        _selected_box.unit = pixel;
+        _selected_box_view.draw(cr, _selected_box);
 
         // Draw the brushbox.
         if (_editor.brushbox.p1() != _editor.brushbox.p2())
@@ -419,7 +419,7 @@ void Sickle::MapArea2D::on_editor_selection_changed()
         for (auto const &face : brush->faces)
             for (auto const &vertex : face->vertices)
                 selection_bounds.add(worldspace_to_drawspace(vertex));
-    _box.set_box(selection_bounds);
+    _selected_box.set_box(selection_bounds);
     queue_draw();
 }
 

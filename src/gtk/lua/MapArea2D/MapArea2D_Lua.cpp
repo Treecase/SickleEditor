@@ -116,7 +116,14 @@ static int set_transform(lua_State *L)
 static int get_selection_box(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    Lua::push(L, &ma->get_box());
+    Lua::push(L, &ma->get_selected_box());
+    return 1;
+}
+
+static int get_brushbox(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
+    Lua::push(L, &ma->get_brushbox());
     return 1;
 }
 
@@ -138,6 +145,7 @@ static luaL_Reg methods[] = {
     {"get_transform", get_transform},
     {"set_transform", set_transform},
     {"get_selection_box", get_selection_box},
+    {"get_brushbox", get_brushbox},
 
     {"on_key_press_event", do_nothing},
     {"on_key_release_event", do_nothing},
