@@ -34,8 +34,14 @@ function Create.metatable:on_motion_notify_event(event)
     if snapped then
         curr = geo.vector.map(round_to_grid, curr)
     end
-    self.maparea:get_editor():get_brushbox():set_end(
-        self.maparea:drawspace_to_worldspace(curr))
+    curr.z = gAppWin:get_grid_size()
+
+    local brushbox = self.maparea:get_editor():get_brushbox()
+    if not self.moved then
+        brushbox:set_start(self.maparea:drawspace_to_worldspace(curr))
+    end
+    brushbox:set_end(self.maparea:drawspace3_to_worldspace(curr))
+
     self.moved = true
     return true
 end
@@ -45,15 +51,9 @@ end
 
 
 function Create.new(parent, maparea, x, y)
-    local click_pos = maparea:screenspace_to_drawspace({x, y})
-    local snapped = (maparea.alt ~= true)
-    if snapped then
-        click_pos = geo.vector.map(round_to_grid, click_pos)
-    end
-
     local brushbox = maparea:get_editor():get_brushbox()
-    brushbox:set_start(maparea:drawspace_to_worldspace(click_pos))
-    brushbox:set_end(maparea:drawspace_to_worldspace(click_pos))
+    brushbox:set_start(geo.vector.new())
+    brushbox:set_end(geo.vector.new())
 
     local drag = {}
     drag.parent = parent

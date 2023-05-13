@@ -48,11 +48,29 @@ static int drawspace_to_worldspace(lua_State *L)
     return 1;
 }
 
+static int drawspace3_to_worldspace(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
+    auto ds = lgeo_tovector(L, 2);
+    auto ws = ma->drawspace3_to_worldspace(ds);
+    Lua::push(L, ws);
+    return 1;
+}
+
 static int worldspace_to_drawspace(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
     auto ws = lgeo_tovector(L, 2);
     auto ds = ma->worldspace_to_drawspace(ws);
+    Lua::push(L, ds);
+    return 1;
+}
+
+static int worldspace_to_drawspace3(lua_State *L)
+{
+    auto ma = lmaparea2d_check(L, 1);
+    auto ws = lgeo_tovector(L, 2);
+    auto ds = ma->worldspace_to_drawspace3(ws);
     Lua::push(L, ds);
     return 1;
 }
@@ -135,7 +153,9 @@ static int do_nothing(lua_State *L)
 static luaL_Reg methods[] = {
     {"screenspace_to_drawspace", screenspace_to_drawspace},
     {"drawspace_to_worldspace", drawspace_to_worldspace},
+    {"drawspace3_to_worldspace", drawspace3_to_worldspace},
     {"worldspace_to_drawspace", worldspace_to_drawspace},
+    {"worldspace_to_drawspace3", worldspace_to_drawspace3},
     {"pick_brush", pick_brush},
 
     {"set_cursor", set_cursor},

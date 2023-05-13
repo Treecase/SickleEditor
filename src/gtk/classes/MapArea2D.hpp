@@ -45,7 +45,9 @@ namespace Sickle
     class MapArea2D : public Gtk::DrawingArea
     {
     public:
+        using ScreenSpacePoint = glm::vec2;
         using DrawSpacePoint = glm::vec2;
+        using WorldSpacePoint = glm::vec3;
 
         enum DrawAngle {TOP, FRONT, RIGHT};
 
@@ -55,10 +57,15 @@ namespace Sickle
         DrawSpacePoint screenspace_to_drawspace(double x, double y) const;
         /** Convert draw-space coordinates to screen-space coordinates. */
         glm::vec2 drawspace_to_screenspace(DrawSpacePoint const &v) const;
+
         /** Convert draw-space coordinates to world-space coordinates. */
-        MAP::Vertex drawspace_to_worldspace(DrawSpacePoint const &v) const;
+        WorldSpacePoint drawspace_to_worldspace(DrawSpacePoint const &v) const;
+        WorldSpacePoint drawspace3_to_worldspace(glm::vec3 const &v) const;
+
         /** Convert world-space coordinates to draw-space coordinates. */
-        DrawSpacePoint worldspace_to_drawspace(MAP::Vertex const &v) const;
+        DrawSpacePoint worldspace_to_drawspace(WorldSpacePoint const &v) const;
+        glm::vec3 worldspace_to_drawspace3(WorldSpacePoint const &v) const;
+
         /** Pick an EditorBrush based on the given point. */
         std::shared_ptr<Editor::Brush> pick_brush(DrawSpacePoint point);
 

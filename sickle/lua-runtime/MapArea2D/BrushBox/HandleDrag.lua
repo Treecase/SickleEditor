@@ -41,21 +41,24 @@ function HandleDrag.metatable:on_motion_notify_event(event)
         mousepos.y = self.orig_cardinals.N.y
         self.anchor.y = self.orig_cardinals.S.y
     end
+    mousepos.z = self.orig_cardinals.Z2
 
     local brushbox = self.maparea:get_editor():get_brushbox()
-    brushbox:set_start(self.maparea:drawspace_to_worldspace(self.anchor))
-    brushbox:set_end(self.maparea:drawspace_to_worldspace(mousepos))
+    brushbox:set_start(self.maparea:drawspace3_to_worldspace(self.anchor))
+    brushbox:set_end(self.maparea:drawspace3_to_worldspace(mousepos))
 end
 
 
 function HandleDrag.new(parent, maparea, x, y, handle)
-    local northwest,southeast = utils.find_corners(
+    local northwest,southeast = utils.find_corners3(
         maparea:get_editor():get_brushbox(), maparea)
     local CARDINAL = {
         ["N"] = geo.vector.new(0, northwest.y),
         ["E"] = geo.vector.new(southeast.x, 0),
         ["S"] = geo.vector.new(0, southeast.y),
         ["W"] = geo.vector.new(northwest.x, 0),
+        ["Z1"] = northwest.z,
+        ["Z2"] = southeast.z,
     }
     local OPPOSITE_CORNER = {
         [maparea2d.grabbablebox.NE] = CARDINAL.S + CARDINAL.W,
@@ -67,13 +70,15 @@ function HandleDrag.new(parent, maparea, x, y, handle)
         [maparea2d.grabbablebox.S] = CARDINAL.N,
         [maparea2d.grabbablebox.W] = CARDINAL.E,
     }
+    local anchor = OPPOSITE_CORNER[handle]
+    anchor.z = CARDINAL.Z1
 
     local drag = {}
     drag.parent = parent
     drag.maparea = maparea
     drag.moved = false
     drag.handle = handle
-    drag.anchor = OPPOSITE_CORNER[handle]
+    drag.anchor = anchor
     drag.orig_cardinals = CARDINAL
     setmetatable(drag, HandleDrag.metatable)
     return drag

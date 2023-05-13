@@ -222,7 +222,7 @@ Sickle::MapArea2D::screenspace_to_drawspace(double x, double y) const
     };
 }
 
-glm::vec2
+Sickle::MapArea2D::ScreenSpacePoint
 Sickle::MapArea2D::drawspace_to_screenspace(DrawSpacePoint const &v) const
 {
     auto const &transform = property_transform().get_value();
@@ -234,7 +234,7 @@ Sickle::MapArea2D::drawspace_to_screenspace(DrawSpacePoint const &v) const
     };
 }
 
-MAP::Vertex
+Sickle::MapArea2D::WorldSpacePoint
 Sickle::MapArea2D::drawspace_to_worldspace(DrawSpacePoint const &v) const
 {
     switch (property_draw_angle().get_value())
@@ -246,14 +246,32 @@ Sickle::MapArea2D::drawspace_to_worldspace(DrawSpacePoint const &v) const
     throw std::logic_error{"bad DrawAngle value"};
 }
 
-Sickle::MapArea2D::DrawSpacePoint
-Sickle::MapArea2D::worldspace_to_drawspace(MAP::Vertex const &v) const
+Sickle::MapArea2D::WorldSpacePoint
+Sickle::MapArea2D::drawspace3_to_worldspace(glm::vec3 const &v) const
 {
     switch (property_draw_angle().get_value())
     {
-    case DrawAngle::TOP  : return {v.x, -v.y}; break;
-    case DrawAngle::FRONT: return {v.y, -v.z}; break;
-    case DrawAngle::RIGHT: return {v.x, -v.z}; break;
+    case DrawAngle::TOP  : return {v.x, -v.y, v.z}; break;
+    case DrawAngle::FRONT: return {v.z, v.x, -v.y}; break;
+    case DrawAngle::RIGHT: return {v.x, v.z, -v.y}; break;
+    }
+    throw std::logic_error{"bad DrawAngle value"};
+}
+
+Sickle::MapArea2D::DrawSpacePoint
+Sickle::MapArea2D::worldspace_to_drawspace(WorldSpacePoint const &v) const
+{
+    return glm::vec2{worldspace_to_drawspace3(v)};
+}
+
+glm::vec3
+Sickle::MapArea2D::worldspace_to_drawspace3(WorldSpacePoint const &v) const
+{
+    switch (property_draw_angle().get_value())
+    {
+    case DrawAngle::TOP  : return {v.x, -v.y, v.z}; break;
+    case DrawAngle::FRONT: return {v.y, -v.z, v.x}; break;
+    case DrawAngle::RIGHT: return {v.x, -v.z, v.y}; break;
     }
     throw std::logic_error{"bad DrawAngle value"};
 }
