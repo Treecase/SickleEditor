@@ -1,8 +1,8 @@
--- BrushBox.HandleDrag
+-- CreateBrush.HandleDrag
 --
 -- BrushBox handle dragged.
 
-local utils = require "MapArea2D/BrushBox/utils"
+local utils = require "MapArea2D/MapTools/CreateBrush/utils"
 
 
 local HandleDrag = {}

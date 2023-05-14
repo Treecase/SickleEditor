@@ -1,9 +1,7 @@
 
 local moremath = require "moremath"
 local EventListener = require "EventListener"
-local BrushBox = require "MapArea2D/BrushBox"
-local MoveSelected = require "MapArea2D/MoveSelected"
-local ScaleDrag = require "MapArea2D/ScaleDrag"
+local MapTools = require "MapArea2D/MapTools/MapTools"
 local ViewDrag = require "MapArea2D/ViewDrag"
 
 
@@ -21,61 +19,20 @@ EventListener.inherit(maparea2d.metatable)
 
 -- Mouse button pressed.
 function maparea2d.metatable:on_button_press_event(event)
-    local gbox = self:get_selection_box()
-
-    if event.button == 1 then
-        local hovered = gbox:check_point(
-            self:screenspace_to_drawspace(event))
-        -- Clicking inside the selection box begins a selection drag.
-        if hovered == maparea2d.grabbablebox.BOX then
-            local drag = MoveSelected.new(self, event.x, event.y)
-            self:addListener(drag)
-            drag:on_button_press_event(event)
-            return true
-
-        elseif hovered ~= maparea2d.grabbablebox.NONE then
-            local scale_drag = ScaleDrag.new(self, event.x, event.y, hovered)
-            self:addListener(scale_drag)
-            scale_drag:on_button_press_event(event)
-            return true
-        end
+    if self:doEvent("on_button_press_event", event) then return true end
 
     -- Middle click begins view panning.
-    elseif event.button == 2 then
+    if event.button == 2 then
         local view_drag = ViewDrag.new(self, event.x, event.y)
         self:addListener(view_drag)
         return true
     end
-
-    return self:doEvent("on_button_press_event", event)
 end
 
 
 -- Mouse button released.
 function maparea2d.metatable:on_button_release_event(event)
     if self:doEvent("on_button_release_event", event) then return true end
-
-    local editor = self:get_editor()
-
-    -- Select a brush on left click.
-    if event.button == 1 then
-        -- Clear selection if we're only picking one at a time.
-        if not self.multiselect then
-            editor:get_selection():clear()
-        end
-        -- Pick a brush based on the click position.
-        local xy = self:screenspace_to_drawspace(event)
-        local picked = self:pick_brush(xy)
-        if picked then
-            if picked:is_selected() then
-                editor:get_selection():remove(picked)
-            else
-                editor:get_selection():add(picked)
-            end
-        end
-        return true
-    end
-    return false
 end
 
 
@@ -88,12 +45,8 @@ function maparea2d.metatable:on_key_press_event(keyval)
         self.shift = true
     elseif keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
         self.alt = true
-    -- Pressing escape cancels any current actions.
-    elseif keyval == LuaGDK.GDK_KEY_Escape then
-        self:clearListeners()
     end
 
-    -- Process listeners. If any return true, we're done.
     if self:doEvent("on_key_press_event", event) then return true end
 
     local transform = self:get_transform()
@@ -125,10 +78,6 @@ function maparea2d.metatable:on_key_press_event(keyval)
     elseif keyval == LuaGDK.GDK_KEY_0 then
         transform:set_zoom(1.0)
 
-    -- Hold Ctrl to select multiple brushes.
-    elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
-        self.multiselect = true
-
     else
         return false
     end
@@ -149,17 +98,7 @@ function maparea2d.metatable:on_key_release_event(keyval)
         self.alt = false
     end
 
-    -- Process listeners. If any return true, we're done.
     if self:doEvent("on_key_release_event", event) then return true end
-
-    -- Turn off multi-brush selecting when Ctrl is released.
-    if keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
-        self.multiselect = false
-
-    else
-        return false
-    end
-    return true
 end
 
 
@@ -238,12 +177,22 @@ function maparea2d.metatable:on_scroll_event(event)
 end
 
 
+function maparea2d.metatable:on_maptool_changed()
+    local Tool = MapTools[gAppWin:get_maptool()]
+    self:removeListener(self.tool)
+    self.tool = Tool.new(self)
+    self:addListener(self.tool)
+end
+
+
 local function setup(maparea)
     maparea.shift = false
     maparea.ctrl = false
     maparea.alt = false
+    maparea.tool = MapTools[gAppWin:get_maptool()].new(maparea)
     EventListener.construct(maparea)
-    maparea:addListener(BrushBox.new(maparea))
+    maparea:addListener(maparea.tool)
+    gAppWin:addListener(maparea)
 end
 
 setup(gAppWin.topMapArea)

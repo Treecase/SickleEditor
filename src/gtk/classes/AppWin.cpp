@@ -114,8 +114,9 @@ Sickle::AppWin::AppWin()
     m_hbox.pack_end(m_gridsizelabel);
     m_hbox.pack_start(m_infobar);
 
-    m_grid.attach(m_viewgrid, 0, 0);
-    m_grid.attach(m_hbox, 0, 1);
+    m_grid.attach(m_maptools, 0, 0);
+    m_grid.attach(m_viewgrid, 1, 0);
+    m_grid.attach(m_hbox, 0, 1, 2);
     add(m_grid);
 
     // Lua console window
@@ -216,6 +217,11 @@ void Sickle::AppWin::set_grid_size(guint grid_size)
 guint Sickle::AppWin::get_grid_size()
 {
     return property_grid_size().get_value();
+}
+
+Sickle::MapTools::Tool Sickle::AppWin::get_maptool()
+{
+    return m_maptools.property_tool().get_value();
 }
 
 

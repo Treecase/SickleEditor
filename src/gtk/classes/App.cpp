@@ -75,6 +75,15 @@ void Sickle::App::on_startup()
     set_accel_for_action("app.exit", "<Ctrl>Q");
     set_accel_for_action("app.openLuaConsole", "<Ctrl><Shift>C");
     set_accel_for_action("app.reloadLua", "<Ctrl><Shift>R");
+    // Keyboard accelerators for MapTools.
+    add_action(
+        "mapTools_Select",
+        sigc::mem_fun(*this, &App::on_action_mapTools_Select));
+    add_action(
+        "mapTools_CreateBrush",
+        sigc::mem_fun(*this, &App::on_action_mapTools_CreateBrush));
+    set_accel_for_action("app.mapTools_Select", "<Shift>S");
+    set_accel_for_action("app.mapTools_CreateBrush", "<Shift>B");
 }
 
 void Sickle::App::on_activate()
@@ -231,6 +240,18 @@ void Sickle::App::on_action_about()
     auto about = Sickle::About{};
     about.set_transient_for(*get_active_window());
     about.run();
+}
+
+void Sickle::App::on_action_mapTools_Select()
+{
+    auto window = dynamic_cast<AppWin *>(get_active_window());
+    window->m_maptools.property_tool() = MapTools::Tool::SELECT;
+}
+
+void Sickle::App::on_action_mapTools_CreateBrush()
+{
+    auto window = dynamic_cast<AppWin *>(get_active_window());
+    window->m_maptools.property_tool() = MapTools::Tool::CREATE_BRUSH;
 }
 
 

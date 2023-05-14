@@ -44,6 +44,13 @@ static int get_grid_size(lua_State *L)
     return 1;
 }
 
+static int get_maptool(lua_State *L)
+{
+    auto aw = lappwin_check(L, 1);
+    lua_pushinteger(L, static_cast<lua_Integer>(aw->get_maptool()));
+    return 1;
+}
+
 static int do_nothing(lua_State *L)
 {
     return 0;
@@ -52,8 +59,10 @@ static int do_nothing(lua_State *L)
 static luaL_Reg methods[] = {
     {"set_grid_size", set_grid_size},
     {"get_grid_size", get_grid_size},
+    {"get_maptool", get_maptool},
 
     {"on_grid_size_changed", do_nothing},
+    {"on_maptool_changed", do_nothing},
     {"on_key_press_event", do_nothing},
     {NULL, NULL}
 };
@@ -74,6 +83,9 @@ void Lua::push(lua_State *L, Sickle::AppWin *appwin)
 
     builder.addSignalHandler(
         appwin->property_grid_size().signal_changed(), "on_grid_size_changed");
+    builder.addSignalHandler(
+        appwin->m_maptools.property_tool().signal_changed(),
+        "on_maptool_changed");
     builder.addSignalHandler(
         appwin->signal_key_press_event(), "on_key_press_event");
 
@@ -97,6 +109,13 @@ int luaopen_appwin(lua_State *L)
     luaL_newmetatable(L, "Sickle.appwin");
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
+
+    lua_newtable(L);
+    lua_pushinteger(L, Sickle::MapTools::Tool::SELECT);
+    lua_pushinteger(L, Sickle::MapTools::Tool::CREATE_BRUSH);
+    lua_setfield(L, -3, "CREATE_BRUSH");
+    lua_setfield(L, -2, "SELECT");
+    lua_setfield(L, -2, "MapTools");
 
     builder.setLua(L);
     return 1;

@@ -1,10 +1,14 @@
 
-local moremath = require "../moremath"
+local moremath = require "moremath"
+local EventListener = require "EventListener"
+
 
 function round_to_grid(x)
     return moremath.round_to(x, gAppWin:get_grid_size())
 end
 
+
+EventListener.inherit(appwin.metatable)
 
 function appwin.metatable:on_key_press_event(keyval)
     -- Increase/decrease grid size with ] and [
@@ -17,3 +21,11 @@ function appwin.metatable:on_key_press_event(keyval)
     end
     return true
 end
+
+
+function appwin.metatable:on_maptool_changed()
+    self:doEvent("on_maptool_changed")
+end
+
+
+EventListener.construct(gAppWin)

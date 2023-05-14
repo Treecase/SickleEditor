@@ -13,7 +13,7 @@ local function get_center(drag)
     local center = geo.vector.new()
 
     -- Scale out from center.
-    if drag.centered then
+    if drag:centered() then
         local count = 0.0
         for brush in drag.maparea:get_editor():get_selection():iterate() do
             for i,vertex in ipairs(brush:get_vertices()) do
@@ -78,35 +78,28 @@ local function safe_vector_divide(a, b)
 end
 
 
+function ScaleDrag.metatable:snapped()
+    return self.maparea.alt == false
+end
+
+function ScaleDrag.metatable:centered()
+    return self.maparea.ctrl == true
+end
+
+
 function ScaleDrag.metatable:on_button_press_event(event)
     return true
 end
 
 function ScaleDrag.metatable:on_button_release_event(event)
-    self.maparea:removeListener(self)
+    self.parent:removeListener(self)
     return true
 end
 
 function ScaleDrag.metatable:on_key_press_event(keyval)
-    if keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
-        self.snapped = false
-    elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
-        self.centered = true
-    else
-        return false
-    end
-    return true
 end
 
 function ScaleDrag.metatable:on_key_release_event(keyval)
-    if keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
-        self.snapped = true
-    elseif keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
-        self.centered = false
-    else
-        return false
-    end
-    return true
 end
 
 function ScaleDrag.metatable:on_motion_notify_event(event)
@@ -132,14 +125,14 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
     )
 
     local click_pos = self.maparea:screenspace_to_drawspace({event.x, event.y})
-    if self.snapped then
+    if self:snapped() then
         click_pos = geo.vector.map(round_to_grid, click_pos)
     end
 
     local distance = geo.vector.map(math.abs, click_pos - center)
     local scale = safe_vector_divide(distance, self.base_distance)
 
-    if self.centered then
+    if self:centered() then
         scale = scale * 2
     end
 
@@ -177,16 +170,17 @@ function ScaleDrag.metatable:on_scroll_event(event)
 end
 
 
-function ScaleDrag.new(maparea, x, y, handle)
+function ScaleDrag.new(parent, maparea, x, y, handle)
     local scale_drag = {}
+    scale_drag.parent = parent
     scale_drag.maparea = maparea
     scale_drag.handle = handle
     scale_drag.moved = false
-    scale_drag.snapped = true
-    scale_drag.centered = false
+
+    setmetatable(scale_drag, ScaleDrag.metatable)
 
     local click_pos = maparea:screenspace_to_drawspace({x, y})
-    if scale_drag.snapped then
+    if scale_drag:snapped() then
         click_pos = geo.vector.map(round_to_grid, click_pos)
     end
 
@@ -195,7 +189,6 @@ function ScaleDrag.new(maparea, x, y, handle)
     scale_drag.base_distance = distance
     scale_drag.prev_scale = safe_vector_divide(distance, distance)
 
-    setmetatable(scale_drag, ScaleDrag.metatable)
     return scale_drag
 end
 

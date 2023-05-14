@@ -10,13 +10,15 @@ end
 local function removeListener(self, listener)
     for i,l in ipairs(self.listeners) do
         if l == listener then
+            if l.on_removed then l:on_removed() end
             table.remove(self.listeners, i)
         end
     end
 end
 
 local function clearListeners(self)
-    for i,_ in ipairs(self.listeners) do
+    for i,l in ipairs(self.listeners) do
+        if l.on_removed then l:on_removed() end
         table.remove(self.listeners, i)
     end
 end
@@ -25,8 +27,8 @@ function doEvent(self, event, args)
     local captured = false
     for _,listener in ipairs(self.listeners) do
         local fn = listener[event]
-        if fn(listener, args) then
-            captured = true
+        if fn then
+            captured = fn(listener, args) or captured
         end
     end
     return captured

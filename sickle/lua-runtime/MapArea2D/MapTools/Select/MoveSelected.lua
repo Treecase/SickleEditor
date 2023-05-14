@@ -34,34 +34,31 @@ MoveSelected.metatable = {}
 MoveSelected.metatable.__index = MoveSelected.metatable
 
 
+function MoveSelected.metatable:snapped()
+    return self.maparea.alt == false
+end
+
+
 function MoveSelected.metatable:on_button_press_event(event)
     return true
 end
 
 function MoveSelected.metatable:on_button_release_event(event)
-    self.maparea:removeListener(self)
+    self.parent:removeListener(self)
     return self.moved
 end
 
 function MoveSelected.metatable:on_key_press_event(keyval)
-    if keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
-        self.snapped = false
-        return true
-    end
 end
 
 function MoveSelected.metatable:on_key_release_event(keyval)
-    if keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
-        self.snapped = true
-        return true
-    end
 end
 
 function MoveSelected.metatable:on_motion_notify_event(event)
     local curr = self.maparea:screenspace_to_drawspace({event.x, event.y})
 
     local newcorner = curr
-    if self.snapped then
+    if self:snapped() then
         newcorner = geo.vector.map(round_to_grid, curr)
     end
 
@@ -82,7 +79,7 @@ function MoveSelected.metatable:on_scroll_event(event)
 end
 
 
-function MoveSelected.new(maparea, x, y)
+function MoveSelected.new(parent, maparea, x, y)
     local click_pos = maparea:screenspace_to_drawspace({x, y})
 
     local topleft, bottomright = find_corners(
@@ -107,9 +104,9 @@ function MoveSelected.new(maparea, x, y)
     end
 
     local drag = {}
+    drag.parent = parent
     drag.maparea = maparea
     drag.moved = false
-    drag.snapped = true
     drag.corner = closest_corner[1]
     drag.prev_translation = geo.vector.new()
     setmetatable(drag, MoveSelected.metatable)

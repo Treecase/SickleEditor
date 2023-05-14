@@ -1,21 +1,28 @@
--- BrushBox
+-- CreateBrush
 --
 -- Manage BrushBox interactions.
 
-local Create = require "MapArea2D/BrushBox/Create"
-local HandleDrag = require "MapArea2D/BrushBox/HandleDrag"
-local MoveDrag = require "MapArea2D/BrushBox/MoveDrag"
 local EventListener = require "EventListener"
+local Create = require "MapArea2D/MapTools/CreateBrush/Create"
+local HandleDrag = require "MapArea2D/MapTools/CreateBrush/HandleDrag"
+local MoveDrag = require "MapArea2D/MapTools/CreateBrush/MoveDrag"
 
 
-local BrushBox = {}
-BrushBox.metatable = {}
-BrushBox.metatable.__index = BrushBox.metatable
+local CreateBrush = {}
+CreateBrush.metatable = {}
+CreateBrush.metatable.__index = CreateBrush.metatable
 
-EventListener.inherit(BrushBox.metatable)
+EventListener.inherit(CreateBrush.metatable)
 
 
-function BrushBox.metatable:on_button_press_event(event)
+function CreateBrush.metatable:on_removed()
+    local brushbox = self.maparea:get_editor():get_brushbox()
+    brushbox:set_start(geo.vector.new())
+    brushbox:set_end(geo.vector.new())
+end
+
+
+function CreateBrush.metatable:on_button_press_event(event)
     if self:doEvent("on_button_press_event", event) then return true end
 
     local hovered = self.maparea:get_brushbox():check_point(
@@ -36,20 +43,21 @@ function BrushBox.metatable:on_button_press_event(event)
     end
 end
 
-function BrushBox.metatable:on_button_release_event(event)
+function CreateBrush.metatable:on_button_release_event(event)
     if self:doEvent("on_button_release_event", event) then return true end
 end
 
-function BrushBox.metatable:on_key_press_event(keyval)
+function CreateBrush.metatable:on_key_press_event(keyval)
     if self:doEvent("on_key_press_event", event) then return true end
 end
 
-function BrushBox.metatable:on_key_release_event(keyval)
+function CreateBrush.metatable:on_key_release_event(keyval)
     if self:doEvent("on_key_release_event", event) then return true end
 end
 
-function BrushBox.metatable:on_motion_notify_event(event)
+function CreateBrush.metatable:on_motion_notify_event(event)
     if self:doEvent("on_motion_notify_event", event) then return true end
+    if not self.brushbox_exists then return false end
 
     local mouse_position_ds = self.maparea:screenspace_to_drawspace(event)
     local hovered = self.maparea:get_brushbox():check_point(mouse_position_ds)
@@ -71,17 +79,18 @@ function BrushBox.metatable:on_motion_notify_event(event)
     end
 end
 
-function BrushBox.metatable:on_scroll_event(event)
+function CreateBrush.metatable:on_scroll_event(event)
     if self:doEvent("on_scroll_event", event) then return true end
 end
 
 
-function BrushBox.new(maparea)
+function CreateBrush.new(maparea)
     local brushbox = {}
     brushbox.maparea = maparea
-    setmetatable(brushbox, BrushBox.metatable)
+    brushbox.brushbox_exists = false
+    setmetatable(brushbox, CreateBrush.metatable)
     EventListener.construct(brushbox)
     return brushbox
 end
 
-return BrushBox
+return CreateBrush

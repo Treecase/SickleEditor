@@ -7,6 +7,7 @@ target_sources(sickle PRIVATE
     LuaConsole.cpp
     MapArea2D.cpp
     MapArea3D.cpp
+    MapTools.cpp
     WADDialog.cpp
 )
 

@@ -23,6 +23,7 @@
 #include "LuaConsole.hpp"
 #include "MapArea2D.hpp"
 #include "MapArea3D.hpp"
+#include "MapTools.hpp"
 #include "editor/Editor.hpp"
 
 #include <glibmm/property.h>
@@ -36,6 +37,8 @@
 
 namespace Sickle
 {
+    class App;
+
     class AppWin : public Gtk::ApplicationWindow
     {
     public:
@@ -56,11 +59,13 @@ namespace Sickle
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
         void set_grid_size(guint grid_size);
         guint get_grid_size();
+        MapTools::Tool get_maptool();
 
         auto signal_lua_reloaded() {return _sig_lua_reloaded;}
 
         // Lua constructor needs access to private members.
         friend void Lua::push(lua_State *, AppWin *);
+        friend class Sickle::App;
 
     protected:
         Gtk::Grid m_grid;
@@ -73,6 +78,7 @@ namespace Sickle
         LuaConsole m_luaconsole;
         Gtk::InfoBar m_infobar{};
         Gtk::Label m_infobar_label{};
+        MapTools m_maptools{};
 
         void setup_lua_state();
 

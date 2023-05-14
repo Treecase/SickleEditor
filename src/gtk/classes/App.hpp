@@ -64,6 +64,10 @@ namespace Sickle
         // Help
         void on_action_about();
 
+        // MapTools actions
+        void on_action_mapTools_Select();
+        void on_action_mapTools_CreateBrush();
+
     private:
         FGD::GameDef _game_definition;
 

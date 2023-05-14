@@ -1,4 +1,4 @@
--- BrushBox.Create
+-- CreateBrush.Create
 --
 -- Create the brush box.
 
@@ -38,6 +38,7 @@ function Create.metatable:on_motion_notify_event(event)
 
     local brushbox = self.maparea:get_editor():get_brushbox()
     if not self.moved then
+        self.parent.brushbox_exists = true
         brushbox:set_start(self.maparea:drawspace_to_worldspace(curr))
     end
     brushbox:set_end(self.maparea:drawspace3_to_worldspace(curr))
@@ -54,6 +55,7 @@ function Create.new(parent, maparea, x, y)
     local brushbox = maparea:get_editor():get_brushbox()
     brushbox:set_start(geo.vector.new())
     brushbox:set_end(geo.vector.new())
+    parent.brushbox_exists = false
 
     local drag = {}
     drag.parent = parent
