@@ -273,8 +273,8 @@ void Sickle::AppWin::setup_lua_state()
     std::stringstream paths{};
     for (auto const &dir : dirs)
     {
-        paths << dir->get_path() + "/?;";
         paths << dir->get_path() + "/?.lua;";
+        paths << dir->get_path() + "/?;";
     }
     Lua::push(L, oldpath + ";" + paths.str());
     lua_setfield(L, -2, "path");
