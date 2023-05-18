@@ -19,10 +19,10 @@ function HandleDrag.metatable:on_button_release_event(event)
     return self.moved
 end
 
-function HandleDrag.metatable:on_key_press_event(keyval)
+function HandleDrag.metatable:on_key_press_event(event)
 end
 
-function HandleDrag.metatable:on_key_release_event(keyval)
+function HandleDrag.metatable:on_key_release_event(event)
 end
 
 function HandleDrag.metatable:on_motion_notify_event(event)

@@ -70,11 +70,11 @@ function Select.metatable:on_button_release_event(event)
     end
 end
 
-function Select.metatable:on_key_press_event(keyval)
+function Select.metatable:on_key_press_event(event)
     if self:doEvent("on_key_press_event", event) then return true end
 end
 
-function Select.metatable:on_key_release_event(keyval)
+function Select.metatable:on_key_release_event(event)
     if self:doEvent("on_key_release_event", event) then return true end
 end
 

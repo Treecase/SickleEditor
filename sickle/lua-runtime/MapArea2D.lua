@@ -37,13 +37,13 @@ end
 
 
 -- Keyboard key pressed.
-function maparea2d.metatable:on_key_press_event(keyval)
+function maparea2d.metatable:on_key_press_event(event)
     -- These always need to work, and so are done before listeners.
-    if keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
+    if event == LuaGDK.GDK_KEY_Control_L or event == LuaGDK.GDK_KEY_Control_R then
         self.ctrl = true
-    elseif keyval == LuaGDK.GDK_KEY_Shift_L or keyval == LuaGDK.GDK_KEY_Shift_R then
+    elseif event == LuaGDK.GDK_KEY_Shift_L or event == LuaGDK.GDK_KEY_Shift_R then
         self.shift = true
-    elseif keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
+    elseif event == LuaGDK.GDK_KEY_Alt_L or event == LuaGDK.GDK_KEY_Alt_R then
         self.alt = true
     end
 
@@ -52,30 +52,30 @@ function maparea2d.metatable:on_key_press_event(keyval)
     local transform = self:get_transform()
 
     -- Pan view using arrow keys.
-    if keyval == LuaGDK.GDK_KEY_Up then
+    if event == LuaGDK.GDK_KEY_Up then
         transform:set_y(transform:get_y() + MOVE_STEP)
-    elseif keyval == LuaGDK.GDK_KEY_Down then
+    elseif event == LuaGDK.GDK_KEY_Down then
         transform:set_y(transform:get_y() - MOVE_STEP)
-    elseif keyval == LuaGDK.GDK_KEY_Left then
+    elseif event == LuaGDK.GDK_KEY_Left then
         transform:set_x(transform:get_x() + MOVE_STEP)
-    elseif keyval == LuaGDK.GDK_KEY_Right then
+    elseif event == LuaGDK.GDK_KEY_Right then
         transform:set_x(transform:get_x() - MOVE_STEP)
 
     -- Zoom in/out with keypad +/-.
-    elseif keyval == LuaGDK.GDK_KEY_KP_Add then
+    elseif event == LuaGDK.GDK_KEY_KP_Add then
         transform:set_zoom(
             moremath.clamp(
                 transform:get_zoom() * ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM
             )
         )
-    elseif keyval == LuaGDK.GDK_KEY_KP_Subtract then
+    elseif event == LuaGDK.GDK_KEY_KP_Subtract then
         transform:set_zoom(
             moremath.clamp(
                 transform:get_zoom() / ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM
             )
         )
     -- Reset zoom with 0.
-    elseif keyval == LuaGDK.GDK_KEY_0 then
+    elseif event == LuaGDK.GDK_KEY_0 then
         transform:set_zoom(1.0)
 
     else
@@ -88,13 +88,13 @@ end
 
 
 -- Keyboard key released.
-function maparea2d.metatable:on_key_release_event(keyval)
+function maparea2d.metatable:on_key_release_event(event)
     -- These always need to work, and so are done before listeners.
-    if keyval == LuaGDK.GDK_KEY_Control_L or keyval == LuaGDK.GDK_KEY_Control_R then
+    if event == LuaGDK.GDK_KEY_Control_L or event == LuaGDK.GDK_KEY_Control_R then
         self.ctrl = false
-    elseif keyval == LuaGDK.GDK_KEY_Shift_L or keyval == LuaGDK.GDK_KEY_Shift_R then
+    elseif event == LuaGDK.GDK_KEY_Shift_L or event == LuaGDK.GDK_KEY_Shift_R then
         self.shift = false
-    elseif keyval == LuaGDK.GDK_KEY_Alt_L or keyval == LuaGDK.GDK_KEY_Alt_R then
+    elseif event == LuaGDK.GDK_KEY_Alt_L or event == LuaGDK.GDK_KEY_Alt_R then
         self.alt = false
     end
 

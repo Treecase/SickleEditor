@@ -19,10 +19,10 @@ function ViewDrag.metatable:on_button_release_event(event)
     end
 end
 
-function ViewDrag.metatable:on_key_press_event(keyval)
+function ViewDrag.metatable:on_key_press_event(event)
 end
 
-function ViewDrag.metatable:on_key_release_event(keyval)
+function ViewDrag.metatable:on_key_release_event(event)
 end
 
 function ViewDrag.metatable:on_motion_notify_event(event)

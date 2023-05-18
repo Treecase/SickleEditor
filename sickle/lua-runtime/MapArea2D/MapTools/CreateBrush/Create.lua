@@ -17,10 +17,10 @@ function Create.metatable:on_button_release_event(event)
     return self.moved
 end
 
-function Create.metatable:on_key_press_event(keyval)
+function Create.metatable:on_key_press_event(event)
 end
 
-function Create.metatable:on_key_release_event(keyval)
+function Create.metatable:on_key_release_event(event)
 end
 
 function Create.metatable:on_motion_notify_event(event)
