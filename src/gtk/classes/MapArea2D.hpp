@@ -24,9 +24,12 @@
 #include <editor/Editor.hpp>
 
 #include <gdkmm/rgba.h>
+#include <giomm/simpleactiongroup.h>
 #include <glibmm/property.h>
+#include <glibmm/refptr.h>
 #include <glibmm/ustring.h>
 #include <gtkmm/drawingarea.h>
+#include <gtkmm/menu.h>
 #include <cairomm/cairomm.h>
 
 
@@ -91,7 +94,11 @@ namespace Sickle
         void on_draw_angle_changed();
 
         // Input Signals
+        bool on_button_press_event(GdkEventButton *event) override;
         bool on_enter_notify_event(GdkEventCrossing *event) override;
+
+        // Actions
+        void on_action_createbrush_create();
 
     private:
         Editor::Editor &_editor;
@@ -106,6 +113,9 @@ namespace Sickle
         Glib::Property<int> _prop_grid_size;
         Glib::Property<DrawAngle> _prop_draw_angle;
         Glib::Property<MapArea2Dx::Transform2D> _prop_transform;
+
+        Gtk::Menu _createbrush_popup_menu{};
+        Glib::RefPtr<Gio::SimpleActionGroup> _createbrush_popup_actions{};
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,

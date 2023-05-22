@@ -59,7 +59,7 @@ namespace Sickle
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
         void set_grid_size(guint grid_size);
         guint get_grid_size();
-        MapTools::Tool get_maptool();
+        MapTools::Tool get_maptool(); // TEMP
 
         auto signal_lua_reloaded() {return _sig_lua_reloaded;}
 
@@ -78,7 +78,7 @@ namespace Sickle
         LuaConsole m_luaconsole;
         Gtk::InfoBar m_infobar{};
         Gtk::Label m_infobar_label{};
-        MapTools m_maptools{};
+        MapTools m_maptools;
 
         void setup_lua_state();
 

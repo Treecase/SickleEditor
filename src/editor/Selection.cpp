@@ -18,8 +18,10 @@
 
 #include "editor/Editor.hpp"
 
+using namespace Sickle::Editor;
 
-void Sickle::Editor::Selection::clear()
+
+void Selection::clear()
 {
     signal_updated().block();
     auto const copy = _selected;
@@ -30,7 +32,7 @@ void Sickle::Editor::Selection::clear()
 }
 
 
-void Sickle::Editor::Selection::add(Item *item)
+void Selection::add(Item item)
 {
     _selected.emplace(item);
     item->is_selected = true;
@@ -43,7 +45,7 @@ void Sickle::Editor::Selection::add(Item *item)
 }
 
 
-void Sickle::Editor::Selection::remove(Item *item)
+void Selection::remove(Item item)
 {
     _selected.erase(item);
     item->is_selected = false;
@@ -54,7 +56,7 @@ void Sickle::Editor::Selection::remove(Item *item)
 }
 
 
-bool Sickle::Editor::Selection::contains(Item *item) const
+bool Selection::contains(Item item) const
 {
     return _selected.count(item) != 0;
 }

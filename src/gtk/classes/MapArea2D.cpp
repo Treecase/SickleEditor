@@ -20,8 +20,13 @@
 #include "MapArea2D_Lua.hpp"
 #include "AppWin.hpp"
 
+#include <gtkmm/builder.h>
+
+#include <cassert>
 #include <cmath>
+
 #include <algorithm>
+#include <iostream>
 
 // Test function for the Xspace_to_Yspace methods.
 void _test_space_conversions(Sickle::MapArea2D const &maparea);
@@ -185,6 +190,20 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
     set_vexpand(true);
     set_size_request(320, 240);
     set_can_focus(true);
+
+    // Set up right-click menu
+    _createbrush_popup_actions = Gio::SimpleActionGroup::create();
+    _createbrush_popup_actions->add_action(
+        "create",
+        sigc::mem_fun(*this, &MapArea2D::on_action_createbrush_create));
+    insert_action_group("createbrush", _createbrush_popup_actions);
+    auto builder = Gtk::Builder::create();
+    builder->add_from_resource(
+        SE_GRESOURCE_PREFIX"gtk/MapArea2D/CreateBrushPopupMenu.ui");
+    _createbrush_popup_menu = Gtk::Menu{
+        Glib::RefPtr<Gio::Menu>::cast_dynamic(
+            builder->get_object("popup-createbrush"))};
+    _createbrush_popup_menu.attach_to_widget(*this);
 
     _editor.brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_brushbox_changed));
@@ -452,10 +471,26 @@ void Sickle::MapArea2D::on_draw_angle_changed()
     queue_draw();
 }
 
+bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
+{
+    if (event->button == GDK_BUTTON_SECONDARY)
+    {
+        _createbrush_popup_menu.popup_at_pointer(nullptr);
+        return true;
+    }
+    return false;
+}
+
 bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 {
     grab_focus();
     return true;
+}
+
+void Sickle::MapArea2D::on_action_createbrush_create()
+{
+    std::cout << "onAction ACTION" << std::endl;
+    (*_editor.maptool.get())();
 }
 
 

@@ -19,9 +19,14 @@
 #ifndef SE_MAPTOOLS_HPP
 #define SE_MAPTOOLS_HPP
 
+#include <editor/Editor.hpp>
+
 #include <gtkmm/box.h>
 #include <gtkmm/radiobutton.h>
 #include <glibmm/property.h>
+
+#include <array>
+#include <memory>
 
 
 namespace Sickle
@@ -36,21 +41,21 @@ namespace Sickle
             _COUNT
         };
 
-        auto property_tool() {return _tool.get_proxy();}
-        std::string tool_name(Tool tool) const;
+        auto property_tool() {return _prop_tool.get_proxy();}
 
-        MapTools();
+        MapTools(Editor::Editor &editor);
 
     protected:
         void on_tool_button_toggled(Tool tool);
         void on_tool_changed();
 
     private:
-        Glib::Property<Tool> _tool;
+        Glib::Property<Tool> _prop_tool;
 
-        std::array<std::string, Tool::_COUNT> const _button_labels{
-            "Select",
-            "Create Brush",
+        Editor::Editor &_editor;
+        std::array<std::shared_ptr<Editor::MapTool>, Tool::_COUNT> const _tools{
+            std::make_shared<Editor::MapToolSelect>(),
+            std::make_shared<Editor::MapToolCreateBrush>(),
         };
         std::array<Gtk::RadioButton, Tool::_COUNT> _buttons{};
     };

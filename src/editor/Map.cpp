@@ -18,15 +18,17 @@
 
 #include "editor/EditorWorld.hpp"
 
+using namespace Sickle::Editor;
 
-Sickle::Editor::Map::Map(MAP::Map const &map)
+
+Map::Map(MAP::Map const &map)
 {
     for (auto const &entity : map.entities)
         entities.push_back(entity);
 }
 
 
-Sickle::Editor::Map::Map(RMF::RichMap const &map)
+Map::Map(RMF::RichMap const &map)
 {
     Entity worldspawn{};
     worldspawn.properties = map.worldspawn_properties;
@@ -49,7 +51,7 @@ Sickle::Editor::Map::Map(RMF::RichMap const &map)
 }
 
 
-Sickle::Editor::Map::operator MAP::Map() const
+Map::operator MAP::Map() const
 {
     MAP::Map out{};
     for (auto const &entity : entities)

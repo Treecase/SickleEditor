@@ -19,65 +19,21 @@
 #ifndef SE_EDITOR_HPP
 #define SE_EDITOR_HPP
 
-#include "EditorWorld.hpp"
+#include "BrushBox.hpp"
+#include "MapTools.hpp"
+#include "Selection.hpp"
 
-#include <map/map.hpp>
-
-#include <glm/glm.hpp>
 #include <sigc++/signal.h>
-#include <sigc++/connection.h>
 
-#include <unordered_set>
+#include <memory>
+#include <string>
+#include <vector>
 
 
 namespace Sickle
 {
 namespace Editor
 {
-    class BrushBox
-    {
-    public:
-        void p1(glm::vec3 v);
-        void p2(glm::vec3 v);
-        auto p1() const {return _p1;}
-        auto p2() const {return _p2;}
-
-        auto &signal_updated() {return _signal_updated;}
-
-    private:
-        glm::vec3 _p1, _p2;
-        sigc::signal<void()> _signal_updated;
-    };
-
-
-    class Selection
-    {
-    public:
-        using Item = Brush;
-
-        void clear();
-        void add(Item *item);
-        void remove(Item *item);
-        bool contains(Item *item) const;
-
-        auto begin() const {return _selected.begin();}
-        auto end() const {return _selected.end();}
-
-        auto &signal_updated() {return _signal_updated;}
-
-        Selection()=default;
-
-    private:
-        std::unordered_set<Item *> _selected{};
-
-        std::unordered_map<Item *, std::vector<sigc::connection>> _selected_signals{};
-        sigc::signal<void()> _signal_updated{};
-
-        Selection(Selection const &)=delete;
-        Selection &operator=(Selection const &)=delete;
-    };
-
-
     /**
      * The Editor class manages all the objects in the map, as well editor-only
      * data like visgroups.
@@ -89,6 +45,8 @@ namespace Editor
         BrushBox brushbox{};
         /** Selected brushes/entities. */
         Selection selected{};
+        /** Map tools. */
+        Property<std::shared_ptr<MapTool>> maptool{nullptr};
         /** WAD paths. */
         Property<std::vector<std::string>> wads{};
 

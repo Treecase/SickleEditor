@@ -19,10 +19,11 @@
 #include "MapTools.hpp"
 
 
-Sickle::MapTools::MapTools()
+Sickle::MapTools::MapTools(Editor::Editor &editor)
 :   Glib::ObjectBase{typeid(MapTools)}
 ,   Gtk::Box{}
-,   _tool{*this, "tool", Tool::SELECT}
+,   _prop_tool{*this, "tool", Tool::SELECT}
+,   _editor{editor}
 {
     set_orientation(Gtk::Orientation::ORIENTATION_VERTICAL);
 
@@ -34,21 +35,17 @@ Sickle::MapTools::MapTools()
     _buttons.at(property_tool().get_value()).set_active(true);
     for (int m = 0; m < Tool::_COUNT; ++m)
     {
-        auto t = static_cast<Tool>(m);
         auto &button = _buttons.at(m);
-        button.set_label(tool_name(t));
+        button.set_label(_tools.at(m)->name());
         button.set_group(group);
         button.signal_toggled().connect(
             sigc::bind(
-                sigc::mem_fun(*this, &MapTools::on_tool_button_toggled), t));
+                sigc::mem_fun(*this, &MapTools::on_tool_button_toggled),
+                static_cast<Tool>(m)));
         add(button);
     }
-}
 
-
-std::string Sickle::MapTools::tool_name(Tool tool) const
-{
-    return _button_labels.at(tool);
+    _editor.maptool = _tools.at(property_tool().get_value());
 }
 
 
@@ -59,8 +56,9 @@ void Sickle::MapTools::on_tool_button_toggled(Tool tool)
         property_tool() = tool;
 }
 
+
 void Sickle::MapTools::on_tool_changed()
 {
-    auto &button = _buttons.at(property_tool().get_value());
-    button.set_active(true);
+    _buttons.at(property_tool().get_value()).set_active(true);
+    _editor.maptool = _tools.at(property_tool().get_value());
 }

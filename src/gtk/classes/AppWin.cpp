@@ -51,6 +51,7 @@ Sickle::AppWin::AppWin()
 ,   m_drawarea_right{editor}
 ,   m_luaconsolewindow{}
 ,   m_luaconsole{}
+,   m_maptools{editor}
 ,   m_hbox{}
 ,   m_gridsizelabel{}
 ,   _prop_grid_size{*this, "grid-size", 32}

@@ -12,6 +12,7 @@ add_custom_command(
         --generate-source
     DEPENDS
         gtk/menus.ui
+        gtk/MapArea2D/CreateBrushPopupMenu.ui
         lua/gdkevents.lua
         lua/gdkkeysyms.lua
         lua/gdktypes.lua

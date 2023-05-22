@@ -1,5 +1,5 @@
 /**
- * BrushBox.cpp - Editor::BrushBox.
+ * BrushBox.hpp - Editor BrushBox class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,30 +16,32 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
+#ifndef SE_EDITOR_BRUSHBOX_HPP
+#define SE_EDITOR_BRUSHBOX_HPP
+
+#include <glm/glm.hpp>
+#include <sigc++/signal.h>
 
 
-void Sickle::Editor::BrushBox::p1(MAP::Vertex v)
+namespace Sickle
 {
-    _p1 = v;
-    signal_updated().emit();
+namespace Editor
+{
+    class BrushBox
+    {
+    public:
+        void p1(glm::vec3 v);
+        void p2(glm::vec3 v);
+        glm::vec3 p1() const;
+        glm::vec3 p2() const;
+
+        auto &signal_updated() {return _signal_updated;}
+
+    private:
+        glm::vec3 _p1, _p2;
+        sigc::signal<void()> _signal_updated{};
+    };
+}
 }
 
-
-void Sickle::Editor::BrushBox::p2(MAP::Vertex v)
-{
-    _p2 = v;
-    signal_updated().emit();
-}
-
-
-glm::vec3 Sickle::Editor::BrushBox::p1() const
-{
-    return _p1;
-}
-
-
-glm::vec3 Sickle::Editor::BrushBox::p2() const
-{
-    return _p2;
-}
+#endif

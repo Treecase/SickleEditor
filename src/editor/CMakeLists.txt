@@ -9,6 +9,7 @@ add_library(editor STATIC
     Entity.cpp
     Face.cpp
     Map.cpp
+    MapTools.cpp
     Selection.cpp
 )
 target_include_directories(editor PUBLIC include)

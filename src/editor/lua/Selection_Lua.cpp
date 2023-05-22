@@ -16,10 +16,12 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
+#include "editor/Selection.hpp"
 #include "Editor_Lua.hpp"
 
 #include <se-lua/utils/RefBuilder.hpp>
+
+#include <memory>
 
 
 static Lua::RefBuilder<Sickle::Editor::Selection> builder{
@@ -39,7 +41,7 @@ static int selection_add(lua_State *L)
 {
     auto s = lselection_check(L, 1);
     auto i = leditorbrush_check(L, 2);
-    s->add(i);
+    s->add(Sickle::Editor::Selection::Item{i});
     return 0;
 }
 
@@ -47,7 +49,7 @@ static int selection_remove(lua_State *L)
 {
     auto s = lselection_check(L, 1);
     auto i = leditorbrush_check(L, 2);
-    s->remove(i);
+    s->remove(Sickle::Editor::Selection::Item{i});
     return 0;
 }
 
@@ -55,7 +57,7 @@ static int selection_contains(lua_State *L)
 {
     auto s = lselection_check(L, 1);
     auto i = leditorbrush_check(L, 2);
-    lua_pushboolean(L, s->contains(i));
+    lua_pushboolean(L, s->contains(Sickle::Editor::Selection::Item{i}));
     return 1;
 }
 
@@ -72,7 +74,7 @@ static int selection_iterate_iterator(lua_State *L)
 
     lua_pushinteger(L, I + 1);
     lua_replace(L, lua_upvalueindex(2));
-    Lua::push(L, *it);
+    Lua::push(L, it->get());
 
     return 1;
 }
