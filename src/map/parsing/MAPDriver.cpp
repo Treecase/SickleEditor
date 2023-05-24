@@ -1,5 +1,5 @@
 /**
- * mapsaver.hpp - Save a map to a .map file.
+ * MAPDriver.cpp - Flex/Bison .map parser driver.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,35 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPSAVER_HPP
-#define SE_MAPSAVER_HPP
+#include "MAPDriver.hpp"
 
-#include "map.hpp"
-
-#include <ostream>
+#include <stdexcept>
+#include <fstream>
 
 
-namespace std
+void MAP::MAPDriver::set_debug(bool debug)
 {
-std::ostream &operator<<(std::ostream &os, MAP::Vertex const &vertex);
-std::ostream &operator<<(std::ostream &os, MAP::Plane const &plane);
-std::ostream &operator<<(std::ostream &os, MAP::Brush const &brush);
-std::ostream &operator<<(std::ostream &os, MAP::Entity const &entity);
-std::ostream &operator<<(std::ostream &os, MAP::Map const &map);
+    debug_enabled = debug;
 }
 
-
-namespace MAP
+void MAP::MAPDriver::parse(std::istream &iss)
 {
-    /** Save a map to a .map file. */
-    void save(std::ostream &out, Map const &map);
+    _scanner.reset(new MAP::MAPScanner{&iss});
+    _parser.reset(new MAP::MAPParser{*_scanner, *this});
+
+    std::ofstream dbgstream{};
+    if (debug_enabled)
+    {
+        dbgstream.open("debug.txt");
+        _parser->set_debug_level(1);
+        _parser->set_debug_stream(dbgstream);
+    }
+
+    if (_parser->parse() != 0)
+        throw std::runtime_error{"parse failed"};
 }
 
-#endif
+MAP::Map MAP::MAPDriver::get_result() const
+{
+    return result;
+}

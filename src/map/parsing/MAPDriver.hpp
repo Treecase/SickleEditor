@@ -1,5 +1,5 @@
 /**
- * mapsaver.hpp - Save a map to a .map file.
+ * MAPDriver.hpp - Flex/Bison .map parser driver.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,32 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPSAVER_HPP
-#define SE_MAPSAVER_HPP
+#ifndef MAP_DRIVER_HPP
+#define MAP_DRIVER_HPP
 
-#include "map.hpp"
+#include "MAPParser.hpp"
+#include "MAPScanner.hpp"
+#include "map/map.hpp"
 
-#include <ostream>
-
-
-namespace std
-{
-std::ostream &operator<<(std::ostream &os, MAP::Vertex const &vertex);
-std::ostream &operator<<(std::ostream &os, MAP::Plane const &plane);
-std::ostream &operator<<(std::ostream &os, MAP::Brush const &brush);
-std::ostream &operator<<(std::ostream &os, MAP::Entity const &entity);
-std::ostream &operator<<(std::ostream &os, MAP::Map const &map);
-}
+#include <istream>
+#include <memory>
 
 
 namespace MAP
 {
-    /** Save a map to a .map file. */
-    void save(std::ostream &out, Map const &map);
+    class MAPDriver
+    {
+    public:
+        void set_debug(bool debug);
+        void parse(std::istream &iss);
+        Map get_result() const;
+        Map result{};
+
+    protected:
+        bool debug_enabled{false};
+        std::unique_ptr<MAPParser> _parser;
+        std::unique_ptr<MAPScanner> _scanner;
+    };
 }
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * mapsaver.hpp - Save a map to a .map file.
+ * MAPScanner.hpp - Flex .map scanner.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,34 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPSAVER_HPP
-#define SE_MAPSAVER_HPP
+#ifndef MAP_SCANNER_HPP
+#define MAP_SCANNER_HPP
 
-#include "map.hpp"
+#include "location.hh"
+#include "MAPParser.hpp"
 
-#include <ostream>
+#ifndef yyFlexLexerOnce
+#undef yyFlexLexer
+#define yyFlexLexer mapFlexLexer
+#include <FlexLexer.h>
+#endif
 
-
-namespace std
-{
-std::ostream &operator<<(std::ostream &os, MAP::Vertex const &vertex);
-std::ostream &operator<<(std::ostream &os, MAP::Plane const &plane);
-std::ostream &operator<<(std::ostream &os, MAP::Brush const &brush);
-std::ostream &operator<<(std::ostream &os, MAP::Entity const &entity);
-std::ostream &operator<<(std::ostream &os, MAP::Map const &map);
-}
+#undef YY_DECL
+#define YY_DECL int MAP::MAPScanner::next_token(MAPParser::semantic_type *yylval, MAPParser::location_type *yylloc)
 
 
 namespace MAP
 {
-    /** Save a map to a .map file. */
-    void save(std::ostream &out, Map const &map);
+    class MAPScanner : public yyFlexLexer
+    {
+        bool _expect_texture{false};
+    public:
+        MAPScanner(std::istream *in): yyFlexLexer{in} {}
+        int next_token(
+            MAPParser::semantic_type *yylval,
+            MAPParser::location_type *yylloc);
+        void expect_texture() { _expect_texture = true; }
+    };
 }
 
 #endif

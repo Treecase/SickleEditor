@@ -19,6 +19,7 @@
 #ifndef SE_EDITORWORLD_HPP
 #define SE_EDITORWORLD_HPP
 
+#include <convexhull/convexhull.hpp>
 #include <map/map.hpp>
 #include <rmf/rmf.hpp>
 
@@ -29,6 +30,7 @@
 #include <memory>
 #include <stack>
 #include <unordered_map>
+#include <unordered_set>
 
 
 namespace Sickle
@@ -68,13 +70,9 @@ namespace Editor
         Property<float> rotation{0.0f};
 
         Face(
-            std::vector<glm::vec3> vertices,
-            std::string texture,
-            glm::vec3 u,
-            glm::vec3 v,
-            glm::vec2 shift,
-            glm::vec2 scale,
-            float rotation);
+            MAP::Plane const &plane,
+            std::unordered_set<glm::vec3> const &brush_vertices);
+        Face(RMF::Face const &face);
 
         operator MAP::Plane() const;
 

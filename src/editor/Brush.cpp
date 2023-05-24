@@ -19,45 +19,38 @@
 #include "editor/EditorWorld.hpp"
 
 
+/* ===[ .map conversion utils ]=== */
+/** Find general form plane equation coefficients for a MAP::Plane. */
+static HalfPlane make_halfplane(MAP::Plane const &plane)
+{
+    auto const normal = glm::normalize(
+        glm::cross(plane.b - plane.a, plane.c - plane.a));
+    return {
+        normal.x, normal.y, normal.z,
+        -normal.x*plane.a.x - normal.y*plane.a.y - normal.z*plane.a.z};
+}
+
+
+
 Sickle::Editor::Brush::Brush(MAP::Brush const &brush)
 {
+    std::vector<HalfPlane> halfplanes{};
     for (auto const &plane : brush.planes)
     {
-        faces.emplace_back(
-            std::make_shared<Face>(
-                plane.vertices,
-                plane.miptex,
-                plane.s, plane.t,
-                plane.offsets,
-                plane.scale,
-                plane.rotation));
+        halfplanes.emplace_back(make_halfplane(plane));
     }
+    auto const vertices = vertex_enumeration(halfplanes);
+    assert(vertices.size() != 0);
+
+    for (auto const &plane : brush.planes)
+        faces.emplace_back(std::make_shared<Face>(plane, vertices));
 }
 
 
 Sickle::Editor::Brush::Brush(RMF::Solid const &solid)
 {
     for (auto const &face : solid.faces)
-    {
-        std::vector<glm::vec3> verts{};
-        for (auto const &vert : face.vertices)
-            verts.emplace(verts.begin(), vert.x, vert.y, vert.z);
-        faces.emplace_back(
-            std::make_shared<Face>(
-                verts,
-                face.texture_name,
-                glm::vec3{
-                    face.texture_u.x,
-                    face.texture_u.y,
-                    face.texture_u.z},
-                glm::vec3{
-                    face.texture_v.x,
-                    face.texture_v.y,
-                    face.texture_v.z},
-                glm::vec2{face.texture_x_shift, face.texture_y_shift},
-                glm::vec2{face.texture_x_scale, face.texture_y_scale},
-                face.texture_rotation));
-    }
+        faces.emplace_back(std::make_shared<Face>(face));
 }
 
 

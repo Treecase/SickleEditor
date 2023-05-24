@@ -1,6 +1,6 @@
 /**
  * convexhull.hpp - Vertex and Facet enumeration algorithms.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,13 +43,19 @@ class HalfPlane
 {
 public:
     /** Coefficients for general form plane equation (ax + by + cz + d = 0). */
-    double a, b, c, d;
+    float const a, b, c, d;
 
     /**
      * Solve for point P on plane. Result will be ~0 if point lies on the
      * plane.
      */
-    double solveForPoint(glm::vec3 const &p) const;
+    float solveForPoint(glm::vec3 const &p) const;
+
+    /** Check if a point lies on the plane. */
+    bool isPointOnPlane(glm::vec3 const &point) const;
+
+    /** Get the plane's normal vector. */
+    glm::vec3 normal() const;
 };
 
 

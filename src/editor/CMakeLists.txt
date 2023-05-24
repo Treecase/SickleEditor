@@ -13,7 +13,7 @@ add_library(editor STATIC
 )
 target_include_directories(editor PUBLIC include)
 target_link_libraries(editor PUBLIC
-    map rmf
+    convexhull map rmf
     PkgConfig::sigc++
 )
 

@@ -1,0 +1,72 @@
+/**
+ * maplexer.lpp - .map scanner.
+ * Copyright (C) 2023 Trevor Last
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+%{
+#include "MAPParser.hpp"
+#include "MAPScanner.hpp"
+
+using token = MAP::MAPParser::token;
+%}
+
+%option debug nodefault noyywrap
+%option c++
+%option prefix="map"
+%option yyclass="MAP::Scanner"
+
+%{
+/* Update location on pattern match. */
+#define YY_USER_ACTION  yylloc->step(); yylloc->columns(yyleng);
+%}
+
+STRING_CHAR [^"\n]
+TEXTURE_CHAR [[:alnum:][:punct:]]
+
+
+/* Since TEXTUREs can contain any (non-whitespace) character, the scanner needs
+ * to be context-sensitive. So, after parsing 3 plane points, the parser will
+ * tell the scanner to enter TEXTURE_CONDITION. */
+%x TEXTURE_CONDITION
+
+
+%%
+    if (_expect_texture)
+    {
+        BEGIN(TEXTURE_CONDITION);
+        _expect_texture = false;
+    }
+
+<INITIAL,TEXTURE_CONDITION>\n                  yylloc->lines();
+<INITIAL,TEXTURE_CONDITION>[[:space:]]
+
+[()[\]{}]  return *yytext;
+
+-?[[:digit:]]+(\.[[:digit:]]+)?  %{
+    yylval->emplace<float>(std::stof(yytext));
+    return token::NUMBER;
+    %}
+
+\"{STRING_CHAR}*\"  %{
+    yylval->emplace<std::string>(yytext, 1, yyleng-2);
+    return token::STRING;
+    %}
+
+<TEXTURE_CONDITION>{TEXTURE_CHAR}+  %{
+    yylval->emplace<std::string>(yytext);
+    BEGIN(INITIAL);
+    return token::TEXTURE;
+    %}
