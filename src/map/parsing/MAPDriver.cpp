@@ -48,4 +48,3 @@ MAP::Map MAP::MAPDriver::get_result() const
 {
     return result;
 }
-

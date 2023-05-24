@@ -18,7 +18,6 @@ add_library(map_parsing OBJECT
     "${FLEX_maplexer_OUTPUTS}"
     "${BISON_mapparser_OUTPUTS}"
     MAPDriver.cpp
-    ../vertexmap.cpp
 )
 target_include_directories(map_parsing PRIVATE
     "${FLEX_INCLUDE_DIRS}"

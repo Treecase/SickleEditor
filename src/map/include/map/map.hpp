@@ -1,5 +1,5 @@
 /**
- * load_map.hpp - .map format data.
+ * map.hpp - .map format data.
  * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -58,10 +58,8 @@ namespace MAP
     /** Half-spaces used to define a brush. */
     struct Plane
     {
-        // 3 points which define the plane
+        // 3 points which define the plane. Must be in clockwise order.
         Vertex a, b, c;
-        // Vertices are sorted counterclockwise
-        std::vector<Vertex> vertices;
         // Name of the texture to paste on the plane
         std::string miptex;
         // Texture application vars

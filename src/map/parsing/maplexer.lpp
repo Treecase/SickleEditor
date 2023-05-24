@@ -61,7 +61,6 @@ TEXTURE_CHAR [[:alnum:][:punct:]]
     %}
 
 \"{STRING_CHAR}*\"  %{
-
     yylval->emplace<std::string>(yytext, 1, yyleng-2);
     return token::STRING;
     %}

@@ -24,50 +24,20 @@
 #include <ostream>
 
 
+namespace std
+{
+std::ostream &operator<<(std::ostream &os, MAP::Vertex const &vertex);
+std::ostream &operator<<(std::ostream &os, MAP::Plane const &plane);
+std::ostream &operator<<(std::ostream &os, MAP::Brush const &brush);
+std::ostream &operator<<(std::ostream &os, MAP::Entity const &entity);
+std::ostream &operator<<(std::ostream &os, MAP::Map const &map);
+}
+
+
 namespace MAP
 {
     /** Save a map to a .map file. */
-    void save(std::ostream &out, Map const &map)
-    {
-        for (auto const &entity : map.entities)
-        {
-            out << "{\n";
-            out << "\"classname\" \"" << entity.properties.at("classname") << "\"\n";
-            for (auto const &property : entity.properties)
-            {
-                if (property.first != "classname")
-                    out << "\"" << property.first << "\" \"" << property.second
-                        << "\"\n";
-            }
-            for (auto const &brush : entity.brushes)
-            {
-                out << "{\n";
-                for (auto const &plane : brush.planes)
-                {
-                    out
-                        << "( "
-                        << plane.a.x << ' ' << plane.a.y << ' ' << plane.a.z
-                        << " ) ( "
-                        << plane.b.x << ' ' << plane.b.y << ' ' << plane.b.z
-                        << " ) ( "
-                        << plane.c.x << ' ' << plane.c.y << ' ' << plane.c.z
-                        << " ) "
-                        << plane.miptex
-                        << " [ "
-                        << plane.s.x << ' ' << plane.s.y << ' ' << plane.s.z
-                        << ' ' << plane.offsets.s
-                        << " ] [ "
-                        << plane.t.x << ' ' << plane.t.y << ' ' << plane.t.z
-                        << ' ' << plane.offsets.t
-                        << " ] " << plane.rotation
-                        << ' ' << plane.scale.x << ' ' << plane.scale.y
-                        << '\n';
-                }
-                out << "}\n";
-            }
-            out << "}\n";
-        }
-    }
+    void save(std::ostream &out, Map const &map);
 }
 
 #endif

@@ -1,6 +1,6 @@
 /**
  * convexhull.cpp - Vertex and Facet enumeration algorithms.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,14 +21,16 @@
 #include <glm/ext/scalar_constants.hpp>
 #include <glm/gtc/epsilon.hpp>
 
+static constexpr float EPSILON = 0.001f;
 
 
-/** Cramer's rule. Solve `Ax = d` for x. */
-template<glm::length_t C, typename T>
-bool _cramer(
-    glm::mat<C, C, T> const &A, glm::vec<C, T> const &d, glm::vec<C, T> *x)
+
+/**
+ * Cramer's rule. Solve `Ax = d` for x. Returns true if there is one solution,
+ * false for no solutions or infinite solutions.
+ */
+bool _cramer(glm::mat3 const &A, glm::vec3 const &d, glm::vec3 &x)
 {
-    static constexpr float EPSILON = glm::epsilon<float>();
     auto const &a = A[0];
     auto const &b = A[1];
     auto const &c = A[2];
@@ -38,7 +40,7 @@ bool _cramer(
         // Only solution is 0,0,0
         if (glm::epsilonEqual(D, 0.0f, EPSILON))
         {
-            *x = {0.0f, 0.0f, 0.0f};
+            x = {0.0f, 0.0f, 0.0f};
             return true;
         }
         // Infinite solutions
@@ -50,7 +52,7 @@ bool _cramer(
         // Single solution
         if (glm::epsilonNotEqual(D, 0.0f, EPSILON))
         {
-            *x = {
+            x = {
                 glm::determinant(glm::mat3{d, b, c}) / D,
                 glm::determinant(glm::mat3{a, d, c}) / D,
                 glm::determinant(glm::mat3{a, b, d}) / D};
@@ -70,7 +72,6 @@ bool _cramer(
 bool _is_point_in_polygon(
     std::vector<HalfPlane> const &facets, glm::vec3 const &x)
 {
-    static constexpr double EPSILON = 0.0001;
     // 'Epsilon >=' only needs to compare against lower bound.
     for (auto const &f : facets)
         if (f.solveForPoint(x) < -EPSILON)
@@ -80,9 +81,19 @@ bool _is_point_in_polygon(
 
 
 /* ===[ HalfPlane ]=== */
-double HalfPlane::solveForPoint(glm::vec3 const &p) const
+float HalfPlane::solveForPoint(glm::vec3 const &p) const
 {
     return a * p.x + b * p.y + c * p.z + d;
+}
+
+bool HalfPlane::isPointOnPlane(glm::vec3 const &point) const
+{
+    return glm::epsilonEqual((float)solveForPoint(point), 0.0f, EPSILON);
+}
+
+glm::vec3 HalfPlane::normal() const
+{
+    return {a, b, c};
 }
 
 
@@ -130,21 +141,21 @@ std::unordered_set<glm::vec3> vertex_enumeration(
                 // [a_j b_j c_j]
                 // [a_k b_k c_k]
                 glm::mat3 const B{
-                    {-p0.a, -p1.a, -p2.a},
-                    {-p0.b, -p1.b, -p2.b},
-                    {-p0.c, -p1.c, -p2.c},
+                    {p0.a, p1.a, p2.a},
+                    {p0.b, p1.b, p2.b},
+                    {p0.c, p1.c, p2.c},
                 };
                 // Let b_bar be the corresponding subvector of b.
                 // [d_i]
                 // [d_j]
                 // [d_k]
-                glm::vec3 const b_bar{-p0.d, -p1.d, -p2.d};
+                glm::vec3 const b_bar{p0.d, p1.d, p2.d};
                 glm::vec3 x_bar{};
                 // If `b_bar + B*x_bar = 0` has a unique solution, and that
                 // solution satisfies `b + A*x_bar >= 0`, output it.
-                if (_cramer(B, -b_bar, &x_bar))
+                if (_cramer(B, -b_bar, x_bar))
                     if (_is_point_in_polygon(facets, x_bar))
-                        vertices.emplace(glm::round(x_bar)); // WARNING: value gets rounded to avoid issues with the unordered_set. Fix this in future!
+                        vertices.emplace(x_bar);
             }
         }
     }
