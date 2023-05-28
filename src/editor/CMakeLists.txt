@@ -13,9 +13,13 @@ add_library(editor STATIC
     Selection.cpp
 )
 target_include_directories(editor PUBLIC include)
-target_link_libraries(editor PUBLIC
-    convexhull map rmf
-    PkgConfig::sigc++
+target_link_libraries(editor
+    PUBLIC
+        convexhull map rmf
+        PkgConfig::sigc++
+    PRIVATE
+        commands
 )
 
 add_subdirectory(lua)
+add_subdirectory(commands)

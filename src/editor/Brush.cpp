@@ -18,43 +18,37 @@
 
 #include "editor/EditorWorld.hpp"
 
+using namespace Sickle::Editor;
 
-/* ===[ .map conversion utils ]=== */
-/** Find general form plane equation coefficients for a MAP::Plane. */
-static HalfPlane make_halfplane(MAP::Plane const &plane)
+
+Brush::Brush(std::vector<glm::vec3> const &vertices)
 {
-    auto const normal = glm::normalize(
-        glm::cross(plane.b - plane.a, plane.c - plane.a));
-    return {
-        normal.x, normal.y, normal.z,
-        -normal.x*plane.a.x - normal.y*plane.a.y - normal.z*plane.a.z};
+    auto facets = facet_enumeration(vertices);
+    for (auto const &facet : facets)
+        faces.emplace_back(std::make_shared<Face>(facet, vertices));
 }
 
 
-
-Sickle::Editor::Brush::Brush(MAP::Brush const &brush)
+Brush::Brush(MAP::Brush const &brush)
 {
     std::vector<HalfPlane> halfplanes{};
     for (auto const &plane : brush.planes)
-    {
-        halfplanes.emplace_back(make_halfplane(plane));
-    }
+        halfplanes.emplace_back(plane.a, plane.b, plane.c);
     auto const vertices = vertex_enumeration(halfplanes);
     assert(vertices.size() != 0);
-
     for (auto const &plane : brush.planes)
         faces.emplace_back(std::make_shared<Face>(plane, vertices));
 }
 
 
-Sickle::Editor::Brush::Brush(RMF::Solid const &solid)
+Brush::Brush(RMF::Solid const &solid)
 {
     for (auto const &face : solid.faces)
         faces.emplace_back(std::make_shared<Face>(face));
 }
 
 
-Sickle::Editor::Brush::operator MAP::Brush() const
+Brush::operator MAP::Brush() const
 {
     MAP::Brush out{};
     for (auto const &face : faces)
@@ -63,7 +57,7 @@ Sickle::Editor::Brush::operator MAP::Brush() const
 }
 
 
-void Sickle::Editor::Brush::transform(glm::mat4 const &matrix)
+void Brush::transform(glm::mat4 const &matrix)
 {
     for (auto &face : faces)
         for (size_t i = 0; i < face->vertices.size(); ++i)
@@ -72,7 +66,7 @@ void Sickle::Editor::Brush::transform(glm::mat4 const &matrix)
 }
 
 
-void Sickle::Editor::Brush::translate(glm::vec3 const &translation)
+void Brush::translate(glm::vec3 const &translation)
 {
     transform(glm::translate(glm::mat4{1.0}, translation));
 }

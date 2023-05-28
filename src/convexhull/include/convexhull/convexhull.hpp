@@ -38,18 +38,29 @@ struct std::hash<glm::vec3>
 };
 
 
+enum Classification
+{
+    ON, ABOVE, BELOW,
+};
+
 /** 3D half-space. */
 class HalfPlane
 {
 public:
-    /** Coefficients for general form plane equation (ax + by + cz + d = 0). */
-    float const a, b, c, d;
+    static constexpr float EPSILON = 0.001f;
 
-    /**
-     * Solve for point P on plane. Result will be ~0 if point lies on the
-     * plane.
-     */
-    float solveForPoint(glm::vec3 const &p) const;
+    /** Coefficients for general form plane equation (ax + by + cz + d = 0). */
+    float a, b, c, d;
+
+    HalfPlane(float a, float b, float c, float d);
+    /// Points are clockwise ordered.
+    HalfPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C);
+
+    /** Signed distance from P to the plane. */
+    float distanceTo(glm::vec3 const &p) const;
+
+    /** Classify a point as either above, below, or on the plane. */
+    Classification classify(glm::vec3 const &point) const;
 
     /** Check if a point lies on the plane. */
     bool isPointOnPlane(glm::vec3 const &point) const;

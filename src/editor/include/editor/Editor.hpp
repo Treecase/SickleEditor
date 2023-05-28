@@ -22,6 +22,7 @@
 #include "BrushBox.hpp"
 #include "MapTools.hpp"
 #include "Selection.hpp"
+#include "Commands.hpp"
 
 #include <sigc++/signal.h>
 
@@ -54,6 +55,8 @@ namespace Editor
 
         void set_map(Map const &map);
         Map &get_map();
+
+        void do_command(std::shared_ptr<Command> command);
 
         Editor();
 

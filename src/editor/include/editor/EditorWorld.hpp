@@ -70,6 +70,9 @@ namespace Editor
         Property<float> rotation{0.0f};
 
         Face(
+            HalfPlane const &plane,
+            std::vector<glm::vec3> const &brush_vertices);
+        Face(
             MAP::Plane const &plane,
             std::unordered_set<glm::vec3> const &brush_vertices);
         Face(RMF::Face const &face);
@@ -91,6 +94,8 @@ namespace Editor
         Property<bool> is_selected{false};
         std::vector<std::shared_ptr<Face>> faces{};
 
+        Brush()=default;
+        Brush(std::vector<glm::vec3> const &points);
         Brush(MAP::Brush const &brush);
         Brush(RMF::Solid const &solid);
 

@@ -69,7 +69,7 @@ function CreateBrush.metatable:on_key_press_event(event)
 
     if event == LuaGDK.GDK_KEY_Return then
         local brushbox = self.maparea:get_editor():get_brushbox()
-        -- self.maparea:get_editor():add_brush(brush_from_brushbox(brushbox))
+        self.maparea:get_editor():add_brush(brush_from_brushbox(brushbox))
         brushbox:set_start(geo.vector.new())
         brushbox:set_end(geo.vector.new())
         return true

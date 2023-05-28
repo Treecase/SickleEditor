@@ -24,17 +24,6 @@
 
 
 /* ===[ .map conversion utils ]=== */
-/** Find general form plane equation coefficients for a MAP::Plane. */
-static std::array<float, 4> plane_coefficients(MAP::Plane const &plane)
-{
-    auto const normal = glm::normalize(
-        glm::cross(plane.c - plane.a, plane.b - plane.a));
-    return {
-        normal.x, normal.y, normal.z,
-        -normal.x*plane.a.x - normal.y*plane.a.y - normal.z*plane.a.z};
-}
-
-
 /** Implements std::less interface to sort MAP::Vertex counterclockwise. */
 class VectorLessCounterClockwise
 {
@@ -94,6 +83,31 @@ public:
 
 
 Sickle::Editor::Face::Face(
+    HalfPlane const &plane,
+    std::vector<glm::vec3> const &brush_vertices)
+:   vertices{}
+,   texture{"TODO"}
+,   u{1.0f, 0.0f, 0.0f} // TODO
+,   v{0.0f, 1.0f, 0.0f} // TODO
+,   shift{0.0f, 0.0f}
+,   scale{0.0f, 0.0f}
+,   rotation{0.0f}
+{
+    // Build Face by finding all the vertices that lie on each plane.
+    std::copy_if(
+        brush_vertices.cbegin(), brush_vertices.cend(),
+        std::back_inserter(vertices),
+        [&plane](auto v){return plane.isPointOnPlane(v);});
+    assert(vertices.size() >= 3);
+    std::sort(
+        vertices.begin(), vertices.end(),
+        VectorLessCounterClockwise{plane, vertices});
+    if (vertices.size() < 3)
+        throw std::runtime_error{"not enough points for a face"};
+}
+
+
+Sickle::Editor::Face::Face(
     MAP::Plane const &plane,
     std::unordered_set<glm::vec3> const &brush_vertices)
 :   vertices{}
@@ -105,8 +119,7 @@ Sickle::Editor::Face::Face(
 ,   rotation{plane.rotation}
 {
     // Build Face by finding all the vertices that lie on each plane.
-    auto p = plane_coefficients(plane);
-    HalfPlane const mp{p[0], p[1], p[2], p[3]};
+    HalfPlane const mp{plane.a, plane.b, plane.c};
     assert(mp.isPointOnPlane(plane.a));
     assert(mp.isPointOnPlane(plane.b));
     assert(mp.isPointOnPlane(plane.c));

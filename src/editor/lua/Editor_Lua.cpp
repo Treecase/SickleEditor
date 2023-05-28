@@ -20,13 +20,31 @@
 #include "Editor_Lua.hpp"
 
 #include <se-lua/utils/RefBuilder.hpp>
+#include <LuaGeo.hpp>
+
+using namespace Sickle::Editor;
 
 
-static Lua::RefBuilder<Sickle::Editor::Editor> builder{"Sickle.editor"};
+static Lua::RefBuilder<Editor> builder{"Sickle.editor"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
+static int add_brush(lua_State *L)
+{
+    auto ed = leditor_check(L, 1);
+    luaL_argcheck(L, lua_istable(L, 2), 2, "`table' expected");
+    lua_Integer n = 1;
+    while (lua_geti(L, 2, n) != LUA_TNIL)
+        n++;
+    std::vector<glm::vec3> points{};
+    for (int i = 0; i < n; ++i)
+        points.emplace_back(lgeo_tovector(L, 2 + i));
+    lua_pop(L, n);
+    ed->do_command(std::make_shared<commands::AddBrush>(points));
+    return 0;
+}
+
 static int get_selection(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
@@ -47,6 +65,8 @@ static int do_nothing(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
+    {"add_brush", add_brush},
+
     {"get_selection", get_selection},
     {"get_brushbox", get_brushbox},
 
@@ -58,7 +78,7 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::Editor::Editor *editor)
+void Lua::push(lua_State *L, Editor *editor)
 {
     if (builder.pushnew(editor))
         return;
@@ -66,11 +86,11 @@ void Lua::push(lua_State *L, Sickle::Editor::Editor *editor)
     builder.finish();
 }
 
-Sickle::Editor::Editor *leditor_check(lua_State *L, int arg)
+Editor *leditor_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, "Sickle.editor");
     luaL_argcheck(L, ud != NULL, arg, "`Sickle.editor' expected");
-    return *static_cast<Sickle::Editor::Editor **>(ud);
+    return *static_cast<Editor **>(ud);
 }
 
 int luaopen_editor(lua_State *L)

@@ -1,5 +1,5 @@
 /**
- * Editor.cpp - Editor::Editor.
+ * Commands.cpp - Editor Command classes.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,43 +16,29 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
 #include "editor/Commands.hpp"
+#include "editor/Editor.hpp"
 
-using namespace Sickle::Editor;
+#include <convexhull/convexhull.hpp>
+
+#include <cstdio>
 
 
-Editor::Editor()
+using namespace Sickle::Editor::commands;
+
+
+/* ===[ AddBrush ]=== */
+AddBrush::AddBrush(std::vector<glm::vec3> const &points)
+:   _points{points}
 {
-    signal_map_changed().connect(
-        sigc::mem_fun(*this, &Editor::_on_map_changed));
 }
 
 
-
-void Editor::set_map(Map const &map)
+void AddBrush::execute(Editor &editor)
 {
-    _map = map;
-    signal_map_changed().emit();
-}
-
-
-void Editor::do_command(std::shared_ptr<Command> command)
-{
-    command->execute(*this);
-}
-
-
-
-Map &Editor::get_map()
-{
-    return _map;
-}
-
-
-
-void Editor::_on_map_changed()
-{
-    brushbox = BrushBox{};
-    selected.clear();
+    auto brush = std::make_shared<Brush>(_points);
+    auto &map = editor.get_map();
+    for (auto &entity : map.entities)
+        if (entity.properties.at("classname") == "worldspawn")
+            entity.brushes.push_back(brush);
 }

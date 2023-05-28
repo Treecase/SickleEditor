@@ -1,5 +1,5 @@
 /**
- * convexhull.cpp - Vertex and Facet enumeration algorithms.
+ * vertex_enumerate.cpp - Vertex enumeration algorithm.
  * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,6 @@
 #include <glm/ext/scalar_constants.hpp>
 #include <glm/gtc/epsilon.hpp>
 
-static constexpr float EPSILON = 0.001f;
-
-
 
 /**
  * Cramer's rule. Solve `Ax = d` for x. Returns true if there is one solution,
@@ -35,10 +32,10 @@ bool _cramer(glm::mat3 const &A, glm::vec3 const &d, glm::vec3 &x)
     auto const &b = A[1];
     auto const &c = A[2];
     auto const &D = glm::determinant(A);
-    if (glm::epsilonEqual(glm::length(d), 0.0f, EPSILON))
+    if (glm::epsilonEqual(glm::length(d), 0.0f, HalfPlane::EPSILON))
     {
         // Only solution is 0,0,0
-        if (glm::epsilonEqual(D, 0.0f, EPSILON))
+        if (glm::epsilonEqual(D, 0.0f, HalfPlane::EPSILON))
         {
             x = {0.0f, 0.0f, 0.0f};
             return true;
@@ -50,7 +47,7 @@ bool _cramer(glm::mat3 const &A, glm::vec3 const &d, glm::vec3 &x)
     else
     {
         // Single solution
-        if (glm::epsilonNotEqual(D, 0.0f, EPSILON))
+        if (glm::epsilonNotEqual(D, 0.0f, HalfPlane::EPSILON))
         {
             x = {
                 glm::determinant(glm::mat3{d, b, c}) / D,
@@ -74,31 +71,14 @@ bool _is_point_in_polygon(
 {
     // 'Epsilon >=' only needs to compare against lower bound.
     for (auto const &f : facets)
-        if (f.solveForPoint(x) < -EPSILON)
+        if (f.distanceTo(x) < -HalfPlane::EPSILON)
             return false;
     return true;
 }
 
 
-/* ===[ HalfPlane ]=== */
-float HalfPlane::solveForPoint(glm::vec3 const &p) const
-{
-    return a * p.x + b * p.y + c * p.z + d;
-}
-
-bool HalfPlane::isPointOnPlane(glm::vec3 const &point) const
-{
-    return glm::epsilonEqual((float)solveForPoint(point), 0.0f, EPSILON);
-}
-
-glm::vec3 HalfPlane::normal() const
-{
-    return {a, b, c};
-}
-
-
-std::unordered_set<glm::vec3> vertex_enumeration(
-    std::vector<HalfPlane> const &facets)
+std::unordered_set<glm::vec3>
+vertex_enumeration(std::vector<HalfPlane> const &facets)
 {
     // Algorithm from
     // http://www.lab2.kuis.kyoto-u.ac.jp/~avis/courses/pc/2010/notes/lec2.pdf
@@ -160,9 +140,4 @@ std::unordered_set<glm::vec3> vertex_enumeration(
         }
     }
     return vertices;
-}
-
-std::vector<HalfPlane> facet_enumeration(std::vector<glm::vec3> const &vertices)
-{
-    return {};
 }
