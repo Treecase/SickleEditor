@@ -55,7 +55,7 @@ TEXTURE_CHAR [[:alnum:][:punct:]]
 
 [()[\]{}]  return *yytext;
 
--?[[:digit:]]+(\.[[:digit:]]+)?  %{
+-?[[:digit:]]+(\.[[:digit:]]+)?(e[+-][[:digit:]]+)?  %{
     yylval->emplace<float>(std::stof(yytext));
     return token::NUMBER;
     %}

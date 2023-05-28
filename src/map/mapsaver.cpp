@@ -18,7 +18,6 @@
 
 #include "map/mapsaver.hpp"
 
-#include <iomanip>
 #include <ostream>
 
 
@@ -79,8 +78,5 @@ std::ostream &operator<<(std::ostream &os, MAP::Map const &map)
 
 void MAP::save(std::ostream &out, Map const &map)
 {
-    // TODO: Using std::fixed here so we don't get output in scientific
-    // notation. Downside is it makes the output look ugly with all the extra
-    // 0s. Would prefer to find a better way to do this.
-    out << std::fixed << map;
+    out << map;
 }
