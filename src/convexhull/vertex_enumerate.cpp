@@ -62,16 +62,12 @@ bool _cramer(glm::mat3 const &A, glm::vec3 const &d, glm::vec3 &x)
     return false;
 }
 
-/**
- * True if x is a valid solution to `b + Ax >= 0`.
- * Rows of A come from plane.a,b,c; rows of b come from plane.d.
- */
+/** Test if X is on or inside the polygon defined by FACETS. */
 bool _is_point_in_polygon(
     std::vector<HalfPlane> const &facets, glm::vec3 const &x)
 {
-    // 'Epsilon >=' only needs to compare against lower bound.
     for (auto const &f : facets)
-        if (f.distanceTo(x) < -HalfPlane::EPSILON)
+        if (f.classify(x) == ABOVE)
             return false;
     return true;
 }

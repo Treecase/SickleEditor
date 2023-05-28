@@ -47,6 +47,7 @@ enum Classification
 class HalfPlane
 {
 public:
+    // FIXME: This epsilon value was chosen arbitrarily.
     static constexpr float EPSILON = 0.001f;
 
     /** Coefficients for general form plane equation (ax + by + cz + d = 0). */

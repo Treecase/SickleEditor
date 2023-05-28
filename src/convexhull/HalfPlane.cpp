@@ -46,7 +46,7 @@ Classification HalfPlane::classify(glm::vec3 const &point) const
     auto const d = distanceTo(point);
     if (d > EPSILON)
         return ABOVE;
-    else if (d < EPSILON)
+    else if (d < -EPSILON)
         return BELOW;
     else
         return ON;
