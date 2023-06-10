@@ -21,6 +21,12 @@
 using namespace Sickle::Editor;
 
 
+Map::Map()
+{
+    auto &worldspawn = entities.emplace_back();
+    worldspawn.properties["classname"] = "worldspawn";
+}
+
 Map::Map(MAP::Map const &map)
 {
     for (auto const &entity : map.entities)

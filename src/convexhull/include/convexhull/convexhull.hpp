@@ -57,6 +57,8 @@ public:
     /// Points are clockwise ordered.
     HalfPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C);
 
+    bool operator==(HalfPlane const &other) const;
+
     /** Signed distance from P to the plane. */
     float distanceTo(glm::vec3 const &p) const;
 
@@ -68,6 +70,16 @@ public:
 
     /** Get the plane's normal vector. */
     glm::vec3 normal() const;
+};
+
+template<>
+struct std::hash<HalfPlane>
+{
+    std::size_t operator()(HalfPlane const &hp) const noexcept
+    {
+        std::hash<float> const hashf{};
+        return hashf(hp.a) ^ hashf(hp.b) ^ hashf(hp.c) ^ hashf(hp.d);
+    }
 };
 
 
@@ -82,7 +94,7 @@ std::unordered_set<glm::vec3> vertex_enumeration(
  * Facet enumeration. Given a list of vertices comprising a convex polyhedron,
  * return a list of half-planes making up said polyhedron.
  */
-std::vector<HalfPlane> facet_enumeration(
-    std::vector<glm::vec3> const &vertices);
+std::pair<std::vector<HalfPlane>, std::vector<glm::vec3>>
+facet_enumeration(std::vector<glm::vec3> const &vertices);
 
 #endif

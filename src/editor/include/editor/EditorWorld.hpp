@@ -137,7 +137,7 @@ namespace Editor
     public:
         std::vector<Entity> entities{};
 
-        Map()=default;
+        Map();
         Map(MAP::Map const &map);
         Map(RMF::RichMap const &map);
 

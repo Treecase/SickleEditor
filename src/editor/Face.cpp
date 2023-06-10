@@ -90,7 +90,7 @@ Sickle::Editor::Face::Face(
 ,   u{1.0f, 0.0f, 0.0f} // TODO
 ,   v{0.0f, 1.0f, 0.0f} // TODO
 ,   shift{0.0f, 0.0f}
-,   scale{0.0f, 0.0f}
+,   scale{1.0f, 1.0f}
 ,   rotation{0.0f}
 {
     // Build Face by finding all the vertices that lie on each plane.

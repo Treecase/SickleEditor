@@ -23,9 +23,11 @@ using namespace Sickle::Editor;
 
 Brush::Brush(std::vector<glm::vec3> const &vertices)
 {
-    auto facets = facet_enumeration(vertices);
+    auto const v = facet_enumeration(vertices);
+    auto const facets = v.first;
+    auto const vertices2 = v.second;
     for (auto const &facet : facets)
-        faces.emplace_back(std::make_shared<Face>(facet, vertices));
+        faces.emplace_back(std::make_shared<Face>(facet, vertices2));
 }
 
 
