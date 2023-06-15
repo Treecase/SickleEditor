@@ -26,21 +26,11 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <unordered_map>
-
-#if 1
-#include <iostream>
-std::ostream &operator<<(std::ostream &os, glm::vec3 v)
-{
-    return os << v.x << ' ' << v.y << ' ' << v.z;
-}
-#endif
 
 
 /* ===[ Facet Enumeration Utils ]=== */
-// We need to manage a list of edges between facets
-// - Edges need to keep track of direction to maintain clockwise ordering
-
 enum class EdgeCompare
 {
     EQUAL,
@@ -52,7 +42,7 @@ struct Edge
 {
     glm::vec3 first, second;
 
-    Edge(glm::vec3 first, glm::vec3 second)
+    Edge(glm::vec3 const &first, glm::vec3 const &second)
     :   first{first}
     ,   second{second}
     {
@@ -86,104 +76,165 @@ struct std::hash<Edge>
 };
 
 
-struct Facet : public HalfPlane
+class ConvexHull
 {
-    // in clockwise order
-    std::vector<Edge> edges;
-    std::unordered_map<Edge, std::shared_ptr<Facet>> neighbors;
+public:
+    std::unordered_set<HalfPlane> facets{};
+    std::unordered_map<HalfPlane, std::vector<Edge>> edges{};
+    std::unordered_map<
+        HalfPlane,
+        std::unordered_map<Edge, HalfPlane>> neighbors{};
 
-    Facet(glm::vec3 a, glm::vec3 b, glm::vec3 c)
-    :   HalfPlane{a, b, c}
-    ,   edges{{a, b}, {b, c}, {c, a}}
+    // Unless this is the first facet being added, B and C must make up an edge
+    // already in the hull.
+    void addFacet(glm::vec3 const &a, glm::vec3 const &b, glm::vec3 const &c)
     {
-        for (auto const &edge : edges)
-            neighbors[edge] = nullptr;
-    }
-
-    bool checkIntegrity() const
-    {
-        for (auto const &edge : edges)
-        {
-            // each edge must be in neighbors, and no neighbor slot can be null
-            assert(neighbors.count(edge) != 0);
-            assert(neighbors.at(edge) != nullptr);
-
-            // neighbor's slot must exist and point to this facet
-            auto const &neighbor = neighbors.at(edge);
-            Edge const opposite{edge.second, edge.first};
-            assert(neighbor->neighbors.count(opposite) != 0);
-            assert(neighbor->neighbors.at(opposite).get() == this);
-        }
-        return true;
-    }
-
-    bool operator==(Facet const &o) const
-    {
-        return glm::all(
-            glm::epsilonEqual(
-                glm::vec4{a, b, c, d},
-                glm::vec4{o.a, o.b, o.c, o.d},
-                EPSILON));
-    }
-
-    std::optional<std::pair<Edge, Edge>> checkNeighbor(Facet const &other)
-    {
-        for (auto const &edge1 : edges)
-            for (auto const &edge2 : other.edges)
-                if (edge1.compare(edge2) == EdgeCompare::OPPOSITE)
-                    return std::make_pair(edge1, edge2);
-        return std::nullopt;
-    }
-};
-
-std::ostream &operator<<(std::ostream &os, Facet const &facet)
-{
-    return os << "Facet(" << facet.normal() << ')';
-}
-
-template<>
-struct std::hash<Facet>
-{
-    size_t operator()(Facet const &f) const
-    {
-        std::hash<float> const h{};
-        return h(f.a) ^ h(f.b) ^ h(f.c) ^ h(f.d);
-    }
-};
-
-
-struct ConvexHull
-{
-    std::unordered_set<std::shared_ptr<Facet>> facets{};
-
-    void addFacet(Facet const &f)
-    {
-        auto p = facets.insert(std::make_shared<Facet>(f));
+        auto const p = facets.emplace(a, b, c);
+        auto const newf = *p.first;
+        // Plane already exists in the hull.
         if (!p.second)
-            return;
-
-        auto newf = *p.first;
-        for (auto &facet : facets)
         {
-            auto const edges = facet->checkNeighbor(*newf);
-            if (edges.has_value())
+            _merge_existing_facet(newf, a, b, c);
+        }
+        // Plane does not already exist in the hull.
+        else
+        {
+            edges[newf] = {};
+            edges.at(newf).emplace_back(a, b);
+            edges.at(newf).emplace_back(b, c);
+            edges.at(newf).emplace_back(c, a);
+        }
+        recalculateNeighbors();
+    }
+
+    void removeFacet(HalfPlane const &facet)
+    {
+        facets.erase(facet);
+        edges.erase(facet);
+        neighbors.erase(facet);
+        // Erase references in the neighbors map.
+        for (auto &kv : neighbors)
+        {
+            for (auto it = kv.second.begin(); it != kv.second.end(); )
             {
-                facet->neighbors.at(edges.value().first) = newf;
-                newf->neighbors.at(edges.value().second) = facet;
+                if (it->second == facet)
+                    it = kv.second.erase(it);
+                else
+                    it++;
             }
         }
     }
 
+    auto as_planes() const
+    {
+        return facets;
+    }
+
+    auto as_points() const
+    {
+        std::unordered_set<glm::vec3> points{};
+        for (auto const kv : edges)
+        {
+            for (auto const edge : kv.second)
+            {
+                points.insert(edge.first);
+                points.insert(edge.second);
+            }
+        }
+        return points;
+    }
+
+#if !NDEBUG
+    // for debugging
     bool checkIntegrity() const
     {
         for (auto const &facet : facets)
         {
-            assert(facet->checkIntegrity());
-            // neighbors must be in the hull
-            for (auto const &kv : facet->neighbors)
-                assert(facets.count(kv.second) != 0);
+            // Every facet must have a neighbors map
+            assert(neighbors.count(facet) != 0);
+            // Every facet must have edges
+            assert(edges.count(facet) != 0);
+        }
+
+        // Edges must be ordered clockwise
+        for (auto const &kv : edges)
+        {
+            for (size_t i = 0; i + 1 < kv.second.size(); ++i)
+                assert(kv.second.at(i).second == kv.second.at(i+1).first);
+            assert(kv.second.back().second == kv.second.front().first);
+        }
+
+        for (auto const &kv : edges)
+        {
+            for (auto const &edge : kv.second)
+            {
+                // Every edge must have a neighbor
+                assert(neighbors.at(kv.first).count(edge) != 0);
+                // All the neighbors must be in the hull
+                assert(neighbors.count(neighbors.at(kv.first).at(edge)) != 0);
+            }
         }
         return true;
+    }
+#endif // !NDEBUG
+
+private:
+    // Splice new edges into an existing face
+    void _merge_existing_facet(
+        HalfPlane const &facet,
+        glm::vec3 const &a,
+        glm::vec3 const &b,
+        glm::vec3 const &c)
+    {
+        assert(facets.count(facet) != 0);
+
+        auto &e = edges.at(facet);
+        Edge const existing{c, b};
+
+        auto const replace = std::find(e.begin(), e.end(), existing);
+        assert(replace != e.end());
+
+        Edge const e1{existing.first, a};
+        Edge const e2{a, existing.second};
+
+        e.insert(e.erase(replace), {e1, e2});
+    }
+
+    // Find the edge between two planes.
+    std::optional<std::pair<Edge, Edge>>
+    neighboring_edge(HalfPlane const &a, HalfPlane const &b) const
+    {
+        for (auto const &edge1 : edges.at(a))
+            for (auto const &edge2 : edges.at(b))
+                if (edge1.compare(edge2) == EdgeCompare::OPPOSITE)
+                    return std::make_pair(edge1, edge2);
+        return std::nullopt;
+    }
+
+    // Regenerare the `neighbors' map.
+    void recalculateNeighbors()
+    {
+        neighbors.clear();
+        for (auto const &f1 : facets)
+        {
+            for (auto const &f2 : facets)
+            {
+                if (f1 == f2) continue;
+
+                auto edges_pair = neighboring_edge(f1, f2);
+                if (edges_pair.has_value())
+                {
+                    assert(
+                        neighbors[f1].count(edges_pair->first) == 0
+                        || neighbors[f1][edges_pair->first] == f2);
+                    assert(
+                        neighbors[f2].count(edges_pair->second) == 0
+                        || neighbors[f2][edges_pair->second] == f1);
+                    neighbors[f1][edges_pair->first] = f2;
+                    neighbors[f2][edges_pair->second] = f1;
+                }
+            }
+        }
     }
 };
 
@@ -234,7 +285,6 @@ auto create_tetrahedron(std::vector<glm::vec3> const &vertices)
 {
     auto const minmax = choose_minmax(vertices);
     auto const min = minmax.first, max = minmax.second;
-    std::cout << "min/max: " << min << '/' << max << '\n';
 
     // Find point furthest from the line between the min and max.
     auto const linedist =\
@@ -247,7 +297,7 @@ auto create_tetrahedron(std::vector<glm::vec3> const &vertices)
         throw std::runtime_error{"create_tetrahedron degenerate case 1D"};
 
     // Find point furthest from the plane formed by prior 3 points.
-    Facet const plane{min, max, farL};
+    HalfPlane const plane{min, max, farL};
     auto const farP = *std::max_element(
         vertices.cbegin(), vertices.cend(),
         [&plane](auto a, auto b){
@@ -257,37 +307,33 @@ auto create_tetrahedron(std::vector<glm::vec3> const &vertices)
     // Degenerate case if this point is on the plane.
     if (farD == ON)
         throw std::runtime_error{"create_tetrahedron degenerate case 2D"};
-    std::cout << "d: " << farD << '\n';
 
     // Create the tetrahedron. FARD's sign tells us clockwise vertex ordering.
     auto const A = min;
     auto const B = max;
     auto const C = farL;
     auto const D = farP;
-    std::cout << "ABCD: " << A << '|' << B << '|' << C << '|' << D << '\n';
     ConvexHull out{};
     if (farD == BELOW)
     {
-        std::cout << "Below\n";
-        out.addFacet(Facet{A, B, C});
-        out.addFacet(Facet{D, B, A});
-        out.addFacet(Facet{D, C, B});
-        out.addFacet(Facet{D, A, C});
+        out.addFacet(A, B, C);
+        out.addFacet(D, B, A);
+        out.addFacet(D, C, B);
+        out.addFacet(D, A, C);
     }
     else
     {
-        std::cout << "Above\n";
-        out.addFacet(Facet{A, C, B});
-        out.addFacet(Facet{D, A, B});
-        out.addFacet(Facet{D, B, C});
-        out.addFacet(Facet{D, C, A});
+        out.addFacet(A, C, B);
+        out.addFacet(D, A, B);
+        out.addFacet(D, B, C);
+        out.addFacet(D, C, A);
     }
     return out;
 }
 
 /** Find the points outside a convex hull. */
-auto get_outer_points(
-    ConvexHull const &hull, std::vector<glm::vec3> const &points)
+auto
+get_outer_points(ConvexHull const &hull, std::vector<glm::vec3> const &points)
 {
     std::vector<glm::vec3> outside{};
     std::copy_if(
@@ -296,7 +342,7 @@ auto get_outer_points(
         [&hull](auto p){
             return std::any_of(
                 hull.facets.cbegin(), hull.facets.cend(),
-                [&p](auto plane){return plane->classify(p) == ABOVE;});
+                [&p](auto plane){return plane.classify(p) == ABOVE;});
         });
     return outside;
 }
@@ -307,16 +353,15 @@ auto get_outer_points(
  * above the facet.
  */
 auto get_conflict_lists(
-    ConvexHull const &hull, std::vector<glm::vec3> const &points)
+    ConvexHull const &hull,
+    std::vector<glm::vec3> const &points)
 {
-    std::unordered_map<
-        std::shared_ptr<Facet>,
-        std::vector<glm::vec3>> conflicts{};
+    std::unordered_map<HalfPlane, std::vector<glm::vec3>> conflicts{};
     for (auto const &point : points)
     {
         for (auto const &facet : hull.facets)
         {
-            if (facet->classify(point) == ABOVE)
+            if (facet.classify(point) == ABOVE)
             {
                 conflicts[facet].push_back(point);
                 break;
@@ -328,36 +373,34 @@ auto get_conflict_lists(
 
 
 void dfs2(
+    ConvexHull const &hull,
     glm::vec3 const &eye,
-    std::shared_ptr<Facet> const &f,
-    std::unordered_set<std::shared_ptr<Facet>> &visited,
+    HalfPlane const &f,
+    std::unordered_set<HalfPlane> &visited,
     std::vector<Edge> &horizon)
 {
-    std::cout << "Visiting " << *f << '\n';
     visited.insert(f);
-
-    for (auto const &edge : f->edges)
+    for (auto const &edge : hull.edges.at(f))
     {
-        auto const &next = f->neighbors.at(edge);
+        auto const &next = hull.neighbors.at(f).at(edge);
         // Crossing this edge leads to a non-visible face, so this edge is on
         // the horizon.
-        if (next->classify(eye) != ABOVE)
+        if (next.classify(eye) != ABOVE)
+        {
             horizon.push_back(edge);
+        }
         // If we haven't already visited the neighboring face, visit it.
         else if (visited.count(next) == 0)
-            dfs2(eye, next, visited, horizon);
+            dfs2(hull, eye, next, visited, horizon);
     }
 }
 
-auto dfs(glm::vec3 const &eye, std::shared_ptr<Facet> const &start)
+auto dfs(ConvexHull const &hull, glm::vec3 const &eye, HalfPlane const &start)
 {
-    assert(start->classify(eye) == ABOVE);
-
-    std::cout << ">>> start dfs\n";
-    std::unordered_set<std::shared_ptr<Facet>> visited{};
+    assert(start.classify(eye) == ABOVE);
+    std::unordered_set<HalfPlane> visited{};
     std::vector<Edge> horizon{};
-    dfs2(eye, start, visited, horizon);
-    std::cout << "<<< end dfs\n";
+    dfs2(hull, eye, start, visited, horizon);
     return std::make_pair(horizon, visited);
 }
 
@@ -367,17 +410,13 @@ auto dfs(glm::vec3 const &eye, std::shared_ptr<Facet> const &start)
  */
 auto get_horizon(
     glm::vec3 const &eye,
-    std::shared_ptr<Facet> const &start,
+    HalfPlane const &start,
     ConvexHull const &facets)
 {
     // run a depth-first search through the convexhull facets, using START as
     // the root
-    auto const horizon_and_visible = dfs(eye, start);
+    auto const horizon_and_visible = dfs(facets, eye, start);
     auto const horizon = horizon_and_visible.first;
-
-    std::cout << "HORIZON(" << eye << ")\n";
-    for (auto const &edge : horizon)
-        std::cout << "  " << edge.first << " -> " << edge.second << '\n';
 
     // Check horizon is ordered clockwise
     for (size_t i = 0; i < horizon.size() - 1; ++i)
@@ -405,30 +444,8 @@ facet_enumeration(std::vector<glm::vec3> const &vertices)
     assert(convex_hull.facets.size() == 4);
     assert(convex_hull.checkIntegrity());
 
-    // Find points outside the hull.
-    auto outer_points = get_outer_points(convex_hull, vertices);
-
-    // Build conflict lists.
-    auto conflict_lists = get_conflict_lists(convex_hull, outer_points);
-
-{//TEMP
-    std::cout << "HULL\n";
-    for (auto const &f : convex_hull.facets)
-        std::cout << "  " << *f << '\n';
-
-    std::cout << "OUTSIDE\n";
-    for (auto const &p : outer_points)
-        std::cout << "  " << p << '\n';
-
-    std::cout << "CONFLICTS\n";
-    for (auto const &conflict : conflict_lists)
-    {
-        std::cout << "  " << conflict.first->normal() << " |";
-        for (auto const &p : conflict.second)
-            std::cout << " [" << p << ']';
-        std::cout << '\n';
-    }
-}//TEMP
+    auto outside_points = get_outer_points(convex_hull, vertices);
+    auto conflict_lists = get_conflict_lists(convex_hull, outside_points);
 
     while (!conflict_lists.empty())
     {
@@ -444,55 +461,34 @@ facet_enumeration(std::vector<glm::vec3> const &vertices)
             auto const furthest = *std::max_element(
                 points.cbegin(), points.cend(),
                 [&f](auto a, auto b){
-                    return f->distanceTo(a) < f->distanceTo(b);});
+                    return f.distanceTo(a) < f.distanceTo(b);});
 
-            if (far.first->distanceTo(far.second) < f->distanceTo(furthest))
+            if (far.first.distanceTo(far.second) < f.distanceTo(furthest))
                 far = std::make_pair(f, furthest);
         }
 
         auto const eye = far.second;
         auto const facet = far.first;
 
-        // Find horizon for furthest point.
         auto const horizon_and_visible = get_horizon(eye, facet, convex_hull);
-        auto const horizon = horizon_and_visible.first;
-        auto const visible = horizon_and_visible.second;
+        auto const horizon_edges = horizon_and_visible.first;
+        auto const visible_faces = horizon_and_visible.second;
 
-        // Delete facets visible to the eye point.
-        for (auto const &visible_face : visible)
-            convex_hull.facets.erase(visible_face);
+        for (auto const &face : visible_faces)
+            convex_hull.removeFacet(face);
 
-        // Add faces between each horizon edge and the eye point.
-        for (auto const &edge : horizon)
-            convex_hull.addFacet(Facet{far.second, edge.first, edge.second});
+        for (auto const &edge : horizon_edges)
+            convex_hull.addFacet(eye, edge.first, edge.second);
+
         assert(convex_hull.checkIntegrity());
-
-        outer_points = get_outer_points(convex_hull, outer_points);
-        conflict_lists = get_conflict_lists(convex_hull, outer_points);
-        std::cout << "===\n";
+        outside_points = get_outer_points(convex_hull, outside_points);
+        conflict_lists = get_conflict_lists(convex_hull, outside_points);
     }
 
 
-    // return results
-    std::vector<HalfPlane> halfplane_hull{};
-    for (auto const &f : convex_hull.facets)
-        halfplane_hull.push_back(*f);
-
-    std::unordered_set<glm::vec3> contrib{};
-    for (auto const &f : convex_hull.facets)
-    {
-        for (auto const &e : f->edges)
-        {
-            contrib.insert(e.first);
-            contrib.insert(e.second);
-        }
-    }
-    std::vector<glm::vec3> contribv{contrib.cbegin(), contrib.cend()};
-
-{//TEMP
-    std::cout << "FINAL\n";
-    for (auto const &p : halfplane_hull)
-        std::cout << "  " << p.normal() << '\n';
-}//TEMP
-    return std::make_pair(halfplane_hull, contribv);
+    auto const planes1 = convex_hull.as_planes();
+    std::vector<HalfPlane> const planes{planes1.cbegin(), planes1.cend()};
+    auto const points1 = convex_hull.as_points();
+    std::vector<glm::vec3> const points{points1.cbegin(), points1.cend()};
+    return std::make_pair(planes, points);
 }

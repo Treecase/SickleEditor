@@ -53,6 +53,7 @@ public:
     /** Coefficients for general form plane equation (ax + by + cz + d = 0). */
     float a, b, c, d;
 
+    HalfPlane()=default;
     HalfPlane(float a, float b, float c, float d);
     /// Points are clockwise ordered.
     HalfPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C);
@@ -77,8 +78,13 @@ struct std::hash<HalfPlane>
 {
     std::size_t operator()(HalfPlane const &hp) const noexcept
     {
+        static constexpr float EPSILON_INV = 1.0f / HalfPlane::EPSILON;
         std::hash<float> const hashf{};
-        return hashf(hp.a) ^ hashf(hp.b) ^ hashf(hp.c) ^ hashf(hp.d);
+        return (
+            hashf(roundf(hp.a * EPSILON_INV) * HalfPlane::EPSILON)
+            ^ hashf(roundf(hp.b * EPSILON_INV) * HalfPlane::EPSILON)
+            ^ hashf(roundf(hp.c * EPSILON_INV) * HalfPlane::EPSILON)
+            ^ hashf(roundf(hp.d * EPSILON_INV) * HalfPlane::EPSILON));
     }
 };
 

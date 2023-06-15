@@ -210,8 +210,8 @@ glm::vec4 lgeo_checkvector(lua_State *L, int arg)
 
 glm::vec4 lgeo_tovector(lua_State *L, int idx)
 {
-    luaL_argcheck(L, lua_istable(L, idx) || lua_isuserdata(L, idx), idx,
-        "expected table or userdata");
+    if (!(lua_istable(L, idx) || lua_isuserdata(L, idx)))
+        throw Lua::Error{"expected table or userdata"};
 
     auto i = idx;
     if (i < 0)
@@ -230,18 +230,23 @@ glm::vec4 lgeo_tovector(lua_State *L, int idx)
     {
         lua_pop(L, 1);
         lua_geti(L, i, 1);
-        luaL_argcheck(L, !lua_isnil(L, -1), idx, "not a vector-like object");
         lua_geti(L, i, 2);
         lua_geti(L, i, 3);
         lua_geti(L, i, 4);
     }
 
-    auto x = lua_tonumber(L, -4);
-    auto y = lua_tonumber(L, -3);
-    auto z = lua_tonumber(L, -2);
-    auto w = lua_tonumber(L, -1);
-
+    std::array<int, 4> success{};
+    auto x = lua_tonumberx(L, -4, &success[0]);
+    auto y = lua_tonumberx(L, -3, &success[1]);
+    auto z = lua_tonumberx(L, -2, &success[2]);
+    auto w = lua_tonumberx(L, -1, &success[3]);
     lua_pop(L, 4);
+
+    bool failed = std::all_of(
+        success.cbegin(), success.cend(),
+        [](auto v){return v == 0;});
+    if (failed)
+        throw Lua::Error{"Value is not a vector-like object"};
 
     return {x, y, z, w};
 }
