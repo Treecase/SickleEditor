@@ -27,6 +27,8 @@
 static Lua::RefBuilder<Sickle::Editor::Selection> builder{
     "Sickle.editor.selection"};
 
+void do_nothing_deleter(void *p) {}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -41,7 +43,7 @@ static int selection_add(lua_State *L)
 {
     auto s = lselection_check(L, 1);
     auto i = leditorbrush_check(L, 2);
-    s->add(Sickle::Editor::Selection::Item{i});
+    s->add(std::shared_ptr<Sickle::Editor::Brush>{i, do_nothing_deleter});
     return 0;
 }
 
@@ -49,7 +51,7 @@ static int selection_remove(lua_State *L)
 {
     auto s = lselection_check(L, 1);
     auto i = leditorbrush_check(L, 2);
-    s->remove(Sickle::Editor::Selection::Item{i});
+    s->remove(std::shared_ptr<Sickle::Editor::Brush>{i, do_nothing_deleter});
     return 0;
 }
 
@@ -57,7 +59,9 @@ static int selection_contains(lua_State *L)
 {
     auto s = lselection_check(L, 1);
     auto i = leditorbrush_check(L, 2);
-    lua_pushboolean(L, s->contains(Sickle::Editor::Selection::Item{i}));
+    lua_pushboolean(L,
+        s->contains(
+            std::shared_ptr<Sickle::Editor::Brush>{i, do_nothing_deleter}));
     return 1;
 }
 
