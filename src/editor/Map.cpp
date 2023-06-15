@@ -57,6 +57,19 @@ Map::Map(RMF::RichMap const &map)
 }
 
 
+void Map::add_brush(std::shared_ptr<Brush> const &brush)
+{
+    for (auto &entity : entities)
+    {
+        if (entity.properties.at("classname") == "worldspawn")
+        {
+            entity.brushes.push_back(brush);
+            break;
+        }
+    }
+}
+
+
 Map::operator MAP::Map() const
 {
     MAP::Map out{};

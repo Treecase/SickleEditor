@@ -41,9 +41,7 @@ namespace commands
 {
     class AddBrush : public Command
     {
-        std::vector<glm::vec3> const _points;
     public:
-        AddBrush(std::vector<glm::vec3> const &points);
         virtual void execute(Editor &editor) override;
         virtual ~AddBrush()=default;
     };

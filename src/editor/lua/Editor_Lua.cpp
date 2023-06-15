@@ -33,15 +33,7 @@ static Lua::RefBuilder<Editor> builder{"Sickle.editor"};
 static int add_brush(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
-    luaL_argcheck(L, lua_istable(L, 2), 2, "`table' expected");
-    lua_Integer n = 1;
-    while (lua_geti(L, 2, n) != LUA_TNIL)
-        n++;
-    std::vector<glm::vec3> points{};
-    for (int i = 1; i < n; ++i)
-        points.emplace_back(lgeo_tovector(L, 2 + i));
-    lua_pop(L, n);
-    ed->do_command(std::make_shared<commands::AddBrush>(points));
+    ed->do_command(std::make_shared<commands::AddBrush>());
     return 0;
 }
 

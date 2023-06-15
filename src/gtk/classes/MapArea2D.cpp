@@ -489,8 +489,7 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 
 void Sickle::MapArea2D::on_action_createbrush_create()
 {
-    std::cout << "onAction ACTION" << std::endl;
-    (*_editor.maptool.get())();
+    _editor.do_command(std::make_shared<Editor::commands::AddBrush>());
 }
 
 

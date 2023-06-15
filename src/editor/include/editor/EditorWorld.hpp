@@ -141,6 +141,8 @@ namespace Editor
         Map(MAP::Map const &map);
         Map(RMF::RichMap const &map);
 
+        void add_brush(std::shared_ptr<Brush> const &brush);
+
         operator MAP::Map() const;
 
     private:

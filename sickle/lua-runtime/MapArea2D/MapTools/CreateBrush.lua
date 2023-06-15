@@ -15,23 +15,6 @@ CreateBrush.metatable.__index = CreateBrush.metatable
 EventListener.inherit(CreateBrush.metatable)
 
 
-local function brush_from_brushbox(brushbox)
-    local a = brushbox:get_start()
-    local b = brushbox:get_end()
-    local vertices = {
-        {a.x, a.y, a.z},
-        {a.x, a.y, b.z},
-        {a.x, b.y, a.z},
-        {a.x, b.y, b.z},
-        {b.x, a.y, a.z},
-        {b.x, a.y, b.z},
-        {b.x, b.y, a.z},
-        {b.x, b.y, b.z},
-    }
-    return vertices
-end
-
-
 function CreateBrush.metatable:on_removed()
     local brushbox = self.maparea:get_editor():get_brushbox()
     brushbox:set_start(geo.vector.new())
@@ -68,10 +51,7 @@ function CreateBrush.metatable:on_key_press_event(event)
     if self:doEvent("on_key_press_event", event) then return true end
 
     if event == LuaGDK.GDK_KEY_Return then
-        local brushbox = self.maparea:get_editor():get_brushbox()
-        self.maparea:get_editor():add_brush(brush_from_brushbox(brushbox))
-        brushbox:set_start(geo.vector.new())
-        brushbox:set_end(geo.vector.new())
+        self.maparea:get_editor():add_brush()
         return true
     end
 end

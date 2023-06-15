@@ -28,17 +28,22 @@ using namespace Sickle::Editor::commands;
 
 
 /* ===[ AddBrush ]=== */
-AddBrush::AddBrush(std::vector<glm::vec3> const &points)
-:   _points{points}
-{
-}
-
-
 void AddBrush::execute(Editor &editor)
 {
-    auto brush = std::make_shared<Brush>(_points);
-    auto &map = editor.get_map();
-    for (auto &entity : map.entities)
-        if (entity.properties.at("classname") == "worldspawn")
-            entity.brushes.push_back(brush);
+    auto const a = editor.brushbox.p1();
+    auto const b = editor.brushbox.p2();
+    editor.brushbox.p1({0, 0, 0});
+    editor.brushbox.p2({0, 0, 0});
+
+    std::vector<glm::vec3> const points{
+        {a.x, a.y, a.z},
+        {a.x, a.y, b.z},
+        {a.x, b.y, a.z},
+        {a.x, b.y, b.z},
+        {b.x, a.y, a.z},
+        {b.x, a.y, b.z},
+        {b.x, b.y, a.z},
+        {b.x, b.y, b.z},
+    };
+    editor.get_map().add_brush(std::make_shared<Brush>(points));
 }
