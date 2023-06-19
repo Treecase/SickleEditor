@@ -475,8 +475,11 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 {
     if (event->button == GDK_BUTTON_SECONDARY)
     {
-        _createbrush_popup_menu.popup_at_pointer(nullptr);
-        return true;
+        if (_editor.maptool.get()->name() == "CreateBrush")
+        {
+            _createbrush_popup_menu.popup_at_pointer(nullptr);
+            return true;
+        }
     }
     return false;
 }
@@ -489,7 +492,15 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 
 void Sickle::MapArea2D::on_action_createbrush_create()
 {
-    _editor.do_command(std::make_shared<Editor::commands::AddBrush>());
+    try
+    {
+        _editor.do_command(std::make_shared<Editor::commands::AddBrush>());
+    }
+    catch (std::runtime_error const &e)
+    {
+        std::cout << "Sickle::MapArea2D::on_action_createbrush_create -- "
+            << e.what() << '\n';
+    }
 }
 
 
