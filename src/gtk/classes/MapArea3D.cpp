@@ -108,6 +108,8 @@ Sickle::MapArea3D::MapArea3D(Editor::Editor &ed)
 
     _editor.signal_map_changed().connect(
         sigc::mem_fun(*this, &MapArea3D::on_editor_map_changed));
+    _editor.get_map().signal_changed().connect(
+        sigc::mem_fun(*this, &Sickle::MapArea3D::_synchronize_glmap));
     _editor.selected.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea3D::queue_render));
     _editor.brushbox.signal_updated().connect(
@@ -157,7 +159,7 @@ Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
     // used to transform map vertices into GL space.
     auto const modelview = property_transform().get_value().getMatrix();
 
-    for (auto const &entity : _editor.get_map().entities)
+    for (auto const &entity : _editor.get_map().entities())
     {
         for (auto const &brush : entity.brushes)
         {
@@ -323,6 +325,8 @@ void Sickle::MapArea3D::on_editor_map_changed()
     property_state().reset_value();
     property_camera().set_value(DEFAULT_CAMERA);
     property_transform().set_value(DEFAULT_TRANSFORM);
+    _editor.get_map().signal_changed().connect(
+        sigc::mem_fun(*this, &Sickle::MapArea3D::_synchronize_glmap));
     if (get_realized())
     {
         _synchronize_glmap();

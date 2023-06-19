@@ -301,7 +301,7 @@ Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
     std::shared_ptr<Editor::Brush> picked{nullptr};
     BBox2 pbbox{};
 
-    for (auto const &entity : _editor.get_map().entities)
+    for (auto const &entity : _editor.get_map().entities())
     {
         for (auto const &brush : entity.brushes)
         {
@@ -381,7 +381,7 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         cr->stroke();
 
         // Draw selected brushes.
-        for (auto const &e : _editor.get_map().entities)
+        for (auto const &e : _editor.get_map().entities())
         {
             for (auto const &b : e.brushes)
             {
@@ -526,7 +526,7 @@ const
 
 void Sickle::MapArea2D::_draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const
 {
-    for (auto const &e : _editor.get_map().entities)
+    for (auto const &e : _editor.get_map().entities())
         for (auto const &brush : e.brushes)
             _draw_brush(cr, brush);
 }

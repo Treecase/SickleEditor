@@ -45,5 +45,5 @@ void AddBrush::execute(Editor &editor)
         {b.x, b.y, a.z},
         {b.x, b.y, b.z},
     };
-    editor.get_map().add_brush(std::make_shared<Brush>(points));
+    editor.get_map().add_brush(Brush{points});
 }

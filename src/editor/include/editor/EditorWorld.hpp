@@ -126,6 +126,12 @@ namespace Editor
 
         operator MAP::Entity() const;
 
+        auto &signal_changed() {return _signal_changed;}
+
+        void add_brush(Brush const &brush);
+
+    private:
+        sigc::signal<void()> _signal_changed{};
         // TODO:
         // - visgroup id
         // - color
@@ -135,17 +141,24 @@ namespace Editor
     class Map
     {
     public:
-        std::vector<Entity> entities{};
-
         Map();
         Map(MAP::Map const &map);
         Map(RMF::RichMap const &map);
 
-        void add_brush(std::shared_ptr<Brush> const &brush);
-
         operator MAP::Map() const;
 
+        auto &signal_changed() {return _signal_changed;}
+        // WARNING: You are expected to not modify the collection itself, only
+        // contained items.
+        auto &entities() {return _entities;}
+
+        void add_brush(Brush const &brush);
+        Entity &add_entity(Entity const &entity);
+        Entity &worldspawn();
+
     private:
+        sigc::signal<void()> _signal_changed{};
+        std::vector<Entity> _entities{};
         // TODO:
         // - visgroups & groups
         // - paths (what are these?)

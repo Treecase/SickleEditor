@@ -18,9 +18,11 @@
 
 #include "editor/EditorWorld.hpp"
 
+using namespace Sickle::Editor;
 
 
-Sickle::Editor::Entity::Entity(MAP::Entity const &entity)
+
+Entity::Entity(MAP::Entity const &entity)
 :   properties{entity.properties}
 {
     for (auto const &brush : entity.brushes)
@@ -28,7 +30,7 @@ Sickle::Editor::Entity::Entity(MAP::Entity const &entity)
 }
 
 
-Sickle::Editor::Entity::Entity(RMF::Entity const &entity)
+Entity::Entity(RMF::Entity const &entity)
 :   properties{entity.kv_pairs}
 {
     properties["classname"] = entity.classname;
@@ -37,11 +39,17 @@ Sickle::Editor::Entity::Entity(RMF::Entity const &entity)
 }
 
 
-Sickle::Editor::Entity::operator MAP::Entity() const
+Entity::operator MAP::Entity() const
 {
     MAP::Entity out{};
     out.properties = properties;
     for (auto const &brush : brushes)
         out.brushes.push_back(*brush);
     return out;
+}
+
+void Entity::add_brush(Brush const &brush)
+{
+    brushes.push_back(std::make_shared<Brush>(brush));
+    signal_changed().emit();
 }

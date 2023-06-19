@@ -23,14 +23,14 @@ using namespace Sickle::Editor;
 
 Map::Map()
 {
-    auto &worldspawn = entities.emplace_back();
+    auto &worldspawn = add_entity({});
     worldspawn.properties["classname"] = "worldspawn";
 }
 
 Map::Map(MAP::Map const &map)
 {
     for (auto const &entity : map.entities)
-        entities.push_back(entity);
+        add_entity(entity);
 }
 
 
@@ -49,31 +49,42 @@ Map::Map(RMF::RichMap const &map)
         for (auto const &brush : group.brushes)
             worldspawn.brushes.emplace_back(std::make_shared<Brush>(brush));
         for (auto const &entity : group.entities)
-            entities.push_back(entity);
+            add_entity(entity);
         for (auto group2 : group.groups)
             groups.push(group2);
     }
-    entities.emplace_back(worldspawn);
-}
-
-
-void Map::add_brush(std::shared_ptr<Brush> const &brush)
-{
-    for (auto &entity : entities)
-    {
-        if (entity.properties.at("classname") == "worldspawn")
-        {
-            entity.brushes.push_back(brush);
-            break;
-        }
-    }
+    add_entity(worldspawn);
 }
 
 
 Map::operator MAP::Map() const
 {
     MAP::Map out{};
-    for (auto const &entity : entities)
+    for (auto const &entity : _entities)
         out.entities.push_back(entity);
     return out;
+}
+
+
+void Map::add_brush(Brush const &brush)
+{
+    worldspawn().add_brush(brush);
+    signal_changed().emit();
+}
+
+
+Entity &Map::add_entity(Entity const &entity)
+{
+    auto &e = _entities.emplace_back(entity);
+    signal_changed().emit();
+    return e;
+}
+
+
+Entity &Map::worldspawn()
+{
+    for (auto &entity : _entities)
+        if (entity.properties.at("classname") == "worldspawn")
+            return entity;
+    throw std::logic_error{"missing worldspawn"};
 }

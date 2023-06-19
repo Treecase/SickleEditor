@@ -31,7 +31,7 @@ World3D::World3D::World3D(
     std::vector<std::string> const &wads)
 {
     Sickle::Editor::Entity const *worldspawn{nullptr};
-    for (auto const &entity : src.entities)
+    for (auto const &entity : src.entities())
         if (entity.properties.at("classname") == "worldspawn")
             worldspawn = &entity;
     if (!worldspawn)
@@ -49,7 +49,7 @@ World3D::World3D::World3D(
         }
     }
 
-    for (auto &entity : src.entities)
+    for (auto &entity : src.entities())
         entities.emplace_back(*this, entity);
 }
 
