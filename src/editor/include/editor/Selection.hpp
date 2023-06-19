@@ -41,6 +41,7 @@ namespace Editor
         void add(Item item);
         void remove(Item item);
         bool contains(Item item) const;
+        bool empty() const;
 
         auto begin() const {return _selected.begin();}
         auto end() const {return _selected.end();}

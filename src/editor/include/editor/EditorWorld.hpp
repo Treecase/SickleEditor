@@ -129,6 +129,7 @@ namespace Editor
         auto &signal_changed() {return _signal_changed;}
 
         void add_brush(Brush const &brush);
+        void remove_brush(std::shared_ptr<Brush> const &brush);
 
     private:
         sigc::signal<void()> _signal_changed{};
@@ -154,6 +155,7 @@ namespace Editor
 
         void add_brush(Brush const &brush);
         Entity &add_entity(Entity const &entity);
+        void remove_brush(std::shared_ptr<Brush> const &brush);
         Entity &worldspawn();
 
     private:

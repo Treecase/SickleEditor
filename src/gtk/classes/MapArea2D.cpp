@@ -191,7 +191,22 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
     set_size_request(320, 240);
     set_can_focus(true);
 
-    // Set up right-click menu
+    {// Set up Select right-click menu
+    _select_popup_actions = Gio::SimpleActionGroup::create();
+    _select_popup_actions->add_action(
+        "delete",
+        sigc::mem_fun(*this, &MapArea2D::on_action_select_delete));
+    insert_action_group("select", _select_popup_actions);
+    auto builder = Gtk::Builder::create();
+    builder->add_from_resource(
+        SE_GRESOURCE_PREFIX"gtk/MapArea2D/SelectPopupMenu.ui");
+    _select_popup_menu = Gtk::Menu{
+        Glib::RefPtr<Gio::Menu>::cast_dynamic(
+            builder->get_object("popup-select"))};
+    _select_popup_menu.attach_to_widget(*this);
+    }
+
+    {// Set up CreateBrush right-click menu
     _createbrush_popup_actions = Gio::SimpleActionGroup::create();
     _createbrush_popup_actions->add_action(
         "create",
@@ -204,6 +219,7 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
         Glib::RefPtr<Gio::Menu>::cast_dynamic(
             builder->get_object("popup-createbrush"))};
     _createbrush_popup_menu.attach_to_widget(*this);
+    }
 
     _editor.brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_brushbox_changed));
@@ -475,7 +491,13 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 {
     if (event->button == GDK_BUTTON_SECONDARY)
     {
-        if (_editor.maptool.get()->name() == "CreateBrush")
+        auto const &tool = _editor.maptool.get()->name();
+        if (tool == "Select" && !_editor.selected.empty())
+        {
+            _select_popup_menu.popup_at_pointer(nullptr);
+            return true;
+        }
+        else if (tool == "CreateBrush")
         {
             _createbrush_popup_menu.popup_at_pointer(nullptr);
             return true;
@@ -488,6 +510,13 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 {
     grab_focus();
     return true;
+}
+
+void Sickle::MapArea2D::on_action_select_delete()
+{
+    for (auto &brush : _editor.selected)
+        _editor.get_map().remove_brush(brush);
+    _editor.selected.clear();
 }
 
 void Sickle::MapArea2D::on_action_createbrush_create()

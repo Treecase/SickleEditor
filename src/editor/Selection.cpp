@@ -60,3 +60,8 @@ bool Selection::contains(Item item) const
 {
     return _selected.count(item) != 0;
 }
+
+bool Selection::empty() const
+{
+    return _selected.empty();
+}

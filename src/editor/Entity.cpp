@@ -18,6 +18,8 @@
 
 #include "editor/EditorWorld.hpp"
 
+#include <algorithm>
+
 using namespace Sickle::Editor;
 
 
@@ -51,5 +53,14 @@ Entity::operator MAP::Entity() const
 void Entity::add_brush(Brush const &brush)
 {
     brushes.push_back(std::make_shared<Brush>(brush));
+    signal_changed().emit();
+}
+
+void Entity::remove_brush(std::shared_ptr<Brush> const &brush)
+{
+    auto const it = std::find(brushes.begin(), brushes.end(), brush);
+    if (it == brushes.end())
+        return;
+    brushes.erase(it);
     signal_changed().emit();
 }

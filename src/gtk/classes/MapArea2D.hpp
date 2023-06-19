@@ -98,6 +98,9 @@ namespace Sickle
         bool on_enter_notify_event(GdkEventCrossing *event) override;
 
         // Actions
+        // Select Tool
+        void on_action_select_delete();
+        // CreateBrush Tool
         void on_action_createbrush_create();
 
     private:
@@ -114,7 +117,9 @@ namespace Sickle
         Glib::Property<DrawAngle> _prop_draw_angle;
         Glib::Property<MapArea2Dx::Transform2D> _prop_transform;
 
+        Gtk::Menu _select_popup_menu{};
         Gtk::Menu _createbrush_popup_menu{};
+        Glib::RefPtr<Gio::SimpleActionGroup> _select_popup_actions{};
         Glib::RefPtr<Gio::SimpleActionGroup> _createbrush_popup_actions{};
 
         void _draw_brush(

@@ -81,6 +81,14 @@ Entity &Map::add_entity(Entity const &entity)
 }
 
 
+void Map::remove_brush(std::shared_ptr<Brush> const &brush)
+{
+    for (auto &entity : _entities)
+        entity.remove_brush(brush);
+    signal_changed().emit();
+}
+
+
 Entity &Map::worldspawn()
 {
     for (auto &entity : _entities)
