@@ -21,12 +21,12 @@ if(EXISTS "${LOC_PATH}")
 endif()
 
 project("Sickle Editor"
-    VERSION 0.7.0
+    VERSION 0.8.0
     DESCRIPTION "Open-Source GoldSrc Editor"
     LANGUAGES CXX
 )
 
-if(CMAKE_BUILD_TYPE STREQUAL "")
+if(NOT CMAKE_BUILD_TYPE)
     message("CMAKE_BUILD_TYPE is unset, defaulting to Release")
     set(CMAKE_BUILD_TYPE Release)
 endif()
