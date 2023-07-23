@@ -84,6 +84,7 @@ raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
 }
 
 
+
 /* ===[ MapArea3D ]=== */
 Sickle::MapArea3D::MapArea3D(Editor::Editor &ed)
 :   Glib::ObjectBase{typeid(MapArea3D)}
@@ -144,6 +145,7 @@ Sickle::MapArea3D::MapArea3D(Editor::Editor &ed)
     add_tick_callback(sigc::mem_fun(*this, &MapArea3D::tick_callback));
 }
 
+
 std::shared_ptr<Sickle::Editor::Brush>
 Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
 {
@@ -184,6 +186,7 @@ Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
     return picked;
 }
 
+
 Sickle::MapArea3D::GLSpacePoint
 Sickle::MapArea3D::screenspace_to_glspace(ScreenSpacePoint const &point) const
 {
@@ -193,6 +196,7 @@ Sickle::MapArea3D::screenspace_to_glspace(ScreenSpacePoint const &point) const
         0
     };
 }
+
 
 void Sickle::MapArea3D::on_realize()
 {
@@ -229,9 +233,11 @@ void Sickle::MapArea3D::on_realize()
     _synchronize_glmap();
 }
 
+
 void Sickle::MapArea3D::on_unrealize()
 {
 }
+
 
 bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 {
@@ -279,6 +285,7 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 }
 
 
+
 bool Sickle::MapArea3D::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
 {
     static constexpr float const USEC_TO_SECONDS = 0.000001f;
@@ -314,11 +321,13 @@ bool Sickle::MapArea3D::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock
     return G_SOURCE_CONTINUE;
 }
 
+
 bool Sickle::MapArea3D::on_enter_notify_event(GdkEventCrossing *event)
 {
     grab_focus();
     return true;
 }
+
 
 void Sickle::MapArea3D::on_editor_map_changed()
 {
@@ -335,6 +344,7 @@ void Sickle::MapArea3D::on_editor_map_changed()
     }
 }
 
+
 void Sickle::MapArea3D::on_wireframe_changed()
 {
     make_current();
@@ -343,15 +353,18 @@ void Sickle::MapArea3D::on_wireframe_changed()
         property_wireframe().get_value()? GL_LINE : GL_FILL);
 }
 
+
 void Sickle::MapArea3D::on_world3d_wad_load_error(std::string const &what)
 {
     _error_tracker.missing_wads.insert(what);
 }
 
+
 void Sickle::MapArea3D::on_world3d_face_missing_texture(std::string const &what)
 {
     _error_tracker.missing_textures.insert(what);
 }
+
 
 
 void Sickle::MapArea3D::_check_errors()
@@ -376,6 +389,7 @@ void Sickle::MapArea3D::_check_errors()
         d.run();
     }
 }
+
 
 void Sickle::MapArea3D::_synchronize_glmap()
 {

@@ -76,15 +76,15 @@ void Lua::push(lua_State *L, Sickle::AppWin *appwin)
     if (builder.pushnew(appwin))
         return;
 
-    builder.addField("mapArea3D", &appwin->m_maparea);
-    builder.addField("topMapArea", &appwin->m_drawarea_top);
-    builder.addField("frontMapArea", &appwin->m_drawarea_front);
-    builder.addField("rightMapArea", &appwin->m_drawarea_right);
+    builder.addField("mapArea3D", &appwin->_view3d);
+    builder.addField("topMapArea", &appwin->_view2d_top);
+    builder.addField("frontMapArea", &appwin->_view2d_front);
+    builder.addField("rightMapArea", &appwin->_view2d_right);
 
     builder.addSignalHandler(
         appwin->property_grid_size().signal_changed(), "on_grid_size_changed");
     builder.addSignalHandler(
-        appwin->m_maptools.property_tool().signal_changed(),
+        appwin->_maptools.property_tool().signal_changed(),
         "on_maptool_changed");
     builder.addSignalHandler(
         appwin->signal_key_press_event(), "on_key_press_event");

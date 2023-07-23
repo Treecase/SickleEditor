@@ -24,7 +24,9 @@
 #include "MapArea2D.hpp"
 #include "MapArea3D.hpp"
 #include "MapTools.hpp"
-#include "editor/Editor.hpp"
+
+#include <appid.hpp>
+#include <editor/Editor.hpp>
 
 #include <glibmm/property.h>
 #include <glibmm/binding.h>
@@ -42,7 +44,7 @@ namespace Sickle
     class AppWin : public Gtk::ApplicationWindow
     {
     public:
-        Editor::Editor editor;
+        Editor::Editor editor{};
         lua_State *const L;
 
         AppWin();
@@ -56,33 +58,43 @@ namespace Sickle
         /** Reload Lua scripts. */
         void reload_scripts();
 
-        auto property_grid_size() {return _prop_grid_size.get_proxy();}
         void set_grid_size(guint grid_size);
         guint get_grid_size();
         MapTools::Tool get_maptool(); // TEMP
 
+        auto property_grid_size() {return _prop_grid_size.get_proxy();}
         auto signal_lua_reloaded() {return _sig_lua_reloaded;}
 
         // Lua constructor needs access to private members.
         friend void Lua::push(lua_State *, AppWin *);
-        friend class Sickle::App;
 
     protected:
-        Gtk::Grid m_grid;
-        Gtk::Grid m_viewgrid;
-        MapArea3D m_maparea;
-        MapArea2D m_drawarea_top, m_drawarea_front, m_drawarea_right;
-        Gtk::HBox m_hbox;
-        Gtk::Label m_gridsizelabel;
-        Gtk::Window m_luaconsolewindow;
-        LuaConsole m_luaconsole;
-        Gtk::InfoBar m_infobar{};
-        Gtk::Label m_infobar_label{};
-        MapTools m_maptools;
-
         void setup_lua_state();
 
+        void on_action_openLuaConsole();
+        void on_action_reloadLua();
+        void on_action_mapTools_Select();
+        void on_action_mapTools_CreateBrush();
+
     private:
+        static constexpr guint GRID_SIZE_MIN = 1;
+        static constexpr guint GRID_SIZE_MAX = 512;
+
+        // Important widgets
+        MapArea3D _view3d;
+        MapArea2D _view2d_top, _view2d_front, _view2d_right;
+        MapTools _maptools;
+        Gtk::Label _gridsizelabel{};
+        Gtk::Window _luaconsolewindow{};
+        LuaConsole _luaconsole{};
+        Gtk::InfoBar _luainfobar{};
+
+        // Structural widgets
+        Gtk::Grid _basegrid{};
+        Gtk::Grid _viewsgrid{};
+        Gtk::HBox _inforegion{};
+        Gtk::Label _luainfobarlabel{};
+
         Glib::Property<guint> _prop_grid_size;
         Glib::RefPtr<Glib::Binding> _binding_grid_size_top,
             _binding_grid_size_front,

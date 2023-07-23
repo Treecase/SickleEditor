@@ -32,7 +32,8 @@
 void _test_space_conversions(Sickle::MapArea2D const &maparea);
 
 
-struct DrawAnchor {
+struct DrawAnchor
+{
     bool top;
     bool left;
 };
@@ -48,11 +49,12 @@ static DrawAnchor const BottomRight{false, false};
  */
 double points_to_pixels(double points, double dpi)
 {
-    static constexpr auto const point_in_inches = 1.0 / 72.0;
+    static constexpr auto point_in_inches = 1.0 / 72.0;
     auto const inches_per_pixel = 1.0 / dpi;
     auto const font_size_inches = point_in_inches * points;
     return font_size_inches / inches_per_pixel;
 }
+
 
 /** Draw the grid. */
 void draw_grid(
@@ -81,9 +83,11 @@ void draw_grid(
     }
 }
 
+
 /** Draw main axes. */
 void draw_axes(
-    Cairo::RefPtr<Cairo::Context> const &cr, double width, double height,
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    double width, double height,
     double _transform_x, double _transform_y)
 {
     cr->move_to(0.5 * width + _transform_x, 0);
@@ -91,6 +95,7 @@ void draw_axes(
     cr->move_to(0, 0.5 * height + _transform_y);
     cr->rel_line_to(width, 0);
 }
+
 
 /**
  * Sets CR's font_face and font_size based on FONT and DPI. Returns font size.
@@ -125,6 +130,7 @@ double select_font_from_pango(
     return font_size;
 }
 
+
 /** Draw text. */
 void draw_text(
     Cairo::RefPtr<Cairo::Context> const &cr, std::string const &text,
@@ -144,6 +150,7 @@ void draw_text(
     cr->move_to(tx, ty);
     cr->show_text(text);
 }
+
 
 
 /* ===[ MapArea2D ]=== */
@@ -245,6 +252,7 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
         | Gdk::ENTER_NOTIFY_MASK);
 }
 
+
 Sickle::MapArea2D::DrawSpacePoint
 Sickle::MapArea2D::screenspace_to_drawspace(double x, double y) const
 {
@@ -256,6 +264,7 @@ Sickle::MapArea2D::screenspace_to_drawspace(double x, double y) const
         ((y - 0.5 * height) / transform.zoom) - transform.y
     };
 }
+
 
 Sickle::MapArea2D::ScreenSpacePoint
 Sickle::MapArea2D::drawspace_to_screenspace(DrawSpacePoint const &v) const
@@ -269,6 +278,7 @@ Sickle::MapArea2D::drawspace_to_screenspace(DrawSpacePoint const &v) const
     };
 }
 
+
 Sickle::MapArea2D::WorldSpacePoint
 Sickle::MapArea2D::drawspace_to_worldspace(DrawSpacePoint const &v) const
 {
@@ -280,6 +290,7 @@ Sickle::MapArea2D::drawspace_to_worldspace(DrawSpacePoint const &v) const
     }
     throw std::logic_error{"bad DrawAngle value"};
 }
+
 
 Sickle::MapArea2D::WorldSpacePoint
 Sickle::MapArea2D::drawspace3_to_worldspace(glm::vec3 const &v) const
@@ -293,11 +304,13 @@ Sickle::MapArea2D::drawspace3_to_worldspace(glm::vec3 const &v) const
     throw std::logic_error{"bad DrawAngle value"};
 }
 
+
 Sickle::MapArea2D::DrawSpacePoint
 Sickle::MapArea2D::worldspace_to_drawspace(WorldSpacePoint const &v) const
 {
     return glm::vec2{worldspace_to_drawspace3(v)};
 }
+
 
 glm::vec3
 Sickle::MapArea2D::worldspace_to_drawspace3(WorldSpacePoint const &v) const
@@ -310,6 +323,7 @@ Sickle::MapArea2D::worldspace_to_drawspace3(WorldSpacePoint const &v) const
     }
     throw std::logic_error{"bad DrawAngle value"};
 }
+
 
 std::shared_ptr<Sickle::Editor::Brush>
 Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
@@ -341,6 +355,7 @@ Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
     }
     return picked;
 }
+
 
 bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 {
@@ -447,6 +462,7 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
     return true;
 }
 
+
 void Sickle::MapArea2D::on_editor_brushbox_changed()
 {
     auto const p1 = worldspace_to_drawspace(_editor.brushbox.p1());
@@ -454,6 +470,7 @@ void Sickle::MapArea2D::on_editor_brushbox_changed()
     _brushbox.set_box(BBox2{p1, p2});
     queue_draw();
 }
+
 
 void Sickle::MapArea2D::on_editor_map_changed()
 {
@@ -464,6 +481,7 @@ void Sickle::MapArea2D::on_editor_map_changed()
     property_transform().reset_value();
     queue_draw();
 }
+
 
 void Sickle::MapArea2D::on_editor_selection_changed()
 {
@@ -476,6 +494,7 @@ void Sickle::MapArea2D::on_editor_selection_changed()
     queue_draw();
 }
 
+
 void Sickle::MapArea2D::on_draw_angle_changed()
 {
     switch (property_draw_angle().get_value())
@@ -486,6 +505,7 @@ void Sickle::MapArea2D::on_draw_angle_changed()
     }
     queue_draw();
 }
+
 
 bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 {
@@ -506,11 +526,13 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
     return false;
 }
 
+
 bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 {
     grab_focus();
     return true;
 }
+
 
 void Sickle::MapArea2D::on_action_select_delete()
 {
@@ -518,6 +540,7 @@ void Sickle::MapArea2D::on_action_select_delete()
         _editor.get_map().remove_brush(brush);
     _editor.selected.clear();
 }
+
 
 void Sickle::MapArea2D::on_action_createbrush_create()
 {
@@ -531,6 +554,7 @@ void Sickle::MapArea2D::on_action_createbrush_create()
             << e.what() << '\n';
     }
 }
+
 
 
 void Sickle::MapArea2D::_draw_brush(
@@ -552,6 +576,7 @@ const
         cr->close_path();
     }
 }
+
 
 void Sickle::MapArea2D::_draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const
 {

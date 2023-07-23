@@ -17,10 +17,9 @@
  */
 
 #include "App.hpp"
-#include "WADDialog.hpp"
-
 #include "About.hpp"
 #include "appid.hpp"
+#include "WADDialog.hpp"
 
 #include <gtkmm/filechoosernative.h>
 
@@ -31,24 +30,24 @@ Glib::RefPtr<Sickle::App> Sickle::App::create()
 }
 
 
+
 Sickle::App::App()
 :   Glib::ObjectBase{typeid(App)}
 ,   Gtk::Application{
         SE_APPLICATION_ID, Gio::ApplicationFlags::APPLICATION_HANDLES_OPEN}
-,   m_settings{Gio::Settings::create(SE_APPLICATION_ID)}
+,   _settings{Gio::Settings::create(SE_APPLICATION_ID)}
 ,   _prop_fgd_path{*this, "fgd-path", ""}
 ,   _prop_wad_paths{*this, "wad-paths", {}}
-,   _game_definition{}
 {
     property_fgd_path().signal_changed().connect(
         sigc::mem_fun(*this, &App::_on_fgd_path_changed));
-    m_settings->bind("fgd-path", property_fgd_path());
-    m_settings->bind("wad-paths", property_wad_paths());
+    _settings->bind("fgd-path", property_fgd_path());
+    _settings->bind("wad-paths", property_wad_paths());
 }
+
 
 void Sickle::App::on_startup()
 {
-    // Call the base class's implementation.
     Gtk::Application::on_startup();
 
     // Add actions for the menu.
@@ -59,32 +58,25 @@ void Sickle::App::on_startup()
     add_action("exit", sigc::mem_fun(*this, &App::on_action_exit));
     // Edit
     add_action("setGameDef", sigc::mem_fun(*this, &App::on_action_setGameDef));
-    add_action("setWADPaths",
+    add_action(
+        "setWADPaths",
         sigc::mem_fun(*this, &App::on_action_setWADPaths));
-    // Edit
-    add_action(
-        "openLuaConsole", sigc::mem_fun(*this, &App::on_action_openLuaConsole));
-    add_action(
-        "reloadLua", sigc::mem_fun(*this, &App::on_action_reloadLua));
     // About
     add_action("about", sigc::mem_fun(*this, &App::on_action_about));
+
     // Add keyboard accelerators for the menu.
     set_accel_for_action("app.new", "<Ctrl>N");
     set_accel_for_action("app.open", "<Ctrl>O");
     set_accel_for_action("app.save", "<Ctrl>S");
     set_accel_for_action("app.exit", "<Ctrl>Q");
-    set_accel_for_action("app.openLuaConsole", "<Ctrl><Shift>C");
-    set_accel_for_action("app.reloadLua", "<Ctrl><Shift>R");
-    // Keyboard accelerators for MapTools.
-    add_action(
-        "mapTools_Select",
-        sigc::mem_fun(*this, &App::on_action_mapTools_Select));
-    add_action(
-        "mapTools_CreateBrush",
-        sigc::mem_fun(*this, &App::on_action_mapTools_CreateBrush));
-    set_accel_for_action("app.mapTools_Select", "<Shift>S");
-    set_accel_for_action("app.mapTools_CreateBrush", "<Shift>B");
+    set_accel_for_action("win.openLuaConsole", "<Ctrl><Shift>C");
+    set_accel_for_action("win.reloadLua", "<Ctrl><Shift>R");
+
+    // Add keyboard accelerators for MapTools.
+    set_accel_for_action("win.mapTools_Select", "<Shift>S");
+    set_accel_for_action("win.mapTools_CreateBrush", "<Shift>B");
 }
+
 
 void Sickle::App::on_activate()
 {
@@ -93,22 +85,22 @@ void Sickle::App::on_activate()
     appwindow->present();
 }
 
+
 void Sickle::App::on_open(
     Gio::Application::type_vec_files const &files, Glib::ustring const &hint)
 {
     // Use already existing AppWin if it exists, otherwise create a new one.
     AppWin *appwindow = nullptr;
-    auto windows = get_windows();
+    auto const windows = get_windows();
     if (windows.size() > 0)
-        appwindow = dynamic_cast<AppWin *>(windows[0]);
+        appwindow = dynamic_cast<AppWin *>(windows.at(0));
     if (!appwindow)
         appwindow = _create_appwindow();
-    // Assuming files won't be empty, since if it was, `on_activate` would be
-    // used instead
-    appwindow->open(files[0]);
+    appwindow->open(files.at(0));
     appwindow->maximize();
     appwindow->present();
 }
+
 
 void Sickle::App::on_action_new()
 {
@@ -116,70 +108,70 @@ void Sickle::App::on_action_new()
     win->open(Glib::RefPtr<Gio::File>{nullptr});
 }
 
+
 void Sickle::App::on_action_open()
 {
     auto win = dynamic_cast<AppWin *>(get_active_window());
     auto chooser = Gtk::FileChooserNative::create(
-        "Open", Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN, "Open",
-        "Cancel");
+        "Open",
+        Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN);
     chooser->set_transient_for(*win);
+
     auto all_filter = Gtk::FileFilter::create();
     all_filter->add_pattern("*.*");
     all_filter->set_name("All Files");
     chooser->add_filter(all_filter);
+
     auto map_filter = Gtk::FileFilter::create();
     map_filter->add_pattern("*.map");
     map_filter->set_name("Game Maps");
     chooser->add_filter(map_filter);
+
     auto rmf_filter = Gtk::FileFilter::create();
     rmf_filter->add_pattern("*.rmf");
     rmf_filter->set_name("Hammer/Worldcraft Maps");
     chooser->add_filter(rmf_filter);
     chooser->set_filter(rmf_filter);
-    int response = chooser->run();
-    switch (response)
-    {
-    case Gtk::ResponseType::RESPONSE_ACCEPT:
+
+    int const response = chooser->run();
+    if (response == Gtk::ResponseType::RESPONSE_ACCEPT)
         win->open(chooser->get_file());
-        break;
-    }
 }
+
 
 void Sickle::App::on_action_save()
 {
     auto win = dynamic_cast<AppWin *>(get_active_window());
-
     auto chooser = Gtk::FileChooserNative::create(
-        "Save", Gtk::FileChooserAction::FILE_CHOOSER_ACTION_SAVE, "Save",
-        "Cancel");
+        "Save",
+        Gtk::FileChooserAction::FILE_CHOOSER_ACTION_SAVE);
     chooser->set_transient_for(*win);
 
     auto all_filter = Gtk::FileFilter::create();
     all_filter->add_pattern("*.*");
     all_filter->set_name("All Files");
+    chooser->add_filter(all_filter);
+
     auto map_filter = Gtk::FileFilter::create();
     map_filter->add_pattern("*.map");
     map_filter->set_name("Game Maps");
     chooser->add_filter(map_filter);
-    chooser->add_filter(all_filter);
+    chooser->set_filter(map_filter);
 
-    int response = chooser->run();
+    int const response = chooser->run();
 
     auto filename = chooser->get_filename();
     if (chooser->get_filter() == map_filter)
     {
-        auto x = filename.rfind('.');
+        auto const x = filename.rfind(".map");
         if (x == std::string::npos)
             filename.append(".map");
     }
 
-    switch (response)
-    {
-    case Gtk::ResponseType::RESPONSE_ACCEPT:
+    if (response == Gtk::ResponseType::RESPONSE_ACCEPT)
         win->save(filename);
-        break;
-    }
 }
+
 
 void Sickle::App::on_action_exit()
 {
@@ -188,52 +180,39 @@ void Sickle::App::on_action_exit()
     quit();
 }
 
+
 void Sickle::App::on_action_setGameDef()
 {
     auto chooser = Gtk::FileChooserNative::create(
-        "Open", Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN, "Open",
-        "Cancel");
+        "Open",
+        Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN);
     chooser->set_transient_for(*get_active_window());
+
     auto all_filter = Gtk::FileFilter::create();
     all_filter->add_pattern("*.*");
     all_filter->set_name("All Files");
+    chooser->add_filter(all_filter);
+
     auto map_filter = Gtk::FileFilter::create();
     map_filter->add_pattern("*.fgd");
     map_filter->set_name("Game Data Files");
     chooser->add_filter(map_filter);
-    chooser->add_filter(all_filter);
-    int response = chooser->run();
-    switch (response)
-    {
-    case Gtk::ResponseType::RESPONSE_ACCEPT:
+
+    int const response = chooser->run();
+    if (response == Gtk::ResponseType::RESPONSE_ACCEPT)
         property_fgd_path().set_value(chooser->get_filename());
-        break;
-    }
 }
+
 
 void Sickle::App::on_action_setWADPaths()
 {
-    auto waddialog = WADDialog{*get_active_window()};
-    waddialog.set_transient_for(*get_active_window());
-    auto response = waddialog.run();
-    _sync_wadpaths(dynamic_cast<AppWin *>(get_active_window()));
+    auto win = dynamic_cast<AppWin *>(get_active_window());
+    auto waddialog = WADDialog{*win};
+    waddialog.set_transient_for(*win);
+    int const response = waddialog.run();
+    _sync_wadpaths(win);
 }
 
-void Sickle::App::on_action_openLuaConsole()
-{
-    auto window = dynamic_cast<AppWin *>(get_active_window());
-    if (!window)
-        return;
-    window->show_console_window();
-}
-
-void Sickle::App::on_action_reloadLua()
-{
-    auto window = dynamic_cast<AppWin *>(get_active_window());
-    if (!window)
-        return;
-    window->reload_scripts();
-}
 
 void Sickle::App::on_action_about()
 {
@@ -242,17 +221,6 @@ void Sickle::App::on_action_about()
     about.run();
 }
 
-void Sickle::App::on_action_mapTools_Select()
-{
-    auto window = dynamic_cast<AppWin *>(get_active_window());
-    window->m_maptools.property_tool() = MapTools::Tool::SELECT;
-}
-
-void Sickle::App::on_action_mapTools_CreateBrush()
-{
-    auto window = dynamic_cast<AppWin *>(get_active_window());
-    window->m_maptools.property_tool() = MapTools::Tool::CREATE_BRUSH;
-}
 
 
 Sickle::AppWin *Sickle::App::_create_appwindow()
@@ -266,16 +234,19 @@ Sickle::AppWin *Sickle::App::_create_appwindow()
     return appwindow;
 }
 
+
 void Sickle::App::_sync_wadpaths(AppWin *appwin)
 {
-    auto settings = Gio::Settings::create(SE_APPLICATION_ID);
+    auto const settings = Gio::Settings::create(SE_APPLICATION_ID);
     appwin->editor.wads.set(settings->get_string_array("wad-paths"));
 }
+
 
 void Sickle::App::_on_hide_window(Gtk::Window *window)
 {
     delete window;
 }
+
 
 void Sickle::App::_on_fgd_path_changed()
 {

@@ -20,7 +20,8 @@
 #define SE_APP_HPP
 
 #include "AppWin.hpp"
-#include "fgd/fgd.hpp"
+
+#include <fgd/fgd.hpp>
 
 #include <gtkmm/application.h>
 #include <giomm/settings.h>
@@ -37,8 +38,6 @@ namespace Sickle
         auto property_wad_paths() {return _prop_wad_paths.get_proxy();}
 
     protected:
-        Glib::RefPtr<Gio::Settings> m_settings;
-
         App();
 
         // Signals
@@ -58,25 +57,18 @@ namespace Sickle
         // Edit
         void on_action_setGameDef();
         void on_action_setWADPaths();
-        // Tools
-        void on_action_openLuaConsole();
-        void on_action_reloadLua();
         // Help
         void on_action_about();
 
-        // MapTools actions
-        void on_action_mapTools_Select();
-        void on_action_mapTools_CreateBrush();
-
     private:
+        Glib::RefPtr<Gio::Settings> _settings;
         FGD::GameDef _game_definition;
+
+        Glib::Property<Glib::ustring> _prop_fgd_path;
+        Glib::Property<std::vector<Glib::ustring>> _prop_wad_paths;
 
         AppWin *_create_appwindow();
         void _sync_wadpaths(AppWin *appwin);
-
-        // Properties
-        Glib::Property<Glib::ustring> _prop_fgd_path;
-        Glib::Property<std::vector<Glib::ustring>> _prop_wad_paths;
 
         // Signal Handlers
         void _on_hide_window(Gtk::Window *window);

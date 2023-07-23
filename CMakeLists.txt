@@ -70,7 +70,6 @@ configure_file(sicklegtk.gschema.xml.in sicklegtk.gschema.xml)
 # Declare targets
 add_executable(sickle)
 target_compile_features(sickle PRIVATE cxx_std_17)
-target_include_directories(sickle PRIVATE "${PROJECT_BINARY_DIR}/include")
 
 # Compiles settings gschema
 add_custom_target(
@@ -98,14 +97,7 @@ add_subdirectory(gresource)
 if(MINGW)
     target_link_libraries(sickle PRIVATE mingw32)
 endif()
-target_link_libraries(sickle PRIVATE
-    GLEW::GLEW
-    glm::glm
-    SickleGL
-    glutils::glutils
-    ${CMAKE_DL_LIBS}
-    PkgConfig::GTKMM
-)
+target_link_libraries(sickle PRIVATE ${CMAKE_DL_LIBS})
 
 
 install(TARGETS sickle)

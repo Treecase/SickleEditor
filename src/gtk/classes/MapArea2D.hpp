@@ -23,14 +23,17 @@
 
 #include <editor/Editor.hpp>
 
+#include <cairomm/cairomm.h>
 #include <gdkmm/rgba.h>
 #include <giomm/simpleactiongroup.h>
 #include <glibmm/property.h>
 #include <glibmm/refptr.h>
 #include <glibmm/ustring.h>
+#include <glm/glm.hpp>
 #include <gtkmm/drawingarea.h>
 #include <gtkmm/menu.h>
-#include <cairomm/cairomm.h>
+
+#include <memory>
 
 
 namespace Sickle

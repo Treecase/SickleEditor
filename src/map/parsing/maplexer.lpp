@@ -70,3 +70,11 @@ TEXTURE_CHAR [[:alnum:][:punct:]]
     BEGIN(INITIAL);
     return token::TEXTURE;
     %}
+
+.   %{
+        throw MAP::LoadError{
+            "lexing failed @ "
+            + std::to_string(yylloc->begin.line)
+            + ":"
+            + std::to_string(yylloc->begin.column)};
+    %}

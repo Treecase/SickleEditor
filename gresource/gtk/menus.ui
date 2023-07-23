@@ -46,11 +46,11 @@
       <section>
         <item>
           <attribute name="label" translatable="yes">_Lua Console</attribute>
-          <attribute name="action">app.openLuaConsole</attribute>
+          <attribute name="action">win.openLuaConsole</attribute>
         </item>
         <item>
           <attribute name="label" translatable="yes">_Reload Lua Scripts</attribute>
-          <attribute name="action">app.reloadLua</attribute>
+          <attribute name="action">win.reloadLua</attribute>
         </item>
       </section>
     </submenu>

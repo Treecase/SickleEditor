@@ -30,12 +30,8 @@ namespace Sickle
     class WADModelColumns : public Gtk::TreeModelColumnRecord
     {
     public:
-        WADModelColumns()
-        {
-            add(col_path);
-        }
-
         Gtk::TreeModelColumn<Glib::ustring> col_path{};
+        WADModelColumns();
     };
 
     class WADDialog : public Gtk::Dialog

@@ -17,7 +17,6 @@
  */
 
 #include "WADDialog.hpp"
-
 #include "appid.hpp"
 
 #include <glibmm/convert.h>
@@ -25,6 +24,12 @@
 #include <gtkmm/treerowreference.h>
 
 #include <set>
+
+
+Sickle::WADModelColumns::WADModelColumns()
+{
+    add(col_path);
+}
 
 
 Sickle::WADDialog::WADDialog(Gtk::Window &parent)
@@ -67,19 +72,19 @@ void Sickle::WADDialog::on_add_path_clicked()
 {
     auto chooser = Gtk::FileChooserNative::create(
         "Add Texture WADs",
-        Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN,
-        "Open",
-        "Cancel");
+        Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN);
     chooser->set_transient_for(*this);
     chooser->set_select_multiple(true);
+
     auto wad_filter = Gtk::FileFilter::create();
     wad_filter->add_pattern("*.wad");
     wad_filter->set_name("Texture WADs");
     chooser->add_filter(wad_filter);
-    auto response = chooser->run();
+
+    auto const response = chooser->run();
     if (response == Gtk::ResponseType::RESPONSE_ACCEPT)
     {
-        auto path_array = _settings->get_string_array("wad-paths");
+        auto const path_array = _settings->get_string_array("wad-paths");
         std::set<Glib::ustring> path_set{path_array.begin(), path_array.end()};
         for (auto const &filename : chooser->get_filenames())
             path_set.insert(Glib::filename_to_utf8(filename));
@@ -92,11 +97,11 @@ void Sickle::WADDialog::on_add_path_clicked()
 
 void Sickle::WADDialog::on_remove_path_clicked()
 {
-    auto selected_iter = _pathview.get_selection()->get_selected();
+    auto const selected_iter = _pathview.get_selection()->get_selected();
     if (selected_iter)
     {
-        auto path = selected_iter->get_value(_columns.col_path);
-        auto path_array = _settings->get_string_array("wad-paths");
+        auto const path = selected_iter->get_value(_columns.col_path);
+        auto const path_array = _settings->get_string_array("wad-paths");
         std::set<Glib::ustring> path_set{path_array.begin(), path_array.end()};
         path_set.erase(path);
         _settings->set_string_array(

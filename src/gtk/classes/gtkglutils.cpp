@@ -17,6 +17,10 @@
  */
 
 #include "gtkglutils.hpp"
+#include "appid.hpp"
+
+#include <gtkmm/glarea.h>
+#include <giomm/resource.h>
 
 
 GLUtil::Shader

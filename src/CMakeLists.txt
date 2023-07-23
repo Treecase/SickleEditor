@@ -1,4 +1,7 @@
 
+add_library(config INTERFACE)
+target_include_directories(config INTERFACE "${PROJECT_BINARY_DIR}/include")
+
 configure_file(version.hpp.in "${PROJECT_BINARY_DIR}/include/version.hpp")
 
 add_subdirectory(convexhull)

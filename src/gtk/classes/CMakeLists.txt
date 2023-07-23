@@ -11,4 +11,4 @@ target_sources(sickle PRIVATE
     WADDialog.cpp
 )
 
-target_link_libraries(sickle PRIVATE fgd luageo rmf world3d)
+target_link_libraries(sickle PRIVATE config fgd luageo rmf world3d)

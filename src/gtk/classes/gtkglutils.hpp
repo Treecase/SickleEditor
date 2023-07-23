@@ -19,11 +19,9 @@
 #ifndef SE_GTKGLUTILS_HPP
 #define SE_GTKGLUTILS_HPP
 
-#include "appid.hpp"
 #include <glutils/glutils.hpp>
 
-#include <gtkmm/glarea.h>
-#include <giomm/resource.h>
+#include <string>
 
 
 namespace GLUtil

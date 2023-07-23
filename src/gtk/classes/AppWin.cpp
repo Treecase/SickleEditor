@@ -26,6 +26,7 @@
 #include <map/mapsaver.hpp>
 #include <rmf/rmf.hpp>
 
+#include <giomm/resource.h>
 #include <glibmm/fileutils.h>
 #include <gtkmm/messagedialog.h>
 
@@ -34,112 +35,149 @@
 #include <iostream>
 
 
-#define GRID_SIZE_MIN   1U
-#define GRID_SIZE_MAX   512U
+/** Convert a string to lowercase. */
+std::string lowercase(std::string s)
+{
+    std::transform(
+        s.begin(), s.end(),
+        s.begin(),
+        [](unsigned char ch){return std::tolower(ch);});
+    return s;
+}
+
+
+/**
+ * Thrown by 'loadAnyMapFile' if neither RMF or MAP format can load the file
+ * correctly.
+ */
+struct GenericLoadError : public std::runtime_error
+{
+    std::string const rmf, map;
+    GenericLoadError(std::string const &rmf, std::string const &map)
+    :   std::runtime_error{rmf + ";" + map}
+    ,   rmf{rmf}
+    ,   map{map}
+    {
+    }
+};
+
 
 
 Sickle::AppWin::AppWin()
 :   Glib::ObjectBase{typeid(AppWin)}
 ,   Gtk::ApplicationWindow{}
-,   editor{}
 ,   L{luaL_newstate()}
-,   m_grid{}
-,   m_viewgrid{}
-,   m_maparea{editor}
-,   m_drawarea_top{editor}
-,   m_drawarea_front{editor}
-,   m_drawarea_right{editor}
-,   m_luaconsolewindow{}
-,   m_luaconsole{}
-,   m_maptools{editor}
-,   m_hbox{}
-,   m_gridsizelabel{}
+,   _view3d{editor}
+,   _view2d_top{editor}
+,   _view2d_front{editor}
+,   _view2d_right{editor}
+,   _maptools{editor}
 ,   _prop_grid_size{*this, "grid-size", 32}
-,   _binding_grid_size_top{}
-,   _binding_grid_size_front{}
-,   _binding_grid_size_right{}
+,   _binding_grid_size_top{
+        Glib::Binding::bind_property(
+            property_grid_size(),
+            _view2d_top.property_grid_size(),
+            Glib::BindingFlags::BINDING_SYNC_CREATE)}
+,   _binding_grid_size_front{
+        Glib::Binding::bind_property(
+            property_grid_size(),
+            _view2d_front.property_grid_size(),
+            Glib::BindingFlags::BINDING_SYNC_CREATE)}
+,   _binding_grid_size_right{
+        Glib::Binding::bind_property(
+            property_grid_size(),
+            _view2d_right.property_grid_size(),
+            Glib::BindingFlags::BINDING_SYNC_CREATE)}
 {
+    set_show_menubar(true);
+    set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
+    set_title(SE_CANON_NAME);
+
+    add_action(
+        "openLuaConsole",
+        sigc::mem_fun(*this, &AppWin::on_action_openLuaConsole));
+    add_action(
+        "reloadLua",
+        sigc::mem_fun(*this, &AppWin::on_action_reloadLua));
+
+    add_action(
+        "mapTools_Select",
+        sigc::mem_fun(*this, &AppWin::on_action_mapTools_Select));
+    add_action(
+        "mapTools_CreateBrush",
+        sigc::mem_fun(*this, &AppWin::on_action_mapTools_CreateBrush));
+
+
+    // TODO: Use Gtk::Builder to clean this up?
+    _view2d_top.set_draw_angle(Sickle::MapArea2D::DrawAngle::TOP);
+    _view2d_front.set_draw_angle(Sickle::MapArea2D::DrawAngle::FRONT);
+    _view2d_right.set_draw_angle(Sickle::MapArea2D::DrawAngle::RIGHT);
+
+    _viewsgrid.set_row_spacing(2);
+    _viewsgrid.set_column_spacing(2);
+    _viewsgrid.set_row_homogeneous(true);
+    _viewsgrid.set_column_homogeneous(true);
+    _viewsgrid.attach(_view3d, 0, 0);
+    _viewsgrid.attach(_view2d_top, 1, 0);
+    _viewsgrid.attach(_view2d_front, 0, 1);
+    _viewsgrid.attach(_view2d_right, 1, 1);
+
+    _luainfobar.set_show_close_button(true);
+    _luainfobar.set_message_type(Gtk::MessageType::MESSAGE_INFO);
+    _luainfobarlabel.set_text("Reloaded Lua scripts");
+    auto contentarea = dynamic_cast<Gtk::Container *>(
+        _luainfobar.get_content_area());
+    contentarea->add(_luainfobarlabel);
+
+    _inforegion.pack_end(_gridsizelabel);
+    _inforegion.pack_start(_luainfobar);
+
+    _basegrid.attach(_maptools, 0, 0);
+    _basegrid.attach(_viewsgrid, 1, 0);
+    _basegrid.attach(_inforegion, 0, 1, 2);
+    add(_basegrid);
+
+    _luaconsole.set_size_request(320, 240);
+    _luaconsolewindow.add(_luaconsole);
+    _luaconsolewindow.show_all_children();
+    _luaconsolewindow.set_title(SE_CANON_NAME " - Lua Console");
+
+    _luainfobar.signal_response().connect([this](int){_luainfobar.hide();});
+    signal_lua_reloaded().connect(
+        sigc::mem_fun(_luainfobar, &Gtk::InfoBar::show));
+    signal_lua_reloaded().connect(
+        [this](){_luaconsole.writeline("---Lua Reloaded---");});
+    property_grid_size().signal_changed().connect(
+        sigc::mem_fun(*this, &AppWin::_on_grid_size_changed));
+
+    _on_grid_size_changed();
+
     if (!L)
         throw Lua::Error{"Failed to allocate new lua_State"};
     luaL_checkversion(L);
     luaL_openlibs(L);
 
-
-    set_show_menubar(true);
-    set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
-    set_title(SE_CANON_NAME);
-
-    _binding_grid_size_top = Glib::Binding::bind_property(
-        property_grid_size(),
-        m_drawarea_top.property_grid_size(),
-        Glib::BindingFlags::BINDING_SYNC_CREATE);
-    _binding_grid_size_front = Glib::Binding::bind_property(
-        property_grid_size(),
-        m_drawarea_front.property_grid_size(),
-        Glib::BindingFlags::BINDING_SYNC_CREATE);
-    _binding_grid_size_right = Glib::Binding::bind_property(
-        property_grid_size(),
-        m_drawarea_right.property_grid_size(),
-        Glib::BindingFlags::BINDING_SYNC_CREATE);
-
-    property_grid_size().signal_changed().connect(
-        sigc::mem_fun(*this, &AppWin::_on_grid_size_changed));
-    _on_grid_size_changed();
-
-    add_events(Gdk::KEY_PRESS_MASK);
-
-    m_drawarea_top.set_draw_angle(Sickle::MapArea2D::DrawAngle::TOP);
-    m_drawarea_front.set_draw_angle(Sickle::MapArea2D::DrawAngle::FRONT);
-    m_drawarea_right.set_draw_angle(Sickle::MapArea2D::DrawAngle::RIGHT);
-
-    m_viewgrid.set_row_spacing(2);
-    m_viewgrid.set_column_spacing(2);
-    m_viewgrid.set_row_homogeneous(true);
-    m_viewgrid.set_column_homogeneous(true);
-    m_viewgrid.attach(m_maparea, 0, 0);
-    m_viewgrid.attach(m_drawarea_top, 1, 0);
-    m_viewgrid.attach(m_drawarea_front, 0, 1);
-    m_viewgrid.attach(m_drawarea_right, 1, 1);
-
-    m_infobar.set_show_close_button(true);
-    m_infobar.signal_response().connect(
-        [this](int){m_infobar.hide();});
-    m_infobar.set_message_type(Gtk::MessageType::MESSAGE_INFO);
-    m_infobar_label.set_text("Reloaded Lua scripts");
-    auto contentarea = dynamic_cast<Gtk::Container *>(
-        m_infobar.get_content_area());
-    contentarea->add(m_infobar_label);
-    signal_lua_reloaded().connect(
-        sigc::mem_fun(m_infobar, &Gtk::InfoBar::show));
-
-    m_hbox.pack_end(m_gridsizelabel);
-    m_hbox.pack_start(m_infobar);
-
-    m_grid.attach(m_maptools, 0, 0);
-    m_grid.attach(m_viewgrid, 1, 0);
-    m_grid.attach(m_hbox, 0, 1, 2);
-    add(m_grid);
-
-    // Lua console window
-    m_luaconsole.property_lua_state().set_value(L);
-    m_luaconsole.set_size_request(320, 240);
-    m_luaconsolewindow.add(m_luaconsole);
-    m_luaconsolewindow.show_all_children();
-    m_luaconsolewindow.set_title(SE_CANON_NAME " - Lua Console");
-    signal_lua_reloaded().connect(
-        [this](){m_luaconsole.writeline("---Lua Reloaded---");});
-
     setup_lua_state();
     reload_scripts();
 
+    _luaconsole.property_lua_state().set_value(L);
+
     show_all_children();
-    m_infobar.hide();
+    _luainfobar.hide();
 }
+
 
 Sickle::Editor::Map loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
 {
-    std::string maperror{};
+    auto const path = file->get_path();
+    if (lowercase(path).rfind(".rmf") != std::string::npos)
+        return RMF::load(path);
+
+    else if (lowercase(path).rfind(".map") != std::string::npos)
+        return MAP::load(path);
+
     std::string rmferror{};
+    std::string maperror{};
     try
     {
         return RMF::load(file->get_path());
@@ -156,24 +194,43 @@ Sickle::Editor::Map loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
     {
         maperror = e.what();
     }
-    Gtk::MessageDialog d{
-        "Failed to load " + file->get_path() + ":\n"
-        + ".map: " + maperror + "\n"
-        + ".rmf: " + rmferror,
-        false,
-        Gtk::MessageType::MESSAGE_ERROR};
-    d.set_title("File Load Error");
-    d.run();
-    return {};
+    throw GenericLoadError{rmferror, maperror};
 }
+
 
 void Sickle::AppWin::open(Glib::RefPtr<Gio::File> const &file)
 {
     if (file)
-        editor.set_map(loadAnyMapFile(file));
+    {
+        std::string errmsg{};
+        try
+        {
+            editor.set_map(loadAnyMapFile(file));
+            return;
+        }
+        catch (RMF::LoadError const &e)
+        {
+            errmsg = ".rmf: " + std::string{e.what()};
+        }
+        catch (MAP::LoadError const &e)
+        {
+            errmsg = ".map: " + std::string{e.what()};
+        }
+        catch (GenericLoadError const &e)
+        {
+            errmsg = ".rmf: " + e.rmf + "\n" + ".map: " + e.map;
+        }
+        Gtk::MessageDialog d{
+            "Failed to load " + file->get_path() + ":\n" + errmsg,
+            false,
+            Gtk::MessageType::MESSAGE_ERROR};
+        d.set_title("File Load Error");
+        d.run();
+    }
     else
         editor.set_map({});
 }
+
 
 void Sickle::AppWin::save(std::string const &filename)
 {
@@ -181,17 +238,19 @@ void Sickle::AppWin::save(std::string const &filename)
     MAP::save(out, editor.get_map());
 }
 
+
 void Sickle::AppWin::show_console_window()
 {
-    m_luaconsolewindow.present();
+    _luaconsolewindow.present();
 }
+
 
 void Sickle::AppWin::reload_scripts()
 {
-    auto pre = lua_gettop(L);
+    auto const pre = lua_gettop(L);
     for (auto const &path : _lua_script_dirs)
     {
-        auto dir = Gio::File::create_for_path(path);
+        auto const dir = Gio::File::create_for_path(path);
         if (!dir->query_exists())
             continue;
         auto enumeration = dir->enumerate_children();
@@ -210,20 +269,24 @@ void Sickle::AppWin::reload_scripts()
     signal_lua_reloaded().emit();
 }
 
+
 void Sickle::AppWin::set_grid_size(guint grid_size)
 {
     property_grid_size() = std::clamp(grid_size, GRID_SIZE_MIN, GRID_SIZE_MAX);
 }
+
 
 guint Sickle::AppWin::get_grid_size()
 {
     return property_grid_size().get_value();
 }
 
+
 Sickle::MapTools::Tool Sickle::AppWin::get_maptool()
 {
-    return m_maptools.property_tool().get_value();
+    return _maptools.property_tool().get_value();
 }
+
 
 
 void Sickle::AppWin::setup_lua_state()
@@ -249,7 +312,7 @@ void Sickle::AppWin::setup_lua_state()
     std::vector<Glib::RefPtr<Gio::File>> dirs{};
     for (auto const &path : _lua_script_dirs)
     {
-        auto dir = Gio::File::create_for_path(path);
+        auto const dir = Gio::File::create_for_path(path);
         if (dir->query_exists())
             dirs.push_back(dir);
     }
@@ -268,7 +331,7 @@ void Sickle::AppWin::setup_lua_state()
     // Add script dirs to Lua path.
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "path");
-    std::string oldpath{lua_tostring(L, -1)};
+    std::string const oldpath{lua_tostring(L, -1)};
     lua_pop(L, 1);
 
     std::stringstream paths{};
@@ -283,8 +346,33 @@ void Sickle::AppWin::setup_lua_state()
 }
 
 
+void Sickle::AppWin::on_action_openLuaConsole()
+{
+    show_console_window();
+}
+
+
+void Sickle::AppWin::on_action_reloadLua()
+{
+    reload_scripts();
+}
+
+
+void Sickle::AppWin::on_action_mapTools_Select()
+{
+    _maptools.property_tool() = MapTools::Tool::SELECT;
+}
+
+
+void Sickle::AppWin::on_action_mapTools_CreateBrush()
+{
+    _maptools.property_tool() = MapTools::Tool::CREATE_BRUSH;
+}
+
+
+
 void Sickle::AppWin::_on_grid_size_changed()
 {
-    m_gridsizelabel.set_text(
+    _gridsizelabel.set_text(
         "Grid Size: " + std::to_string(property_grid_size().get_value()));
 }
