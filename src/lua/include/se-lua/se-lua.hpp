@@ -22,11 +22,7 @@
 #include <utils/TemplateUtils.hpp>
 #include <functional>
 
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
+#include <lua.hpp>
 
 #include <stdexcept>
 #include <string>

@@ -2,7 +2,6 @@
 target_sources(sickle PRIVATE
     About.cpp
     App.cpp
-    AppWin.cpp
     gtkglutils.cpp
     LuaConsole.cpp
     MapArea2D.cpp
@@ -11,4 +10,13 @@ target_sources(sickle PRIVATE
     WADDialog.cpp
 )
 
-target_link_libraries(sickle PRIVATE config fgd luageo rmf world3d)
+target_link_libraries(sickle PRIVATE
+    appwin
+    config
+    fgd
+    luageo
+    rmf
+    world3d
+)
+
+add_subdirectory(appwin)

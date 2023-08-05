@@ -19,14 +19,16 @@
 #ifndef SE_APPWIN_HPP
 #define SE_APPWIN_HPP
 
-#include "AppWin_Lua.hpp"
-#include "LuaConsole.hpp"
-#include "MapArea2D.hpp"
-#include "MapArea3D.hpp"
-#include "MapTools.hpp"
+#include "../LuaConsole.hpp"
+#include "../MapArea2D.hpp"
+#include "../MapArea3D.hpp"
+#include "../MapTools.hpp"
+#include "OperationSearch.hpp"
 
 #include <appid.hpp>
+#include <AppWin_Lua.hpp>
 #include <editor/Editor.hpp>
+#include <editor/Operation.hpp>
 
 #include <glibmm/property.h>
 #include <glibmm/binding.h>
@@ -35,12 +37,11 @@
 #include <gtkmm/hvbox.h>
 #include <gtkmm/infobar.h>
 #include <gtkmm/label.h>
+#include <gtkmm/searchentry.h>
 
 
-namespace Sickle
+namespace Sickle::AppWin
 {
-    class App;
-
     class AppWin : public Gtk::ApplicationWindow
     {
     public:
@@ -57,6 +58,8 @@ namespace Sickle
         void show_console_window();
         /** Reload Lua scripts. */
         void reload_scripts();
+        /** Open the Operation Search dialog. */
+        void search_operations();
 
         void set_grid_size(guint grid_size);
         guint get_grid_size();
@@ -76,6 +79,8 @@ namespace Sickle
         void on_action_mapTools_Select();
         void on_action_mapTools_CreateBrush();
 
+        bool on_key_press_event(GdkEventKey *event) override;
+
     private:
         static constexpr guint GRID_SIZE_MIN = 1;
         static constexpr guint GRID_SIZE_MAX = 512;
@@ -88,6 +93,7 @@ namespace Sickle
         Gtk::Window _luaconsolewindow{};
         LuaConsole _luaconsole{};
         Gtk::InfoBar _luainfobar{};
+        OperationSearch _opsearch{};
 
         // Structural widgets
         Gtk::Grid _basegrid{};
@@ -112,6 +118,7 @@ namespace Sickle
         };
 
         void _on_grid_size_changed();
+        void _on_opsearch_op_chosen(Editor::Operation const &op);
     };
 }
 

@@ -2,11 +2,13 @@
 <gresources>
   <gresource prefix="@GRESOURCE_PREFIX@">
     <file>gtk/menus.ui</file>
+    <file>gtk/OperationSearch.glade</file>
     <file>gtk/MapArea2D/CreateBrushPopupMenu.ui</file>
     <file>gtk/MapArea2D/SelectPopupMenu.ui</file>
     <file>lua/gdkevents.lua</file>
     <file>lua/gdkkeysyms.lua</file>
     <file>lua/gdktypes.lua</file>
+    <file>operations/basic.lua</file>
     <file>shaders/map.frag</file>
     <file>shaders/map.vert</file>
     <file>logo.png</file>

@@ -12,11 +12,13 @@ add_custom_command(
         --generate-source
     DEPENDS
         gtk/menus.ui
+        gtk/OperationSearch.glade
         gtk/MapArea2D/CreateBrushPopupMenu.ui
         gtk/MapArea2D/SelectPopupMenu.ui
         lua/gdkevents.lua
         lua/gdkkeysyms.lua
         lua/gdktypes.lua
+        operations/basic.lua
         shaders/map.frag
         shaders/map.vert
         logo.png

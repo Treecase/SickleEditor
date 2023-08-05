@@ -28,11 +28,15 @@
 
 #include <giomm/resource.h>
 #include <glibmm/fileutils.h>
+#include <gtkmm/builder.h>
 #include <gtkmm/messagedialog.h>
 
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+
+
+using namespace Sickle::AppWin;
 
 
 /** Convert a string to lowercase. */
@@ -62,8 +66,7 @@ struct GenericLoadError : public std::runtime_error
 };
 
 
-
-Sickle::AppWin::AppWin()
+AppWin::AppWin()
 :   Glib::ObjectBase{typeid(AppWin)}
 ,   Gtk::ApplicationWindow{}
 ,   L{luaL_newstate()}
@@ -107,6 +110,8 @@ Sickle::AppWin::AppWin()
         "mapTools_CreateBrush",
         sigc::mem_fun(*this, &AppWin::on_action_mapTools_CreateBrush));
 
+    add_events(Gdk::EventMask::KEY_PRESS_MASK);
+
 
     // TODO: Use Gtk::Builder to clean this up?
     _view2d_top.set_draw_angle(Sickle::MapArea2D::DrawAngle::TOP);
@@ -149,6 +154,10 @@ Sickle::AppWin::AppWin()
         [this](){_luaconsole.writeline("---Lua Reloaded---");});
     property_grid_size().signal_changed().connect(
         sigc::mem_fun(*this, &AppWin::_on_grid_size_changed));
+
+    _opsearch.set_transient_for(*this);
+    _opsearch.signal_operation_chosen().connect(
+        sigc::mem_fun(*this, &AppWin::_on_opsearch_op_chosen));
 
     _on_grid_size_changed();
 
@@ -198,7 +207,7 @@ Sickle::Editor::Map loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
 }
 
 
-void Sickle::AppWin::open(Glib::RefPtr<Gio::File> const &file)
+void AppWin::open(Glib::RefPtr<Gio::File> const &file)
 {
     if (file)
     {
@@ -232,20 +241,20 @@ void Sickle::AppWin::open(Glib::RefPtr<Gio::File> const &file)
 }
 
 
-void Sickle::AppWin::save(std::string const &filename)
+void AppWin::save(std::string const &filename)
 {
     std::ofstream out{filename};
     MAP::save(out, editor.get_map());
 }
 
 
-void Sickle::AppWin::show_console_window()
+void AppWin::show_console_window()
 {
     _luaconsolewindow.present();
 }
 
 
-void Sickle::AppWin::reload_scripts()
+void AppWin::reload_scripts()
 {
     auto const pre = lua_gettop(L);
     for (auto const &path : _lua_script_dirs)
@@ -270,26 +279,32 @@ void Sickle::AppWin::reload_scripts()
 }
 
 
-void Sickle::AppWin::set_grid_size(guint grid_size)
+void AppWin::search_operations()
+{
+    _opsearch.present();
+}
+
+
+void AppWin::set_grid_size(guint grid_size)
 {
     property_grid_size() = std::clamp(grid_size, GRID_SIZE_MIN, GRID_SIZE_MAX);
 }
 
 
-guint Sickle::AppWin::get_grid_size()
+guint AppWin::get_grid_size()
 {
     return property_grid_size().get_value();
 }
 
 
-Sickle::MapTools::Tool Sickle::AppWin::get_maptool()
+Sickle::MapTools::Tool AppWin::get_maptool()
 {
     return _maptools.property_tool().get_value();
 }
 
 
 
-void Sickle::AppWin::setup_lua_state()
+void AppWin::setup_lua_state()
 {
     luaL_requiref(L, "appwin", luaopen_appwin, 1);
     luaL_requiref(L, "geo", luaopen_geo, 1);
@@ -346,33 +361,53 @@ void Sickle::AppWin::setup_lua_state()
 }
 
 
-void Sickle::AppWin::on_action_openLuaConsole()
+void AppWin::on_action_openLuaConsole()
 {
     show_console_window();
 }
 
 
-void Sickle::AppWin::on_action_reloadLua()
+void AppWin::on_action_reloadLua()
 {
     reload_scripts();
 }
 
 
-void Sickle::AppWin::on_action_mapTools_Select()
+void AppWin::on_action_mapTools_Select()
 {
     _maptools.property_tool() = MapTools::Tool::SELECT;
 }
 
 
-void Sickle::AppWin::on_action_mapTools_CreateBrush()
+void AppWin::on_action_mapTools_CreateBrush()
 {
     _maptools.property_tool() = MapTools::Tool::CREATE_BRUSH;
 }
 
 
+bool AppWin::on_key_press_event(GdkEventKey *event)
+{
+    switch (event->keyval)
+    {
+    case GDK_KEY_space:
+        search_operations();
+        return true;
 
-void Sickle::AppWin::_on_grid_size_changed()
+    default:
+        return Gtk::ApplicationWindow::on_key_press_event(event);
+    }
+}
+
+
+
+void AppWin::_on_grid_size_changed()
 {
     _gridsizelabel.set_text(
         "Grid Size: " + std::to_string(property_grid_size().get_value()));
+}
+
+
+void AppWin::_on_opsearch_op_chosen(Editor::Operation const &op)
+{
+    op.execute(editor);
 }

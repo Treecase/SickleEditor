@@ -90,10 +90,10 @@ void Sickle::App::on_open(
     Gio::Application::type_vec_files const &files, Glib::ustring const &hint)
 {
     // Use already existing AppWin if it exists, otherwise create a new one.
-    AppWin *appwindow = nullptr;
+    AppWin::AppWin *appwindow = nullptr;
     auto const windows = get_windows();
     if (windows.size() > 0)
-        appwindow = dynamic_cast<AppWin *>(windows.at(0));
+        appwindow = dynamic_cast<AppWin::AppWin *>(windows.at(0));
     if (!appwindow)
         appwindow = _create_appwindow();
     appwindow->open(files.at(0));
@@ -104,14 +104,14 @@ void Sickle::App::on_open(
 
 void Sickle::App::on_action_new()
 {
-    auto win = dynamic_cast<AppWin *>(get_active_window());
+    auto win = dynamic_cast<AppWin::AppWin *>(get_active_window());
     win->open(Glib::RefPtr<Gio::File>{nullptr});
 }
 
 
 void Sickle::App::on_action_open()
 {
-    auto win = dynamic_cast<AppWin *>(get_active_window());
+    auto win = dynamic_cast<AppWin::AppWin *>(get_active_window());
     auto chooser = Gtk::FileChooserNative::create(
         "Open",
         Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN);
@@ -141,7 +141,7 @@ void Sickle::App::on_action_open()
 
 void Sickle::App::on_action_save()
 {
-    auto win = dynamic_cast<AppWin *>(get_active_window());
+    auto win = dynamic_cast<AppWin::AppWin *>(get_active_window());
     auto chooser = Gtk::FileChooserNative::create(
         "Save",
         Gtk::FileChooserAction::FILE_CHOOSER_ACTION_SAVE);
@@ -206,7 +206,7 @@ void Sickle::App::on_action_setGameDef()
 
 void Sickle::App::on_action_setWADPaths()
 {
-    auto win = dynamic_cast<AppWin *>(get_active_window());
+    auto win = dynamic_cast<AppWin::AppWin *>(get_active_window());
     auto waddialog = WADDialog{*win};
     waddialog.set_transient_for(*win);
     int const response = waddialog.run();
@@ -223,9 +223,9 @@ void Sickle::App::on_action_about()
 
 
 
-Sickle::AppWin *Sickle::App::_create_appwindow()
+Sickle::AppWin::AppWin *Sickle::App::_create_appwindow()
 {
-    auto appwindow = new AppWin{};
+    auto appwindow = new AppWin::AppWin{};
     _sync_wadpaths(appwindow);
     add_window(*appwindow);
     // Delete the window when it is hidden.
@@ -235,7 +235,7 @@ Sickle::AppWin *Sickle::App::_create_appwindow()
 }
 
 
-void Sickle::App::_sync_wadpaths(AppWin *appwin)
+void Sickle::App::_sync_wadpaths(AppWin::AppWin *appwin)
 {
     auto const settings = Gio::Settings::create(SE_APPLICATION_ID);
     appwin->editor.wads.set(settings->get_string_array("wad-paths"));

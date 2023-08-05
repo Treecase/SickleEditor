@@ -2,3 +2,4 @@
 build/
 notes/
 *.dll
+*.glade~

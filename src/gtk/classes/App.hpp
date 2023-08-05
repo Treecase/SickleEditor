@@ -67,8 +67,8 @@ namespace Sickle
         Glib::Property<Glib::ustring> _prop_fgd_path;
         Glib::Property<std::vector<Glib::ustring>> _prop_wad_paths;
 
-        AppWin *_create_appwindow();
-        void _sync_wadpaths(AppWin *appwin);
+        AppWin::AppWin *_create_appwindow();
+        void _sync_wadpaths(AppWin::AppWin *appwin);
 
         // Signal Handlers
         void _on_hide_window(Gtk::Window *window);

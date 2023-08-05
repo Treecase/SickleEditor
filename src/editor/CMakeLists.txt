@@ -10,12 +10,16 @@ add_library(editor STATIC
     Face.cpp
     Map.cpp
     MapTools.cpp
+    Operation.cpp
     Selection.cpp
 )
 target_include_directories(editor PUBLIC include)
 target_link_libraries(editor
     PUBLIC
-        convexhull map rmf
+        convexhull
+        map
+        rmf
+        se-lua
         PkgConfig::sigc++
     PRIVATE
         commands

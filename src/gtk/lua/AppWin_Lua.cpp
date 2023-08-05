@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../classes/AppWin.hpp"
+#include "../classes/appwin/AppWin.hpp"
 #include "AppWin_Lua.hpp"
 #include "LuaGdkEvent.hpp"
 #include "MapArea2D_Lua.hpp"
@@ -25,7 +25,9 @@
 #include <se-lua/utils/RefBuilder.hpp>
 
 
-static Lua::RefBuilder<Sickle::AppWin> builder{"Sickle.appwin"};
+using namespace Sickle::AppWin;
+
+static Lua::RefBuilder<AppWin> builder{"Sickle.appwin"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,7 +73,7 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::AppWin *appwin)
+void Lua::push(lua_State *L, AppWin *appwin)
 {
     if (builder.pushnew(appwin))
         return;
@@ -92,11 +94,11 @@ void Lua::push(lua_State *L, Sickle::AppWin *appwin)
     builder.finish();
 }
 
-Sickle::AppWin *lappwin_check(lua_State *L, int arg)
+AppWin *lappwin_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, "Sickle.appwin");
     luaL_argcheck(L, ud != NULL, arg, "`Sickle.appwin' expected");
-    return *static_cast<Sickle::AppWin **>(ud);
+    return *static_cast<AppWin **>(ud);
 }
 
 int luaopen_appwin(lua_State *L)

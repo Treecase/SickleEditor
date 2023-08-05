@@ -1,4 +1,3 @@
-
 add_library(editor-lua STATIC
     BrushBox_Lua.cpp
     Editor_Lua.cpp
