@@ -16,11 +16,13 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/EditorWorld.hpp"
+#include "world/EditorWorld.hpp"
 
 #include <glm/gtc/epsilon.hpp>
 
 #include <algorithm>
+
+using namespace Sickle::Editor;
 
 
 /* ===[ .map conversion utils ]=== */
@@ -82,7 +84,7 @@ public:
 
 
 
-Sickle::Editor::Face::Face(
+Face::Face(
     HalfPlane const &plane,
     std::vector<glm::vec3> const &brush_vertices)
 :   vertices{}
@@ -107,7 +109,7 @@ Sickle::Editor::Face::Face(
 }
 
 
-Sickle::Editor::Face::Face(
+Face::Face(
     MAP::Plane const &plane,
     std::unordered_set<glm::vec3> const &brush_vertices)
 :   vertices{}
@@ -137,7 +139,7 @@ Sickle::Editor::Face::Face(
 }
 
 
-Sickle::Editor::Face::Face(RMF::Face const &face)
+Face::Face(RMF::Face const &face)
 :   vertices{}
 ,   texture{face.texture_name}
 ,   u{face.texture_u.x, face.texture_u.y, face.texture_u.z}
@@ -154,7 +156,7 @@ Sickle::Editor::Face::Face(RMF::Face const &face)
 }
 
 
-Sickle::Editor::Face::operator MAP::Plane() const
+Face::operator MAP::Plane() const
 {
     auto abc = get_plane_points();
     return {
@@ -168,13 +170,13 @@ Sickle::Editor::Face::operator MAP::Plane() const
 }
 
 
-std::array<glm::vec3, 3> Sickle::Editor::Face::get_plane_points() const
+std::array<glm::vec3, 3> Face::get_plane_points() const
 {
     return {vertices.at(0), vertices.at(1), vertices.at(2)};
 }
 
 
-void Sickle::Editor::Face::set_vertex(size_t index, glm::vec3 vertex)
+void Face::set_vertex(size_t index, glm::vec3 vertex)
 {
     vertices.at(index) = vertex;
     signal_vertices_changed().emit();

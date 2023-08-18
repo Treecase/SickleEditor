@@ -21,7 +21,7 @@
 
 #include "gtkglutils.hpp"
 
-#include <editor/Editor.hpp>
+#include <core/Editor.hpp>
 #include <utils/Transform.hpp>
 #include <utils/FreeCam.hpp>
 #include <utils/DebugDrawer3D.hpp>

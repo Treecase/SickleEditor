@@ -19,8 +19,7 @@
 #ifndef SE_EDITOR_OPERATION_HPP
 #define SE_EDITOR_OPERATION_HPP
 
-#include "editor/Editor.hpp"
-
+#include <core/Editor.hpp>
 #include <se-lua/se-lua.hpp>
 
 #include <functional>
@@ -61,16 +60,13 @@ namespace Sickle::Editor
      */
     class OperationLoader
     {
-        struct LuaCloseWrapper{void operator()(lua_State *L){lua_close(L);}};
-
-        std::unique_ptr<lua_State, LuaCloseWrapper> const _L_actual;
         lua_State *const L; // alias for _L_actual
 
         std::vector<Operation>
         L_get_module_operations(std::string const &module_name) const;
 
     public:
-        OperationLoader();
+        OperationLoader(lua_State *L);
 
         /** Execute Lua code from the string. */
         void add_source(std::string const &source);

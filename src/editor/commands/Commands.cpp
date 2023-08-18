@@ -16,13 +16,13 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Commands.hpp"
-#include "editor/Editor.hpp"
+#include "Commands.hpp"
 
-#include <convexhull/convexhull.hpp>
+#include <core/Editor.hpp>
 
-#include <cstdio>
+#include <glm/glm.hpp>
 
+#include <vector>
 
 using namespace Sickle::Editor::commands;
 

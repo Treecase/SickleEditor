@@ -1,5 +1,5 @@
 /**
- * MapTools.cpp - Editor MapTools.
+ * Commands.hpp - Editor Command classes.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,33 +16,30 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
+#ifndef SE_EDITOR_COMMANDS_HPP
+#define SE_EDITOR_COMMANDS_HPP
 
-using namespace Sickle::Editor;
 
-
-/* ===[ MapToolSelect ]=== */
-void MapToolSelect::operator()()
+namespace Sickle::Editor
 {
-    puts(name().c_str());
+    class Editor;
+
+    class Command
+    {
+    public:
+        virtual void execute(Editor &)=0;
+        virtual ~Command()=default;
+    };
+
+    namespace commands
+    {
+        class AddBrush : public Command
+        {
+        public:
+            virtual void execute(Editor &editor) override;
+            virtual ~AddBrush()=default;
+        };
+    }
 }
 
-
-std::string MapToolSelect::name() const
-{
-    return "Select";
-}
-
-
-
-/* ===[ MapToolCreateBrush ]=== */
-void MapToolCreateBrush::operator()()
-{
-    puts(name().c_str());
-}
-
-
-std::string MapToolCreateBrush::name() const
-{
-    return "CreateBrush";
-}
+#endif

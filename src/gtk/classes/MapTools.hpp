@@ -19,7 +19,7 @@
 #ifndef SE_MAPTOOLS_HPP
 #define SE_MAPTOOLS_HPP
 
-#include <editor/Editor.hpp>
+#include <core/Editor.hpp>
 
 #include <gtkmm/box.h>
 #include <gtkmm/radiobutton.h>

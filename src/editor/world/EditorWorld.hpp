@@ -54,9 +54,7 @@ namespace Sickle
 }
 
 
-namespace Sickle
-{
-namespace Editor
+namespace Sickle::Editor
 {
     class Face
     {
@@ -166,7 +164,6 @@ namespace Editor
         // - paths (what are these?)
         // - cameras
     };
-}
 }
 
 #endif

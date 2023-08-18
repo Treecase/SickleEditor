@@ -19,6 +19,11 @@
 #include "../classes/MapArea2D.hpp"
 #include "MapArea2D_Lua.hpp"
 
+#define METATABLE "Sickle.gtk.maparea2d.transform2d"
+
+
+using namespace Sickle::MapArea2Dx;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -77,24 +82,24 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-void Lua::push(lua_State *L, Sickle::MapArea2Dx::Transform2D transform)
+void Lua::push(lua_State *L, Transform2D transform)
 {
-    auto ptr = static_cast<Sickle::MapArea2Dx::Transform2D *>(
-        lua_newuserdatauv(L, sizeof(Sickle::MapArea2Dx::Transform2D), 0));
+    auto ptr = static_cast<Transform2D *>(
+        lua_newuserdatauv(L, sizeof(Transform2D), 0));
     *ptr = transform;
-    luaL_setmetatable(L, "Sickle.maparea2d.transform2d");
+    luaL_setmetatable(L, METATABLE);
 }
 
-Sickle::MapArea2Dx::Transform2D *ltransform2d_check(lua_State *L, int arg)
+Transform2D *ltransform2d_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.maparea2d.transform2d");
-    luaL_argcheck(L, ud != NULL, arg, "`" "Sickle.maparea2d.transform2d" "' expected");
-    return static_cast<Sickle::MapArea2Dx::Transform2D *>(ud);
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
+    return static_cast<Transform2D *>(ud);
 }
 
 int luaopen_transform2d(lua_State *L)
 {
-    luaL_newmetatable(L, "Sickle.maparea2d.transform2d");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -1, "__index");
     return 1;

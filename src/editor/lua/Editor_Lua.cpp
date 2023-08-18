@@ -16,16 +16,15 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
 #include "Editor_Lua.hpp"
 
 #include <se-lua/utils/RefBuilder.hpp>
+#include <core/Editor.hpp>
 #include <LuaGeo.hpp>
 
+#define METATABLE "Sickle.editor"
+
 using namespace Sickle::Editor;
-
-
-static Lua::RefBuilder<Editor> builder{"Sickle.editor"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +71,8 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Editor *editor)
 {
-    if (builder.pushnew(editor))
+    Lua::RefBuilder<Editor> builder{L, METATABLE, editor};
+    if (builder.pushnew())
         return;
     builder.addSignalHandler(editor->signal_map_changed(), "on_map_changed");
     builder.finish();
@@ -80,8 +80,8 @@ void Lua::push(lua_State *L, Editor *editor)
 
 Editor *leditor_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.editor");
-    luaL_argcheck(L, ud != NULL, arg, "`Sickle.editor' expected");
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
     return *static_cast<Editor **>(ud);
 }
 
@@ -94,10 +94,10 @@ int luaopen_editor(lua_State *L)
     lua_setfield(L, -3, "brushbox");
     lua_setfield(L, -2, "selection");
 
-    luaL_newmetatable(L, "Sickle.editor");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
 
-    builder.setLua(L);
+    Lua::RefBuilder<Editor>::setup_indexing(L, METATABLE);
     return 1;
 }

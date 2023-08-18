@@ -16,14 +16,15 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
 #include "Editor_Lua.hpp"
-#include "LuaGeo.hpp"
 
 #include <se-lua/utils/RefBuilder.hpp>
+#include <core/Editor.hpp>
+#include <LuaGeo.hpp>
 
+#define METATABLE "Sickle.editorbrush"
 
-static Lua::RefBuilder<Sickle::Editor::Brush> builder{"Sickle.editorbrush"};
+using namespace Sickle::Editor;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,6 +36,7 @@ static int is_selected(lua_State *L)
     return 1;
 }
 
+
 static int transform(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
@@ -43,6 +45,7 @@ static int transform(lua_State *L)
     return 0;
 }
 
+
 static int translate(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
@@ -50,6 +53,7 @@ static int translate(lua_State *L)
     brush->translate(vec);
     return 0;
 }
+
 
 static int get_vertices(lua_State *L)
 {
@@ -67,10 +71,12 @@ static int get_vertices(lua_State *L)
     return 1;
 }
 
+
 static int do_nothing(lua_State *L)
 {
     return 0;
 }
+
 
 static luaL_Reg methods[] = {
     {"is_selected", is_selected},
@@ -83,32 +89,42 @@ static luaL_Reg methods[] = {
 };
 
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::Editor::Brush *brush)
+void Lua::push(lua_State *L, Brush *brush)
 {
-    if (builder.pushnew(brush))
+    Lua::RefBuilder<Brush> builder{L, METATABLE, brush};
+    int const t1 = lua_gettop(L);
+    if (builder.pushnew())
+    {
+        int const t2 = lua_gettop(L);
+        assert(t2 == t1 + 1);
         return;
+    }
     builder.addSignalHandler(
         brush->is_selected.signal_changed(), "on_selected");
     builder.finish();
+    int const t3 = lua_gettop(L);
+    assert(t3 == t1 + 1);
 }
 
-Sickle::Editor::Brush *leditorbrush_check(lua_State *L, int arg)
+
+Brush *leditorbrush_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.editorbrush");
-    luaL_argcheck(L, ud != NULL, arg, "`Sickle.editorbrush' expected");
-    return *static_cast<Sickle::Editor::Brush **>(ud);
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
+    return *static_cast<Brush **>(ud);
 }
+
 
 int luaopen_editorbrush(lua_State *L)
 {
     lua_newtable(L);
-    luaL_newmetatable(L, "Sickle.editorbrush");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
-
-    builder.setLua(L);
+    Lua::RefBuilder<Brush>::setup_indexing(L, METATABLE);
     return 1;
 }

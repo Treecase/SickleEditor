@@ -21,68 +21,36 @@
 
 #include "../se-lua.hpp"
 
+#include <memory>
+#include <unordered_map>
+
 
 namespace Lua
 {
+    /**
+     * Singleton mapping pointers to Lua values.
+     */
     class ReferenceManager
     {
-        lua_State *L{nullptr};
+        struct LuaDeleter {void operator()(lua_State *L) const {lua_close(L);}};
+
+        static std::unique_ptr<lua_State, LuaDeleter> const _L_actual;
+        static lua_State *const _L;
+        static std::unordered_map<void *, int> _references;
+
     public:
-        virtual ~ReferenceManager()
-        {
-            destroy();
-        }
+        /**
+         * Create a reference from POINTER to the Lua value at stack IDX.
+         *
+         * An existing mapping will be silently overwritten.
+         */
+        void set(lua_State *L, void *pointer, int idx);
 
-        void init(lua_State *_L)
-        {
-            if (L != nullptr)
-                throw std::runtime_error{"attempted to re-init a Lua::ReferenceManager"};
-            L = _L;
-            // Add reference table to Lua registry.
-            lua_pushlightuserdata(L, this);
-            lua_newtable(L);
-            lua_settable(L, LUA_REGISTRYINDEX);
-        }
+        /** Push the Lua value referenced by POINTER to the stack. */
+        void get(lua_State *L, void *pointer);
 
-        void destroy()
-        {
-            if (L == nullptr)
-                return;
-            // Remove reference table from Lua registry.
-            lua_pushlightuserdata(L, this);
-            lua_pushnil(L);
-            lua_settable(L, LUA_REGISTRYINDEX);
-            L = nullptr;
-        }
-
-        /** Make POINTER a reference to VALUE. */
-        void set(void *pointer, int value)
-        {
-            if (value < 0)
-                value = lua_gettop(L) + value + 1;
-            // Get reference table.
-            lua_pushlightuserdata(L, this);
-            lua_gettable(L, LUA_REGISTRYINDEX);
-            // Add the reference to the table.
-            lua_pushlightuserdata(L, pointer);
-            lua_pushvalue(L, value);
-            lua_settable(L, -3);
-            // Clean up.
-            lua_pop(L, 1);
-        }
-
-        /** Get the Lua value referenced by POINTER. */
-        void get(void *pointer)
-        {
-            // Get reference table.
-            lua_pushlightuserdata(L, this);
-            lua_gettable(L, LUA_REGISTRYINDEX);
-            // Get the reference from the table.
-            lua_pushlightuserdata(L, pointer);
-            lua_gettable(L, -2);
-            // Clean up.
-            lua_remove(L, -2);
-        }
+        /** Delete the Lua reference. */
+        void unref(lua_State *L, void *pointer);
     };
 }
 

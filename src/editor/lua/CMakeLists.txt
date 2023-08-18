@@ -5,4 +5,10 @@ add_library(editor-lua STATIC
     Selection_Lua.cpp
 )
 target_include_directories(editor-lua PUBLIC .)
-target_link_libraries(editor-lua PRIVATE editor luageo PUBLIC se-lua)
+target_link_libraries(editor-lua
+    PRIVATE
+        editor-core
+        luageo
+    PUBLIC
+        se-lua
+)

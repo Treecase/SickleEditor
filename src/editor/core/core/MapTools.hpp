@@ -1,5 +1,5 @@
 /**
- * BrushBox.hpp - Editor BrushBox class.
+ * MapTools.hpp - Editor MapTools class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,32 +16,40 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_EDITOR_BRUSHBOX_HPP
-#define SE_EDITOR_BRUSHBOX_HPP
+#ifndef SE_EDITOR_MAPTOOLS_HPP
+#define SE_EDITOR_MAPTOOLS_HPP
 
-#include <glm/glm.hpp>
-#include <sigc++/signal.h>
+#include <string>
 
 
-namespace Sickle
+namespace Sickle::Editor
 {
-namespace Editor
-{
-    class BrushBox
+    class MapTool
     {
     public:
-        void p1(glm::vec3 v);
-        void p2(glm::vec3 v);
-        glm::vec3 p1() const;
-        glm::vec3 p2() const;
+        virtual void operator()()=0;
+        virtual std::string name() const=0;
 
-        auto &signal_updated() {return _signal_updated;}
-
-    private:
-        glm::vec3 _p1, _p2;
-        sigc::signal<void()> _signal_updated{};
+        virtual ~MapTool()=default;
     };
-}
+
+    class MapToolSelect : public MapTool
+    {
+    public:
+        virtual void operator()() override;
+        virtual std::string name() const override;
+
+        virtual ~MapToolSelect()=default;
+    };
+
+    class MapToolCreateBrush : public MapTool
+    {
+    public:
+        virtual void operator()() override;
+        virtual std::string name() const override;
+
+        virtual ~MapToolCreateBrush()=default;
+    };
 }
 
 #endif

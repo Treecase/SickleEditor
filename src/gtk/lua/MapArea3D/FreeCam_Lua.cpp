@@ -20,6 +20,8 @@
 
 #include <LuaGeo.hpp>
 
+#define METATABLE "Sickle.gtk.freecam"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -85,19 +87,19 @@ void Lua::push(lua_State *L, FreeCam camera)
     auto ptr = static_cast<FreeCam *>(
         lua_newuserdatauv(L, sizeof(FreeCam), 0));
     *ptr = camera;
-    luaL_setmetatable(L, "Sickle.freecam");
+    luaL_setmetatable(L, METATABLE);
 }
 
 FreeCam *lfreecam_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.freecam");
-    luaL_argcheck(L, ud != NULL, arg, "`Sickle.freecam' expected");
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
     return static_cast<FreeCam *>(ud);
 }
 
 int luaopen_freecam(lua_State *L)
 {
-    luaL_newmetatable(L, "Sickle.freecam");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -1, "__index");
     return 0;

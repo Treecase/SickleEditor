@@ -17,15 +17,17 @@
  */
 
 #include "../../classes/MapArea2D.hpp"
-#include "Editor_Lua.hpp"
 #include "LuaGdkEvent.hpp"
 #include "MapArea2D_Lua.hpp"
 
 #include <se-lua/utils/RefBuilder.hpp>
+#include <Editor_Lua.hpp>
 #include <LuaGeo.hpp>
 
+#define METATABLE "Sickle.gtk.maparea2d"
 
-static Lua::RefBuilder<Sickle::MapArea2D> builder{"Sickle.maparea2d"};
+
+using namespace Sickle;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +101,7 @@ static int set_cursor(lua_State *L)
 static int set_draw_angle(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    ma->set_draw_angle((Sickle::MapArea2D::DrawAngle)luaL_checkinteger(L, 2));
+    ma->set_draw_angle((MapArea2D::DrawAngle)luaL_checkinteger(L, 2));
     return 0;
 }
 
@@ -180,9 +182,10 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::MapArea2D *maparea)
+void Lua::push(lua_State *L, MapArea2D *maparea)
 {
-    if (builder.pushnew(maparea))
+    Lua::RefBuilder<MapArea2D> builder{L, METATABLE, maparea};
+    if (builder.pushnew())
         return;
 
     builder.addSignalHandler(
@@ -200,11 +203,11 @@ void Lua::push(lua_State *L, Sickle::MapArea2D *maparea)
     builder.finish();
 }
 
-Sickle::MapArea2D *lmaparea2d_check(lua_State *L, int arg)
+MapArea2D *lmaparea2d_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.maparea2d");
-    luaL_argcheck(L, ud != NULL, arg, "`Sickle.maparea2d' expected");
-    return *static_cast<Sickle::MapArea2D **>(ud);
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
+    return *static_cast<MapArea2D **>(ud);
 }
 
 int luaopen_maparea2d(lua_State *L)
@@ -219,17 +222,17 @@ int luaopen_maparea2d(lua_State *L)
     lua_setfield(L, -3, "transfrom2d");
     lua_setfield(L, -2, "grabbablebox");
 
-    luaL_newmetatable(L, "Sickle.maparea2d");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
 
-    lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::TOP);
-    lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::FRONT);
-    lua_pushinteger(L, Sickle::MapArea2D::DrawAngle::RIGHT);
+    lua_pushinteger(L, MapArea2D::DrawAngle::TOP);
+    lua_pushinteger(L, MapArea2D::DrawAngle::FRONT);
+    lua_pushinteger(L, MapArea2D::DrawAngle::RIGHT);
     lua_setfield(L, -4, "RIGHT");
     lua_setfield(L, -3, "FRONT");
     lua_setfield(L, -2, "TOP");
 
-    builder.setLua(L);
+    Lua::RefBuilder<MapArea2D>::setup_indexing(L, METATABLE);
     return 1;
 }

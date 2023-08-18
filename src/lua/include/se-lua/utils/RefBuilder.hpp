@@ -16,8 +16,12 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef SE_LUA_REFBUILDER_HPP
+#define SE_LUA_REFBUILDER_HPP
+
 #include "../se-lua.hpp"
 #include "ReferenceManager.hpp"
+#include <iostream> // temp
 
 
 static int _refbuilder_dunder_newindex(lua_State *L)
@@ -38,7 +42,8 @@ static int _refbuilder_dunder_index(lua_State *L)
     if (lua_isnil(L, -1))
     {
         lua_pop(L, 2);
-        luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));
+        if (lua_getmetatable(L, 1) == 0)
+            return 0;
         lua_pushvalue(L, 2);
         lua_gettable(L, -2);
     }
@@ -53,38 +58,32 @@ namespace Lua
     {
     private:
         std::string const _library;
-        lua_State *L{nullptr};
-        T *_object{nullptr};
+        lua_State *const L;
+        T *const _pointer;
         Lua::ReferenceManager _refman{};
 
     public:
-        RefBuilder(std::string const &library)
-        :   _library{library}
+        /** Set up __index and __newindex methods. */
+        static void setup_indexing(lua_State *L, std::string const &metatable)
         {
-        }
-
-        /**
-         * Must be called after creating the library's metatable.
-         * Overrides the metatable's __index and __newindex.
-         */
-        void setLua(lua_State *nL)
-        {
-            if (nL == L)
-                return;
-            L = nL;
-            _refman.destroy();
-            _refman.init(nL);
-
-            luaL_getmetatable(L, _library.c_str());
+            luaL_getmetatable(L, metatable.c_str());
+            if (lua_isnil(L, -1))
+                throw std::runtime_error{"no metatable '" + metatable + "'"};
 
             lua_pushcfunction(L, _refbuilder_dunder_newindex);
             lua_setfield(L, -2, "__newindex");
 
-            lua_pushstring(L, _library.c_str());
-            lua_pushcclosure(L, _refbuilder_dunder_index, 1);
+            lua_pushcfunction(L, _refbuilder_dunder_index);
             lua_setfield(L, -2, "__index");
 
             lua_pop(L, 1);
+        }
+
+        RefBuilder(lua_State *L, std::string const &library, T *pointer)
+        :   _library{library}
+        ,   _pointer{pointer}
+        ,   L{L}
+        {
         }
 
         /** Add a data field to the object. */
@@ -128,18 +127,26 @@ namespace Lua
         }
 
         /** Push a new reference-style object onto the stack. */
-        bool pushnew(T *object)
+        bool pushnew()
         {
-            _refman.get(object);
-            if (!lua_isnil(L, -1))
-                return true;
-            else
-                lua_pop(L, 1);
+            try {
+                _refman.get(L, _pointer);
+                if (lua_type(L, -1) == LUA_TUSERDATA)
+                {
+                    return true;
+                }
+                else
+                {
+                    lua_pop(L, 1);
+                    std::cerr << "refman.get() pushed the wrong type\n";
+                }
+            }
+            catch (std::out_of_range const &e) {
+            }
 
-            _object = object;
             auto ptr = static_cast<T const **>(
                 lua_newuserdatauv(L, sizeof(T *), 1));
-            *ptr = _object;
+            *ptr = _pointer;
             luaL_setmetatable(L, _library.c_str());
 
             lua_newtable(L);
@@ -151,21 +158,21 @@ namespace Lua
         /** Finish building the object. */
         void finish()
         {
-            _refman.set(_object, -1);
-            _object = nullptr;
+            _refman.set(L, _pointer, -1);
         }
 
     private:
         template<class Signal, typename R, typename... A>
         void _addSignalHandler_low(Signal sig, char const *fn_name)
         {
-            auto cached_L = L;
-            auto cached_object = _object;
+            auto cL = L;
+            auto cP = _pointer;
             auto conn = sig.connect(
-                [this, cached_L, cached_object, fn_name](A... args){
-                    _refman.get(cached_object);
-                    Lua::call_method_r(cached_L, 1, fn_name, args...);
-                    return Lua::get_as<R>(L, -1);
+                [cL, cP, fn_name](A... args){
+                    ReferenceManager refman{};
+                    refman.get(cL, cP);
+                    Lua::call_method_r(cL, 1, fn_name, args...);
+                    return Lua::get_as<R>(cL, -1);
                 }
             );
         }
@@ -173,14 +180,17 @@ namespace Lua
         template<class Signal, typename... A>
         void _addSignalHandler_low_noret(Signal sig, char const *fn_name)
         {
-            auto cached_L = L;
-            auto cached_object = _object;
+            auto cL = L;
+            auto cP = _pointer;
             auto conn = sig.connect(
-                [this, cached_L, cached_object, fn_name](A... args){
-                    _refman.get(cached_object);
-                    Lua::call_method(cached_L, fn_name, args...);
+                [cL, cP, fn_name](A... args){
+                    ReferenceManager refman{};
+                    refman.get(cL, cP);
+                    Lua::call_method(cL, fn_name, args...);
                 }
             );
         }
     };
 }
+
+#endif

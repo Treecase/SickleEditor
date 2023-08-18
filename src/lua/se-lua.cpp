@@ -27,25 +27,30 @@ Lua::Error::Error(std::string const &what)
 }
 
 
+/* ===[ Push values to Lua ]=== */
 void Lua::push(lua_State *L, bool value)
 {
     lua_pushboolean(L, value);
 }
+
 
 void Lua::push(lua_State *L, lua_Integer value)
 {
     lua_pushinteger(L, value);
 }
 
+
 void Lua::push(lua_State *L, lua_Number value)
 {
     lua_pushnumber(L, value);
 }
 
+
 void Lua::push(lua_State *L, char const *value)
 {
     lua_pushstring(L, value);
 }
+
 
 void Lua::push(lua_State *L, std::string const &value)
 {
@@ -53,25 +58,30 @@ void Lua::push(lua_State *L, std::string const &value)
 }
 
 
+/* ===[ Get a Lua value ]=== */
 template<> bool Lua::get_as(lua_State *L, int idx)
 {
     return lua_toboolean(L, idx);
 }
+
 
 template<> lua_Integer Lua::get_as(lua_State *L, int idx)
 {
     return lua_tointeger(L, idx);
 }
 
+
 template<> lua_Number Lua::get_as(lua_State *L, int idx)
 {
     return lua_tonumber(L, idx);
 }
 
+
 template<> char const *Lua::get_as(lua_State *L, int idx)
 {
     return lua_tostring(L, idx);
 }
+
 
 template<> std::string Lua::get_as(lua_State *L, int idx)
 {
@@ -79,6 +89,15 @@ template<> std::string Lua::get_as(lua_State *L, int idx)
 }
 
 
+void Lua::get_method(lua_State *L, std::string const &method)
+{
+    lua_pushlstring(L, method.c_str(), method.length());
+    lua_gettable(L, -2);
+    lua_rotate(L, -2, 1);
+}
+
+
+/* ===[ Error handling ]=== */
 // TODO: Better way to do this?
 static std::unordered_map<lua_State *, std::function<void(lua_State *)>>
 error_handlers{};
@@ -88,10 +107,12 @@ void Lua::set_error_handler(lua_State *L, std::function<void(lua_State *)> fn)
     error_handlers[L] = fn;
 }
 
+
 void Lua::clear_error_handler(lua_State *L)
 {
     error_handlers.erase(L);
 }
+
 
 static void default_error_handler(lua_State *L)
 {
@@ -99,6 +120,7 @@ static void default_error_handler(lua_State *L)
     lua_pop(L, 1);
     throw Lua::Error{err};
 }
+
 
 void Lua::checkerror(lua_State *L, int status)
 {
@@ -109,11 +131,4 @@ void Lua::checkerror(lua_State *L, int status)
         else
             default_error_handler(L);
     }
-}
-
-void Lua::get_method(lua_State *L, std::string const &method)
-{
-    lua_pushlstring(L, method.c_str(), method.length());
-    lua_gettable(L, -2);
-    lua_rotate(L, -2, 1);
 }

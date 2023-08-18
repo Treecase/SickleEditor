@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/EditorWorld.hpp"
+#include "world/EditorWorld.hpp"
 
 #include <algorithm>
 

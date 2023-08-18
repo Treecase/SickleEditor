@@ -1,5 +1,5 @@
 /**
- * Commands.hpp - Editor Command classes.
+ * Editor.cpp - Editor::Editor.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,37 +16,43 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_EDITOR_COMMANDS_HPP
-#define SE_EDITOR_COMMANDS_HPP
+#include "core/Editor.hpp"
+#include <commands/Commands.hpp>
 
-#include <glm/glm.hpp>
-
-#include <vector>
+using namespace Sickle::Editor;
 
 
-namespace Sickle
+Editor::Editor()
 {
-namespace Editor
-{
-    class Editor;
-
-    class Command
-    {
-    public:
-        virtual void execute(Editor &)=0;
-        virtual ~Command()=default;
-    };
-
-namespace commands
-{
-    class AddBrush : public Command
-    {
-    public:
-        virtual void execute(Editor &editor) override;
-        virtual ~AddBrush()=default;
-    };
-}
-}
+    signal_map_changed().connect(
+        sigc::mem_fun(*this, &Editor::_on_map_changed));
 }
 
-#endif
+
+
+void Editor::set_map(Map const &map)
+{
+    _map = map;
+    signal_map_changed().emit();
+}
+
+
+void Editor::do_command(std::shared_ptr<Command> command)
+{
+    command->execute(*this);
+}
+
+
+
+Map &Editor::get_map()
+{
+    return _map;
+}
+
+
+
+void Editor::_on_map_changed()
+{
+    brushbox = BrushBox{};
+    selected.clear();
+}

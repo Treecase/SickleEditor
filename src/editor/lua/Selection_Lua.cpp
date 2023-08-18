@@ -16,16 +16,18 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Selection.hpp"
 #include "Editor_Lua.hpp"
 
 #include <se-lua/utils/RefBuilder.hpp>
+#include <core/Selection.hpp>
 
 #include <memory>
 
+#define METATABLE "Sickle.editor.selection"
 
-static Lua::RefBuilder<Sickle::Editor::Selection> builder{
-    "Sickle.editor.selection"};
+
+using namespace Sickle::Editor;
+
 
 void do_nothing_deleter(void *p) {}
 
@@ -43,7 +45,7 @@ static int selection_add(lua_State *L)
 {
     auto s = lselection_check(L, 1);
     auto i = leditorbrush_check(L, 2);
-    s->add(std::shared_ptr<Sickle::Editor::Brush>{i, do_nothing_deleter});
+    s->add(std::shared_ptr<Brush>{i, do_nothing_deleter});
     return 0;
 }
 
@@ -51,7 +53,7 @@ static int selection_remove(lua_State *L)
 {
     auto s = lselection_check(L, 1);
     auto i = leditorbrush_check(L, 2);
-    s->remove(std::shared_ptr<Sickle::Editor::Brush>{i, do_nothing_deleter});
+    s->remove(std::shared_ptr<Brush>{i, do_nothing_deleter});
     return 0;
 }
 
@@ -61,7 +63,7 @@ static int selection_contains(lua_State *L)
     auto i = leditorbrush_check(L, 2);
     lua_pushboolean(L,
         s->contains(
-            std::shared_ptr<Sickle::Editor::Brush>{i, do_nothing_deleter}));
+            std::shared_ptr<Brush>{i, do_nothing_deleter}));
     return 1;
 }
 
@@ -109,19 +111,20 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::Editor::Selection *selection)
+void Lua::push(lua_State *L, Selection *selection)
 {
-    if (builder.pushnew(selection))
+    Lua::RefBuilder<Selection> builder{L, METATABLE, selection};
+    if (builder.pushnew())
         return;
     builder.addSignalHandler(selection->signal_updated(), "on_updated");
     builder.finish();
 }
 
-Sickle::Editor::Selection *lselection_check(lua_State *L, int arg)
+Selection *lselection_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.editor.selection");
-    luaL_argcheck(L, ud != NULL, arg, "`Sickle.editor.selection' expected");
-    return *static_cast<Sickle::Editor::Selection **>(ud);
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
+    return *static_cast<Selection **>(ud);
 }
 
 int luaopen_selection(lua_State *L)
@@ -129,10 +132,9 @@ int luaopen_selection(lua_State *L)
     lua_newtable(L);
     luaL_requiref(L, "editorbrush", luaopen_editorbrush, 0);
     lua_setfield(L, -2, "editorbrush");
-    luaL_newmetatable(L, "Sickle.editor.selection");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
-
-    builder.setLua(L);
+    Lua::RefBuilder<Selection>::setup_indexing(L, METATABLE);
     return 1;
 }

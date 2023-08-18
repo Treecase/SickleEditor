@@ -19,7 +19,7 @@
 #ifndef SE_APPWIN_OPERATIONSEARCH_HPP
 #define SE_APPWIN_OPERATIONSEARCH_HPP
 
-#include <editor/Operation.hpp>
+#include <operations/Operation.hpp>
 
 #include <glibmm/refptr.h>
 #include <glibmm/ustring.h>
@@ -55,7 +55,7 @@ namespace Sickle::AppWin
         Glib::RefPtr<Gtk::TreeModelSort> sorted{nullptr};
         Gtk::CellRendererText cellrenderer{};
 
-        Editor::OperationLoader _oploader{};
+        std::shared_ptr<Editor::OperationLoader> _oploader{nullptr};
 
         std::vector<std::string> const _internal_scripts{
             "operations/basic.lua",
@@ -80,7 +80,7 @@ namespace Sickle::AppWin
     public:
         std::string mode{"brush"};
 
-        OperationSearch();
+        OperationSearch(lua_State *L);
         virtual ~OperationSearch();
 
         void set_transient_for(Gtk::Window &parent);

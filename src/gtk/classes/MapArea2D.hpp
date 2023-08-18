@@ -21,7 +21,7 @@
 
 #include "maparea2d/GrabbableBox.hpp"
 
-#include <editor/Editor.hpp>
+#include <core/Editor.hpp>
 
 #include <cairomm/cairomm.h>
 #include <gdkmm/rgba.h>

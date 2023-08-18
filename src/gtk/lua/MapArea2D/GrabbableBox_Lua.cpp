@@ -22,9 +22,10 @@
 #include <se-lua/utils/RefBuilder.hpp>
 #include <LuaGeo.hpp>
 
+#define METATABLE "Sickle.gtk.maparea2d.grabbablebox"
 
-static Lua::RefBuilder<Sickle::GrabbableBox> builder{
-    "Sickle.maparea2d.grabbablebox"};
+
+using namespace Sickle;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,43 +47,43 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::GrabbableBox *box)
+void Lua::push(lua_State *L, GrabbableBox *box)
 {
-    if (builder.pushnew(box))
+    Lua::RefBuilder<GrabbableBox> builder{L, METATABLE, box};
+    if (builder.pushnew())
         return;
     builder.finish();
 }
 
-Sickle::GrabbableBox *lgrabbablebox_check(lua_State *L, int arg)
+GrabbableBox *lgrabbablebox_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.maparea2d.grabbablebox");
-    luaL_argcheck(L, ud != NULL, arg,
-        "`Sickle.maparea2d.grabbablebox' expected");
-    return *static_cast<Sickle::GrabbableBox **>(ud);
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
+    return *static_cast<GrabbableBox **>(ud);
 }
 
 int luaopen_grabbablebox(lua_State *L)
 {
     // Export enum values.
     Lua::make_table(L,
-        std::make_pair("NONE", (lua_Integer)Sickle::GrabbableBox::Area::NONE),
-        std::make_pair("BOX", (lua_Integer)Sickle::GrabbableBox::Area::BOX),
-        std::make_pair("N", (lua_Integer)Sickle::GrabbableBox::Area::N),
-        std::make_pair("NE", (lua_Integer)Sickle::GrabbableBox::Area::NE),
-        std::make_pair("E", (lua_Integer)Sickle::GrabbableBox::Area::E),
-        std::make_pair("SE", (lua_Integer)Sickle::GrabbableBox::Area::SE),
-        std::make_pair("S", (lua_Integer)Sickle::GrabbableBox::Area::S),
-        std::make_pair("SW", (lua_Integer)Sickle::GrabbableBox::Area::SW),
-        std::make_pair("W", (lua_Integer)Sickle::GrabbableBox::Area::W),
-        std::make_pair("NW", (lua_Integer)Sickle::GrabbableBox::Area::NW)
+        std::make_pair("NONE", (lua_Integer)GrabbableBox::Area::NONE),
+        std::make_pair("BOX", (lua_Integer)GrabbableBox::Area::BOX),
+        std::make_pair("N", (lua_Integer)GrabbableBox::Area::N),
+        std::make_pair("NE", (lua_Integer)GrabbableBox::Area::NE),
+        std::make_pair("E", (lua_Integer)GrabbableBox::Area::E),
+        std::make_pair("SE", (lua_Integer)GrabbableBox::Area::SE),
+        std::make_pair("S", (lua_Integer)GrabbableBox::Area::S),
+        std::make_pair("SW", (lua_Integer)GrabbableBox::Area::SW),
+        std::make_pair("W", (lua_Integer)GrabbableBox::Area::W),
+        std::make_pair("NW", (lua_Integer)GrabbableBox::Area::NW)
     );
 
-    luaL_newmetatable(L, "Sickle.maparea2d.grabbablebox");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_pushvalue(L, -1);
     lua_setfield(L, -1, "__index");
     lua_setfield(L, -2, "metatable");
 
-    builder.setLua(L);
+    Lua::RefBuilder<GrabbableBox>::setup_indexing(L, METATABLE);
     return 1;
 }

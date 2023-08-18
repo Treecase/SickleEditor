@@ -4,7 +4,8 @@ add_library(appwin STATIC
 )
 target_link_libraries(appwin
     PUBLIC
-        editor
+        editor-core
+        editor-operations
         sickle-gtk-lua
         PkgConfig::GTKMM
         # vvv temp vvv

@@ -19,6 +19,11 @@
 #include "MapArea3D_Lua.hpp"
 #include "LuaGeo.hpp"
 
+#define METATABLE "Sickle.gtk.maparea3d.state"
+
+
+using namespace Sickle;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -121,24 +126,24 @@ static luaL_Reg methods[] = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
-void Lua::push(lua_State *L, Sickle::MapArea3D::State state)
+void Lua::push(lua_State *L, MapArea3D::State state)
 {
-    auto ptr = static_cast<Sickle::MapArea3D::State *>(
-        lua_newuserdatauv(L, sizeof(Sickle::MapArea3D::State), 0));
+    auto ptr = static_cast<MapArea3D::State *>(
+        lua_newuserdatauv(L, sizeof(MapArea3D::State), 0));
     *ptr = state;
-    luaL_setmetatable(L, "Sickle.maparea3d.state");
+    luaL_setmetatable(L, METATABLE);
 }
 
-Sickle::MapArea3D::State *lmaparea3d_state_check(lua_State *L, int arg)
+MapArea3D::State *lmaparea3d_state_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.maparea3d.state");
-    luaL_argcheck(L, ud != NULL, arg, "`Sickle.maparea3d.state' expected");
-    return static_cast<Sickle::MapArea3D::State *>(ud);
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
+    return static_cast<MapArea3D::State *>(ud);
 }
 
 int luaopen_maparea3d_state(lua_State *L)
 {
-    luaL_newmetatable(L, "Sickle.maparea3d.state");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -1, "__index");
     return 0;

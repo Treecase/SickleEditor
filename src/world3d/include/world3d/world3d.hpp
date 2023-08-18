@@ -19,7 +19,7 @@
 #ifndef SE_WORLD3D_HPP
 #define SE_WORLD3D_HPP
 
-#include <editor/EditorWorld.hpp>
+#include <world/EditorWorld.hpp>
 #include <glutils/glutils.hpp>
 #include <wad/lumps.hpp>
 #include <wad/TextureManager.hpp>

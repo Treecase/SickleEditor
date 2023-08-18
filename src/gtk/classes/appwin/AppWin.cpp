@@ -66,6 +66,14 @@ struct GenericLoadError : public std::runtime_error
 };
 
 
+static int panic_handler(lua_State *L)
+{
+    std::string const errmsg{lua_tostring(L, -1)};
+    throw std::runtime_error{"AppWin: Fatal Lua Error -- " + errmsg};
+    return 0;
+}
+
+
 AppWin::AppWin()
 :   Glib::ObjectBase{typeid(AppWin)}
 ,   Gtk::ApplicationWindow{}
@@ -75,6 +83,7 @@ AppWin::AppWin()
 ,   _view2d_front{editor}
 ,   _view2d_right{editor}
 ,   _maptools{editor}
+,   _opsearch{L}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _binding_grid_size_top{
         Glib::Binding::bind_property(
@@ -165,6 +174,8 @@ AppWin::AppWin()
         throw Lua::Error{"Failed to allocate new lua_State"};
     luaL_checkversion(L);
     luaL_openlibs(L);
+
+    lua_atpanic(L, panic_handler);
 
     setup_lua_state();
     reload_scripts();

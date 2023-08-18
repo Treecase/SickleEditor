@@ -37,7 +37,8 @@ size_t OperationSearch::similarity(
 }
 
 
-OperationSearch::OperationSearch()
+OperationSearch::OperationSearch(lua_State *L)
+:   _oploader{std::make_shared<Sickle::Editor::OperationLoader>(L)}
 {
     auto const builder = Gtk::Builder::create_from_resource(
         SE_GRESOURCE_PREFIX "gtk/OperationSearch.glade");
@@ -65,7 +66,7 @@ OperationSearch::OperationSearch()
         sigc::mem_fun(*this, &OperationSearch::operations_sort_func));
 
     run_scripts();
-    auto const &ops = _oploader.get_operations();
+    auto const &ops = _oploader->get_operations();
     for (auto const &operation : ops)
     {
         auto iter = operations->append();
@@ -94,7 +95,7 @@ void OperationSearch::run_scripts()
             SE_GRESOURCE_PREFIX + path);
         gsize size = 0;
         std::string const src{static_cast<char const *>(b->get_data(size))};
-        _oploader.add_source(src);
+        _oploader->add_source(src);
     }
 }
 

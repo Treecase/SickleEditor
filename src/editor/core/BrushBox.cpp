@@ -1,5 +1,5 @@
 /**
- * Editor.cpp - Editor::Editor.
+ * BrushBox.cpp - Editor::BrushBox.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,43 +16,32 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
-#include "editor/Commands.hpp"
+#include "core/Editor.hpp"
 
 using namespace Sickle::Editor;
 
 
-Editor::Editor()
+void BrushBox::p1(glm::vec3 const &v)
 {
-    signal_map_changed().connect(
-        sigc::mem_fun(*this, &Editor::_on_map_changed));
+    _p1 = v;
+    signal_updated().emit();
 }
 
 
-
-void Editor::set_map(Map const &map)
+void BrushBox::p2(glm::vec3 const &v)
 {
-    _map = map;
-    signal_map_changed().emit();
+    _p2 = v;
+    signal_updated().emit();
 }
 
 
-void Editor::do_command(std::shared_ptr<Command> command)
+glm::vec3 BrushBox::p1() const
 {
-    command->execute(*this);
+    return _p1;
 }
 
 
-
-Map &Editor::get_map()
+glm::vec3 BrushBox::p2() const
 {
-    return _map;
-}
-
-
-
-void Editor::_on_map_changed()
-{
-    brushbox = BrushBox{};
-    selected.clear();
+    return _p2;
 }

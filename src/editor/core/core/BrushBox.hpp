@@ -1,5 +1,5 @@
 /**
- * lua-utils.hpp - Lua utilities.
+ * BrushBox.hpp - Editor BrushBox class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,29 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_LUA_UTILS_HPP
-#define SE_LUA_UTILS_HPP
+#ifndef SE_EDITOR_BRUSHBOX_HPP
+#define SE_EDITOR_BRUSHBOX_HPP
 
-#include "utils/ReferenceManager.hpp"
+#include <glm/glm.hpp>
+#include <sigc++/signal.h>
+
+
+namespace Sickle::Editor
+{
+    class BrushBox
+    {
+    public:
+        void p1(glm::vec3 const &v);
+        void p2(glm::vec3 const &v);
+        glm::vec3 p1() const;
+        glm::vec3 p2() const;
+
+        auto &signal_updated() {return _signal_updated;}
+
+    private:
+        glm::vec3 _p1, _p2;
+        sigc::signal<void()> _signal_updated{};
+    };
+}
 
 #endif

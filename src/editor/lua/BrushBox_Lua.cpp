@@ -16,15 +16,16 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
 #include "Editor_Lua.hpp"
 
 #include <se-lua/utils/RefBuilder.hpp>
+#include <core/Editor.hpp>
 #include <LuaGeo.hpp>
 
+#define METATABLE "Sickle.editor.brushbox"
 
-static Lua::RefBuilder<Sickle::Editor::BrushBox> builder{
-    "Sickle.editor.brushbox"};
+
+using namespace Sickle::Editor;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,28 +77,28 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::Editor::BrushBox *bb)
+void Lua::push(lua_State *L, BrushBox *bb)
 {
-    if (builder.pushnew(bb))
+    Lua::RefBuilder<BrushBox> builder{L, METATABLE, bb};
+    if (builder.pushnew())
         return;
     builder.addSignalHandler(bb->signal_updated(), "on_updated");
     builder.finish();
 }
 
-Sickle::Editor::BrushBox *lbrushbox_check(lua_State *L, int arg)
+BrushBox *lbrushbox_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.editor.brushbox");
-    luaL_argcheck(L, ud != NULL, arg, "`Sickle.editor.brushbox' expected");
-    return *static_cast<Sickle::Editor::BrushBox **>(ud);
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
+    return *static_cast<BrushBox **>(ud);
 }
 
 int luaopen_brushbox(lua_State *L)
 {
     lua_newtable(L);
-    luaL_newmetatable(L, "Sickle.editor.brushbox");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
-
-    builder.setLua(L);
+    Lua::RefBuilder<BrushBox>::setup_indexing(L, METATABLE);
     return 0;
 }

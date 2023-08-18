@@ -18,13 +18,15 @@
 
 #include "MapArea3D_Lua.hpp"
 #include "LuaGdkEvent.hpp"
-#include "Editor_Lua.hpp"
 
-#include <LuaGeo.hpp>
 #include <se-lua/utils/RefBuilder.hpp>
+#include <Editor_Lua.hpp>
+#include <LuaGeo.hpp>
+
+#define METATABLE "Sickle.gtk.maparea3d"
 
 
-static Lua::RefBuilder<Sickle::MapArea3D> builder{"Sickle.maparea3d"};
+using namespace Sickle;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -168,9 +170,10 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Sickle::MapArea3D *maparea)
+void Lua::push(lua_State *L, MapArea3D *maparea)
 {
-    if (builder.pushnew(maparea))
+    Lua::RefBuilder<MapArea3D> builder{L, METATABLE, maparea};
+    if (builder.pushnew())
         return;
 
     builder.addSignalHandler(
@@ -188,24 +191,24 @@ void Lua::push(lua_State *L, Sickle::MapArea3D *maparea)
     builder.finish();
 }
 
-Sickle::MapArea3D *lmaparea3d_check(lua_State *L, int arg)
+MapArea3D *lmaparea3d_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.maparea3d");
-    luaL_argcheck(L, ud != NULL, arg, "`Sickle.maparea3d' expected");
-    return *static_cast<Sickle::MapArea3D **>(ud);
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
+    return *static_cast<MapArea3D **>(ud);
 }
 
 int luaopen_maparea3d(lua_State *L)
 {
-    luaL_requiref(L, "Sickle.maparea3d.state", luaopen_maparea3d_state, 0);
-    luaL_requiref(L, "Sickle.freecam", luaopen_freecam, 0);
+    luaL_requiref(L, "Sickle.gtk.maparea3d.state", luaopen_maparea3d_state, 0);
+    luaL_requiref(L, "Sickle.gtk.freecam", luaopen_freecam, 0);
     lua_pop(L, 2);
 
     lua_newtable(L);
-    luaL_newmetatable(L, "Sickle.maparea3d");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
 
-    builder.setLua(L);
+    Lua::RefBuilder<MapArea3D>::setup_indexing(L, METATABLE);
     return 1;
 }

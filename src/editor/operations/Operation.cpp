@@ -16,7 +16,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Operation.hpp"
+#include "operations/Operation.hpp"
+
+#include <iostream>
 
 
 using namespace Sickle::Editor;
@@ -104,7 +106,28 @@ void Operation::execute(Editor &ed) const
     // Push function.
     lua_getfield(L, -1, "function");
 
-    lua_pushnil(L); // TEMP: push MODE object
+    // FIXME: TEMP
+    assert(mode == "brush");
+
+    // Push selected objects list.
+    lua_newtable(L);
+    lua_Integer i = 1;
+    for (auto const &brush : ed.selected)
+    {
+        int const top = lua_gettop(L);
+        std::cout << top << std::endl;
+
+        Lua::push(L, brush.get());
+        int const top2 = lua_gettop(L);
+        std::cout << top2 << std::endl;
+        assert(top2 == top + 1);
+
+        lua_seti(L, -2, i++);
+        int const top3 = lua_gettop(L);
+        std::cout << top3 << std::endl;
+        assert(top3 == top);
+    }
+
     for (auto const ch : args) lua_pushnil(L); // TEMP: push args
     Lua::checkerror(L, lua_pcall(L, 1+args.size(), 0, 0));
 
@@ -113,9 +136,8 @@ void Operation::execute(Editor &ed) const
 
 
 
-OperationLoader::OperationLoader()
-:   _L_actual{luaL_newstate()}
-,   L{_L_actual.get()}
+OperationLoader::OperationLoader(lua_State *L)
+:   L{L}
 {
     if (!L)
         throw Lua::Error{"failed to alloc Lua state"};

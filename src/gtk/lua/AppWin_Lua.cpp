@@ -24,10 +24,10 @@
 
 #include <se-lua/utils/RefBuilder.hpp>
 
+#define METATABLE "Sickle.gtk.appwin"
+
 
 using namespace Sickle::AppWin;
-
-static Lua::RefBuilder<AppWin> builder{"Sickle.appwin"};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +75,8 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, AppWin *appwin)
 {
-    if (builder.pushnew(appwin))
+    Lua::RefBuilder<AppWin> builder{L, METATABLE, appwin};
+    if (builder.pushnew())
         return;
 
     builder.addField("mapArea3D", &appwin->_view3d);
@@ -96,8 +97,8 @@ void Lua::push(lua_State *L, AppWin *appwin)
 
 AppWin *lappwin_check(lua_State *L, int arg)
 {
-    void *ud = luaL_checkudata(L, arg, "Sickle.appwin");
-    luaL_argcheck(L, ud != NULL, arg, "`Sickle.appwin' expected");
+    void *ud = luaL_checkudata(L, arg, METATABLE);
+    luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
     return *static_cast<AppWin **>(ud);
 }
 
@@ -108,7 +109,7 @@ int luaopen_appwin(lua_State *L)
     lua_pop(L, 2);
 
     lua_newtable(L);
-    luaL_newmetatable(L, "Sickle.appwin");
+    luaL_newmetatable(L, METATABLE);
     luaL_setfuncs(L, methods, 0);
     lua_setfield(L, -2, "metatable");
 
@@ -119,6 +120,6 @@ int luaopen_appwin(lua_State *L)
     lua_setfield(L, -2, "SELECT");
     lua_setfield(L, -2, "MapTools");
 
-    builder.setLua(L);
+    Lua::RefBuilder<AppWin>::setup_indexing(L, METATABLE);
     return 1;
 }

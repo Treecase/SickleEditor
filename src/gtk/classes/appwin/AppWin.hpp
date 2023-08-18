@@ -25,10 +25,10 @@
 #include "../MapTools.hpp"
 #include "OperationSearch.hpp"
 
+#include <core/Editor.hpp>
+#include <operations/Operation.hpp>
 #include <appid.hpp>
 #include <AppWin_Lua.hpp>
-#include <editor/Editor.hpp>
-#include <editor/Operation.hpp>
 
 #include <glibmm/property.h>
 #include <glibmm/binding.h>
@@ -93,7 +93,7 @@ namespace Sickle::AppWin
         Gtk::Window _luaconsolewindow{};
         LuaConsole _luaconsole{};
         Gtk::InfoBar _luainfobar{};
-        OperationSearch _opsearch{};
+        OperationSearch _opsearch;
 
         // Structural widgets
         Gtk::Grid _basegrid{};

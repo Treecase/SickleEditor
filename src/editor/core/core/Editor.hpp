@@ -22,7 +22,8 @@
 #include "BrushBox.hpp"
 #include "MapTools.hpp"
 #include "Selection.hpp"
-#include "Commands.hpp"
+
+#include <commands/Commands.hpp>
 
 #include <sigc++/signal.h>
 
@@ -31,9 +32,7 @@
 #include <vector>
 
 
-namespace Sickle
-{
-namespace Editor
+namespace Sickle::Editor
 {
     /**
      * The Editor class manages all the objects in the map, as well editor-only
@@ -70,7 +69,6 @@ namespace Editor
         Editor(Editor const &)=delete;
         Editor &operator=(Editor const &)=delete;
     };
-}
 }
 
 #endif

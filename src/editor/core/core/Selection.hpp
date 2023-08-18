@@ -19,7 +19,7 @@
 #ifndef SE_EDITOR_SELECTION_HPP
 #define SE_EDITOR_SELECTION_HPP
 
-#include "EditorWorld.hpp"
+#include <world/EditorWorld.hpp>
 
 #include <sigc++/signal.h>
 #include <sigc++/connection.h>
@@ -28,9 +28,7 @@
 #include <unordered_set>
 
 
-namespace Sickle
-{
-namespace Editor
+namespace Sickle::Editor
 {
     class Selection
     {
@@ -60,7 +58,6 @@ namespace Editor
         Selection(Selection const &)=delete;
         Selection &operator=(Selection const &)=delete;
     };
-}
 }
 
 #endif

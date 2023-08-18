@@ -1,5 +1,5 @@
 /**
- * BrushBox.cpp - Editor::BrushBox.
+ * MapTools.cpp - Editor MapTools.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,30 +16,33 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "editor/Editor.hpp"
+#include "core/Editor.hpp"
+
+using namespace Sickle::Editor;
 
 
-void Sickle::Editor::BrushBox::p1(MAP::Vertex v)
+/* ===[ MapToolSelect ]=== */
+void MapToolSelect::operator()()
 {
-    _p1 = v;
-    signal_updated().emit();
+    puts(name().c_str());
 }
 
 
-void Sickle::Editor::BrushBox::p2(MAP::Vertex v)
+std::string MapToolSelect::name() const
 {
-    _p2 = v;
-    signal_updated().emit();
+    return "Select";
 }
 
 
-glm::vec3 Sickle::Editor::BrushBox::p1() const
+
+/* ===[ MapToolCreateBrush ]=== */
+void MapToolCreateBrush::operator()()
 {
-    return _p1;
+    puts(name().c_str());
 }
 
 
-glm::vec3 Sickle::Editor::BrushBox::p2() const
+std::string MapToolCreateBrush::name() const
 {
-    return _p2;
+    return "CreateBrush";
 }
