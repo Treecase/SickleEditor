@@ -52,8 +52,6 @@ namespace Sickle::Editor
     private:
         std::unordered_set<Item> _selected{};
 
-        std::unordered_map<Item, std::vector<sigc::connection>>
-        _selected_signals{};
         sigc::signal<void()> _signal_updated{};
 
         Selection(Selection const &)=delete;

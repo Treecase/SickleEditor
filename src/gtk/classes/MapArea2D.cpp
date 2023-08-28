@@ -538,9 +538,12 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 
 void Sickle::MapArea2D::on_action_select_delete()
 {
-    for (auto &brush : _editor.selected)
-        _editor.get_map()->remove_brush(brush);
+    std::vector<Editor::Selection::Item> const cached{
+        _editor.selected.begin(),
+        _editor.selected.end()};
     _editor.selected.clear();
+    for (auto const &brush : cached)
+        _editor.get_map()->remove_brush(brush);
 }
 
 

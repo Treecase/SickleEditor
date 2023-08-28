@@ -94,7 +94,7 @@ void Entity::add_brush(Brush const &brush)
 }
 
 
-void Entity::remove_brush(std::weak_ptr<Brush> const &brush)
+void Entity::remove_brush(BrushRef const &brush)
 {
     auto const it = std::find(_brushes.begin(), _brushes.end(), brush.lock());
     if (it == _brushes.end())

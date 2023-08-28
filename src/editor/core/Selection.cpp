@@ -34,13 +34,12 @@ void Selection::clear()
 
 void Selection::add(Item item)
 {
-    _selected.emplace(item);
-    item->property_selected() = true;
-    _selected_signals[item] = {};
+    if (contains(item))
+        return;
     for (auto &face : item->faces)
-        _selected_signals[item].emplace_back(
-            face->signal_vertices_changed().connect(
-                signal_updated().make_slot()));
+        face->signal_vertices_changed().connect(signal_updated().make_slot());
+    item->property_selected() = true;
+    _selected.emplace(item);
     signal_updated().emit();
 }
 
@@ -49,9 +48,6 @@ void Selection::remove(Item item)
 {
     _selected.erase(item);
     item->property_selected() = false;
-    for (auto &conn : _selected_signals[item])
-        conn.disconnect();
-    _selected_signals.erase(item);
     signal_updated().emit();
 }
 
