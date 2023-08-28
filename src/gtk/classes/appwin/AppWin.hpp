@@ -27,6 +27,7 @@
 
 #include <core/Editor.hpp>
 #include <operations/Operation.hpp>
+#include <se-lua/utils/Referenceable.hpp>
 #include <appid.hpp>
 #include <AppWin_Lua.hpp>
 
@@ -42,7 +43,7 @@
 
 namespace Sickle::AppWin
 {
-    class AppWin : public Gtk::ApplicationWindow
+    class AppWin : public Gtk::ApplicationWindow, public Lua::Referenceable
     {
     public:
         Editor::Editor editor{};

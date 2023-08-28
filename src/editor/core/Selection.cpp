@@ -35,7 +35,7 @@ void Selection::clear()
 void Selection::add(Item item)
 {
     _selected.emplace(item);
-    item->is_selected = true;
+    item->property_selected() = true;
     _selected_signals[item] = {};
     for (auto &face : item->faces)
         _selected_signals[item].emplace_back(
@@ -48,7 +48,7 @@ void Selection::add(Item item)
 void Selection::remove(Item item)
 {
     _selected.erase(item);
-    item->is_selected = false;
+    item->property_selected() = false;
     for (auto &conn : _selected_signals[item])
         conn.disconnect();
     _selected_signals.erase(item);

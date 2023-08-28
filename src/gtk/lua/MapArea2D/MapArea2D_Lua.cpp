@@ -82,8 +82,8 @@ static int pick_brush(lua_State *L)
     auto ma = lmaparea2d_check(L, 1);
     auto xy = lgeo_tovector(L, 2);
     auto picked = ma->pick_brush(xy);
-    if (picked)
-        Lua::push(L, picked.get());
+    if (!picked.expired())
+        Lua::push(L, picked.lock().get());
     else
         lua_pushnil(L);
     return 1;

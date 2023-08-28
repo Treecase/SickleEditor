@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world/EditorWorld.hpp"
+#include "world/Face.hpp"
 
 #include <glm/gtc/epsilon.hpp>
 
@@ -87,13 +87,14 @@ public:
 Face::Face(
     HalfPlane const &plane,
     std::vector<glm::vec3> const &brush_vertices)
-:   vertices{}
-,   texture{"TODO"}
-,   u{1.0f, 0.0f, 0.0f} // TODO
-,   v{0.0f, 1.0f, 0.0f} // TODO
-,   shift{0.0f, 0.0f}
-,   scale{1.0f, 1.0f}
-,   rotation{0.0f}
+:   Glib::ObjectBase{typeid(Face)}
+,   vertices{}
+,   texture{*this, "texture", "TODO"} // TODO
+,   u{*this, "u", {1.0f, 0.0f, 0.0f}} // TODO
+,   v{*this, "v", {0.0f, 1.0f, 0.0f}} // TODO
+,   shift{*this, "shift", {0.0f, 0.0f}}
+,   scale{*this, "scale", {1.0f, 1.0f}}
+,   rotation{*this, "rotation", 0.0f}
 {
     // Build Face by finding all the vertices that lie on each plane.
     std::copy_if(
@@ -112,13 +113,14 @@ Face::Face(
 Face::Face(
     MAP::Plane const &plane,
     std::unordered_set<glm::vec3> const &brush_vertices)
-:   vertices{}
-,   texture{plane.miptex}
-,   u{plane.s}
-,   v{plane.t}
-,   shift{plane.offsets}
-,   scale{plane.scale}
-,   rotation{plane.rotation}
+:   Glib::ObjectBase{typeid(Face)}
+,   vertices{}
+,   texture{*this, "texture", plane.miptex}
+,   u{*this, "u", plane.s}
+,   v{*this, "v", plane.t}
+,   shift{*this, "shift", plane.offsets}
+,   scale{*this, "scale", plane.scale}
+,   rotation{*this, "rotation", plane.rotation}
 {
     // Build Face by finding all the vertices that lie on each plane.
     HalfPlane const mp{plane.a, plane.b, plane.c};
@@ -140,13 +142,14 @@ Face::Face(
 
 
 Face::Face(RMF::Face const &face)
-:   vertices{}
-,   texture{face.texture_name}
-,   u{face.texture_u.x, face.texture_u.y, face.texture_u.z}
-,   v{face.texture_v.x, face.texture_v.y, face.texture_v.z}
-,   shift{face.texture_x_shift, face.texture_y_shift}
-,   scale{face.texture_x_scale, face.texture_y_scale}
-,   rotation{face.texture_rotation}
+:   Glib::ObjectBase{typeid(Face)}
+,   vertices{}
+,   texture{*this, "texture", face.texture_name}
+,   u{*this, "u", {face.texture_u.x, face.texture_u.y, face.texture_u.z}}
+,   v{*this, "v", {face.texture_v.x, face.texture_v.y, face.texture_v.z}}
+,   shift{*this, "shift", {face.texture_x_shift, face.texture_y_shift}}
+,   scale{*this, "scale", {face.texture_x_scale, face.texture_y_scale}}
+,   rotation{*this, "rotation", face.texture_rotation}
 {
     // RMF stores verts sorted clockwise. We need them counterclockwise.
     for (auto const &vert : face.vertices)

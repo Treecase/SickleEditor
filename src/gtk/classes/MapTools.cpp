@@ -45,7 +45,7 @@ Sickle::MapTools::MapTools(Editor::Editor &editor)
         add(button);
     }
 
-    _editor.maptool = _tools.at(property_tool().get_value());
+    _editor.set_maptool(_tools.at(property_tool().get_value()));
 }
 
 
@@ -60,5 +60,5 @@ void Sickle::MapTools::on_tool_button_toggled(Tool tool)
 void Sickle::MapTools::on_tool_changed()
 {
     _buttons.at(property_tool().get_value()).set_active(true);
-    _editor.maptool = _tools.at(property_tool().get_value());
+    _editor.set_maptool(_tools.at(property_tool().get_value()));
 }

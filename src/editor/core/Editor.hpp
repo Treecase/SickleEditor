@@ -24,8 +24,9 @@
 #include "Selection.hpp"
 
 #include <commands/Commands.hpp>
+#include <se-lua/utils/Referenceable.hpp>
 
-#include <sigc++/signal.h>
+#include <glibmm.h>
 
 #include <memory>
 #include <string>
@@ -38,31 +39,40 @@ namespace Sickle::Editor
      * The Editor class manages all the objects in the map, as well editor-only
      * data like visgroups.
      */
-    class Editor
+    class Editor : public Glib::Object, public Lua::Referenceable
     {
     public:
         /** Box used to create new brushes. */
         BrushBox brushbox{};
         /** Selected brushes/entities. */
         Selection selected{};
-        /** Map tools. */
-        Property<std::shared_ptr<MapTool>> maptool{nullptr};
-        /** WAD paths. */
-        Property<std::vector<std::string>> wads{};
-
-        auto &signal_map_changed() {return _signal_map_changed;}
-
-        void set_map(Map const &map);
-        Map &get_map();
-
-        void do_command(std::shared_ptr<Command> command);
 
         Editor();
 
-    private:
-        Map _map{};
+        auto property_map() {return _prop_map.get_proxy();}
+        auto property_map() const {return _prop_map.get_proxy();}
+        auto property_maptool() {return _prop_maptool.get_proxy();}
+        auto property_maptool() const {return _prop_maptool.get_proxy();}
+        auto property_wads() {return _prop_wads.get_proxy();}
+        auto property_wads() const {return _prop_wads.get_proxy();}
 
-        sigc::signal<void()> _signal_map_changed{};
+        auto get_map() {return property_map().get_value();}
+        auto get_maptool() {return property_maptool().get_value();}
+        auto get_wads() {return property_wads().get_value();}
+
+        void set_map(Glib::RefPtr<World> const &value) {
+            property_map() = value;}
+        void set_maptool(std::shared_ptr<MapTool> const &value) {
+            property_maptool() = value;}
+        void set_wads(std::vector<std::string> const &value) {
+            property_wads() = value;}
+
+        void do_command(std::shared_ptr<Command> command);
+
+    private:
+        Glib::Property<Glib::RefPtr<World>> _prop_map;
+        Glib::Property<std::shared_ptr<MapTool>> _prop_maptool;
+        Glib::Property<std::vector<std::string>> _prop_wads;
 
         void _on_map_changed();
 

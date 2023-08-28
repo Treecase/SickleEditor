@@ -1,8 +1,9 @@
+pkg_check_modules(glibmm REQUIRED IMPORTED_TARGET glibmm-2.4)
 add_library(editor-world STATIC
     Brush.cpp
     Entity.cpp
     Face.cpp
-    Map.cpp
+    World.cpp
 )
 target_include_directories(editor-world PUBLIC ..)
 target_link_libraries(editor-world
@@ -10,6 +11,8 @@ target_link_libraries(editor-world
         convexhull
         map
         rmf
+        se-lua
         glm::glm
-        PkgConfig::sigc++
+        PkgConfig::glibmm
 )
+target_compile_features(editor-world PUBLIC cxx_std_17)

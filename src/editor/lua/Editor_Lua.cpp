@@ -74,7 +74,9 @@ void Lua::push(lua_State *L, Editor *editor)
     Lua::RefBuilder<Editor> builder{L, METATABLE, editor};
     if (builder.pushnew())
         return;
-    builder.addSignalHandler(editor->signal_map_changed(), "on_map_changed");
+    builder.addSignalHandler(
+        editor->property_map().signal_changed(),
+        "on_map_changed");
     builder.finish();
 }
 

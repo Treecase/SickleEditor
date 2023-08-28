@@ -20,6 +20,7 @@
 #define SE_LUA_REFERENCEMANAGER_HPP
 
 #include "../se-lua.hpp"
+#include "Referenceable.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -32,11 +33,8 @@ namespace Lua
      */
     class ReferenceManager
     {
-        struct LuaDeleter {void operator()(lua_State *L) const {lua_close(L);}};
-
-        static std::unique_ptr<lua_State, LuaDeleter> const _L_actual;
-        static lua_State *const _L;
-        static std::unordered_map<void *, int> _references;
+        // pushes the reftable (and creates it if it doesn't exists)
+        static void pushRefTable(lua_State *L);
 
     public:
         /**
@@ -44,13 +42,13 @@ namespace Lua
          *
          * An existing mapping will be silently overwritten.
          */
-        void set(lua_State *L, void *pointer, int idx);
+        void set(lua_State *L, Referenceable *pointer, int idx);
 
         /** Push the Lua value referenced by POINTER to the stack. */
-        void get(lua_State *L, void *pointer);
+        void get(lua_State *L, Referenceable *pointer);
 
-        /** Delete the Lua reference. */
-        void unref(lua_State *L, void *pointer);
+        /** Delete a reference. */
+        void erase(lua_State *L, Referenceable *pointer);
     };
 }
 

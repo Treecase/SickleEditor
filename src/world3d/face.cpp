@@ -78,8 +78,8 @@ void World3D::Face::_on_src_verts_changed()
 
 void World3D::Face::_sync_vertices()
 {
-    auto const &u_axis = glm::normalize(_src->u.get());
-    auto const &v_axis = glm::normalize(_src->v.get());
+    auto const &u_axis = glm::normalize(_src->u.get_value());
+    auto const &v_axis = glm::normalize(_src->v.get_value());
     glm::vec2 const texture_size{texture.width, texture.height};
 
     for (auto const &vertex : _src->vertices)
@@ -89,8 +89,8 @@ void World3D::Face::_sync_vertices()
             (   (   glm::vec2{
                         glm::dot(vertex, u_axis),
                         glm::dot(vertex, v_axis)}
-                    / _src->scale.get())
-                + _src->shift.get())
+                    / _src->scale.get_value())
+                + _src->shift.get_value())
             / texture_size);
     }
 }

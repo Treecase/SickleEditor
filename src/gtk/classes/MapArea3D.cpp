@@ -89,6 +89,7 @@ raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
 Sickle::MapArea3D::MapArea3D(Editor::Editor &ed)
 :   Glib::ObjectBase{typeid(MapArea3D)}
 ,   Gtk::GLArea{}
+,   Lua::Referenceable{}
 ,   _editor{ed}
 ,   _prop_camera{*this, "camera", DEFAULT_CAMERA}
 ,   _prop_state{*this, "state", {}}
@@ -107,9 +108,9 @@ Sickle::MapArea3D::MapArea3D(Editor::Editor &ed)
     set_auto_render(true);
     set_can_focus(true);
 
-    _editor.signal_map_changed().connect(
+    _editor.property_map().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea3D::on_editor_map_changed));
-    _editor.get_map().signal_changed().connect(
+    _editor.get_map()->signal_changed().connect(
         sigc::mem_fun(*this, &Sickle::MapArea3D::_synchronize_glmap));
     _editor.selected.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea3D::queue_render));
@@ -146,10 +147,10 @@ Sickle::MapArea3D::MapArea3D(Editor::Editor &ed)
 }
 
 
-std::shared_ptr<Sickle::Editor::Brush>
+Sickle::Editor::Entity::BrushRef
 Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
 {
-    std::shared_ptr<Sickle::Editor::Brush> picked{nullptr};
+    Sickle::Editor::Entity::BrushRef picked{};
     float pt = INFINITY;
 
     auto const &_camera = property_camera().get_value();
@@ -161,12 +162,12 @@ Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
     // used to transform map vertices into GL space.
     auto const modelview = property_transform().get_value().getMatrix();
 
-    for (auto const &entity : _editor.get_map().entities())
+    for (auto const &entity : _editor.get_map()->entities())
     {
-        for (auto const &brush : entity.brushes)
+        for (auto const &brush : entity.brushes())
         {
             BBox3 bbox{};
-            for (auto const &face : brush->faces)
+            for (auto const &face : brush.lock()->faces)
                 for (auto const &vertex : face->vertices)
                     bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
 
@@ -334,7 +335,7 @@ void Sickle::MapArea3D::on_editor_map_changed()
     property_state().reset_value();
     property_camera().set_value(DEFAULT_CAMERA);
     property_transform().set_value(DEFAULT_TRANSFORM);
-    _editor.get_map().signal_changed().connect(
+    _editor.get_map()->signal_changed().connect(
         sigc::mem_fun(*this, &Sickle::MapArea3D::_synchronize_glmap));
     if (get_realized())
     {
@@ -397,7 +398,7 @@ void Sickle::MapArea3D::_synchronize_glmap()
     _error_tracker = ErrorTracker{};
     _mapview = std::make_unique<World3D::World3D>(
         _editor.get_map(),
-        _editor.wads);
+        _editor.get_wads());
     _check_errors();
     queue_render();
 }

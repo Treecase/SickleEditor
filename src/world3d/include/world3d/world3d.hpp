@@ -100,7 +100,7 @@ namespace World3D
     class Brush
     {
         Entity &_parent;
-        std::shared_ptr<Sickle::Editor::Brush> _src{nullptr};
+        Sickle::Editor::Entity::BrushRef _src{};
         std::vector<Face> _faces{};
 
         std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
@@ -110,12 +110,12 @@ namespace World3D
         std::vector<sigc::connection> _face_changed_connection;
 
     public:
-        bool is_selected() const {return _src->is_selected;}
+        bool is_selected() const;
         void render() const;
 
         TextureManager &texman() const;
 
-        Brush(Entity &p, std::shared_ptr<Sickle::Editor::Brush> &src);
+        Brush(Entity &p, Sickle::Editor::Entity::BrushRef const &src);
         Brush(Brush const &other);
         virtual ~Brush();
     };
@@ -144,7 +144,9 @@ namespace World3D
 
         void render() const;
 
-        World3D(Sickle::Editor::Map &src, std::vector<std::string> const &wads);
+        World3D(
+            Glib::RefPtr<Sickle::Editor::World> src,
+            std::vector<std::string> const &wads);
     };
 }
 

@@ -77,6 +77,7 @@ static int panic_handler(lua_State *L)
 AppWin::AppWin()
 :   Glib::ObjectBase{typeid(AppWin)}
 ,   Gtk::ApplicationWindow{}
+,   Lua::Referenceable{}
 ,   L{luaL_newstate()}
 ,   _view3d{editor}
 ,   _view2d_top{editor}
@@ -187,31 +188,28 @@ AppWin::AppWin()
 }
 
 
-Sickle::Editor::Map loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
+Glib::RefPtr<Sickle::Editor::World>
+loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
 {
     auto const path = file->get_path();
     if (lowercase(path).rfind(".rmf") != std::string::npos)
-        return RMF::load(path);
+        return Sickle::Editor::World::create(RMF::load(path));
 
     else if (lowercase(path).rfind(".map") != std::string::npos)
-        return MAP::load(path);
+        return Sickle::Editor::World::create(MAP::load(path));
 
     std::string rmferror{};
     std::string maperror{};
-    try
-    {
-        return RMF::load(file->get_path());
+    try {
+        return Sickle::Editor::World::create(RMF::load(file->get_path()));
     }
-    catch (RMF::LoadError const &e)
-    {
+    catch (RMF::LoadError const &e) {
         rmferror = e.what();
     }
-    try
-    {
-        return MAP::load(file->get_path());
+    try {
+        return Sickle::Editor::World::create(MAP::load(file->get_path()));
     }
-    catch (MAP::LoadError const &e)
-    {
+    catch (MAP::LoadError const &e) {
         maperror = e.what();
     }
     throw GenericLoadError{rmferror, maperror};
@@ -223,21 +221,17 @@ void AppWin::open(Glib::RefPtr<Gio::File> const &file)
     if (file)
     {
         std::string errmsg{};
-        try
-        {
+        try {
             editor.set_map(loadAnyMapFile(file));
             return;
         }
-        catch (RMF::LoadError const &e)
-        {
+        catch (RMF::LoadError const &e) {
             errmsg = ".rmf: " + std::string{e.what()};
         }
-        catch (MAP::LoadError const &e)
-        {
+        catch (MAP::LoadError const &e) {
             errmsg = ".map: " + std::string{e.what()};
         }
-        catch (GenericLoadError const &e)
-        {
+        catch (GenericLoadError const &e) {
             errmsg = ".rmf: " + e.rmf + "\n" + ".map: " + e.map;
         }
         Gtk::MessageDialog d{
@@ -248,14 +242,14 @@ void AppWin::open(Glib::RefPtr<Gio::File> const &file)
         d.run();
     }
     else
-        editor.set_map({});
+        editor.set_map(Editor::World::create());
 }
 
 
 void AppWin::save(std::string const &filename)
 {
     std::ofstream out{filename};
-    MAP::save(out, editor.get_map());
+    MAP::save(out, *editor.get_map().get());
 }
 
 

@@ -23,17 +23,14 @@ using namespace Sickle::Editor;
 
 
 Editor::Editor()
+:   Glib::ObjectBase{typeid(Editor)}
+,   Lua::Referenceable{}
+,   _prop_map{*this, "map", World::create()}
+,   _prop_maptool{*this, "maptool", nullptr}
+,   _prop_wads{*this, "wads", {}}
 {
-    signal_map_changed().connect(
+    property_map().signal_changed().connect(
         sigc::mem_fun(*this, &Editor::_on_map_changed));
-}
-
-
-
-void Editor::set_map(Map const &map)
-{
-    _map = map;
-    signal_map_changed().emit();
 }
 
 
@@ -44,15 +41,9 @@ void Editor::do_command(std::shared_ptr<Command> command)
 
 
 
-Map &Editor::get_map()
-{
-    return _map;
-}
-
-
-
 void Editor::_on_map_changed()
 {
-    brushbox = BrushBox{};
+    brushbox.p1(glm::vec3{});
+    brushbox.p2(glm::vec3{});
     selected.clear();
 }

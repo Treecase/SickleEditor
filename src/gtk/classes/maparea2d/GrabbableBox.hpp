@@ -19,6 +19,7 @@
 #ifndef SE_GRABBABLEBOX_HPP
 #define SE_GRABBABLEBOX_HPP
 
+#include <se-lua/utils/Referenceable.hpp>
 #include <utils/BoundingBox.hpp>
 
 #include <cairomm/cairomm.h>
@@ -35,7 +36,7 @@ namespace Sickle
      * GrabbableBox interface.
      * A 2D box with 8 grabbable handles.
      */
-    class GrabbableBox
+    class GrabbableBox : public Lua::Referenceable
     {
     public:
         /** Areas of the grabbable box. */

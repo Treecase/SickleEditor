@@ -1,5 +1,5 @@
 /**
- * Selection.hpp - Editor Selection class.
+ * BrushBox.hpp - Editor BrushBox class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,47 +16,30 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_EDITOR_SELECTION_HPP
-#define SE_EDITOR_SELECTION_HPP
+#ifndef SE_EDITOR_BRUSHBOX_HPP
+#define SE_EDITOR_BRUSHBOX_HPP
 
-#include <world/EditorWorld.hpp>
+#include <se-lua/utils/Referenceable.hpp>
 
+#include <glm/glm.hpp>
 #include <sigc++/signal.h>
-#include <sigc++/connection.h>
-
-#include <memory>
-#include <unordered_set>
 
 
 namespace Sickle::Editor
 {
-    class Selection
+    class BrushBox : public Lua::Referenceable
     {
     public:
-        using Item = std::shared_ptr<Brush>;
-
-        void clear();
-        void add(Item item);
-        void remove(Item item);
-        bool contains(Item item) const;
-        bool empty() const;
-
-        auto begin() const {return _selected.begin();}
-        auto end() const {return _selected.end();}
+        void p1(glm::vec3 const &v);
+        void p2(glm::vec3 const &v);
+        glm::vec3 p1() const;
+        glm::vec3 p2() const;
 
         auto &signal_updated() {return _signal_updated;}
 
-        Selection()=default;
-
     private:
-        std::unordered_set<Item> _selected{};
-
-        std::unordered_map<Item, std::vector<sigc::connection>>
-        _selected_signals{};
+        glm::vec3 _p1, _p2;
         sigc::signal<void()> _signal_updated{};
-
-        Selection(Selection const &)=delete;
-        Selection &operator=(Selection const &)=delete;
     };
 }
 

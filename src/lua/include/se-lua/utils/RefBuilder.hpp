@@ -129,19 +129,21 @@ namespace Lua
         /** Push a new reference-style object onto the stack. */
         bool pushnew()
         {
-            try {
-                _refman.get(L, _pointer);
-                if (lua_type(L, -1) == LUA_TUSERDATA)
-                {
-                    return true;
-                }
-                else
-                {
-                    lua_pop(L, 1);
-                    std::cerr << "refman.get() pushed the wrong type\n";
-                }
-            }
-            catch (std::out_of_range const &e) {
+            _refman.get(L, _pointer);
+            int const type = lua_type(L, -1);
+            switch (type)
+            {
+            case LUA_TUSERDATA:
+                return true;
+            case LUA_TNIL:
+                lua_pop(L, 1);
+                break;
+            default:
+                lua_pop(L, 1);
+                throw Lua::Error{
+                    "refman.get() pushed the wrong type: "
+                    + std::string{lua_typename(L, type)}};
+                return false;
             }
 
             auto ptr = static_cast<T const **>(

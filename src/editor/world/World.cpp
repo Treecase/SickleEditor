@@ -1,5 +1,5 @@
 /**
- * Map.cpp - Editor::Map.
+ * World.cpp - Editor::World.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,26 +16,30 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world/EditorWorld.hpp"
+#include "world/World.hpp"
 
 using namespace Sickle::Editor;
 
 
-Map::Map()
+Glib::RefPtr<World> World::create()
 {
-    auto &worldspawn = add_entity({});
-    worldspawn.properties["classname"] = "worldspawn";
+    return Glib::RefPtr{new World{}};
 }
 
-Map::Map(MAP::Map const &map)
+
+Glib::RefPtr<World> World::create(MAP::Map const &map)
 {
+    auto world = World::create();
     for (auto const &entity : map.entities)
-        add_entity(entity);
+        world->add_entity(entity);
+    return world;
 }
 
 
-Map::Map(RMF::RichMap const &map)
+Glib::RefPtr<World> World::create(RMF::RichMap const &map)
 {
+    auto world = World::create();
+
     Entity worldspawn{};
     worldspawn.properties = map.worldspawn_properties;
     worldspawn.properties["classname"] = map.worldspawn_name;
@@ -47,17 +51,29 @@ Map::Map(RMF::RichMap const &map)
         auto group = groups.top();
         groups.pop();
         for (auto const &brush : group.brushes)
-            worldspawn.brushes.emplace_back(std::make_shared<Brush>(brush));
+            worldspawn.add_brush(brush);
         for (auto const &entity : group.entities)
-            add_entity(entity);
+            world->add_entity(entity);
         for (auto group2 : group.groups)
             groups.push(group2);
     }
-    add_entity(worldspawn);
+    world->add_entity(worldspawn);
+
+    return world;
 }
 
 
-Map::operator MAP::Map() const
+World &World::operator=(World const &other)
+{
+    if (this != &other)
+    {
+        _entities = other._entities;
+    }
+    return *this;
+}
+
+
+World::operator MAP::Map() const
 {
     MAP::Map out{};
     for (auto const &entity : _entities)
@@ -66,14 +82,14 @@ Map::operator MAP::Map() const
 }
 
 
-void Map::add_brush(Brush const &brush)
+void World::add_brush(Brush const &brush)
 {
     worldspawn().add_brush(brush);
     signal_changed().emit();
 }
 
 
-Entity &Map::add_entity(Entity const &entity)
+Entity &World::add_entity(Entity const &entity)
 {
     auto &e = _entities.emplace_back(entity);
     signal_changed().emit();
@@ -81,7 +97,7 @@ Entity &Map::add_entity(Entity const &entity)
 }
 
 
-void Map::remove_brush(std::shared_ptr<Brush> const &brush)
+void World::remove_brush(Entity::BrushRef const &brush)
 {
     for (auto &entity : _entities)
         entity.remove_brush(brush);
@@ -89,10 +105,19 @@ void Map::remove_brush(std::shared_ptr<Brush> const &brush)
 }
 
 
-Entity &Map::worldspawn()
+Entity &World::worldspawn()
 {
     for (auto &entity : _entities)
         if (entity.properties.at("classname") == "worldspawn")
             return entity;
     throw std::logic_error{"missing worldspawn"};
+}
+
+
+
+World::World()
+:   Glib::ObjectBase{typeid(World)}
+{
+    auto &worldspawn = add_entity({});
+    worldspawn.properties["classname"] = "worldspawn";
 }

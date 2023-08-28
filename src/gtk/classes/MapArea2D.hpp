@@ -22,6 +22,7 @@
 #include "maparea2d/GrabbableBox.hpp"
 
 #include <core/Editor.hpp>
+#include <se-lua/utils/Referenceable.hpp>
 
 #include <cairomm/cairomm.h>
 #include <gdkmm/rgba.h>
@@ -48,7 +49,7 @@ namespace Sickle
     }
 
     /** Displays .map files. */
-    class MapArea2D : public Gtk::DrawingArea
+    class MapArea2D : public Gtk::DrawingArea, public Lua::Referenceable
     {
     public:
         using ScreenSpacePoint = glm::vec2;
@@ -73,7 +74,7 @@ namespace Sickle
         glm::vec3 worldspace_to_drawspace3(WorldSpacePoint const &v) const;
 
         /** Pick an EditorBrush based on the given point. */
-        std::shared_ptr<Editor::Brush> pick_brush(DrawSpacePoint point);
+        Editor::Entity::BrushRef pick_brush(DrawSpacePoint point);
 
         auto property_clear_color() {return _prop_clear_color.get_proxy();}
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
@@ -127,7 +128,7 @@ namespace Sickle
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,
-            std::shared_ptr<Editor::Brush> const &brush) const;
+            Editor::Entity::BrushRef const &brush) const;
         void _draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const;
     };
 }

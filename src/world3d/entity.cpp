@@ -22,7 +22,7 @@
 World3D::Entity::Entity(World3D &parent, Sickle::Editor::Entity &src)
 :   _parent{parent}
 {
-    for (auto &brush : src.brushes)
+    for (auto &brush : src.brushes())
         brushes.emplace_back(*this, brush);
 }
 

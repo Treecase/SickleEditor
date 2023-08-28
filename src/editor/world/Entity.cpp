@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world/EditorWorld.hpp"
+#include "world/Entity.hpp"
 
 #include <algorithm>
 
@@ -24,20 +24,36 @@ using namespace Sickle::Editor;
 
 
 
-Entity::Entity(MAP::Entity const &entity)
-:   properties{entity.properties}
+Entity::Entity()
+:   Glib::ObjectBase{typeid(Entity)}
 {
+}
+
+
+Entity::Entity(Entity const &other)
+:   Entity{}
+{
+    properties = other.properties;
+    _brushes = other._brushes;
+}
+
+
+Entity::Entity(MAP::Entity const &entity)
+:   Entity{}
+{
+    properties = entity.properties;
     for (auto const &brush : entity.brushes)
-        brushes.emplace_back(std::make_shared<Brush>(brush));
+        _brushes.push_back(std::make_shared<Brush>(brush));
 }
 
 
 Entity::Entity(RMF::Entity const &entity)
-:   properties{entity.kv_pairs}
+:   Entity{}
 {
+    properties = entity.kv_pairs;
     properties["classname"] = entity.classname;
     for (auto const &brush : entity.brushes)
-        brushes.emplace_back(std::make_shared<Brush>(brush));
+        _brushes.push_back(std::make_shared<Brush>(brush));
 }
 
 
@@ -45,22 +61,44 @@ Entity::operator MAP::Entity() const
 {
     MAP::Entity out{};
     out.properties = properties;
-    for (auto const &brush : brushes)
+    for (auto const &brush : _brushes)
         out.brushes.push_back(*brush);
     return out;
 }
 
+
+Entity &Entity::operator=(Entity const &other)
+{
+    if (this != &other)
+    {
+        properties = other.properties;
+        _brushes = other._brushes;
+    }
+    return *this;
+}
+
+
+std::vector<std::weak_ptr<Brush>> Entity::brushes() const
+{
+    std::vector<std::weak_ptr<Brush>> the_brushes{};
+    for (auto const brush : _brushes)
+        the_brushes.emplace_back(brush);
+    return the_brushes;
+}
+
+
 void Entity::add_brush(Brush const &brush)
 {
-    brushes.push_back(std::make_shared<Brush>(brush));
+    _brushes.push_back(std::make_shared<Brush>(brush));
     signal_changed().emit();
 }
 
-void Entity::remove_brush(std::shared_ptr<Brush> const &brush)
+
+void Entity::remove_brush(std::weak_ptr<Brush> const &brush)
 {
-    auto const it = std::find(brushes.begin(), brushes.end(), brush);
-    if (it == brushes.end())
+    auto const it = std::find(_brushes.begin(), _brushes.end(), brush.lock());
+    if (it == _brushes.end())
         return;
-    brushes.erase(it);
+    _brushes.erase(it);
     signal_changed().emit();
 }

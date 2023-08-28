@@ -22,6 +22,7 @@
 #include "gtkglutils.hpp"
 
 #include <core/Editor.hpp>
+#include <se-lua/utils/Referenceable.hpp>
 #include <utils/Transform.hpp>
 #include <utils/FreeCam.hpp>
 #include <utils/DebugDrawer3D.hpp>
@@ -35,7 +36,7 @@
 namespace Sickle
 {
     /** Displays .map files. */
-    class MapArea3D : public Gtk::GLArea
+    class MapArea3D : public Gtk::GLArea, public Lua::Referenceable
     {
     public:
         using ScreenSpacePoint = glm::vec2;
@@ -55,7 +56,7 @@ namespace Sickle
 
         MapArea3D(Editor::Editor &ed);
 
-        std::shared_ptr<Editor::Brush> pick_brush(glm::vec2 const &P);
+        Editor::Entity::BrushRef pick_brush(glm::vec2 const &P);
         GLSpacePoint screenspace_to_glspace(ScreenSpacePoint const &) const;
 
         auto &get_editor() {return _editor;}

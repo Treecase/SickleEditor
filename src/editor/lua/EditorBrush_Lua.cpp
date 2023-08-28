@@ -32,7 +32,7 @@ using namespace Sickle::Editor;
 static int is_selected(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
-    lua_pushboolean(L, brush->is_selected.get());
+    lua_pushboolean(L, brush->is_selected());
     return 1;
 }
 
@@ -104,7 +104,7 @@ void Lua::push(lua_State *L, Brush *brush)
         return;
     }
     builder.addSignalHandler(
-        brush->is_selected.signal_changed(), "on_selected");
+        brush->property_selected().signal_changed(), "on_selected");
     builder.finish();
     int const t3 = lua_gettop(L);
     assert(t3 == t1 + 1);

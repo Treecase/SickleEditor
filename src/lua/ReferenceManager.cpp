@@ -21,39 +21,53 @@
 using namespace Lua;
 
 
-std::unique_ptr<lua_State, ReferenceManager::LuaDeleter> const
-ReferenceManager::_L_actual{luaL_newstate()};
-lua_State *const ReferenceManager::_L{ReferenceManager::_L_actual.get()};
-std::unordered_map<void *, int> ReferenceManager::_references{};
+static char _KEY = 'k';
+static void *const REFTABLE_KEY = &_KEY;
 
 
-void ReferenceManager::set(lua_State *L, void *pointer, int idx)
+void ReferenceManager::set(lua_State *L, Referenceable *pointer, int idx)
 {
-    if (_references.count(pointer) != 0)
-        unref(L, pointer);
-
-    lua_pushvalue(L, idx);
-    lua_xmove(L, _L, 1);
-    int const r = luaL_ref(_L, LUA_REGISTRYINDEX);
-    _references.insert({pointer, r});
+    auto const index = lua_absindex(L, idx);
+    pushRefTable(L);
+    lua_pushlightuserdata(L, pointer->get_id());
+    lua_pushvalue(L, index);
+    lua_settable(L, -3);
+    lua_pop(L, 1);
+    pointer->signal_destroy().connect(
+        [this, L, pointer](){this->erase(L, pointer);});
 }
 
 
-void ReferenceManager::get(lua_State *L, void *pointer)
+void ReferenceManager::get(lua_State *L, Referenceable *pointer)
 {
-    int const r = _references.at(pointer);
-    lua_rawgeti(_L, LUA_REGISTRYINDEX, r);
-    lua_xmove(_L, L, 1);
+    pushRefTable(L);
+    lua_pushlightuserdata(L, pointer->get_id());
+    lua_gettable(L, -2);
+    lua_remove(L, -2);
 }
 
 
-void ReferenceManager::unref(lua_State *L, void *pointer)
+void ReferenceManager::erase(lua_State *L, Referenceable *pointer)
 {
-    try {
-        int const r = _references.at(pointer);
-        luaL_unref(_L, LUA_REGISTRYINDEX, r);
-        _references.erase(pointer);
-    }
-    catch (std::out_of_range const &e) {
+    pushRefTable(L);
+    lua_pushlightuserdata(L, pointer->get_id());
+    lua_pushnil(L);
+    lua_settable(L, -3);
+    lua_pop(L, 1);
+}
+
+
+
+void ReferenceManager::pushRefTable(lua_State *L)
+{
+    lua_pushlightuserdata(L, REFTABLE_KEY);
+    int const type = lua_gettable(L, LUA_REGISTRYINDEX);
+    if (type != LUA_TTABLE)
+    {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushlightuserdata(L, REFTABLE_KEY);
+        lua_pushvalue(L, -2);
+        lua_settable(L, LUA_REGISTRYINDEX);
     }
 }

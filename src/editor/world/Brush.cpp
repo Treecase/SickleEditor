@@ -16,12 +16,29 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world/EditorWorld.hpp"
+#include "world/Brush.hpp"
 
 using namespace Sickle::Editor;
 
 
+Brush::Brush()
+:   Glib::ObjectBase{typeid(Brush)}
+,   Lua::Referenceable{}
+,   _prop_selected{*this, "selected", false}
+{
+}
+
+
+Brush::Brush(Brush const &other)
+:   Brush{}
+{
+    faces = other.faces;
+    property_selected().set_value(other.is_selected());
+}
+
+
 Brush::Brush(std::vector<glm::vec3> const &vertices)
+:   Brush{}
 {
     auto const v = facet_enumeration(vertices);
     auto const facets = v.first;
@@ -32,6 +49,7 @@ Brush::Brush(std::vector<glm::vec3> const &vertices)
 
 
 Brush::Brush(MAP::Brush const &brush)
+:   Brush{}
 {
     std::vector<HalfPlane> halfplanes{};
     for (auto const &plane : brush.planes)
@@ -44,6 +62,7 @@ Brush::Brush(MAP::Brush const &brush)
 
 
 Brush::Brush(RMF::Solid const &solid)
+:   Brush{}
 {
     for (auto const &face : solid.faces)
         faces.emplace_back(std::make_shared<Face>(face));
