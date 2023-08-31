@@ -16,9 +16,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../../classes/maparea2d/GrabbableBox.hpp"
 #include "MapArea2D_Lua.hpp"
 
+#include <gbox/GrabbableBox.hpp>
 #include <se-lua/utils/RefBuilder.hpp>
 #include <LuaGeo.hpp>
 
@@ -67,7 +67,7 @@ int luaopen_grabbablebox(lua_State *L)
     // Export enum values.
     Lua::make_table(L,
         std::make_pair("NONE", (lua_Integer)GrabbableBox::Area::NONE),
-        std::make_pair("BOX", (lua_Integer)GrabbableBox::Area::BOX),
+        std::make_pair("CENTER", (lua_Integer)GrabbableBox::Area::CENTER),
         std::make_pair("N", (lua_Integer)GrabbableBox::Area::N),
         std::make_pair("NE", (lua_Integer)GrabbableBox::Area::NE),
         std::make_pair("E", (lua_Integer)GrabbableBox::Area::E),

@@ -32,7 +32,7 @@ function CreateBrush.metatable:on_button_press_event(event)
         if hovered == maparea2d.grabbablebox.NONE then
             self:addListener(Create.new(self, self.maparea, event.x, event.y))
 
-        elseif hovered == maparea2d.grabbablebox.BOX then
+        elseif hovered == maparea2d.grabbablebox.CENTER then
             self:addListener(MoveDrag.new(self, self.maparea, event.x, event.y))
 
         else
@@ -66,7 +66,7 @@ function CreateBrush.metatable:on_motion_notify_event(event)
     local mouse_position_ds = self.maparea:screenspace_to_drawspace(event)
     local hovered = self.maparea:get_brushbox():check_point(mouse_position_ds)
     local CURSORS = {
-        [maparea2d.grabbablebox.BOX] = "crosshair",
+        [maparea2d.grabbablebox.CENTER] = "crosshair",
         [maparea2d.grabbablebox.NE] = "ne-resize",
         [maparea2d.grabbablebox.NW] = "nw-resize",
         [maparea2d.grabbablebox.SE] = "se-resize",

@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../../classes/MapArea2D.hpp"
 #include "LuaGdkEvent.hpp"
 #include "MapArea2D_Lua.hpp"
 

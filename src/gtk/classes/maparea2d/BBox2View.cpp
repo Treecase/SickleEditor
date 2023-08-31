@@ -1,5 +1,5 @@
 /**
- * MapArea2D_Lua.hpp - MapArea2D Lua binding.
+ * BBox2View.cpp - Views for BBox2s.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,27 +16,39 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPAREA2D_LUA_HPP
-#define SE_MAPAREA2D_LUA_HPP
-
-#include <se-lua/se-lua.hpp>
-#include <MapArea2D.hpp>
+#include "BBox2View.hpp"
 
 
-int luaopen_maparea2d(lua_State *L);
-Sickle::MapArea2D *lmaparea2d_check(lua_State *L, int arg);
+using namespace Sickle;
 
-int luaopen_grabbablebox(lua_State *L);
-Sickle::GrabbableBox *lgrabbablebox_check(lua_State *L, int arg);
 
-int luaopen_transform2d(lua_State *L);
-Sickle::MapArea2Dx::Transform2D *ltransform2d_check(lua_State *L, int arg);
-
-template<> void Lua::push(lua_State *L, Sickle::MapArea2D *maparea);
-template<> void Lua::push(lua_State *L, Sickle::GrabbableBox *box);
-namespace Lua
+/* ===[ BBox2View ]=== */
+void BBox2View::draw(
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    BBox2 const &box,
+    float unit)
 {
-    void push(lua_State *L, Sickle::MapArea2Dx::Transform2D transform);
+    auto const width = box.max.x - box.min.x;
+    auto const height = box.max.y - box.min.y;
+    cr->rectangle(box.min.x, box.min.y, width, height);
 }
 
-#endif
+
+
+/* ===[ BBox2ViewCustom ]=== */
+BBox2ViewCustom::BBox2ViewCustom(Func const &pre, Func const &post)
+:   _pre{pre}
+,   _post{post}
+{
+}
+
+
+void BBox2ViewCustom::draw(
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    BBox2 const &box,
+    float unit)
+{
+    _pre(cr, box, unit);
+    BBox2View::draw(cr, box, unit);
+    _post(cr, box, unit);
+}

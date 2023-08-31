@@ -17,7 +17,6 @@
  */
 
 #include "MapArea2D.hpp"
-#include "MapArea2D_Lua.hpp"
 #include "AppWin.hpp"
 
 #include <gtkmm/builder.h>
@@ -27,9 +26,6 @@
 
 #include <algorithm>
 #include <iostream>
-
-// Test function for the Xspace_to_Yspace methods.
-void _test_space_conversions(Sickle::MapArea2D const &maparea);
 
 
 struct DrawAnchor
@@ -43,113 +39,40 @@ static DrawAnchor const BottomLeft{false, true};
 static DrawAnchor const BottomRight{false, false};
 
 
-/**
- * Convert POINTS from point to pixel units. Needed because Cairo's
- * set_font_size set the font size in pixels, not points.
- */
-double points_to_pixels(double points, double dpi)
-{
-    static constexpr auto point_in_inches = 1.0 / 72.0;
-    auto const inches_per_pixel = 1.0 / dpi;
-    auto const font_size_inches = point_in_inches * points;
-    return font_size_inches / inches_per_pixel;
-}
-
-
 /** Draw the grid. */
-void draw_grid(
-    Cairo::RefPtr<Cairo::Context> const &cr, double width, double height,
-    double grid_size, double _transform_x, double _transform_y)
-{
-    auto const half_w = 0.5 * width;
-    auto const half_h = 0.5 * height;
-    auto const dx = std::fmod(_transform_x, grid_size);
-    auto const dy = std::fmod(_transform_y, grid_size);
-    int const count_x = std::ceil((0.5 * width) / grid_size);
-    int const count_y = std::ceil((0.5 * height) / grid_size);
-    for (int i = 0; i <= count_x; ++i)
-    {
-        cr->move_to(half_w + i*grid_size + dx, 0);
-        cr->rel_line_to(0, height);
-        cr->move_to(half_w - i*grid_size + dx, 0);
-        cr->rel_line_to(0, height);
-    }
-    for (int i = 0; i <= count_y; ++i)
-    {
-        cr->move_to(0, half_h + i*grid_size + dy);
-        cr->rel_line_to(width, 0);
-        cr->move_to(0, half_h - i*grid_size + dy);
-        cr->rel_line_to(width, 0);
-    }
-}
-
-
-/** Draw main axes. */
-void draw_axes(
+static void draw_grid(
     Cairo::RefPtr<Cairo::Context> const &cr,
     double width, double height,
-    double _transform_x, double _transform_y)
-{
-    cr->move_to(0.5 * width + _transform_x, 0);
-    cr->rel_line_to(0, height);
-    cr->move_to(0, 0.5 * height + _transform_y);
-    cr->rel_line_to(width, 0);
-}
+    double grid_size,
+    double _transform_x, double _transform_y);
 
+/** Draw main axes. */
+static void draw_axes(
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    double width, double height,
+    double _transform_x, double _transform_y);
+
+
+/** Convert POINTS from typographic point units to pixels. */
+static double points_to_pixels(double points, double dpi);
 
 /**
  * Sets CR's font_face and font_size based on FONT and DPI. Returns font size.
  */
-double select_font_from_pango(
+static double select_font_from_pango(
     Cairo::RefPtr<Cairo::Context> const &cr,
     Pango::FontDescription const &font,
-    double dpi)
-{
-    double const font_size = (
-        font.get_size_is_absolute()
-        ? font.get_size() / Pango::SCALE
-        : points_to_pixels(font.get_size() / Pango::SCALE, dpi));
-
-    auto weight = Cairo::FontWeight::FONT_WEIGHT_NORMAL;
-    if (font.get_weight() == Pango::Weight::WEIGHT_BOLD)
-        weight = Cairo::FontWeight::FONT_WEIGHT_BOLD;
-
-    auto slant = Cairo::FontSlant::FONT_SLANT_NORMAL;
-    switch (font.get_style())
-    {
-    case Pango::Style::STYLE_ITALIC:
-        slant = Cairo::FontSlant::FONT_SLANT_ITALIC;
-        break;
-    case Pango::Style::STYLE_OBLIQUE:
-        slant = Cairo::FontSlant::FONT_SLANT_OBLIQUE;
-        break;
-    }
-
-    cr->select_font_face(font.get_family(), slant, weight);
-    cr->set_font_size(font_size);
-    return font_size;
-}
-
+    double dpi);
 
 /** Draw text. */
-void draw_text(
-    Cairo::RefPtr<Cairo::Context> const &cr, std::string const &text,
-    double x, double y, DrawAnchor anchor=TopLeft)
-{
-    Cairo::TextExtents extents;
-    cr->get_text_extents(text, extents);
+static void draw_text(
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    std::string const &text,
+    double x, double y,
+    DrawAnchor anchor=TopLeft);
 
-    auto tx = x - extents.x_bearing;
-    auto ty = y - extents.y_bearing;
-
-    if (!anchor.left)
-        tx -= extents.width;
-    if (!anchor.top)
-        ty -= extents.height;
-
-    cr->move_to(tx, ty);
-    cr->show_text(text);
-}
+// FIXME: TEMP? Test function for the Xspace_to_Yspace methods.
+static void _test_space_conversions(Sickle::MapArea2D const &maparea);
 
 
 
@@ -199,35 +122,13 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
     set_size_request(320, 240);
     set_can_focus(true);
 
-    {// Set up Select right-click menu
-    _select_popup_actions = Gio::SimpleActionGroup::create();
-    _select_popup_actions->add_action(
-        "delete",
-        sigc::mem_fun(*this, &MapArea2D::on_action_select_delete));
-    insert_action_group("select", _select_popup_actions);
-    auto builder = Gtk::Builder::create();
-    builder->add_from_resource(
-        SE_GRESOURCE_PREFIX"gtk/MapArea2D/SelectPopupMenu.ui");
-    _select_popup_menu = Gtk::Menu{
-        Glib::RefPtr<Gio::Menu>::cast_dynamic(
-            builder->get_object("popup-select"))};
+    _select_popup_menu.set_editor(
+        std::shared_ptr<Editor::Editor>(&_editor, [](void *ptr){}));
     _select_popup_menu.attach_to_widget(*this);
-    }
 
-    {// Set up CreateBrush right-click menu
-    _createbrush_popup_actions = Gio::SimpleActionGroup::create();
-    _createbrush_popup_actions->add_action(
-        "create",
-        sigc::mem_fun(*this, &MapArea2D::on_action_createbrush_create));
-    insert_action_group("createbrush", _createbrush_popup_actions);
-    auto builder = Gtk::Builder::create();
-    builder->add_from_resource(
-        SE_GRESOURCE_PREFIX"gtk/MapArea2D/CreateBrushPopupMenu.ui");
-    _createbrush_popup_menu = Gtk::Menu{
-        Glib::RefPtr<Gio::Menu>::cast_dynamic(
-            builder->get_object("popup-createbrush"))};
+    _createbrush_popup_menu.set_editor(
+        std::shared_ptr<Editor::Editor>(&_editor, [](void *ptr){}));
     _createbrush_popup_menu.attach_to_widget(*this);
-    }
 
     _editor.brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_brushbox_changed));
@@ -374,7 +275,9 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 
     // Clear background
     cr->set_source_rgb(
-        clear_color.get_red(), clear_color.get_green(), clear_color.get_blue());
+        clear_color.get_red(),
+        clear_color.get_green(),
+        clear_color.get_blue());
     cr->paint();
 
 
@@ -536,31 +439,6 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 }
 
 
-void Sickle::MapArea2D::on_action_select_delete()
-{
-    std::vector<Editor::Selection::Item> const cached{
-        _editor.selected.begin(),
-        _editor.selected.end()};
-    _editor.selected.clear();
-    for (auto const &brush : cached)
-        _editor.get_map()->remove_brush(brush);
-}
-
-
-void Sickle::MapArea2D::on_action_createbrush_create()
-{
-    try
-    {
-        _editor.do_command(std::make_shared<Editor::commands::AddBrush>());
-    }
-    catch (std::runtime_error const &e)
-    {
-        std::cout << "Sickle::MapArea2D::on_action_createbrush_create -- "
-            << e.what() << '\n';
-    }
-}
-
-
 
 void Sickle::MapArea2D::_draw_brush(
     Cairo::RefPtr<Cairo::Context> const &cr,
@@ -591,7 +469,110 @@ void Sickle::MapArea2D::_draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const
 
 
 
-void _test_space_conversions(Sickle::MapArea2D const &maparea)
+static void draw_grid(
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    double width, double height,
+    double grid_size,
+    double _transform_x, double _transform_y)
+{
+    auto const half_w = 0.5 * width;
+    auto const half_h = 0.5 * height;
+    auto const dx = std::fmod(_transform_x, grid_size);
+    auto const dy = std::fmod(_transform_y, grid_size);
+    int const count_x = std::ceil((0.5 * width) / grid_size);
+    int const count_y = std::ceil((0.5 * height) / grid_size);
+    for (int i = 0; i <= count_x; ++i)
+    {
+        cr->move_to(half_w + i*grid_size + dx, 0);
+        cr->rel_line_to(0, height);
+        cr->move_to(half_w - i*grid_size + dx, 0);
+        cr->rel_line_to(0, height);
+    }
+    for (int i = 0; i <= count_y; ++i)
+    {
+        cr->move_to(0, half_h + i*grid_size + dy);
+        cr->rel_line_to(width, 0);
+        cr->move_to(0, half_h - i*grid_size + dy);
+        cr->rel_line_to(width, 0);
+    }
+}
+
+
+static void draw_axes(
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    double width, double height,
+    double _transform_x, double _transform_y)
+{
+    cr->move_to(0.5 * width + _transform_x, 0);
+    cr->rel_line_to(0, height);
+    cr->move_to(0, 0.5 * height + _transform_y);
+    cr->rel_line_to(width, 0);
+}
+
+
+static double points_to_pixels(double points, double dpi)
+{
+    static constexpr auto point_in_inches = 1.0 / 72.0;
+    auto const inches_per_pixel = 1.0 / dpi;
+    auto const font_size_inches = point_in_inches * points;
+    return font_size_inches / inches_per_pixel;
+}
+
+
+static double select_font_from_pango(
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    Pango::FontDescription const &font,
+    double dpi)
+{
+    double const font_size = (
+        font.get_size_is_absolute()
+        ? font.get_size() / Pango::SCALE
+        : points_to_pixels(font.get_size() / Pango::SCALE, dpi));
+
+    auto weight = Cairo::FontWeight::FONT_WEIGHT_NORMAL;
+    if (font.get_weight() == Pango::Weight::WEIGHT_BOLD)
+        weight = Cairo::FontWeight::FONT_WEIGHT_BOLD;
+
+    auto slant = Cairo::FontSlant::FONT_SLANT_NORMAL;
+    switch (font.get_style())
+    {
+    case Pango::Style::STYLE_ITALIC:
+        slant = Cairo::FontSlant::FONT_SLANT_ITALIC;
+        break;
+    case Pango::Style::STYLE_OBLIQUE:
+        slant = Cairo::FontSlant::FONT_SLANT_OBLIQUE;
+        break;
+    }
+
+    cr->select_font_face(font.get_family(), slant, weight);
+    cr->set_font_size(font_size);
+    return font_size;
+}
+
+
+static void draw_text(
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    std::string const &text,
+    double x, double y,
+    DrawAnchor anchor)
+{
+    Cairo::TextExtents extents;
+    cr->get_text_extents(text, extents);
+
+    auto tx = x - extents.x_bearing;
+    auto ty = y - extents.y_bearing;
+
+    if (!anchor.left)
+        tx -= extents.width;
+    if (!anchor.top)
+        ty -= extents.height;
+
+    cr->move_to(tx, ty);
+    cr->show_text(text);
+}
+
+
+static void _test_space_conversions(Sickle::MapArea2D const &maparea)
 {
     static constexpr float EPSILON = 0.001f;
 

@@ -19,7 +19,10 @@
 #ifndef SE_MAPAREA2D_HPP
 #define SE_MAPAREA2D_HPP
 
-#include "maparea2d/GrabbableBox.hpp"
+#include "gbox/GrabbableBox.hpp"
+#include "gbox/GrabbableBoxView.hpp"
+#include "popup-menus/CreateBrushMenu.hpp"
+#include "popup-menus/SelectMenu.hpp"
 
 #include <core/Editor.hpp>
 #include <se-lua/utils/Referenceable.hpp>
@@ -101,12 +104,6 @@ namespace Sickle
         bool on_button_press_event(GdkEventButton *event) override;
         bool on_enter_notify_event(GdkEventCrossing *event) override;
 
-        // Actions
-        // Select Tool
-        void on_action_select_delete();
-        // CreateBrush Tool
-        void on_action_createbrush_create();
-
     private:
         Editor::Editor &_editor;
 
@@ -121,10 +118,8 @@ namespace Sickle
         Glib::Property<DrawAngle> _prop_draw_angle;
         Glib::Property<MapArea2Dx::Transform2D> _prop_transform;
 
-        Gtk::Menu _select_popup_menu{};
-        Gtk::Menu _createbrush_popup_menu{};
-        Glib::RefPtr<Gio::SimpleActionGroup> _select_popup_actions{};
-        Glib::RefPtr<Gio::SimpleActionGroup> _createbrush_popup_actions{};
+        SelectMenu _select_popup_menu{};
+        CreateBrushMenu _createbrush_popup_menu{};
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,

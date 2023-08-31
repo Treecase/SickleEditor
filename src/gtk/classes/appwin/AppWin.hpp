@@ -20,7 +20,7 @@
 #define SE_APPWIN_HPP
 
 #include "../LuaConsole.hpp"
-#include "../MapArea2D.hpp"
+#include "../maparea2d/MapArea2D.hpp"
 #include "../MapArea3D.hpp"
 #include "../MapTools.hpp"
 #include "OperationSearch.hpp"

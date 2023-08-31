@@ -1,5 +1,5 @@
 /**
- * MapArea2D_Lua.hpp - MapArea2D Lua binding.
+ * CreateBrushMenu.hpp - Popup menu for "Create Brush" tool.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,27 +16,31 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPAREA2D_LUA_HPP
-#define SE_MAPAREA2D_LUA_HPP
+#ifndef SE_MAPAREA2D_CREATEBRUSHMENU_HPP
+#define SE_MAPAREA2D_CREATEBRUSHMENU_HPP
 
-#include <se-lua/se-lua.hpp>
-#include <MapArea2D.hpp>
+#include <core/Editor.hpp>
+
+#include <gtkmm/menu.h>
+#include <giomm/simpleactiongroup.h>
+#include <glibmm/refptr.h>
 
 
-int luaopen_maparea2d(lua_State *L);
-Sickle::MapArea2D *lmaparea2d_check(lua_State *L, int arg);
-
-int luaopen_grabbablebox(lua_State *L);
-Sickle::GrabbableBox *lgrabbablebox_check(lua_State *L, int arg);
-
-int luaopen_transform2d(lua_State *L);
-Sickle::MapArea2Dx::Transform2D *ltransform2d_check(lua_State *L, int arg);
-
-template<> void Lua::push(lua_State *L, Sickle::MapArea2D *maparea);
-template<> void Lua::push(lua_State *L, Sickle::GrabbableBox *box);
-namespace Lua
+namespace Sickle
 {
-    void push(lua_State *L, Sickle::MapArea2Dx::Transform2D transform);
+    class CreateBrushMenu : public Gtk::Menu
+    {
+        Glib::RefPtr<Gio::SimpleActionGroup> _actions{};
+        std::shared_ptr<Editor::Editor> _editor{nullptr};
+
+    protected:
+        void action_create();
+
+    public:
+        CreateBrushMenu();
+
+        void set_editor(decltype(_editor) editor);
+    };
 }
 
 #endif

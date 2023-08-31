@@ -31,7 +31,7 @@ function Select.metatable:on_button_press_event(event)
         local hovered = self.maparea:get_selection_box():check_point(
             self.maparea:screenspace_to_drawspace(event))
 
-        if hovered == maparea2d.grabbablebox.BOX then
+        if hovered == maparea2d.grabbablebox.CENTER then
             self:addListener(
                 MoveSelected.new(self, self.maparea, event.x, event.y))
             return true

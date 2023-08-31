@@ -119,7 +119,7 @@ function maparea2d.metatable:on_motion_notify_event(event)
         end
     end
     local CURSORS = {
-        [maparea2d.grabbablebox.BOX] = "crosshair",
+        [maparea2d.grabbablebox.CENTER] = "crosshair",
         [maparea2d.grabbablebox.NE] = "ne-resize",
         [maparea2d.grabbablebox.NW] = "nw-resize",
         [maparea2d.grabbablebox.SE] = "se-resize",

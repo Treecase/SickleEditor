@@ -4,6 +4,7 @@ add_library(appwin STATIC
 )
 target_link_libraries(appwin
     PUBLIC
+        config
         editor-core
         editor-operations
         sickle-gtk-lua
@@ -12,7 +13,6 @@ target_link_libraries(appwin
         glutils::glutils # maparea3d
         world3d # maparea3d
     PRIVATE
-        config
         map
         rmf
         luageo
