@@ -19,36 +19,41 @@
 #ifndef SE_EDITOR_MAPTOOLS_HPP
 #define SE_EDITOR_MAPTOOLS_HPP
 
+#include <glibmm/refptr.h>
+
+#include <functional> // temp
 #include <string>
+#include <vector>
 
 
 namespace Sickle::Editor
 {
+    class Editor;
+
     class MapTool
     {
     public:
-        virtual void operator()()=0;
-        virtual std::string name() const=0;
+        struct OpDef
+        {
+            std::string const label;
+            std::string const operation_id;
+        };
+        // temp
+        std::function<bool(Glib::RefPtr<Editor>)> x;
 
+        MapTool(
+            std::string const &name,
+            std::vector<OpDef> const &opdefs,
+            decltype(x) fn
+            );
         virtual ~MapTool()=default;
-    };
 
-    class MapToolSelect : public MapTool
-    {
-    public:
-        virtual void operator()() override;
-        virtual std::string name() const override;
+        std::string name() const;
+        std::vector<OpDef> operations() const;
 
-        virtual ~MapToolSelect()=default;
-    };
-
-    class MapToolCreateBrush : public MapTool
-    {
-    public:
-        virtual void operator()() override;
-        virtual std::string name() const override;
-
-        virtual ~MapToolCreateBrush()=default;
+    private:
+        std::string _name;
+        std::vector<OpDef> _opdefs;
     };
 }
 

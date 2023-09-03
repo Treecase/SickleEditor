@@ -71,7 +71,7 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Editor *editor)
 {
-    Lua::RefBuilder<Editor> builder{L, METATABLE, editor};
+    Lua::RefBuilder builder{L, METATABLE, editor};
     if (builder.pushnew())
         return;
     builder.addSignalHandler(

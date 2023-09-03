@@ -26,6 +26,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 
 namespace Sickle::Editor
@@ -39,6 +40,23 @@ namespace Sickle::Editor
         std::string const mode;
         std::string const args;
 
+        /**
+         * Return the identifier for the given operation.
+         * Current ID format is "<module>.<operation>".
+         */
+        static std::string id(
+            std::string const &module,
+            std::string const &operation);
+
+        /** Break an ID into the module and operation names (in that order). */
+        static std::pair<std::string, std::string> unid(std::string const &id);
+
+        /**
+         * Return the Operation's ID.
+         * Current ID format is "<module>.<operation>".
+         */
+        auto id() const {return id(module_name, name);};
+
         Operation(
             lua_State *L,
             std::string const &module_name,
@@ -46,7 +64,7 @@ namespace Sickle::Editor
             std::string const &mode,
             std::string const &args);
 
-        void execute(Editor &ed) const;
+        void execute(Glib::RefPtr<Editor> ed) const;
     };
 
     /**
@@ -65,6 +83,16 @@ namespace Sickle::Editor
         std::vector<Operation>
         L_get_module_operations(std::string const &module_name) const;
 
+        void L_push_module_table() const;
+        void L_push_module(std::string const &module) const;
+        void L_push_operation(
+            std::string const &module,
+            std::string const &operation) const;
+
+        // Copying not allowed
+        OperationLoader(OperationLoader const &)=delete;
+        OperationLoader &operator=(OperationLoader const &)=delete;
+
     public:
         OperationLoader(lua_State *L);
 
@@ -73,6 +101,13 @@ namespace Sickle::Editor
 
         /** Get a list of all the operations. */
         std::vector<Operation> get_operations() const;
+
+        /** Get a single operation. */
+        Operation get_operation(
+            std::string const &module,
+            std::string const &operation) const;
+        /** Get a single operation. */
+        Operation get_operation(std::string const &id);
 
         /** Get a list of operations in the module. */
         std::vector<Operation> get_module(std::string const &module_name) const;

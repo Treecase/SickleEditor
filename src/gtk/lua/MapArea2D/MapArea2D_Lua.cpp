@@ -114,7 +114,7 @@ static int get_draw_angle(lua_State *L)
 static int get_editor(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    Lua::push(L, &ma->get_editor());
+    Lua::push(L, ma->get_editor().get());
     return 1;
 }
 

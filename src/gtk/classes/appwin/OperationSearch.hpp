@@ -47,6 +47,7 @@ namespace Sickle::AppWin
 
         sigc::signal<void(Editor::Operation)> _sig_operation_chosen{};
 
+        Glib::RefPtr<Editor::Editor> _editor;
         Gtk::Window *window{nullptr};
         Gtk::SearchEntry *searchbar{nullptr};
         Gtk::TreeView *treeview{nullptr};
@@ -55,17 +56,9 @@ namespace Sickle::AppWin
         Glib::RefPtr<Gtk::TreeModelSort> sorted{nullptr};
         Gtk::CellRendererText cellrenderer{};
 
-        std::shared_ptr<Editor::OperationLoader> _oploader{nullptr};
-
-        std::vector<std::string> const _internal_scripts{
-            "operations/basic.lua",
-        };
-
         static size_t similarity(
             Glib::ustring const &a,
             Glib::ustring const &b);
-
-        void run_scripts();
 
         void on_search_changed();
         void on_row_activated(
@@ -80,7 +73,7 @@ namespace Sickle::AppWin
     public:
         std::string mode{"brush"};
 
-        OperationSearch(lua_State *L);
+        OperationSearch(Glib::RefPtr<Editor::Editor> editor);
         virtual ~OperationSearch();
 
         void set_transient_for(Gtk::Window &parent);

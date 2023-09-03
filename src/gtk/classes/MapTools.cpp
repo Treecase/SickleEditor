@@ -19,46 +19,57 @@
 #include "MapTools.hpp"
 
 
-Sickle::MapTools::MapTools(Editor::Editor &editor)
+using namespace Sickle;
+
+
+MapTools::MapTools(Glib::RefPtr<Editor::Editor> editor)
 :   Glib::ObjectBase{typeid(MapTools)}
 ,   Gtk::Box{}
-,   _prop_tool{*this, "tool", Tool::SELECT}
 ,   _editor{editor}
 {
     set_orientation(Gtk::Orientation::ORIENTATION_VERTICAL);
 
-    property_tool().signal_changed().connect(
+    _editor->signal_maptools_changed().connect(
+        sigc::mem_fun(*this, &MapTools::on_maptools_changed));
+    _editor->property_maptool().signal_changed().connect(
         sigc::mem_fun(*this, &MapTools::on_tool_changed));
-
-    // Add RadioButtons for the tools.
-    auto group = _buttons.at(property_tool().get_value()).get_group();
-    _buttons.at(property_tool().get_value()).set_active(true);
-    for (int m = 0; m < Tool::_COUNT; ++m)
-    {
-        auto &button = _buttons.at(m);
-        button.set_label(_tools.at(m)->name());
-        button.set_group(group);
-        button.signal_toggled().connect(
-            sigc::bind(
-                sigc::mem_fun(*this, &MapTools::on_tool_button_toggled),
-                static_cast<Tool>(m)));
-        add(button);
-    }
-
-    _editor.set_maptool(_tools.at(property_tool().get_value()));
 }
 
 
 
-void Sickle::MapTools::on_tool_button_toggled(Tool tool)
+void MapTools::on_tool_button_toggled(std::string const &tool)
 {
     if (_buttons.at(tool).get_active())
-        property_tool() = tool;
+        _editor->set_maptool(tool);
 }
 
 
-void Sickle::MapTools::on_tool_changed()
+void MapTools::on_tool_changed()
 {
-    _buttons.at(property_tool().get_value()).set_active(true);
-    _editor.set_maptool(_tools.at(property_tool().get_value()));
+    auto const tool = _editor->get_maptool().name();
+    _buttons.at(tool).set_active(true);
+}
+
+
+void MapTools::on_maptools_changed()
+{
+    for (auto const &p : _editor->get_maptools())
+        _add_tool(p.second);
+}
+
+
+
+void MapTools::_add_tool(Editor::MapTool const &tool)
+{
+    if (_buttons.count(tool.name()) != 0)
+        return;
+    _buttons[tool.name()] = {};
+    auto &button = _buttons.at(tool.name());
+    button.set_label(tool.name());
+    button.set_group(_button_group);
+    button.signal_toggled().connect(
+        sigc::bind(
+            sigc::mem_fun(*this, &MapTools::on_tool_button_toggled),
+            tool.name()));
+    add(button);
 }

@@ -31,7 +31,7 @@ namespace Sickle
     class CreateBrushMenu : public Gtk::Menu
     {
         Glib::RefPtr<Gio::SimpleActionGroup> _actions{};
-        std::shared_ptr<Editor::Editor> _editor{nullptr};
+        Glib::RefPtr<Editor::Editor> _editor{nullptr};
 
     protected:
         void action_create();

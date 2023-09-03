@@ -79,12 +79,13 @@ AppWin::AppWin()
 ,   Gtk::ApplicationWindow{}
 ,   Lua::Referenceable{}
 ,   L{luaL_newstate()}
+,   editor{Editor::Editor::create(L)}
 ,   _view3d{editor}
 ,   _view2d_top{editor}
 ,   _view2d_front{editor}
 ,   _view2d_right{editor}
 ,   _maptools{editor}
-,   _opsearch{L}
+,   _opsearch{editor}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _binding_grid_size_top{
         Glib::Binding::bind_property(
@@ -113,12 +114,17 @@ AppWin::AppWin()
         "reloadLua",
         sigc::mem_fun(*this, &AppWin::on_action_reloadLua));
 
+    // FIXME: temp
+    for (auto const &tool : _predefined_maptools)
+        editor->add_maptool(tool);
+
+    // TODO: integrate w/ dynamic system?
     add_action(
         "mapTools_Select",
-        sigc::mem_fun(*this, &AppWin::on_action_mapTools_Select));
+        [this](){editor->set_maptool("Select");});
     add_action(
         "mapTools_CreateBrush",
-        sigc::mem_fun(*this, &AppWin::on_action_mapTools_CreateBrush));
+        [this](){editor->set_maptool("Create Brush");});
 
     add_events(Gdk::EventMask::KEY_PRESS_MASK);
 
@@ -171,6 +177,8 @@ AppWin::AppWin()
 
     _on_grid_size_changed();
 
+    _setup_operations();
+
     if (!L)
         throw Lua::Error{"Failed to allocate new lua_State"};
     luaL_checkversion(L);
@@ -222,7 +230,7 @@ void AppWin::open(Glib::RefPtr<Gio::File> const &file)
     {
         std::string errmsg{};
         try {
-            editor.set_map(loadAnyMapFile(file));
+            editor->set_map(loadAnyMapFile(file));
             return;
         }
         catch (RMF::LoadError const &e) {
@@ -242,14 +250,14 @@ void AppWin::open(Glib::RefPtr<Gio::File> const &file)
         d.run();
     }
     else
-        editor.set_map(Editor::World::create());
+        editor->set_map(Editor::World::create());
 }
 
 
 void AppWin::save(std::string const &filename)
 {
     std::ofstream out{filename};
-    MAP::save(out, *editor.get_map().get());
+    MAP::save(out, *editor->get_map().get());
 }
 
 
@@ -299,12 +307,6 @@ void AppWin::set_grid_size(guint grid_size)
 guint AppWin::get_grid_size()
 {
     return property_grid_size().get_value();
-}
-
-
-Sickle::MapTools::Tool AppWin::get_maptool()
-{
-    return _maptools.property_tool().get_value();
 }
 
 
@@ -378,18 +380,6 @@ void AppWin::on_action_reloadLua()
 }
 
 
-void AppWin::on_action_mapTools_Select()
-{
-    _maptools.property_tool() = MapTools::Tool::SELECT;
-}
-
-
-void AppWin::on_action_mapTools_CreateBrush()
-{
-    _maptools.property_tool() = MapTools::Tool::CREATE_BRUSH;
-}
-
-
 bool AppWin::on_key_press_event(GdkEventKey *event)
 {
     switch (event->keyval)
@@ -415,4 +405,17 @@ void AppWin::_on_grid_size_changed()
 void AppWin::_on_opsearch_op_chosen(Editor::Operation const &op)
 {
     op.execute(editor);
+}
+
+
+void AppWin::_setup_operations()
+{
+    for (auto const &path : _internal_scripts_operations)
+    {
+        auto const &b = Gio::Resource::lookup_data_global(
+            SE_GRESOURCE_PREFIX + path);
+        gsize size = 0;
+        std::string const src{static_cast<char const *>(b->get_data(size))};
+        editor->oploader->add_source(src);
+    }
 }

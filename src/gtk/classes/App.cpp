@@ -238,7 +238,7 @@ Sickle::AppWin::AppWin *Sickle::App::_create_appwindow()
 void Sickle::App::_sync_wadpaths(AppWin::AppWin *appwin)
 {
     auto const settings = Gio::Settings::create(SE_APPLICATION_ID);
-    appwin->editor.set_wads(settings->get_string_array("wad-paths"));
+    appwin->editor->set_wads(settings->get_string_array("wad-paths"));
 }
 
 

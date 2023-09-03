@@ -40,14 +40,16 @@
 #include <gtkmm/label.h>
 #include <gtkmm/searchentry.h>
 
+#include <functional>
+
 
 namespace Sickle::AppWin
 {
     class AppWin : public Gtk::ApplicationWindow, public Lua::Referenceable
     {
     public:
-        Editor::Editor editor{};
         lua_State *const L;
+        Glib::RefPtr<Editor::Editor> editor;
 
         AppWin();
 
@@ -64,7 +66,6 @@ namespace Sickle::AppWin
 
         void set_grid_size(guint grid_size);
         guint get_grid_size();
-        MapTools::Tool get_maptool(); // TEMP
 
         auto property_grid_size() {return _prop_grid_size.get_proxy();}
         auto signal_lua_reloaded() {return _sig_lua_reloaded;}
@@ -77,8 +78,6 @@ namespace Sickle::AppWin
 
         void on_action_openLuaConsole();
         void on_action_reloadLua();
-        void on_action_mapTools_Select();
-        void on_action_mapTools_CreateBrush();
 
         bool on_key_press_event(GdkEventKey *event) override;
 
@@ -117,9 +116,35 @@ namespace Sickle::AppWin
             "lua/gdkkeysyms.lua",
             "lua/gdktypes.lua",
         };
+        std::vector<std::string> const _internal_scripts_operations{
+            "operations/basic.lua",
+        };
+        // FIXME: temp -- these should be defined in Lua scripts
+        std::vector<Editor::MapTool> const _predefined_maptools{
+            {
+                "Select",
+                {
+                    {"Delete", "Brush.Delete"},
+                },
+                [](Glib::RefPtr<Editor::Editor> ed){
+                    return !ed->selected.empty();
+                }
+            },
+            {
+                "Create Brush",
+                {
+                    {"Create Brush", "Brush.Create"},
+                },
+                [](Glib::RefPtr<Editor::Editor> ed){
+                    return true;
+                }
+            },
+        };
 
         void _on_grid_size_changed();
         void _on_opsearch_op_chosen(Editor::Operation const &op);
+
+        void _setup_operations();
     };
 }
 

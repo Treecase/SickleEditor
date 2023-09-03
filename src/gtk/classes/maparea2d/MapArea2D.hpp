@@ -21,8 +21,7 @@
 
 #include "gbox/GrabbableBox.hpp"
 #include "gbox/GrabbableBoxView.hpp"
-#include "popup-menus/CreateBrushMenu.hpp"
-#include "popup-menus/SelectMenu.hpp"
+#include "popup-menus/ToolPopupMenu.hpp"
 
 #include <core/Editor.hpp>
 #include <se-lua/utils/Referenceable.hpp>
@@ -61,7 +60,7 @@ namespace Sickle
 
         enum DrawAngle {TOP, FRONT, RIGHT};
 
-        MapArea2D(Editor::Editor &ed);
+        MapArea2D(Glib::RefPtr<Editor::Editor> ed);
 
         /** Convert screen-space coordinates to draw-space coordinates. */
         DrawSpacePoint screenspace_to_drawspace(double x, double y) const;
@@ -88,7 +87,7 @@ namespace Sickle
 
         void set_draw_angle(DrawAngle angle){property_draw_angle().set_value(angle);}
         auto get_draw_angle() {return property_draw_angle().get_value();};
-        auto &get_editor() {return _editor;}
+        auto get_editor() {return _editor;}
         auto &get_selected_box() {return _selected_box;}
         auto &get_brushbox() {return _brushbox;}
 
@@ -97,6 +96,7 @@ namespace Sickle
         bool on_draw(Cairo::RefPtr<Cairo::Context> const &cr) override;
         void on_editor_brushbox_changed();
         void on_editor_map_changed();
+        void on_editor_maptools_changed();
         void on_editor_selection_changed();
         void on_draw_angle_changed();
 
@@ -105,7 +105,7 @@ namespace Sickle
         bool on_enter_notify_event(GdkEventCrossing *event) override;
 
     private:
-        Editor::Editor &_editor;
+        Glib::RefPtr<Editor::Editor> _editor;
 
         GrabbableBox _selected_box{};
         GrabbableBoxView _selected_box_view;
@@ -118,8 +118,7 @@ namespace Sickle
         Glib::Property<DrawAngle> _prop_draw_angle;
         Glib::Property<MapArea2Dx::Transform2D> _prop_transform;
 
-        SelectMenu _select_popup_menu{};
-        CreateBrushMenu _createbrush_popup_menu{};
+        std::unordered_map<std::string, ToolPopupMenu> _popup_menus{};
 
         void _draw_brush(
             Cairo::RefPtr<Cairo::Context> const &cr,

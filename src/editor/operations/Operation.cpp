@@ -16,9 +16,30 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * Lua Interface Explanation
+ * =========================
+ *
+ * There is a toplevel Module Table in the Lua Registry. The Module Table is at
+ * lightuserdata index `REGISTRY_KEY`.
+ *
+ * Each Module is contained in the Module Table, using the Module's name as the
+ * index. A Module is just a table containing Operations.
+ *
+ * Each Operation is stored in the corresponding Module. The Operation's name
+ * is the index.
+ *
+ * Operation
+ * {
+ *   mode: String ; names the mode this operation is active for.
+ *   args: String ; argument types string.
+ *   function: Function ; points to the corresponding Function value.
+ * }
+ */
+
 #include "operations/Operation.hpp"
 
-#include <iostream>
+#include <iostream> // temp
 
 
 using namespace Sickle::Editor;
@@ -77,6 +98,7 @@ static int fn_add_operation(lua_State *L)
 }
 
 
+/* ===[ Operation ]=== */
 Operation::Operation(
     lua_State *L,
     std::string const &module_name,
@@ -92,7 +114,26 @@ Operation::Operation(
 }
 
 
-void Operation::execute(Editor &ed) const
+std::string Operation::id(
+    std::string const &module,
+    std::string const &operation)
+{
+    return module + "." + operation;
+}
+
+
+std::pair<std::string, std::string> Operation::unid(std::string const &id)
+{
+    auto const pos = id.find('.');
+    if (pos == std::string::npos)
+        throw std::runtime_error{"Not an ID"};
+    auto const module = id.substr(0, pos);
+    auto const operation = id.substr(pos + 1);
+    return std::make_pair(module, operation);
+}
+
+
+void Operation::execute(Glib::RefPtr<Editor> ed) const
 {
     int const pre = lua_gettop(L);
 
@@ -112,7 +153,7 @@ void Operation::execute(Editor &ed) const
     // Push selected objects list.
     lua_newtable(L);
     lua_Integer i = 1;
-    for (auto const &brush : ed.selected)
+    for (auto const &brush : ed->selected)
     {
         int const top = lua_gettop(L);
         std::cout << top << std::endl;
@@ -135,12 +176,12 @@ void Operation::execute(Editor &ed) const
 }
 
 
-
+/* ===[ OperationLoader ]=== */
 OperationLoader::OperationLoader(lua_State *L)
 :   L{L}
 {
     if (!L)
-        throw Lua::Error{"failed to alloc Lua state"};
+        throw std::invalid_argument{"null Lua state"};
     luaL_checkversion(L);
     luaL_openlibs(L);
 
@@ -184,6 +225,39 @@ std::vector<Operation> OperationLoader::get_operations() const
     lua_pop(L, 1);
     assert(lua_gettop(L) == pre);
     return ops;
+}
+
+
+Operation OperationLoader::get_operation(
+    std::string const &module,
+    std::string const &operation) const
+{
+    auto const pre = lua_gettop(L);
+
+    L_push_operation(module, operation);
+    int const modetype = lua_getfield(L, -1, "mode");
+    int const argstype = lua_getfield(L, -2, "args");
+
+    if (modetype != LUA_TSTRING) throw Lua::Error{"mode is not a string"};
+    if (argstype != LUA_TSTRING) throw Lua::Error{"args is not a string"};
+
+    auto const mode = lua_tostring(L, -2);
+    auto const args = lua_tostring(L, -1);
+    lua_pop(L, 3);
+
+    Operation op{L, module, operation, mode, args};
+
+    assert(lua_gettop(L) == pre);
+    return op;
+}
+
+
+Operation OperationLoader::get_operation(std::string const &id)
+{
+    auto const module_and_operation = Operation::unid(id);
+    return get_operation(
+        module_and_operation.first,
+        module_and_operation.second);
 }
 
 
@@ -232,4 +306,40 @@ OperationLoader::L_get_module_operations(std::string const &module_name) const
     }
 
     return ops;
+}
+
+
+void OperationLoader::L_push_module_table() const
+{
+    lua_pushlightuserdata(L, REGISTRY_KEY);
+    auto const type = lua_gettable(L, LUA_REGISTRYINDEX);
+    if (type != LUA_TTABLE)
+        throw Lua::Error{"ModuleTable is not a table"};
+}
+
+
+void OperationLoader::L_push_module(std::string const &module) const
+{
+    L_push_module_table();
+    int const type = lua_getfield(L, -1, module.c_str());
+    if (type != LUA_TTABLE)
+        throw Lua::Error{"Module '" + module + "' is not a table"};
+    lua_remove(L, -2);
+}
+
+
+void OperationLoader::L_push_operation(
+    std::string const &module,
+    std::string const &operation) const
+{
+    L_push_module(module);
+    int const type = lua_getfield(L, -1, operation.c_str());
+    if (type != LUA_TTABLE)
+    {
+        throw Lua::Error{
+            "Operation '"
+            + Operation::id(module, operation)
+            + "' is not a table"};
+    }
+    lua_remove(L, -2);
 }

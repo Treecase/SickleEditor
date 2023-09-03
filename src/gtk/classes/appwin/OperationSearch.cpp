@@ -37,8 +37,8 @@ size_t OperationSearch::similarity(
 }
 
 
-OperationSearch::OperationSearch(lua_State *L)
-:   _oploader{std::make_shared<Sickle::Editor::OperationLoader>(L)}
+OperationSearch::OperationSearch(Glib::RefPtr<Editor::Editor> editor)
+:   _editor{editor}
 {
     auto const builder = Gtk::Builder::create_from_resource(
         SE_GRESOURCE_PREFIX "gtk/OperationSearch.glade");
@@ -65,8 +65,7 @@ OperationSearch::OperationSearch(lua_State *L)
     sorted->set_default_sort_func(
         sigc::mem_fun(*this, &OperationSearch::operations_sort_func));
 
-    run_scripts();
-    auto const &ops = _oploader->get_operations();
+    auto const &ops = _editor->oploader->get_operations();
     for (auto const &operation : ops)
     {
         auto iter = operations->append();
@@ -84,19 +83,6 @@ OperationSearch::~OperationSearch()
     };
     operations->foreach_iter(free_operations);
     delete window;
-}
-
-
-void OperationSearch::run_scripts()
-{
-    for (auto const &path : _internal_scripts)
-    {
-        auto const &b = Gio::Resource::lookup_data_global(
-            SE_GRESOURCE_PREFIX + path);
-        gsize size = 0;
-        std::string const src{static_cast<char const *>(b->get_data(size))};
-        _oploader->add_source(src);
-    }
 }
 
 

@@ -79,7 +79,7 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, BrushBox *bb)
 {
-    Lua::RefBuilder<BrushBox> builder{L, METATABLE, bb};
+    Lua::RefBuilder builder{L, METATABLE, bb};
     if (builder.pushnew())
         return;
     builder.addSignalHandler(bb->signal_updated(), "on_updated");

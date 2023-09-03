@@ -22,42 +22,39 @@
 #include <core/Editor.hpp>
 
 #include <gtkmm/box.h>
+#include <gtkmm/menu.h>
 #include <gtkmm/radiobutton.h>
 #include <glibmm/property.h>
 
-#include <array>
 #include <memory>
+#include <unordered_map>
 
 
 namespace Sickle
 {
+    /**
+     * Side toolbar.
+     *
+     * Creates a RadioButton for each MapTool installed in the editor. Clicking
+     * the buttons will set that tool as active. If the editor's active tool
+     * changes, the button states will also update to match.
+     */
     class MapTools : public Gtk::Box
     {
     public:
-        enum Tool
-        {
-            SELECT,
-            CREATE_BRUSH,
-            _COUNT
-        };
-
-        auto property_tool() {return _prop_tool.get_proxy();}
-
-        MapTools(Editor::Editor &editor);
+        MapTools(Glib::RefPtr<Editor::Editor> editor);
 
     protected:
-        void on_tool_button_toggled(Tool tool);
+        void on_tool_button_toggled(std::string const &tool);
         void on_tool_changed();
+        void on_maptools_changed();
 
     private:
-        Glib::Property<Tool> _prop_tool;
+        Glib::RefPtr<Editor::Editor> _editor;
+        std::unordered_map<std::string, Gtk::RadioButton> _buttons{};
+        Gtk::RadioButtonGroup _button_group{};
 
-        Editor::Editor &_editor;
-        std::array<std::shared_ptr<Editor::MapTool>, Tool::_COUNT> const _tools{
-            std::make_shared<Editor::MapToolSelect>(),
-            std::make_shared<Editor::MapToolCreateBrush>(),
-        };
-        std::array<Gtk::RadioButton, Tool::_COUNT> _buttons{};
+        void _add_tool(Editor::MapTool const &tool);
     };
 }
 

@@ -95,7 +95,7 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Brush *brush)
 {
-    Lua::RefBuilder<Brush> builder{L, METATABLE, brush};
+    Lua::RefBuilder builder{L, METATABLE, brush};
     int const t1 = lua_gettop(L);
     if (builder.pushnew())
     {

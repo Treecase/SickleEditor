@@ -1,5 +1,4 @@
 /**
- * SelectMenu.hpp - Popup menu for "Select" tool.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,8 +15,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPAREA2D_SELECTMENU_HPP
-#define SE_MAPAREA2D_SELECTMENU_HPP
+#ifndef SE_MAPAREA2D_TOOLPOPUPMENU_HPP
+#define SE_MAPAREA2D_TOOLPOPUPMENU_HPP
 
 #include <core/Editor.hpp>
 
@@ -28,18 +27,22 @@
 
 namespace Sickle
 {
-    class SelectMenu : public Gtk::Menu
+    /**
+     * Dynamically created popup menu for Editor MapTools.
+     */
+    class ToolPopupMenu : public Gtk::Menu
     {
         Glib::RefPtr<Gio::SimpleActionGroup> _actions{};
         Glib::RefPtr<Editor::Editor> _editor{nullptr};
-
-    protected:
-        void action_delete();
+        Editor::MapTool _tool; // FIXME: temp?
 
     public:
-        SelectMenu();
+        ToolPopupMenu(Editor::MapTool const &tool);
 
         void set_editor(decltype(_editor) editor);
+        bool should_popup() const;
+
+        void action_triggered(std::string const &id);
     };
 }
 

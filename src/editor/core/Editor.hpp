@@ -24,6 +24,7 @@
 #include "Selection.hpp"
 
 #include <commands/Commands.hpp>
+#include <operations/Operation.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
 #include <glibmm.h>
@@ -31,10 +32,14 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 
 namespace Sickle::Editor
 {
+    // OperationLoader depends on Editor, so we have to forward declare it.
+    class OperationLoader;
+
     /**
      * The Editor class manages all the objects in the map, as well editor-only
      * data like visgroups.
@@ -47,7 +52,9 @@ namespace Sickle::Editor
         /** Selected brushes/entities. */
         Selection selected{};
 
-        Editor();
+        std::shared_ptr<OperationLoader> oploader{nullptr};
+
+        static Glib::RefPtr<Editor> create(lua_State *L);
 
         auto property_map() {return _prop_map.get_proxy();}
         auto property_map() const {return _prop_map.get_proxy();}
@@ -55,27 +62,35 @@ namespace Sickle::Editor
         auto property_maptool() const {return _prop_maptool.get_proxy();}
         auto property_wads() {return _prop_wads.get_proxy();}
         auto property_wads() const {return _prop_wads.get_proxy();}
+        auto &signal_maptools_changed() {return _sig_maptools_changed;}
 
         auto get_map() {return property_map().get_value();}
-        auto get_maptool() {return property_maptool().get_value();}
+        MapTool get_maptool() const;
+        auto &get_maptools() const {return _maptools;}
         auto get_wads() {return property_wads().get_value();}
 
         void set_map(Glib::RefPtr<World> const &value) {
             property_map() = value;}
-        void set_maptool(std::shared_ptr<MapTool> const &value) {
+        void set_maptool(std::string const &value) {
             property_maptool() = value;}
         void set_wads(std::vector<std::string> const &value) {
             property_wads() = value;}
+
+        void add_maptool(MapTool const &maptool);
 
         void do_command(std::shared_ptr<Command> command);
 
     private:
         Glib::Property<Glib::RefPtr<World>> _prop_map;
-        Glib::Property<std::shared_ptr<MapTool>> _prop_maptool;
+        Glib::Property<std::string> _prop_maptool;
         Glib::Property<std::vector<std::string>> _prop_wads;
+        sigc::signal<void()> _sig_maptools_changed{};
+
+        std::unordered_map<std::string, MapTool> _maptools{};
 
         void _on_map_changed();
 
+        Editor(lua_State *L);
         Editor(Editor const &)=delete;
         Editor &operator=(Editor const &)=delete;
     };

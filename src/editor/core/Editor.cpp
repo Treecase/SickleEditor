@@ -22,15 +22,40 @@
 using namespace Sickle::Editor;
 
 
-Editor::Editor()
+Glib::RefPtr<Editor> Editor::create(lua_State *L)
+{
+    return Glib::RefPtr<Editor>{new Editor{L}};
+}
+
+
+Editor::Editor(lua_State *L)
 :   Glib::ObjectBase{typeid(Editor)}
 ,   Lua::Referenceable{}
+,   oploader{std::make_shared<OperationLoader>(L)}
 ,   _prop_map{*this, "map", World::create()}
-,   _prop_maptool{*this, "maptool", nullptr}
+,   _prop_maptool{*this, "maptool", ""}
 ,   _prop_wads{*this, "wads", {}}
 {
     property_map().signal_changed().connect(
         sigc::mem_fun(*this, &Editor::_on_map_changed));
+}
+
+
+MapTool Editor::get_maptool() const
+{
+    auto const name = property_maptool().get_value();
+    if (name.empty())
+        throw std::logic_error{"no maptool set"};
+    return _maptools.at(name);
+}
+
+
+void Editor::add_maptool(MapTool const &maptool)
+{
+    _maptools.insert({maptool.name(), maptool});
+    signal_maptools_changed().emit();
+    if (property_maptool().get_value().empty())
+        set_maptool(maptool.name());
 }
 
 

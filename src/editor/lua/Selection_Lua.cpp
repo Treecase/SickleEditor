@@ -113,7 +113,7 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, Selection *selection)
 {
-    Lua::RefBuilder<Selection> builder{L, METATABLE, selection};
+    Lua::RefBuilder builder{L, METATABLE, selection};
     if (builder.pushnew())
         return;
     builder.addSignalHandler(selection->signal_updated(), "on_updated");

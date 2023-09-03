@@ -21,28 +21,24 @@
 using namespace Sickle::Editor;
 
 
-/* ===[ MapToolSelect ]=== */
-void MapToolSelect::operator()()
+MapTool::MapTool(
+    std::string const &name,
+    std::vector<OpDef> const &opdefs,
+    decltype(x) fn)
+:   _name{name}
+,   _opdefs{opdefs}
+,   x{fn}
 {
-    puts(name().c_str());
 }
 
 
-std::string MapToolSelect::name() const
+std::string MapTool::name() const
 {
-    return "Select";
+    return _name;
 }
 
 
-
-/* ===[ MapToolCreateBrush ]=== */
-void MapToolCreateBrush::operator()()
+std::vector<MapTool::OpDef> MapTool::operations() const
 {
-    puts(name().c_str());
-}
-
-
-std::string MapToolCreateBrush::name() const
-{
-    return "CreateBrush";
+    return _opdefs;
 }

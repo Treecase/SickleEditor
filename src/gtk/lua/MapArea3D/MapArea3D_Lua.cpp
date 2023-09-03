@@ -71,7 +71,7 @@ static int set_camera(lua_State *L)
 static int get_editor(lua_State *L)
 {
     auto m3d = lmaparea3d_check(L, 1);
-    Lua::push(L, &m3d->get_editor());
+    Lua::push(L, m3d->get_editor().get());
     return 1;
 }
 

@@ -1,4 +1,3 @@
-
 # Generate the GResource XML file.
 configure_file(sicklegtk.gresource.xml.in sicklegtk.gresource.xml)
 
@@ -13,8 +12,6 @@ add_custom_command(
     DEPENDS
         gtk/menus.ui
         gtk/OperationSearch.glade
-        gtk/MapArea2D/CreateBrushPopupMenu.ui
-        gtk/MapArea2D/SelectPopupMenu.ui
         lua/gdkevents.lua
         lua/gdkkeysyms.lua
         lua/gdktypes.lua

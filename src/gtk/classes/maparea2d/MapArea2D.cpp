@@ -77,7 +77,7 @@ static void _test_space_conversions(Sickle::MapArea2D const &maparea);
 
 
 /* ===[ MapArea2D ]=== */
-Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
+Sickle::MapArea2D::MapArea2D(Glib::RefPtr<Editor::Editor> ed)
 :   Glib::ObjectBase{typeid(MapArea2D)}
 ,   Gtk::DrawingArea{}
 ,   Lua::Referenceable{}
@@ -122,19 +122,15 @@ Sickle::MapArea2D::MapArea2D(Editor::Editor &ed)
     set_size_request(320, 240);
     set_can_focus(true);
 
-    _select_popup_menu.set_editor(
-        std::shared_ptr<Editor::Editor>(&_editor, [](void *ptr){}));
-    _select_popup_menu.attach_to_widget(*this);
+    on_editor_maptools_changed();
 
-    _createbrush_popup_menu.set_editor(
-        std::shared_ptr<Editor::Editor>(&_editor, [](void *ptr){}));
-    _createbrush_popup_menu.attach_to_widget(*this);
-
-    _editor.brushbox.signal_updated().connect(
+    _editor->signal_maptools_changed().connect(
+        sigc::mem_fun(*this, &MapArea2D::on_editor_maptools_changed));
+    _editor->brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_brushbox_changed));
-    _editor.selected.signal_updated().connect(
+    _editor->selected.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_selection_changed));
-    _editor.property_map().signal_changed().connect(
+    _editor->property_map().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_map_changed));
     property_grid_size().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
@@ -233,7 +229,7 @@ Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
     Editor::Entity::BrushRef picked{};
     BBox2 pbbox{};
 
-    for (auto const &entity : _editor.get_map()->entities())
+    for (auto const &entity : _editor->get_map()->entities())
     {
         for (auto const &brush : entity.brushes())
         {
@@ -316,7 +312,7 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         cr->stroke();
 
         // Draw selected brushes.
-        for (auto const &e : _editor.get_map()->entities())
+        for (auto const &e : _editor->get_map()->entities())
         {
             for (auto const &ref : e.brushes())
             {
@@ -336,7 +332,7 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         _selected_box_view.draw(cr, _selected_box);
 
         // Draw the brushbox.
-        if (_editor.brushbox.p1() != _editor.brushbox.p2())
+        if (_editor->brushbox.p1() != _editor->brushbox.p2())
         {
             _brushbox.unit = pixel;
             _brushbox_view.draw(cr, _brushbox);
@@ -370,8 +366,8 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 
 void Sickle::MapArea2D::on_editor_brushbox_changed()
 {
-    auto const p1 = worldspace_to_drawspace(_editor.brushbox.p1());
-    auto const p2 = worldspace_to_drawspace(_editor.brushbox.p2());
+    auto const p1 = worldspace_to_drawspace(_editor->brushbox.p1());
+    auto const p2 = worldspace_to_drawspace(_editor->brushbox.p2());
     _brushbox.set_box(BBox2{p1, p2});
     queue_draw();
 }
@@ -379,19 +375,34 @@ void Sickle::MapArea2D::on_editor_brushbox_changed()
 
 void Sickle::MapArea2D::on_editor_map_changed()
 {
-    _editor.brushbox.signal_updated().connect(
+    _editor->brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_brushbox_changed));
-    _editor.selected.signal_updated().connect(
+    _editor->selected.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_selection_changed));
     property_transform().reset_value();
     queue_draw();
 }
 
 
+void Sickle::MapArea2D::on_editor_maptools_changed()
+{
+    for (auto const &p : _editor->get_maptools())
+    {
+        auto const p2 = _popup_menus.emplace(p.first, p.second);
+        if (p2.second)
+        {
+            auto &menu = p2.first->second;
+            menu.set_editor(_editor);
+            menu.attach_to_widget(*this);
+        }
+    }
+}
+
+
 void Sickle::MapArea2D::on_editor_selection_changed()
 {
     BBox2 selection_bounds{};
-    for (auto const &brush : _editor.selected)
+    for (auto const &brush : _editor->selected)
         for (auto const &face : brush->faces)
             for (auto const &vertex : face->vertices)
                 selection_bounds.add(worldspace_to_drawspace(vertex));
@@ -416,16 +427,16 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 {
     if (event->button == GDK_BUTTON_SECONDARY)
     {
-        auto const &tool = _editor.get_maptool()->name();
-        if (tool == "Select" && !_editor.selected.empty())
+        auto const &tool = _editor->get_maptool();
+        auto const name = tool.name();
+        if (_popup_menus.count(name) != 0)
         {
-            _select_popup_menu.popup_at_pointer(nullptr);
-            return true;
-        }
-        else if (tool == "CreateBrush")
-        {
-            _createbrush_popup_menu.popup_at_pointer(nullptr);
-            return true;
+            auto &menu = _popup_menus.at(name);
+            if (menu.should_popup())
+            {
+                menu.popup_at_pointer(nullptr);
+                return true;
+            }
         }
     }
     return false;
@@ -462,7 +473,7 @@ void Sickle::MapArea2D::_draw_brush(
 
 void Sickle::MapArea2D::_draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const
 {
-    for (auto const &e : _editor.get_map()->entities())
+    for (auto const &e : _editor->get_map()->entities())
         for (auto const &brush : e.brushes())
             _draw_brush(cr, brush);
 }
