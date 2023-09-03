@@ -94,6 +94,8 @@ static int fn_add_operation(lua_State *L)
     lua_setfield(L, -2, "function");
 
     lua_setfield(L, -2, opname);
+
+    ptr->signal_operation_added().emit(Operation::id(modname, opname));
     return 0;
 }
 

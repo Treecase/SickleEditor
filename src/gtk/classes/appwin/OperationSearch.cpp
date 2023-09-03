@@ -65,13 +65,11 @@ OperationSearch::OperationSearch(Glib::RefPtr<Editor::Editor> editor)
     sorted->set_default_sort_func(
         sigc::mem_fun(*this, &OperationSearch::operations_sort_func));
 
+    _editor->oploader->signal_operation_added().connect(
+        sigc::mem_fun(*this, &OperationSearch::on_editor_operation_added));
     auto const &ops = _editor->oploader->get_operations();
     for (auto const &operation : ops)
-    {
-        auto iter = operations->append();
-        (*iter)[_model.col1] = new Editor::Operation{operation};
-        (*iter)[_model.col2] = operation.module_name + "." + operation.name;
-    }
+        _add_row(operation);
 }
 
 
@@ -105,6 +103,12 @@ void OperationSearch::on_row_activated(
     searchbar->set_text("");
 
     _sig_operation_chosen.emit(*v1);
+}
+
+
+void OperationSearch::on_editor_operation_added(std::string const &id)
+{
+    _add_row(_editor->oploader->get_operation(id));
 }
 
 
@@ -152,6 +156,14 @@ int OperationSearch::operations_sort_func(
         return au.compare(bu);
     else
         return -1;
+}
+
+
+void OperationSearch::_add_row(Editor::Operation const &op)
+{
+    auto iter = operations->append();
+    (*iter)[_model.col1] = new Editor::Operation{op};
+    (*iter)[_model.col2] = op.module_name + "." + op.name;
 }
 
 

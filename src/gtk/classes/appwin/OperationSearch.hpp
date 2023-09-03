@@ -64,11 +64,14 @@ namespace Sickle::AppWin
         void on_row_activated(
             Gtk::TreeModel::Path const &path,
             Gtk::TreeView::Column *column);
+        void on_editor_operation_added(std::string const &id);
 
         bool filter_visible_func(Gtk::TreeModel::iterator const &iter);
         int operations_sort_func(
             Gtk::TreeModel::iterator const &a,
             Gtk::TreeModel::iterator const &b);
+
+        void _add_row(Editor::Operation const &op);
 
     public:
         std::string mode{"brush"};

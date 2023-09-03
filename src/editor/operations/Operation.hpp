@@ -78,6 +78,8 @@ namespace Sickle::Editor
      */
     class OperationLoader
     {
+        sigc::signal<void(std::string const &)> _sig_operation_added{};
+
         lua_State *const L; // alias for _L_actual
 
         std::vector<Operation>
@@ -95,6 +97,12 @@ namespace Sickle::Editor
 
     public:
         OperationLoader(lua_State *L);
+
+        /**
+         * Emitted when a new operation is added. The operation's ID is passed
+         * as the parameter.
+         */
+        auto &signal_operation_added() {return _sig_operation_added;};
 
         /** Execute Lua code from the string. */
         void add_source(std::string const &source);
