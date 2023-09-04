@@ -23,3 +23,28 @@ add_operation(
         print("Transform")
         for _,b in ipairs(brush) do print(b) end
     end)
+
+add_operation(
+    "Brush",
+    "CreateFromBox",
+    "editor",
+    "",
+    function(editor)
+        local bb = editor:get_brushbox()
+        local a = bb:get_start()
+        local b = bb:get_end()
+        bb:set_start(geo.vector.new())
+        bb:set_end(geo.vector.new())
+
+        editor:add_brush(
+            {a.x, a.y, a.z},
+            {a.x, a.y, b.z},
+            {a.x, b.y, a.z},
+            {a.x, b.y, b.z},
+            {b.x, a.y, a.z},
+            {b.x, a.y, b.z},
+            {b.x, b.y, a.z},
+            {b.x, b.y, b.z}
+        )
+    end
+)

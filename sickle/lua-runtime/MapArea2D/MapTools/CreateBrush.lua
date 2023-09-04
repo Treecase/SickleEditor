@@ -51,7 +51,7 @@ function CreateBrush.metatable:on_key_press_event(event)
     if self:doEvent("on_key_press_event", event) then return true end
 
     if event == LuaGDK.GDK_KEY_Return then
-        self.maparea:get_editor():add_brush()
+        self.maparea:get_editor():do_operation("Brush.CreateFromBox")
         return true
     end
 end

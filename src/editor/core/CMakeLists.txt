@@ -11,6 +11,4 @@ target_link_libraries(editor-core
         se-lua
         glm::glm
         PkgConfig::sigc++
-    PRIVATE
-        editor-commands
 )

@@ -23,7 +23,6 @@
 #include "MapTools.hpp"
 #include "Selection.hpp"
 
-#include <commands/Commands.hpp>
 #include <operations/Operation.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
@@ -78,7 +77,7 @@ namespace Sickle::Editor
 
         void add_maptool(MapTool const &maptool);
 
-        void do_command(std::shared_ptr<Command> command);
+        void do_operation(std::string const &id);
 
     private:
         Glib::Property<Glib::RefPtr<World>> _prop_map;

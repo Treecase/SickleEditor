@@ -49,6 +49,43 @@ static char _REGISTRY_KEY_BASE = 'k';
 static void *const REGISTRY_KEY = static_cast<void *>(&_REGISTRY_KEY_BASE);
 
 
+static void _push_module_table(lua_State *L)
+{
+    lua_pushlightuserdata(L, REGISTRY_KEY);
+    auto const type = lua_gettable(L, LUA_REGISTRYINDEX);
+    if (type != LUA_TTABLE)
+        throw Lua::Error{"ModuleTable is not a table"};
+}
+
+
+static void _push_module(lua_State *L, std::string const &module)
+{
+    _push_module_table(L);
+    int const type = lua_getfield(L, -1, module.c_str());
+    if (type != LUA_TTABLE)
+        throw Lua::Error{"Module '" + module + "' is not a table"};
+    lua_remove(L, -2);
+}
+
+
+static void _push_operation(
+    lua_State *L,
+    std::string const &module,
+    std::string const &operation)
+{
+    _push_module(L, module);
+    int const type = lua_getfield(L, -1, operation.c_str());
+    if (type != LUA_TTABLE)
+    {
+        throw Lua::Error{
+            "Operation '"
+            + Operation::id(module, operation)
+            + "' is not a table"};
+    }
+    lua_remove(L, -2);
+}
+
+
 /**
  * add_operation(module: String, operation: String, mode: String, args: String,
  *               fn: Callable)
@@ -67,20 +104,23 @@ static int fn_add_operation(lua_State *L)
     if (!ptr)
         return luaL_error(L, "bad upvalue");
 
-    // Get the module registry table.
-    lua_pushlightuserdata(L, REGISTRY_KEY);
-    lua_gettable(L, LUA_REGISTRYINDEX);
+    _push_module_table(L);
 
     // Try to get the module from the registry table.
-    lua_getfield(L, -1, modname);
+    int const modtype = lua_getfield(L, -1, modname);
 
     // If module doesn't exist, create it.
-    if (lua_isnil(L, -1))
+    if (modtype == LUA_TNIL)
     {
         lua_pop(L, 1);
         lua_newtable(L);
         lua_setfield(L, -2, modname);
         lua_getfield(L, -1, modname);
+    }
+    else if (modtype != LUA_TTABLE)
+    {
+        throw Lua::Error{
+            "Module '" + std::string{modname} + "' is not a table"};
     }
 
     // Add the operation to the module.
@@ -137,44 +177,55 @@ std::pair<std::string, std::string> Operation::unid(std::string const &id)
 
 void Operation::execute(Glib::RefPtr<Editor> ed) const
 {
+    execute(ed.get());
+}
+
+
+void Operation::execute(Editor *ed) const
+{
     int const pre = lua_gettop(L);
 
-    // Get registry table.
-    lua_pushlightuserdata(L, REGISTRY_KEY);
-    lua_gettable(L, LUA_REGISTRYINDEX);
-    // Get module.
-    lua_getfield(L, -1, module_name.c_str());
-    // Get operation.
-    lua_getfield(L, -1, name.c_str());
+    _push_operation(L, module_name, name);
     // Push function.
     lua_getfield(L, -1, "function");
 
     // FIXME: TEMP
-    assert(mode == "brush");
+    assert(mode == "brush" || mode == "editor");
 
-    // Push selected objects list.
-    lua_newtable(L);
-    lua_Integer i = 1;
-    for (auto const &brush : ed->selected)
+    if (mode == "brush")
     {
-        int const top = lua_gettop(L);
-        std::cout << top << std::endl;
+        // Push selected objects list.
+        lua_newtable(L);
+        lua_Integer i = 1;
+        for (auto const &brush : ed->selected)
+        {
+            int const top = lua_gettop(L);
+            std::cout << top << std::endl;
 
-        Lua::push(L, brush.get());
-        int const top2 = lua_gettop(L);
-        std::cout << top2 << std::endl;
-        assert(top2 == top + 1);
+            Lua::push(L, brush.get());
+            int const top2 = lua_gettop(L);
+            std::cout << top2 << std::endl;
+            assert(top2 == top + 1);
 
-        lua_seti(L, -2, i++);
-        int const top3 = lua_gettop(L);
-        std::cout << top3 << std::endl;
-        assert(top3 == top);
+            lua_seti(L, -2, i++);
+            int const top3 = lua_gettop(L);
+            std::cout << top3 << std::endl;
+            assert(top3 == top);
+        }
     }
+    else if (mode == "editor")
+    {
+        Lua::push(L, ed);
+    }
+    else
+        throw std::runtime_error{"invalid mode '" + mode + "'"};
 
-    for (auto const ch : args) lua_pushnil(L); // TEMP: push args
+    for (auto const ch : args)
+        lua_pushnil(L); // TEMP: push args
     Lua::checkerror(L, lua_pcall(L, 1+args.size(), 0, 0));
 
-    lua_pop(L, lua_gettop(L) - pre);
+    lua_pop(L, 1);
+    assert(lua_gettop(L) == pre);
 }
 
 
@@ -208,9 +259,7 @@ std::vector<Operation> OperationLoader::get_operations() const
     auto const pre = lua_gettop(L);
     std::vector<Operation> ops{};
 
-    // Get the module registry table.
-    lua_pushlightuserdata(L, REGISTRY_KEY);
-    lua_gettable(L, LUA_REGISTRYINDEX);
+    _push_module_table(L);
 
     // Iterate through modules.
     lua_pushnil(L);
@@ -236,7 +285,7 @@ Operation OperationLoader::get_operation(
 {
     auto const pre = lua_gettop(L);
 
-    L_push_operation(module, operation);
+    _push_operation(L, module, operation);
     int const modetype = lua_getfield(L, -1, "mode");
     int const argstype = lua_getfield(L, -2, "args");
 
@@ -267,16 +316,8 @@ std::vector<Operation>
 OperationLoader::get_module(std::string const &module_name) const
 {
     auto const pre = lua_gettop(L);
-
-    // Get the module registry table.
-    lua_pushlightuserdata(L, REGISTRY_KEY);
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    // Get the module.
-    lua_getfield(L, -1, module_name.c_str());
-
+    _push_module(L, module_name);
     auto const ops = L_get_module_operations(module_name);
-
     lua_pop(L, 1);
     assert(lua_gettop(L) == pre);
     return ops;
@@ -308,40 +349,4 @@ OperationLoader::L_get_module_operations(std::string const &module_name) const
     }
 
     return ops;
-}
-
-
-void OperationLoader::L_push_module_table() const
-{
-    lua_pushlightuserdata(L, REGISTRY_KEY);
-    auto const type = lua_gettable(L, LUA_REGISTRYINDEX);
-    if (type != LUA_TTABLE)
-        throw Lua::Error{"ModuleTable is not a table"};
-}
-
-
-void OperationLoader::L_push_module(std::string const &module) const
-{
-    L_push_module_table();
-    int const type = lua_getfield(L, -1, module.c_str());
-    if (type != LUA_TTABLE)
-        throw Lua::Error{"Module '" + module + "' is not a table"};
-    lua_remove(L, -2);
-}
-
-
-void OperationLoader::L_push_operation(
-    std::string const &module,
-    std::string const &operation) const
-{
-    L_push_module(module);
-    int const type = lua_getfield(L, -1, operation.c_str());
-    if (type != LUA_TTABLE)
-    {
-        throw Lua::Error{
-            "Operation '"
-            + Operation::id(module, operation)
-            + "' is not a table"};
-    }
-    lua_remove(L, -2);
 }

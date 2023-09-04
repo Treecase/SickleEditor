@@ -32,7 +32,29 @@ using namespace Sickle::Editor;
 static int add_brush(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
-    ed->do_command(std::make_shared<commands::AddBrush>());
+
+    auto const n = lua_gettop(L);
+
+    std::vector<glm::vec3> points{};
+    for (int i = 0; i < n - 1; ++i)
+    {
+        auto const v = lgeo_tovector(L, i + 2);
+        points.push_back(v);
+    }
+    ed->get_map()->add_brush(points);
+    return 0;
+}
+
+static int do_operation(lua_State *L)
+{
+    auto ed = leditor_check(L, 1);
+    auto const id = luaL_checkstring(L, 2);
+    try {
+        ed->do_operation(id);
+    }
+    catch (Lua::Error const &e) {
+        return luaL_error(L, "%s", e.what());
+    }
     return 0;
 }
 
@@ -57,6 +79,7 @@ static int do_nothing(lua_State *L)
 
 static luaL_Reg methods[] = {
     {"add_brush", add_brush},
+    {"do_operation", do_operation},
 
     {"get_selection", get_selection},
     {"get_brushbox", get_brushbox},

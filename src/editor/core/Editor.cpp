@@ -17,7 +17,6 @@
  */
 
 #include "core/Editor.hpp"
-#include <commands/Commands.hpp>
 
 using namespace Sickle::Editor;
 
@@ -59,9 +58,10 @@ void Editor::add_maptool(MapTool const &maptool)
 }
 
 
-void Editor::do_command(std::shared_ptr<Command> command)
+void Editor::do_operation(std::string const &id)
 {
-    command->execute(*this);
+    auto const &op = oploader->get_operation(id);
+    op.execute(this);
 }
 
 

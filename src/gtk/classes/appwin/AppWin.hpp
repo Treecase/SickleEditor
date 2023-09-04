@@ -133,7 +133,7 @@ namespace Sickle::AppWin
             {
                 "Create Brush",
                 {
-                    {"Create Brush", "Brush.Create"},
+                    {"Create Brush", "Brush.CreateFromBox"},
                 },
                 [](Glib::RefPtr<Editor::Editor> ed){
                     return true;

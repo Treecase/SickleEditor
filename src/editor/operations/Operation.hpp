@@ -65,6 +65,7 @@ namespace Sickle::Editor
             std::string const &args);
 
         void execute(Glib::RefPtr<Editor> ed) const;
+        void execute(Editor *ed) const;
     };
 
     /**
@@ -84,12 +85,6 @@ namespace Sickle::Editor
 
         std::vector<Operation>
         L_get_module_operations(std::string const &module_name) const;
-
-        void L_push_module_table() const;
-        void L_push_module(std::string const &module) const;
-        void L_push_operation(
-            std::string const &module,
-            std::string const &operation) const;
 
         // Copying not allowed
         OperationLoader(OperationLoader const &)=delete;

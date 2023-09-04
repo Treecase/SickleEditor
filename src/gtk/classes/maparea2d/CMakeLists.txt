@@ -3,8 +3,6 @@ add_library(maparea2d STATIC
     MapArea2D.cpp
     gbox/GrabbableBox.cpp
     gbox/GrabbableBoxView.cpp
-    popup-menus/CreateBrushMenu.cpp
-    popup-menus/SelectMenu.cpp
     popup-menus/ToolPopupMenu.cpp
 )
 target_link_libraries(maparea2d
