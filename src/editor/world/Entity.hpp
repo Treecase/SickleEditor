@@ -37,7 +37,7 @@ namespace Sickle::Editor
     class Entity : public Glib::Object
     {
     public:
-        using BrushRef = std::weak_ptr<Brush>;
+        using BrushRef = Glib::RefPtr<Brush>;
 
         std::unordered_map<std::string, std::string> properties{};
 
@@ -58,7 +58,7 @@ namespace Sickle::Editor
 
     private:
         sigc::signal<void()> _signal_changed{};
-        std::vector<std::shared_ptr<Brush>> _brushes{};
+        std::vector<BrushRef> _brushes{};
         // TODO:
         // - visgroup id
         // - color

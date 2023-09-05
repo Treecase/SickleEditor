@@ -28,7 +28,7 @@ World3D::Brush::Brush(
 ,   _vbo{std::make_shared<GLUtil::Buffer>(GL_ARRAY_BUFFER)}
 {
     std::vector<GLfloat> vbo_data{};
-    for (auto faceptr : _src.lock()->faces)
+    for (auto faceptr : _src->faces)
     {
         auto &face = _faces.emplace_back(*this, faceptr);
         face.offset = vbo_data.size() / Vertex::ELEMENTS;
@@ -92,7 +92,7 @@ World3D::TextureManager &World3D::Brush::texman() const
 
 bool World3D::Brush::is_selected() const
 {
-    return _src.lock()->is_selected();
+    return _src->is_selected();
 }
 
 

@@ -124,7 +124,7 @@ namespace Sickle::AppWin
             {
                 "Select",
                 {
-                    {"Delete", "Brush.Delete"},
+                    {"Delete", "Brush.DeleteSelected"},
                 },
                 [](Glib::RefPtr<Editor::Editor> ed){
                     return !ed->selected.empty();

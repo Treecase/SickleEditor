@@ -167,7 +167,7 @@ Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
         for (auto const &brush : entity.brushes())
         {
             BBox3 bbox{};
-            for (auto const &face : brush.lock()->faces)
+            for (auto const &face : brush->faces)
                 for (auto const &vertex : face->vertices)
                     bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
 

@@ -50,14 +50,18 @@ namespace Sickle::Editor
 
         auto property_selected() {return _prop_selected.get_proxy();}
         auto property_selected() const {return _prop_selected.get_proxy();}
+        auto property_real() {return _prop_real.get_proxy();}
+        auto property_real() const {return _prop_real.get_proxy();}
 
         auto is_selected() const {return property_selected().get_value();}
+        auto is_real() const {return property_real().get_value();}
 
         void transform(glm::mat4 const &matrix);
         void translate(glm::vec3 const &translation);
 
     private:
         Glib::Property<bool> _prop_selected;
+        Glib::Property<bool> _prop_real;
         // TODO:
         // - visgroup id
         // - color

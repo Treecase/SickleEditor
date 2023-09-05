@@ -202,7 +202,7 @@ void Operation::execute(Editor *ed) const
             int const top = lua_gettop(L);
             std::cout << top << std::endl;
 
-            Lua::push(L, brush.get());
+            Lua::push(L, brush);
             int const top2 = lua_gettop(L);
             std::cout << top2 << std::endl;
             assert(top2 == top + 1);

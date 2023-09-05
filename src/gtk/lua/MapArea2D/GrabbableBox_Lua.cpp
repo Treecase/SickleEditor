@@ -49,7 +49,7 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, GrabbableBox *box)
 {
-    Lua::RefBuilder<GrabbableBox> builder{L, METATABLE, box};
+    Lua::RefBuilder builder{L, METATABLE, box};
     if (builder.pushnew())
         return;
     builder.finish();

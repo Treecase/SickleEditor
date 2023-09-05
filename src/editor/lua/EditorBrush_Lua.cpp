@@ -93,7 +93,7 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Brush *brush)
+void Lua::push(lua_State *L, Entity::BrushRef brush)
 {
     Lua::RefBuilder builder{L, METATABLE, brush};
     int const t1 = lua_gettop(L);
@@ -111,11 +111,11 @@ void Lua::push(lua_State *L, Brush *brush)
 }
 
 
-Brush *leditorbrush_check(lua_State *L, int arg)
+Entity::BrushRef leditorbrush_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, METATABLE);
     luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
-    return *static_cast<Brush **>(ud);
+    return *static_cast<Entity::BrushRef *>(ud);
 }
 
 

@@ -22,6 +22,8 @@
 #include "../se-lua.hpp"
 #include "Referenceable.hpp"
 
+#include <glibmm/refptr.h>
+
 #include <memory>
 #include <unordered_map>
 
@@ -43,12 +45,21 @@ namespace Lua
          * An existing mapping will be silently overwritten.
          */
         void set(lua_State *L, Referenceable *pointer, int idx);
+        template<typename T>
+        void set(lua_State *L, Glib::RefPtr<T> const &pointer, int idx)
+        {set(L, pointer.get(), idx);}
 
         /** Push the Lua value referenced by POINTER to the stack. */
         void get(lua_State *L, Referenceable *pointer);
+        template<typename T>
+        void get(lua_State *L, Glib::RefPtr<T> const &pointer)
+        {get(L, pointer.get());}
 
         /** Delete a reference. */
         void erase(lua_State *L, Referenceable *pointer);
+        template<typename T>
+        void erase(lua_State *L, Glib::RefPtr<T> const &pointer)
+        {erase(L, pointer.get());}
     };
 }
 

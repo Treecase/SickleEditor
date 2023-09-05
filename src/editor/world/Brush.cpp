@@ -25,12 +25,16 @@ Brush::Brush()
 :   Glib::ObjectBase{typeid(Brush)}
 ,   Lua::Referenceable{}
 ,   _prop_selected{*this, "selected", false}
+,   _prop_real{*this, "real", false}
 {
 }
 
 
 Brush::Brush(Brush const &other)
-:   Brush{}
+:   Glib::ObjectBase{typeid(Brush)}
+,   Lua::Referenceable{other}
+,   _prop_selected{*this, "selected", false}
+,   _prop_real{*this, "real", false}
 {
     faces = other.faces;
     property_selected().set_value(other.is_selected());

@@ -6,6 +6,7 @@ target_include_directories(se-lua PUBLIC include ${LUA_INCLUDE_DIR})
 target_link_libraries(se-lua PUBLIC
     utils
     PkgConfig::sigc++
+    PkgConfig::GTKMM
     ${LUA_LIBRARIES}
 )
 target_compile_features(se-lua PUBLIC cxx_std_17)

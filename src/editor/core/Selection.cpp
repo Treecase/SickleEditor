@@ -39,6 +39,8 @@ void Selection::add(Item item)
     for (auto &face : item->faces)
         face->signal_vertices_changed().connect(signal_updated().make_slot());
     item->property_selected() = true;
+    item->property_real().signal_changed().connect(
+        [this, item](){remove(item);});
     _selected.emplace(item);
     signal_updated().emit();
 }

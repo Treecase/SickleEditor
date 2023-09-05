@@ -136,7 +136,12 @@ int lgeo_vector_new(lua_State *L)
         Lua::push(L, glm::vec4{0, 0, 0, 0});
         break;
     case 1:
-        Lua::push(L, lgeo_tovector(L, 1));
+        try {
+            Lua::push(L, lgeo_tovector(L, 1));
+        }
+        catch (Lua::Error const &e) {
+            luaL_error(L, "%s", e.what());
+        }
         break;
     case 2:
         Lua::push(L, glm::vec4{

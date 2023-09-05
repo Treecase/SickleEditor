@@ -48,3 +48,15 @@ add_operation(
         )
     end
 )
+add_operation(
+    "Brush",
+    "DeleteSelected",
+    "editor",
+    "",
+    function(editor)
+        local sel = editor:get_selection()
+        for brush in sel:iterate() do
+            editor:remove_brush(brush)
+        end
+    end
+)

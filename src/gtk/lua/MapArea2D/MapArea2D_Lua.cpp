@@ -81,8 +81,8 @@ static int pick_brush(lua_State *L)
     auto ma = lmaparea2d_check(L, 1);
     auto xy = lgeo_tovector(L, 2);
     auto picked = ma->pick_brush(xy);
-    if (!picked.expired())
-        Lua::push(L, picked.lock().get());
+    if (picked)
+        Lua::push(L, picked);
     else
         lua_pushnil(L);
     return 1;
@@ -183,7 +183,7 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, MapArea2D *maparea)
 {
-    Lua::RefBuilder<MapArea2D> builder{L, METATABLE, maparea};
+    Lua::RefBuilder builder{L, METATABLE, maparea};
     if (builder.pushnew())
         return;
 

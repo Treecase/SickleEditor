@@ -25,6 +25,7 @@
 #include <sigc++/signal.h>
 #include <sigc++/connection.h>
 
+#include <functional>
 #include <memory>
 #include <unordered_set>
 
@@ -34,7 +35,7 @@ namespace Sickle::Editor
     class Selection : public Lua::Referenceable
     {
     public:
-        using Item = std::shared_ptr<Brush>;
+        using Item = Entity::BrushRef;
 
         void clear();
         void add(Item item);
@@ -50,7 +51,15 @@ namespace Sickle::Editor
         Selection()=default;
 
     private:
-        std::unordered_set<Item> _selected{};
+        struct ItemHasher
+        {
+            std::size_t operator()(Selection::Item const &item) const
+            {
+                return std::hash<Brush *>{}(item.get());
+            }
+        };
+
+        std::unordered_set<Item, ItemHasher> _selected{};
 
         sigc::signal<void()> _signal_updated{};
 

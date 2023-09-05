@@ -45,6 +45,14 @@ static int add_brush(lua_State *L)
     return 0;
 }
 
+static int remove_brush(lua_State *L)
+{
+    auto ed = leditor_check(L, 1);
+    auto brush = leditorbrush_check(L, 2);
+    ed->get_map()->remove_brush(brush);
+    return 0;
+}
+
 static int do_operation(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
@@ -79,6 +87,7 @@ static int do_nothing(lua_State *L)
 
 static luaL_Reg methods[] = {
     {"add_brush", add_brush},
+    {"remove_brush", remove_brush},
     {"do_operation", do_operation},
 
     {"get_selection", get_selection},

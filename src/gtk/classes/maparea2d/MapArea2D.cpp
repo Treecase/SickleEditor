@@ -234,7 +234,7 @@ Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
         for (auto const &brush : entity.brushes())
         {
             BBox2 bbox{};
-            for (auto const &face : brush.lock()->faces)
+            for (auto const &face : brush->faces)
                 for (auto const &vertex : face->vertices)
                     bbox.add(worldspace_to_drawspace(vertex));
 
@@ -314,14 +314,13 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         // Draw selected brushes.
         for (auto const &e : _editor->get_map()->entities())
         {
-            for (auto const &ref : e.brushes())
+            for (auto const &brush : e.brushes())
             {
-                auto brush = ref.lock();
                 if (brush->is_selected())
                 {
                     cr->set_source_rgb(1, 0, 0);
                     cr->set_line_width(pixel);
-                    _draw_brush(cr, ref);
+                    _draw_brush(cr, brush);
                     cr->stroke();
                 }
             }
@@ -455,7 +454,7 @@ void Sickle::MapArea2D::_draw_brush(
     Cairo::RefPtr<Cairo::Context> const &cr,
     Editor::Entity::BrushRef const &brush) const
 {
-    for (auto const &face : brush.lock()->faces)
+    for (auto const &face : brush->faces)
     {
         if (face->vertices.empty())
             continue;

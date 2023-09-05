@@ -43,7 +43,7 @@ Entity::Entity(MAP::Entity const &entity)
 {
     properties = entity.properties;
     for (auto const &brush : entity.brushes)
-        _brushes.push_back(std::make_shared<Brush>(brush));
+        _brushes.push_back(Glib::RefPtr{new Brush{brush}});
 }
 
 
@@ -53,7 +53,7 @@ Entity::Entity(RMF::Entity const &entity)
     properties = entity.kv_pairs;
     properties["classname"] = entity.classname;
     for (auto const &brush : entity.brushes)
-        _brushes.push_back(std::make_shared<Brush>(brush));
+        _brushes.push_back(Glib::RefPtr{new Brush{brush}});
 }
 
 
@@ -62,7 +62,7 @@ Entity::operator MAP::Entity() const
     MAP::Entity out{};
     out.properties = properties;
     for (auto const &brush : _brushes)
-        out.brushes.push_back(*brush);
+        out.brushes.push_back(*brush.get());
     return out;
 }
 
@@ -78,9 +78,9 @@ Entity &Entity::operator=(Entity const &other)
 }
 
 
-std::vector<std::weak_ptr<Brush>> Entity::brushes() const
+std::vector<Entity::BrushRef> Entity::brushes() const
 {
-    std::vector<std::weak_ptr<Brush>> the_brushes{};
+    std::vector<BrushRef> the_brushes{};
     for (auto const brush : _brushes)
         the_brushes.emplace_back(brush);
     return the_brushes;
@@ -89,16 +89,19 @@ std::vector<std::weak_ptr<Brush>> Entity::brushes() const
 
 void Entity::add_brush(Brush const &brush)
 {
-    _brushes.push_back(std::make_shared<Brush>(brush));
+    Glib::RefPtr the_brush{new Brush{brush}};
+    _brushes.push_back(the_brush);
+    the_brush->property_real() = true;
     signal_changed().emit();
 }
 
 
 void Entity::remove_brush(BrushRef const &brush)
 {
-    auto const it = std::find(_brushes.begin(), _brushes.end(), brush.lock());
+    auto const it = std::find(_brushes.begin(), _brushes.end(), brush);
     if (it == _brushes.end())
         return;
+    (*it)->property_real() = false;
     _brushes.erase(it);
     signal_changed().emit();
 }

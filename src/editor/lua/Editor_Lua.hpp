@@ -33,11 +33,13 @@ int luaopen_brushbox(lua_State *L);
 Sickle::Editor::BrushBox *lbrushbox_check(lua_State *L, int arg);
 
 int luaopen_editorbrush(lua_State *L);
-Sickle::Editor::Brush *leditorbrush_check(lua_State *L, int arg);
+Sickle::Editor::Entity::BrushRef leditorbrush_check(lua_State *L, int arg);
 
 template<> void Lua::push(lua_State *L, Sickle::Editor::Editor *editor);
 template<> void Lua::push(lua_State *L, Sickle::Editor::Selection *selection);
 template<> void Lua::push(lua_State *L, Sickle::Editor::BrushBox *brushbox);
-template<> void Lua::push(lua_State *L, Sickle::Editor::Brush *brush);
+template<> void Lua::push(
+    lua_State *L,
+    Sickle::Editor::Entity::BrushRef brush);
 
 #endif

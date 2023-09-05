@@ -76,7 +76,7 @@ static luaL_Reg methods[] = {
 template<>
 void Lua::push(lua_State *L, AppWin *appwin)
 {
-    Lua::RefBuilder<AppWin> builder{L, METATABLE, appwin};
+    Lua::RefBuilder builder{L, METATABLE, appwin};
     if (builder.pushnew())
         return;
 

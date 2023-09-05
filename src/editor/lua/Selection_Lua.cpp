@@ -29,9 +29,6 @@
 using namespace Sickle::Editor;
 
 
-void do_nothing_deleter(void *p) {}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
 static int selection_clear(lua_State *L)
@@ -44,51 +41,57 @@ static int selection_clear(lua_State *L)
 static int selection_add(lua_State *L)
 {
     auto s = lselection_check(L, 1);
-    auto i = leditorbrush_check(L, 2);
-    s->add(std::shared_ptr<Brush>{i, do_nothing_deleter});
+    auto brush = leditorbrush_check(L, 2);
+    s->add(brush);
     return 0;
 }
 
 static int selection_remove(lua_State *L)
 {
     auto s = lselection_check(L, 1);
-    auto i = leditorbrush_check(L, 2);
-    s->remove(std::shared_ptr<Brush>{i, do_nothing_deleter});
+    auto brush = leditorbrush_check(L, 2);
+    s->remove(brush);
     return 0;
 }
 
 static int selection_contains(lua_State *L)
 {
     auto s = lselection_check(L, 1);
-    auto i = leditorbrush_check(L, 2);
-    lua_pushboolean(L,
-        s->contains(
-            std::shared_ptr<Brush>{i, do_nothing_deleter}));
+    auto brush = leditorbrush_check(L, 2);
+    lua_pushboolean(L, s->contains(brush));
     return 1;
 }
 
 static int selection_iterate_iterator(lua_State *L)
 {
     auto s = lselection_check(L, lua_upvalueindex(1));
-    auto I = luaL_checkinteger(L, lua_upvalueindex(2));
-
-    auto it = s->begin();
-    for (auto i = 0; i < I; i++)
-        it++;
-    if (it == s->end())
-        return 0;
+    auto const I = luaL_checkinteger(L, lua_upvalueindex(2));
 
     lua_pushinteger(L, I + 1);
     lua_replace(L, lua_upvalueindex(2));
-    Lua::push(L, it->get());
+
+    int const type = lua_geti(L, lua_upvalueindex(3), I);
+    if (type == LUA_TNIL)
+        return 0;
+    else if (type != LUA_TUSERDATA)
+        return luaL_error(L, "selection:iterate error -- bad 3rd upvalue");
 
     return 1;
 }
 static int selection_iterate(lua_State *L)
 {
     auto s = lselection_check(L, 1);
-    lua_pushinteger(L, 0);
-    lua_pushcclosure(L, &selection_iterate_iterator, 2);
+    lua_pushinteger(L, 1);
+
+    lua_newtable(L);
+    lua_Integer i = 1;
+    for (auto it = s->begin(); it != s->end(); it++)
+    {
+        Lua::push(L, *it);
+        lua_seti(L, -2, i++);
+    }
+
+    lua_pushcclosure(L, &selection_iterate_iterator, 3);
     return 1;
 }
 

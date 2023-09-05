@@ -21,7 +21,8 @@
 
 #include "../se-lua.hpp"
 #include "ReferenceManager.hpp"
-#include <iostream> // temp
+
+#include <cstring>
 
 
 static int _refbuilder_dunder_newindex(lua_State *L)
@@ -53,13 +54,13 @@ static int _refbuilder_dunder_index(lua_State *L)
 
 namespace Lua
 {
-    template<class T>
+    template<class PointerType>
     class RefBuilder
     {
     private:
         std::string const _library;
         lua_State *const L;
-        T *const _pointer;
+        PointerType _pointer;
         Lua::ReferenceManager _refman{};
 
     public:
@@ -79,7 +80,10 @@ namespace Lua
             lua_pop(L, 1);
         }
 
-        RefBuilder(lua_State *L, std::string const &library, T *pointer)
+        RefBuilder(
+            lua_State *L,
+            std::string const &library,
+            PointerType pointer)
         :   _library{library}
         ,   _pointer{pointer}
         ,   L{L}
@@ -146,8 +150,9 @@ namespace Lua
                 return false;
             }
 
-            auto ptr = static_cast<T const **>(
-                lua_newuserdatauv(L, sizeof(T *), 1));
+            auto ptr = static_cast<PointerType *>(
+                lua_newuserdatauv(L, sizeof(PointerType), 1));
+            std::memset(ptr, 0, sizeof(*ptr));
             *ptr = _pointer;
             luaL_setmetatable(L, _library.c_str());
 
