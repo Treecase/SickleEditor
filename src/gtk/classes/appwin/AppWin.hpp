@@ -111,13 +111,14 @@ namespace Sickle::AppWin
             SE_DATA_DIR "sickle/lua-runtime",
             "../share/sickle/lua-runtime",
         };
+        std::vector<std::string> _operation_script_dirs{
+            SE_DATA_DIR "sickle/operations",
+            "../share/sickle/operations",
+        };
         std::vector<std::string> const _internal_scripts{
             "lua/gdkevents.lua",
             "lua/gdkkeysyms.lua",
             "lua/gdktypes.lua",
-        };
-        std::vector<std::string> const _internal_scripts_operations{
-            "operations/basic.lua",
         };
         // FIXME: temp -- these should be defined in Lua scripts
         std::vector<Editor::MapTool> const _predefined_maptools{
@@ -141,10 +142,18 @@ namespace Sickle::AppWin
             },
         };
 
+        static std::vector<std::string> _filter_dirs(
+            std::vector<std::string> const &dirs);
+        static std::vector<std::string> _find_scripts_in_dirs(
+            std::vector<std::string> const &dirs);
+        static std::string _make_lua_include_path(std::string const &dir);
+
         void _on_grid_size_changed();
         void _on_opsearch_op_chosen(Editor::Operation const &op);
 
-        void _setup_operations();
+        void _run_internal_scripts();
+        void _run_runtime_scripts();
+        void _run_operations_scripts();
     };
 }
 

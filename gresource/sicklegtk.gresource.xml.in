@@ -6,7 +6,6 @@
     <file>lua/gdkevents.lua</file>
     <file>lua/gdkkeysyms.lua</file>
     <file>lua/gdktypes.lua</file>
-    <file>operations/basic.lua</file>
     <file>shaders/map.frag</file>
     <file>shaders/map.vert</file>
     <file>logo.png</file>

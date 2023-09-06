@@ -254,6 +254,12 @@ void OperationLoader::add_source(std::string const &source)
 }
 
 
+void OperationLoader::add_source_from_file(std::string const &path)
+{
+    Lua::checkerror(L, luaL_dofile(L, path.c_str()));
+}
+
+
 std::vector<Operation> OperationLoader::get_operations() const
 {
     auto const pre = lua_gettop(L);

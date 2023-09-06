@@ -15,7 +15,6 @@ add_custom_command(
         lua/gdkevents.lua
         lua/gdkkeysyms.lua
         lua/gdktypes.lua
-        operations/basic.lua
         shaders/map.frag
         shaders/map.vert
         logo.png

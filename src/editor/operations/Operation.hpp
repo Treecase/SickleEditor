@@ -101,6 +101,8 @@ namespace Sickle::Editor
 
         /** Execute Lua code from the string. */
         void add_source(std::string const &source);
+        /** Execute Lua code from the file at PATH. */
+        void add_source_from_file(std::string const &path);
 
         /** Get a list of all the operations. */
         std::vector<Operation> get_operations() const;
