@@ -36,7 +36,10 @@ static int pick_brush(lua_State *L)
     auto m3d = lmaparea3d_check(L, 1);
     auto xy = lgeo_checkvector(L, 2);
     auto brush = m3d->pick_brush(xy);
-    Lua::push(L, brush);
+    if (brush)
+        Lua::push(L, brush);
+    else
+        lua_pushnil(L);
     return 1;
 }
 
