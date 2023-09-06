@@ -39,9 +39,6 @@
 
 #include "operations/Operation.hpp"
 
-#include <iostream> // temp
-
-
 using namespace Sickle::Editor;
 
 
@@ -192,6 +189,7 @@ void Operation::execute(Editor *ed) const
     // FIXME: TEMP
     assert(mode == "brush" || mode == "editor");
 
+    Lua::push(L, ed);
     if (mode == "brush")
     {
         // Push selected objects list.
@@ -200,29 +198,22 @@ void Operation::execute(Editor *ed) const
         for (auto const &brush : ed->selected)
         {
             int const top = lua_gettop(L);
-            std::cout << top << std::endl;
 
             Lua::push(L, brush);
             int const top2 = lua_gettop(L);
-            std::cout << top2 << std::endl;
             assert(top2 == top + 1);
 
             lua_seti(L, -2, i++);
             int const top3 = lua_gettop(L);
-            std::cout << top3 << std::endl;
             assert(top3 == top);
         }
-    }
-    else if (mode == "editor")
-    {
-        Lua::push(L, ed);
     }
     else
         throw std::runtime_error{"invalid mode '" + mode + "'"};
 
     for (auto const ch : args)
         lua_pushnil(L); // TEMP: push args
-    Lua::checkerror(L, lua_pcall(L, 1+args.size(), 0, 0));
+    Lua::checkerror(L, lua_pcall(L, 2+args.size(), 0, 0));
 
     lua_pop(L, 1);
     assert(lua_gettop(L) == pre);
