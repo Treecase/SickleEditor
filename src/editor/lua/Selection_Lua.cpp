@@ -95,6 +95,13 @@ static int selection_iterate(lua_State *L)
     return 1;
 }
 
+static int selection_is_empty(lua_State *L)
+{
+    auto s = lselection_check(L, 1);
+    lua_pushboolean(L, s->empty());
+    return 1;
+}
+
 static int do_nothing(lua_State *L)
 {
     return 0;
@@ -106,6 +113,7 @@ static luaL_Reg methods[] = {
     {"remove", selection_remove},
     {"contains", selection_contains},
     {"iterate", selection_iterate},
+    {"is_empty", selection_is_empty},
     {"on_updated", do_nothing},
     {NULL, NULL}
 };

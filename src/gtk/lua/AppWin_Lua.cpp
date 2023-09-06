@@ -23,6 +23,7 @@
 #include "MapArea3D_Lua.hpp"
 
 #include <se-lua/utils/RefBuilder.hpp>
+#include <core/MapTools.hpp>
 
 #define METATABLE "Sickle.gtk.appwin"
 
@@ -54,6 +55,41 @@ static int get_maptool(lua_State *L)
     return 1;
 }
 
+static int add_maptool(lua_State *L)
+{
+    auto aw = lappwin_check(L, 1);
+    auto const name = luaL_checkstring(L, 2);
+
+    // Argument 3 is an array of opdefs.
+    std::vector<Sickle::Editor::MapTool::OpDef> opdefs{};
+    for (lua_Integer i = 1; ; ++i)
+    {
+        int const type = lua_geti(L, 3, i); // opdef
+        if (type == LUA_TNIL)
+            break;
+        lua_geti(L, -1, 1); // operation label
+        lua_geti(L, -2, 2); // operation id
+        auto const label = lua_tostring(L, -2);
+        auto const id = lua_tostring(L, -1);
+        lua_pop(L, 3);
+        opdefs.push_back(Sickle::Editor::MapTool::OpDef{label, id});
+    }
+
+    // Argument 4 is the "Should Popup?" function.
+    auto const ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    auto const fn = [L, ref](Glib::RefPtr<Sickle::Editor::Editor> const &editor)
+        {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+            Lua::push(L, editor.get());
+            Lua::checkerror(L, lua_pcall(L, 1, 1, 0));
+            bool const result = lua_toboolean(L, -1);
+            return result;
+        };
+
+    aw->add_maptool(Sickle::Editor::MapTool{name, opdefs, fn});
+    return 0;
+}
+
 static int do_nothing(lua_State *L)
 {
     return 0;
@@ -63,6 +99,8 @@ static luaL_Reg methods[] = {
     {"set_grid_size", set_grid_size},
     {"get_grid_size", get_grid_size},
     {"get_maptool", get_maptool},
+
+    {"add_maptool", add_maptool},
 
     {"on_grid_size_changed", do_nothing},
     {"on_maptool_changed", do_nothing},

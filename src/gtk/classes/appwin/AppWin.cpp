@@ -114,10 +114,6 @@ AppWin::AppWin()
         "reloadLua",
         sigc::mem_fun(*this, &AppWin::on_action_reloadLua));
 
-    // FIXME: temp
-    for (auto const &tool : _predefined_maptools)
-        editor->add_maptool(tool);
-
     // TODO: integrate w/ dynamic system?
     add_action(
         "mapTools_Select",
@@ -283,6 +279,13 @@ void AppWin::reload_scripts()
 void AppWin::search_operations()
 {
     _opsearch.present();
+}
+
+
+void AppWin::add_maptool(Editor::MapTool const &maptool)
+{
+    _predefined_maptools.push_back(maptool);
+    editor->add_maptool(maptool);
 }
 
 

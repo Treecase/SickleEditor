@@ -64,6 +64,9 @@ namespace Sickle::AppWin
         /** Open the Operation Search dialog. */
         void search_operations();
 
+        /** Add a MapTool. */
+        void add_maptool(Editor::MapTool const &maptool);
+
         void set_grid_size(guint grid_size);
         guint get_grid_size();
 
@@ -120,27 +123,8 @@ namespace Sickle::AppWin
             "lua/gdkkeysyms.lua",
             "lua/gdktypes.lua",
         };
-        // FIXME: temp -- these should be defined in Lua scripts
-        std::vector<Editor::MapTool> const _predefined_maptools{
-            {
-                "Select",
-                {
-                    {"Delete", "Brush.DeleteSelected"},
-                },
-                [](Glib::RefPtr<Editor::Editor> ed){
-                    return !ed->selected.empty();
-                }
-            },
-            {
-                "Create Brush",
-                {
-                    {"Create Brush", "Brush.CreateFromBox"},
-                },
-                [](Glib::RefPtr<Editor::Editor> ed){
-                    return true;
-                }
-            },
-        };
+
+        std::vector<Editor::MapTool> _predefined_maptools{};
 
         static std::vector<std::string> _filter_dirs(
             std::vector<std::string> const &dirs);

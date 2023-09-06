@@ -29,3 +29,18 @@ end
 
 
 EventListener.construct(gAppWin)
+
+gAppWin:add_maptool(
+    "Select",
+    {
+        {"Delete", "Brush.DeleteSelected"},
+    },
+    function(editor) return not ed:get_selection():is_empty() end
+)
+gAppWin:add_maptool(
+    "Create Brush",
+    {
+        {"Create Brush", "Brush.CreateFromBox"},
+    },
+    function(editor) return true end
+)

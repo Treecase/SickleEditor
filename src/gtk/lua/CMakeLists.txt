@@ -8,6 +8,7 @@ target_link_libraries(sickle-gtk-lua
         se-lua
     PRIVATE
         appwin
+        editor-core
         wad
         PkgConfig::GTKMM
         glutils::glutils
