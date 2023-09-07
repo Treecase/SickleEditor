@@ -1,30 +1,35 @@
-add_operation(
-    "Basic", "Translate", "brush", "fff",
-    function(editor, brush, x, y, z)
-        print("Translate brush: ", x, y, z)
-        for _,b in ipairs(brush) do print(b) end
-    end)
-
+-- TODO
 add_operation(
     "Basic", "Rotate", "brush", "fff",
-    function(editor, brush, x, y, z)
+    function(editor, brushes, x, y, z)
         print("Rotate brush: ", x, y, z)
-        for _,b in ipairs(brush) do print(b) end
+        for _,b in ipairs(brushes) do print(b) end
     end)
 
-add_operation(
-    "Basic", "Scale", "brush", "fff",
-    function(editor, brush, x, y, z)
-        print("Scale brush: ", x, y, z)
-        for _,b in ipairs(brush) do print(b) end
-    end)
-
--- temp
 add_operation(
     "Basic", "Transform", "brush", "",
-    function(editor, brush)
+    function(editor, brushes)
         print("Transform")
-        for _,b in ipairs(brush) do print(b) end
+        for _,b in ipairs(brushes) do print(b) end
+    end)
+
+
+add_operation(
+    "Brush", "Translate", "brush", "fff",
+    function(editor, brushes, x, y, z)
+        for _,b in ipairs(brushes) do
+            b:translate(geo.vector.new(x, y, z))
+        end
+    end)
+
+add_operation(
+    "Brush", "Scale", "brush", "fff",
+    function(editor, brushes, x, y, z)
+        print("Scale brush: ", x, y, z)
+        for _,b in ipairs(brushes) do
+            print(b)
+            b:scale(geo.vector.new(x, y, z))
+        end
     end)
 
 add_operation(
@@ -48,8 +53,7 @@ add_operation(
             {b.x, b.y, a.z},
             {b.x, b.y, b.z}
         )
-    end
-)
+    end)
 
 add_operation(
     "Brush",
@@ -61,5 +65,4 @@ add_operation(
         for brush in sel:iterate() do
             editor:remove_brush(brush)
         end
-    end
-)
+    end)

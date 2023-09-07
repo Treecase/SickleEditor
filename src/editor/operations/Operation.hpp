@@ -19,26 +19,32 @@
 #ifndef SE_EDITOR_OPERATION_HPP
 #define SE_EDITOR_OPERATION_HPP
 
-#include <core/Editor.hpp>
 #include <se-lua/se-lua.hpp>
 
-#include <functional>
-#include <memory>
+#include <glibmm/refptr.h>
+
+#include <any>
 #include <string>
-#include <unordered_map>
 #include <utility>
+#include <vector>
 
 
 namespace Sickle::Editor
 {
+    class Editor;
+
     class Operation
     {
         lua_State *const L;
     public:
+        using ArgList = std::vector<std::any>;
+
+        static std::string const VALID_TYPES;
+
         std::string const module_name;
         std::string const name;
         std::string const mode;
-        std::string const args;
+        std::string const arg_types;
 
         /**
          * Return the identifier for the given operation.
@@ -64,58 +70,8 @@ namespace Sickle::Editor
             std::string const &mode,
             std::string const &args);
 
-        void execute(Glib::RefPtr<Editor> ed) const;
-        void execute(Editor *ed) const;
-    };
-
-    /**
-     * Manages Operations.
-     *
-     * Operations are created by adding a Lua script through the 'add_source'
-     * method. These script(s) call the Lua function 'add_operation':
-     *
-     *  add_operation(module: String, operation_title: String, mode: String,
-     *                args: String, fn: Callable)
-     */
-    class OperationLoader
-    {
-        sigc::signal<void(std::string const &)> _sig_operation_added{};
-
-        lua_State *const L; // alias for _L_actual
-
-        std::vector<Operation>
-        L_get_module_operations(std::string const &module_name) const;
-
-        // Copying not allowed
-        OperationLoader(OperationLoader const &)=delete;
-        OperationLoader &operator=(OperationLoader const &)=delete;
-
-    public:
-        OperationLoader(lua_State *L);
-
-        /**
-         * Emitted when a new operation is added. The operation's ID is passed
-         * as the parameter.
-         */
-        auto &signal_operation_added() {return _sig_operation_added;};
-
-        /** Execute Lua code from the string. */
-        void add_source(std::string const &source);
-        /** Execute Lua code from the file at PATH. */
-        void add_source_from_file(std::string const &path);
-
-        /** Get a list of all the operations. */
-        std::vector<Operation> get_operations() const;
-
-        /** Get a single operation. */
-        Operation get_operation(
-            std::string const &module,
-            std::string const &operation) const;
-        /** Get a single operation. */
-        Operation get_operation(std::string const &id);
-
-        /** Get a list of operations in the module. */
-        std::vector<Operation> get_module(std::string const &module_name) const;
+        void execute(Editor *ed, ArgList const &args) const;
+        void execute(Glib::RefPtr<Editor> ed, ArgList const &args) const;
     };
 }
 

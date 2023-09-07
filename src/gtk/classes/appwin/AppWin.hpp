@@ -23,6 +23,7 @@
 #include "../maparea2d/MapArea2D.hpp"
 #include "../MapArea3D.hpp"
 #include "../MapTools.hpp"
+#include "MapToolConfig.hpp"
 #include "OperationSearch.hpp"
 
 #include <core/Editor.hpp>
@@ -79,6 +80,8 @@ namespace Sickle::AppWin
     protected:
         void setup_lua_state();
 
+        void on_maptoolconfig_confirmed();
+
         void on_action_openLuaConsole();
         void on_action_reloadLua();
 
@@ -92,6 +95,7 @@ namespace Sickle::AppWin
         MapArea3D _view3d;
         MapArea2D _view2d_top, _view2d_front, _view2d_right;
         MapTools _maptools;
+        MapToolConfig _maptool_config{};
         Gtk::Label _gridsizelabel{};
         Gtk::Window _luaconsolewindow{};
         LuaConsole _luaconsole{};

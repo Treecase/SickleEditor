@@ -18,8 +18,9 @@
 
 #include "Editor_Lua.hpp"
 
-#include <se-lua/utils/RefBuilder.hpp>
 #include <core/Editor.hpp>
+#include <operations/OperationLoader.hpp>
+#include <se-lua/utils/RefBuilder.hpp>
 #include <LuaGeo.hpp>
 
 #define METATABLE "Sickle.editor"
@@ -57,8 +58,24 @@ static int do_operation(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
     auto const id = luaL_checkstring(L, 2);
+
+    auto const op = ed->oploader->get_operation(id);
+
+    Operation::ArgList args{};
+    for (size_t i = 0; i < op.arg_types.size(); ++i)
+    {
+        auto const ch = op.arg_types.at(i);
+        switch (ch)
+        {
+        case 'f':
+            args.push_back(
+                std::make_any<lua_Number>(luaL_checknumber(L, 3 + i)));
+            break;
+        }
+    }
+
     try {
-        ed->do_operation(id);
+        op.execute(ed, args);
     }
     catch (Lua::Error const &e) {
         return luaL_error(L, "%s", e.what());

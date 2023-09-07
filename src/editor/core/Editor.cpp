@@ -58,13 +58,6 @@ void Editor::add_maptool(MapTool const &maptool)
 }
 
 
-void Editor::do_operation(std::string const &id)
-{
-    auto const &op = oploader->get_operation(id);
-    op.execute(this);
-}
-
-
 
 void Editor::_on_map_changed()
 {

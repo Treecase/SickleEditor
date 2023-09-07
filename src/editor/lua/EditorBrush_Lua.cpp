@@ -55,6 +55,15 @@ static int translate(lua_State *L)
 }
 
 
+static int scale(lua_State *L)
+{
+    auto brush = leditorbrush_check(L, 1);
+    glm::vec3 const vec = lgeo_checkvector(L, 2);
+    brush->transform(glm::scale(glm::mat4{1.0}, vec));
+    return 0;
+}
+
+
 static int get_vertices(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
@@ -82,6 +91,7 @@ static luaL_Reg methods[] = {
     {"is_selected", is_selected},
     {"transform", transform},
     {"translate", translate},
+    {"scale", scale},
     {"get_vertices", get_vertices},
 
     {"on_selected", do_nothing},

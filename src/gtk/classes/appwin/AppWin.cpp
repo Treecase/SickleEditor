@@ -149,9 +149,13 @@ AppWin::AppWin()
     _inforegion.pack_end(_gridsizelabel);
     _inforegion.pack_start(_luainfobar);
 
+    _maptool_config.signal_confirmed().connect(
+        sigc::mem_fun(*this, &AppWin::on_maptoolconfig_confirmed));
+
     _basegrid.attach(_maptools, 0, 0);
     _basegrid.attach(_viewsgrid, 1, 0);
     _basegrid.attach(_inforegion, 0, 1, 2);
+    _basegrid.attach(_maptool_config, 2, 0);
     add(_basegrid);
 
     _luaconsole.set_size_request(320, 240);
@@ -313,6 +317,17 @@ void AppWin::setup_lua_state()
 }
 
 
+void AppWin::on_maptoolconfig_confirmed()
+{
+    if (_maptool_config.has_operation())
+    {
+        auto const op = _maptool_config.get_operation();
+        op.execute(editor, _maptool_config.get_arguments());
+        _maptool_config.clear_operation();
+    }
+}
+
+
 void AppWin::on_action_openLuaConsole()
 {
     show_console_window();
@@ -394,7 +409,7 @@ void AppWin::_on_grid_size_changed()
 
 void AppWin::_on_opsearch_op_chosen(Editor::Operation const &op)
 {
-    op.execute(editor);
+    _maptool_config.set_operation(op);
 }
 
 

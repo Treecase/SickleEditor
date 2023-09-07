@@ -23,7 +23,7 @@
 #include "MapTools.hpp"
 #include "Selection.hpp"
 
-#include <operations/Operation.hpp>
+#include <operations/OperationLoader.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
 #include <glibmm.h>
@@ -36,7 +36,6 @@
 
 namespace Sickle::Editor
 {
-    // OperationLoader depends on Editor, so we have to forward declare it.
     class OperationLoader;
 
     /**
@@ -76,8 +75,6 @@ namespace Sickle::Editor
             property_wads() = value;}
 
         void add_maptool(MapTool const &maptool);
-
-        void do_operation(std::string const &id);
 
     private:
         Glib::Property<Glib::RefPtr<World>> _prop_map;

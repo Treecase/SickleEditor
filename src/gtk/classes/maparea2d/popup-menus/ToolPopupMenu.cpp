@@ -84,7 +84,7 @@ void ToolPopupMenu::action_triggered(std::string const &id)
 
     try {
         auto const op = _editor->oploader->get_operation(id);
-        op.execute(_editor);
+        op.execute(_editor, {});
     }
     catch (Lua::Error const &e) {
         std::cerr << e.what() << '\n'; // FIXME: temp?
