@@ -102,6 +102,11 @@ AppWin::AppWin()
             property_grid_size(),
             _view2d_right.property_grid_size(),
             Glib::BindingFlags::BINDING_SYNC_CREATE)}
+,   _binding_left_right_views_position{
+        Glib::Binding::bind_property(
+            _left_views.property_position(),
+            _right_views.property_position(),
+            Glib::BindingFlags::BINDING_BIDIRECTIONAL)}
 {
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
@@ -130,14 +135,23 @@ AppWin::AppWin()
     _view2d_front.set_draw_angle(Sickle::MapArea2D::DrawAngle::FRONT);
     _view2d_right.set_draw_angle(Sickle::MapArea2D::DrawAngle::RIGHT);
 
-    _viewsgrid.set_row_spacing(2);
-    _viewsgrid.set_column_spacing(2);
-    _viewsgrid.set_row_homogeneous(true);
-    _viewsgrid.set_column_homogeneous(true);
-    _viewsgrid.attach(_view3d, 0, 0);
-    _viewsgrid.attach(_view2d_top, 1, 0);
-    _viewsgrid.attach(_view2d_front, 0, 1);
-    _viewsgrid.attach(_view2d_right, 1, 1);
+    _left_views.add1(_view3d);
+    _left_views.add2(_view2d_front);
+    _left_views.set_wide_handle(true);
+
+    _right_views.add1(_view2d_top);
+    _right_views.add2(_view2d_right);
+    _right_views.set_wide_handle(true);
+
+    _views.add1(_left_views);
+    _views.add2(_right_views);
+    _views.set_wide_handle(true);
+
+    _sidebar_splitter_R.pack1(_views, Gtk::AttachOptions::EXPAND);
+    _sidebar_splitter_R.pack2(_maptool_config, Gtk::AttachOptions::SHRINK);
+
+    _sidebar_splitter_L.pack1(_maptools, Gtk::AttachOptions::SHRINK);
+    _sidebar_splitter_L.pack2(_sidebar_splitter_R, Gtk::AttachOptions::EXPAND);
 
     _luainfobar.set_show_close_button(true);
     _luainfobar.set_message_type(Gtk::MessageType::MESSAGE_INFO);
@@ -152,10 +166,8 @@ AppWin::AppWin()
     _maptool_config.signal_confirmed().connect(
         sigc::mem_fun(*this, &AppWin::on_maptoolconfig_confirmed));
 
-    _basegrid.attach(_maptools, 0, 0);
-    _basegrid.attach(_viewsgrid, 1, 0);
+    _basegrid.attach(_sidebar_splitter_L, 0, 0);
     _basegrid.attach(_inforegion, 0, 1, 2);
-    _basegrid.attach(_maptool_config, 2, 0);
     add(_basegrid);
 
     _luaconsole.set_size_request(320, 240);

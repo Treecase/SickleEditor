@@ -1,6 +1,7 @@
 add_library(appwin STATIC
     AppWin.cpp
     MapToolConfig.cpp
+    MapTools.cpp
     OperationSearch.cpp
 )
 target_link_libraries(appwin

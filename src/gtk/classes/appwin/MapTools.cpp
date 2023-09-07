@@ -18,16 +18,24 @@
 
 #include "MapTools.hpp"
 
+#include <gtkmm/adjustment.h>
 
-using namespace Sickle;
+
+using namespace Sickle::AppWin;
 
 
 MapTools::MapTools(Glib::RefPtr<Editor::Editor> editor)
 :   Glib::ObjectBase{typeid(MapTools)}
-,   Gtk::Box{}
+,   Gtk::Frame{}
 ,   _editor{editor}
 {
-    set_orientation(Gtk::Orientation::ORIENTATION_VERTICAL);
+    set_label("Tools");
+
+    _box.set_orientation(Gtk::Orientation::ORIENTATION_VERTICAL);
+
+    _scrolled.property_hscrollbar_policy() = Gtk::PolicyType::POLICY_NEVER;
+    _scrolled.add(_box);
+    add(_scrolled);
 
     _editor->signal_maptools_changed().connect(
         sigc::mem_fun(*this, &MapTools::on_maptools_changed));
@@ -71,5 +79,5 @@ void MapTools::_add_tool(Editor::MapTool const &tool)
         sigc::bind(
             sigc::mem_fun(*this, &MapTools::on_tool_button_toggled),
             tool.name()));
-    add(button);
+    _box.add(button);
 }

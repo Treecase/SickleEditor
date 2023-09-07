@@ -4,7 +4,6 @@ target_sources(sickle PRIVATE
     gtkglutils.cpp
     LuaConsole.cpp
     MapArea3D.cpp
-    MapTools.cpp
     WADDialog.cpp
 )
 target_link_libraries(sickle PRIVATE

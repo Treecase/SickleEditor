@@ -42,7 +42,12 @@ static int add_brush(lua_State *L)
         auto const v = lgeo_tovector(L, i + 2);
         points.push_back(v);
     }
-    ed->get_map()->add_brush(points);
+    try {
+        ed->get_map()->add_brush(points);
+    }
+    catch (std::runtime_error const &e) {
+        // Brush construction degenerate case.
+    }
     return 0;
 }
 

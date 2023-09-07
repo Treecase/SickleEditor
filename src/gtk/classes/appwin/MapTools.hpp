@@ -16,21 +16,23 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_MAPTOOLS_HPP
-#define SE_MAPTOOLS_HPP
+#ifndef SE_APPWIN_MAPTOOLS_HPP
+#define SE_APPWIN_MAPTOOLS_HPP
 
 #include <core/Editor.hpp>
 
+#include <glibmm/property.h>
 #include <gtkmm/box.h>
+#include <gtkmm/frame.h>
 #include <gtkmm/menu.h>
 #include <gtkmm/radiobutton.h>
-#include <glibmm/property.h>
+#include <gtkmm/scrolledwindow.h>
 
 #include <memory>
 #include <unordered_map>
 
 
-namespace Sickle
+namespace Sickle::AppWin
 {
     /**
      * Side toolbar.
@@ -39,7 +41,7 @@ namespace Sickle
      * the buttons will set that tool as active. If the editor's active tool
      * changes, the button states will also update to match.
      */
-    class MapTools : public Gtk::Box
+    class MapTools : public Gtk::Frame
     {
     public:
         MapTools(Glib::RefPtr<Editor::Editor> editor);
@@ -52,6 +54,9 @@ namespace Sickle
     private:
         Glib::RefPtr<Editor::Editor> _editor;
         std::unordered_map<std::string, Gtk::RadioButton> _buttons{};
+
+        Gtk::ScrolledWindow _scrolled{};
+        Gtk::Box _box{};
         Gtk::RadioButtonGroup _button_group{};
 
         void _add_tool(Editor::MapTool const &tool);

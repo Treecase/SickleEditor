@@ -22,8 +22,8 @@
 #include "../LuaConsole.hpp"
 #include "../maparea2d/MapArea2D.hpp"
 #include "../MapArea3D.hpp"
-#include "../MapTools.hpp"
 #include "MapToolConfig.hpp"
+#include "MapTools.hpp"
 #include "OperationSearch.hpp"
 
 #include <core/Editor.hpp>
@@ -39,6 +39,7 @@
 #include <gtkmm/hvbox.h>
 #include <gtkmm/infobar.h>
 #include <gtkmm/label.h>
+#include <gtkmm/paned.h>
 #include <gtkmm/searchentry.h>
 
 #include <functional>
@@ -104,14 +105,21 @@ namespace Sickle::AppWin
 
         // Structural widgets
         Gtk::Grid _basegrid{};
-        Gtk::Grid _viewsgrid{};
         Gtk::HBox _inforegion{};
         Gtk::Label _luainfobarlabel{};
+        Gtk::Paned _left_views{Gtk::Orientation::ORIENTATION_VERTICAL};
+        Gtk::Paned _right_views{Gtk::Orientation::ORIENTATION_VERTICAL};
+        Gtk::Paned _views{Gtk::Orientation::ORIENTATION_HORIZONTAL};
+        Gtk::Paned _sidebar_splitter_L{
+            Gtk::Orientation::ORIENTATION_HORIZONTAL};
+        Gtk::Paned _sidebar_splitter_R{
+            Gtk::Orientation::ORIENTATION_HORIZONTAL};
 
         Glib::Property<guint> _prop_grid_size;
         Glib::RefPtr<Glib::Binding> _binding_grid_size_top,
             _binding_grid_size_front,
             _binding_grid_size_right;
+        Glib::RefPtr<Glib::Binding> _binding_left_right_views_position;
         sigc::signal<void()> _sig_lua_reloaded{};
 
         std::vector<std::string> _lua_script_dirs{

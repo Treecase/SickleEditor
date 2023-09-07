@@ -40,6 +40,8 @@ MapToolConfig::MapToolConfig()
     _box.set_margin_top(8);
     _box.pack_end(_confirm, Gtk::PackOptions::PACK_SHRINK);
 
+    _scrolled_window.property_hscrollbar_policy() =\
+        Gtk::PolicyType::POLICY_NEVER;
     _scrolled_window.add(_box);
 
     add(_scrolled_window);
