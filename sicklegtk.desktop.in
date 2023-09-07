@@ -1,5 +1,5 @@
 [Desktop Entry]
 Type=Application
-Name=GHexEdit
+Name=@PROJECT_NAME@
 Icon=@APPLICATION_ID@
-Exec=sicklegtk
+Exec=sickle
