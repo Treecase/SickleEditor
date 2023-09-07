@@ -42,10 +42,12 @@ Editor::Editor(lua_State *L)
 
 MapTool Editor::get_maptool() const
 {
-    auto const name = property_maptool().get_value();
-    if (name.empty())
-        throw std::logic_error{"no maptool set"};
-    return _maptools.at(name);
+    try {
+        return _maptools.at(property_maptool().get_value());
+    }
+    catch (std::out_of_range const &e) {
+        return MapTool{"", {}, [](auto){return false;}};
+    }
 }
 
 
