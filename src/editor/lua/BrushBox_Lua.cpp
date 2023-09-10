@@ -40,7 +40,7 @@ static int get_start(lua_State *L)
 static int set_start(lua_State *L)
 {
     auto bb = lbrushbox_check(L, 1);
-    bb->p1(lgeo_checkvector(L, 2));
+    bb->p1(lgeo_checkvector<glm::vec3>(L, 2));
     return 0;
 }
 
@@ -54,7 +54,7 @@ static int get_end(lua_State *L)
 static int set_end(lua_State *L)
 {
     auto bb = lbrushbox_check(L, 1);
-    bb->p2(lgeo_checkvector(L, 2));
+    bb->p2(lgeo_checkvector<glm::vec3>(L, 2));
     return 0;
 }
 

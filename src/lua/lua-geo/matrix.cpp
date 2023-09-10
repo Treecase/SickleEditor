@@ -102,26 +102,26 @@ int lgeo_matrix_new(lua_State *L)
 
 static int matrix_translate(lua_State *L)
 {
-    auto m = lgeo_checkmatrix(L, 1);
-    auto v = lgeo_checkvector(L, 2);
-    Lua::push(L, glm::translate(m, glm::vec3{v}));
+    auto const m = lgeo_checkmatrix(L, 1);
+    auto const v = lgeo_checkvector<glm::vec3>(L, 2);
+    Lua::push(L, glm::translate(m, v));
     return 1;
 }
 
 static int matrix_rotate(lua_State *L)
 {
-    auto m = lgeo_checkmatrix(L, 1);
-    float angle = glm::radians(luaL_checknumber(L, 2));
-    auto v = lgeo_checkvector(L, 3);
-    Lua::push(L, glm::rotate(m, angle, glm::vec3{v}));
+    auto const m = lgeo_checkmatrix(L, 1);
+    float const angle = glm::radians(luaL_checknumber(L, 2));
+    auto const v = lgeo_checkvector<glm::vec3>(L, 3);
+    Lua::push(L, glm::rotate(m, angle, v));
     return 1;
 }
 
 static int matrix_scale(lua_State *L)
 {
-    auto m = lgeo_checkmatrix(L, 1);
-    auto v = lgeo_checkvector(L, 2);
-    Lua::push(L, glm::scale(m, glm::vec3{v}));
+    auto const m = lgeo_checkmatrix(L, 1);
+    auto const v = lgeo_checkvector<glm::vec3>(L, 2);
+    Lua::push(L, glm::scale(m, v));
     return 1;
 }
 
@@ -155,10 +155,10 @@ glm::mat4 lgeo_tomatrix(lua_State *L, int i)
     lua_geti(L, i, 2);
     lua_geti(L, i, 3);
     glm::mat4 m{
-        lgeo_tovector(L, -4),
-        lgeo_tovector(L, -3),
-        lgeo_tovector(L, -2),
-        lgeo_tovector(L, -1)};
+        lgeo_tovector<glm::vec4>(L, -4),
+        lgeo_tovector<glm::vec4>(L, -3),
+        lgeo_tovector<glm::vec4>(L, -2),
+        lgeo_tovector<glm::vec4>(L, -1)};
     lua_pop(L, 4);
     return m;
 }

@@ -49,7 +49,7 @@ static int transform(lua_State *L)
 static int translate(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
-    auto vec = lgeo_checkvector(L, 2);
+    auto const vec = lgeo_checkvector<glm::vec3>(L, 2);
     brush->translate(vec);
     return 0;
 }
@@ -58,7 +58,7 @@ static int translate(lua_State *L)
 static int scale(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
-    glm::vec3 const vec = lgeo_checkvector(L, 2);
+    auto const vec = lgeo_checkvector<glm::vec3>(L, 2);
     brush->transform(glm::scale(glm::mat4{1.0}, vec));
     return 0;
 }

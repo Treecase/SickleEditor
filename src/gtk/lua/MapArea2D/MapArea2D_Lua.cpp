@@ -34,7 +34,7 @@ using namespace Sickle;
 static int screenspace_to_drawspace(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto ss = lgeo_tovector(L, 2);
+    auto const ss = lgeo_checkvector<glm::vec2>(L, 2);
     auto ds = ma->screenspace_to_drawspace(ss.x, ss.y);
     Lua::push(L, ds);
     return 1;
@@ -43,7 +43,7 @@ static int screenspace_to_drawspace(lua_State *L)
 static int drawspace_to_worldspace(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto ds = lgeo_tovector(L, 2);
+    auto const ds = lgeo_checkvector<glm::vec2>(L, 2);
     auto ws = ma->drawspace_to_worldspace(ds);
     Lua::push(L, ws);
     return 1;
@@ -52,7 +52,7 @@ static int drawspace_to_worldspace(lua_State *L)
 static int drawspace3_to_worldspace(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto ds = lgeo_tovector(L, 2);
+    auto const ds = lgeo_checkvector<glm::vec3>(L, 2);
     auto ws = ma->drawspace3_to_worldspace(ds);
     Lua::push(L, ws);
     return 1;
@@ -61,7 +61,7 @@ static int drawspace3_to_worldspace(lua_State *L)
 static int worldspace_to_drawspace(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto ws = lgeo_tovector(L, 2);
+    auto const ws = lgeo_checkvector<glm::vec3>(L, 2);
     auto ds = ma->worldspace_to_drawspace(ws);
     Lua::push(L, ds);
     return 1;
@@ -70,7 +70,7 @@ static int worldspace_to_drawspace(lua_State *L)
 static int worldspace_to_drawspace3(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto ws = lgeo_tovector(L, 2);
+    auto const ws = lgeo_checkvector<glm::vec3>(L, 2);
     auto ds = ma->worldspace_to_drawspace3(ws);
     Lua::push(L, ds);
     return 1;
@@ -79,7 +79,7 @@ static int worldspace_to_drawspace3(lua_State *L)
 static int pick_brush(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
-    auto xy = lgeo_tovector(L, 2);
+    auto const xy = lgeo_checkvector<glm::vec2>(L, 2);
     auto picked = ma->pick_brush(xy);
     if (picked)
         Lua::push(L, picked);

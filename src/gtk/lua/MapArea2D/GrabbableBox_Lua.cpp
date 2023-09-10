@@ -33,7 +33,7 @@ using namespace Sickle;
 static int check_point(lua_State *L)
 {
     auto box = lgrabbablebox_check(L, 1);
-    auto xy = lgeo_tovector(L, 2);
+    auto const xy = lgeo_checkvector<glm::vec2>(L, 2);
     lua_pushinteger(L, box->check_point(xy));
     return 1;
 }

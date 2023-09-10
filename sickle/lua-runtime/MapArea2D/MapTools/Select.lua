@@ -29,7 +29,8 @@ function Select.metatable:on_button_press_event(event)
 
     if event.button == 1 then
         local hovered = self.maparea:get_selection_box():check_point(
-            self.maparea:screenspace_to_drawspace(event))
+            self.maparea:screenspace_to_drawspace(
+                geo.vec2.new(event.x, event.y)))
 
         if hovered == maparea2d.grabbablebox.CENTER then
             self:addListener(
@@ -58,7 +59,8 @@ function Select.metatable:on_button_release_event(event)
         end
 
         local picked = self.maparea:pick_brush(
-            self.maparea:screenspace_to_drawspace(event))
+            self.maparea:screenspace_to_drawspace(
+                geo.vec2.new(event.x, event.y)))
         if picked then
             if picked:is_selected() then
                 editor:get_selection():remove(picked)

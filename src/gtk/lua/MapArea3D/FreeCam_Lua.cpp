@@ -28,14 +28,14 @@
 static int rotate(lua_State *L)
 {
     auto c = lfreecam_check(L, 1);
-    c->rotate(lgeo_checkvector(L, 2));
+    c->rotate(lgeo_checkvector<glm::vec2>(L, 2));
     return 0;
 }
 
 static int translate(lua_State *L)
 {
     auto c = lfreecam_check(L, 1);
-    c->translate(lgeo_checkvector(L, 2));
+    c->translate(lgeo_checkvector<glm::vec3>(L, 2));
     return 0;
 }
 
@@ -49,7 +49,7 @@ static int get_angle(lua_State *L)
 static int set_angle(lua_State *L)
 {
     auto c = lfreecam_check(L, 1);
-    c->setAngle(lgeo_checkvector(L, 2));
+    c->setAngle(lgeo_checkvector<glm::vec2>(L, 2));
     return 0;
 }
 

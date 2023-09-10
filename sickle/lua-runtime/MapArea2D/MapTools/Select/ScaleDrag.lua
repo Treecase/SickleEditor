@@ -10,7 +10,7 @@ ScaleDrag.metatable.__index = ScaleDrag.metatable
 
 -- Get the centerpoint of selected brushes.
 local function get_center(drag)
-    local center = geo.vector.new()
+    local center = geo.vec3.new()
 
     -- Scale out from center.
     if drag:centered() then
@@ -59,14 +59,19 @@ local function get_center(drag)
         }
 
         local coords = COORD_MAPPING[drag.handle]
-        center = geo.vector.new(minmax[coords[2]], minmax[coords[1]])
+        center = geo.vec2.new(minmax[coords[2]], minmax[coords[1]])
     end
 
     return center
 end
 
+local function get_center3(drag)
+    local v2d = get_center(drag)
+    return geo.vec3.new(v2d.x, v2d.y, 0)
+end
+
 -- Divide two vectors, skipping if the denominator element is 0.
-local function safe_vector_divide(a, b)
+local function safe_vector_divide3(a, b)
     local function make_safe(x)
         if x == 0.0 then
             return 1.0
@@ -74,7 +79,7 @@ local function safe_vector_divide(a, b)
             return x
         end
     end
-    return a / geo.vector.map(make_safe, b)
+    return a / geo.vec3.map(make_safe, b)
 end
 
 
@@ -116,21 +121,22 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
         [maparea2d.grabbablebox.S ] = {0, 1},
         [maparea2d.grabbablebox.W ] = {1, 0}
     }
-    local scale_directions = geo.vector.map(
+    local scale_directions = geo.vec3.map(
         math.abs,
-        self.maparea:drawspace_to_worldspace({
-            SCALE_DIRECTIONS[self.handle][1],
-            SCALE_DIRECTIONS[self.handle][2]}
-        )
-    )
+        self.maparea:drawspace_to_worldspace(
+            geo.vec2.new(
+                SCALE_DIRECTIONS[self.handle][1],
+                SCALE_DIRECTIONS[self.handle][2])))
 
-    local click_pos = self.maparea:screenspace_to_drawspace({event.x, event.y})
+    local click_pos = self.maparea:screenspace_to_drawspace(
+        geo.vec2.new(event.x, event.y))
     if self:snapped() then
-        click_pos = geo.vector.map(round_to_grid, click_pos)
+        click_pos = geo.vec2.map(round_to_grid, click_pos)
     end
 
-    local distance = geo.vector.map(math.abs, click_pos - center)
-    local scale = safe_vector_divide(distance, self.base_distance)
+    local distance2d = geo.vec2.map(math.abs, click_pos - center)
+    local distance = geo.vec3.new(distance2d.x, distance2d.y, 0)
+    local scale = safe_vector_divide3(distance, self.base_distance)
 
     if self:centered() then
         scale = scale * 2
@@ -148,7 +154,7 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
     local scale_mat = geo.matrix.scale(geo.matrix.new(), scale)
     local inverse_prev_scale_mat = geo.matrix.scale(
         geo.matrix.new(),
-        safe_vector_divide(1.0, self.prev_scale)
+        safe_vector_divide3(1.0, self.prev_scale)
     )
 
     local center_ws = self.maparea:drawspace_to_worldspace(center)
@@ -179,15 +185,16 @@ function ScaleDrag.new(parent, maparea, x, y, handle)
 
     setmetatable(scale_drag, ScaleDrag.metatable)
 
-    local click_pos = maparea:screenspace_to_drawspace({x, y})
+    local click_pos2d = maparea:screenspace_to_drawspace(geo.vec2.new(x, y))
+    local click_pos = geo.vec3.new(click_pos2d.x, click_pos2d.y, 0)
     if scale_drag:snapped() then
-        click_pos = geo.vector.map(round_to_grid, click_pos)
+        click_pos = geo.vec3.map(round_to_grid, click_pos)
     end
 
-    local center = get_center(scale_drag)
-    local distance = geo.vector.map(math.abs, click_pos - center)
+    local center = get_center3(scale_drag)
+    local distance = geo.vec3.map(math.abs, click_pos - center)
     scale_drag.base_distance = distance
-    scale_drag.prev_scale = safe_vector_divide(distance, distance)
+    scale_drag.prev_scale = safe_vector_divide3(distance, distance)
 
     return scale_drag
 end

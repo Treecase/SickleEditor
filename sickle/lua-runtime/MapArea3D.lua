@@ -112,7 +112,7 @@ function maparea3d.metatable:on_button_press_event(event)
     local state = self:get_state()
     -- Begin camera turn via middle mouse drag
     if event.button == 2 then
-        state:set_pointer_prev(geo.vector.new(event.x, event.y))
+        state:set_pointer_prev(geo.vec2.new(event.x, event.y))
     else
         return false
     end
@@ -132,7 +132,7 @@ function maparea3d.metatable:on_button_release_event(event)
             editor:get_selection():clear()
         end
 
-        local picked = self:pick_brush(geo.vector.new(event.x, event.y))
+        local picked = self:pick_brush(geo.vec2.new(event.x, event.y))
         if picked then
             if picked:is_selected() then
                 editor:get_selection():remove(picked)
@@ -152,9 +152,9 @@ function maparea3d.metatable:on_motion_notify_event(event)
     local camera = self:get_camera()
     local state = self:get_state()
     if event.state & LuaGDK.GDK_BUTTON2_MASK ~= 0 then
-        local delta = geo.vector.new(event.x, event.y) - state:get_pointer_prev()
+        local delta = geo.vec2.new(event.x, event.y) - state:get_pointer_prev()
         camera:rotate(delta * self:get_mouse_sensitivity())
-        state:set_pointer_prev(geo.vector.new(event.x, event.y))
+        state:set_pointer_prev(geo.vec2.new(event.x, event.y))
     else
         return false
     end

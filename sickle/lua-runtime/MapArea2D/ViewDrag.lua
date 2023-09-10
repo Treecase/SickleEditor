@@ -28,12 +28,12 @@ end
 function ViewDrag.metatable:on_motion_notify_event(event)
     assert(event.state & LuaGDK.GDK_BUTTON2_MASK ~= 0)
 
-    local transform_xy = geo.vector.new(
+    local transform_xy = geo.vec2.new(
         self.maparea:get_transform():get_x(),
         self.maparea:get_transform():get_y())
 
     local mouse_position = (
-        self.maparea:screenspace_to_drawspace(event)
+        self.maparea:screenspace_to_drawspace(geo.vec2.new(event))
         + transform_xy)
     local delta = mouse_position - self.last_mouse_position
 
@@ -52,7 +52,7 @@ end
 
 
 function ViewDrag.new(maparea, x, y)
-    local transform_xy = geo.vector.new(
+    local transform_xy = geo.vec2.new(
         maparea:get_transform():get_x(),
         maparea:get_transform():get_y())
 
@@ -60,7 +60,7 @@ function ViewDrag.new(maparea, x, y)
     drag.maparea = maparea
     drag.moved = false
     drag.last_mouse_position = (
-        maparea:screenspace_to_drawspace({x, y})
+        maparea:screenspace_to_drawspace(geo.vec2.new(x, y))
         + transform_xy)
     setmetatable(drag, ViewDrag.metatable)
     return drag

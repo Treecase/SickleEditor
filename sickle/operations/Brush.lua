@@ -39,8 +39,8 @@ add_operation(
         local bb = editor:get_brushbox()
         local a = bb:get_start()
         local b = bb:get_end()
-        bb:set_start(geo.vector.new())
-        bb:set_end(geo.vector.new())
+        bb:set_start(geo.vec3.new())
+        bb:set_end(geo.vec3.new())
         editor:add_brush(
             {a.x, a.y, a.z},
             {a.x, a.y, b.z},

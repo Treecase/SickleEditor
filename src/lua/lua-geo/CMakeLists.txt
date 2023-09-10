@@ -1,4 +1,3 @@
-
 add_library(luageo STATIC
     LuaGeo.cpp
     matrix.cpp

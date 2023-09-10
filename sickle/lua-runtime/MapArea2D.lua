@@ -112,7 +112,8 @@ function maparea2d.metatable:on_motion_notify_event(event)
         self:get_selection_box(),
     }
     local hovered = maparea2d.grabbablebox.NONE
-    local mouse_position_ds = self:screenspace_to_drawspace(event)
+    local mouse_position_ds = self:screenspace_to_drawspace(
+        geo.vec2.new(event.x, event.y))
     for _,gbox in ipairs(grabbableboxes) do
         local handle = gbox:check_point(mouse_position_ds)
         if hovered == maparea2d.grabbablebox.NONE then

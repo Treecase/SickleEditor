@@ -34,7 +34,7 @@ using namespace Sickle;
 static int pick_brush(lua_State *L)
 {
     auto m3d = lmaparea3d_check(L, 1);
-    auto xy = lgeo_checkvector(L, 2);
+    auto const xy = lgeo_checkvector<glm::vec2>(L, 2);
     auto brush = m3d->pick_brush(xy);
     if (brush)
         Lua::push(L, brush);
@@ -46,7 +46,7 @@ static int pick_brush(lua_State *L)
 static int screenspace_to_glspace(lua_State *L)
 {
     auto m3d = lmaparea3d_check(L, 1);
-    auto const &xy = lgeo_checkvector(L, 2);
+    auto const xy = lgeo_checkvector<glm::vec2>(L, 2);
     auto const &p = m3d->screenspace_to_glspace(xy);
     Lua::push(L, p);
     return 1;

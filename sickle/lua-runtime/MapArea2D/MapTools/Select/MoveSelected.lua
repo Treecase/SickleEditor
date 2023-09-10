@@ -7,8 +7,8 @@
 
 -- Calculate the top-left and bottom-right corners of the given brushes.
 local function find_corners(brushes)
-    local topleft = {nil, nil}
-    local bottomright = {nil, nil}
+    local topleft = {nil, nil, 0}
+    local bottomright = {nil, nil, 0}
     for brush in brushes do
         for i,vertex in ipairs(brush:get_vertices()) do
             if topleft[1] == nil or vertex.x < topleft[1] then
@@ -25,7 +25,7 @@ local function find_corners(brushes)
             end
         end
     end
-    return geo.vector.new(topleft), geo.vector.new(bottomright)
+    return geo.vec3.new(topleft), geo.vec3.new(bottomright)
 end
 
 
@@ -55,11 +55,12 @@ function MoveSelected.metatable:on_key_release_event(event)
 end
 
 function MoveSelected.metatable:on_motion_notify_event(event)
-    local curr = self.maparea:screenspace_to_drawspace({event.x, event.y})
+    local curr = self.maparea:screenspace_to_drawspace(
+        geo.vec2.new(event.x, event.y))
 
     local newcorner = curr
     if self:snapped() then
-        newcorner = geo.vector.map(round_to_grid, curr)
+        newcorner = geo.vec2.map(round_to_grid, curr)
     end
 
     local translation = (
@@ -80,7 +81,7 @@ end
 
 
 function MoveSelected.new(parent, maparea, x, y)
-    local click_pos = maparea:screenspace_to_drawspace({x, y})
+    local click_pos = maparea:screenspace_to_drawspace(geo.vec2.new(x, y))
 
     local topleft, bottomright = find_corners(
         maparea:get_editor():get_selection():iterate())
@@ -90,14 +91,14 @@ function MoveSelected.new(parent, maparea, x, y)
 
     local corners = {
         topleft,
-        geo.vector.new(bottomright.x, topleft.y),
-        geo.vector.new(topleft.x, bottomright.y),
+        geo.vec2.new(bottomright.x, topleft.y),
+        geo.vec2.new(topleft.x, bottomright.y),
         bottomright
     }
 
     local closest_corner = nil
     for i,corner in ipairs(corners) do
-        local distance = geo.vector.length(corner - click_pos)
+        local distance = geo.vec2.length(corner - click_pos)
         if closest_corner == nil or distance < closest_corner[2] then
             closest_corner = {corner, distance}
         end
@@ -108,7 +109,7 @@ function MoveSelected.new(parent, maparea, x, y)
     drag.maparea = maparea
     drag.moved = false
     drag.corner = closest_corner[1]
-    drag.prev_translation = geo.vector.new()
+    drag.prev_translation = geo.vec3.new()
     setmetatable(drag, MoveSelected.metatable)
     return drag
 end

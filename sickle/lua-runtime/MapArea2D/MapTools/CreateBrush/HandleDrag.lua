@@ -27,9 +27,10 @@ end
 
 function HandleDrag.metatable:on_motion_notify_event(event)
     local snapped = (self.maparea.alt ~= true)
-    local mousepos = self.maparea:screenspace_to_drawspace(event)
+    local mousepos = self.maparea:screenspace_to_drawspace(
+        geo.vec2.new(event.x, event.y))
     if snapped then
-        mousepos = geo.vector.map(round_to_grid, mousepos)
+        mousepos = geo.vec2.map(round_to_grid, mousepos)
     end
 
     if (    self.handle == maparea2d.grabbablebox.N
@@ -41,11 +42,11 @@ function HandleDrag.metatable:on_motion_notify_event(event)
         mousepos.y = self.orig_cardinals.N.y
         self.anchor.y = self.orig_cardinals.S.y
     end
-    mousepos.z = self.orig_cardinals.Z2
 
     local brushbox = self.maparea:get_editor():get_brushbox()
     brushbox:set_start(self.maparea:drawspace3_to_worldspace(self.anchor))
-    brushbox:set_end(self.maparea:drawspace3_to_worldspace(mousepos))
+    brushbox:set_end(self.maparea:drawspace3_to_worldspace(
+        geo.vec3.new(mousepos.x, mousepos.y, self.orig_cardinals.Z2)))
 end
 
 
@@ -53,10 +54,10 @@ function HandleDrag.new(parent, maparea, x, y, handle)
     local northwest,southeast = utils.find_corners3(
         maparea:get_editor():get_brushbox(), maparea)
     local CARDINAL = {
-        ["N"] = geo.vector.new(0, northwest.y),
-        ["E"] = geo.vector.new(southeast.x, 0),
-        ["S"] = geo.vector.new(0, southeast.y),
-        ["W"] = geo.vector.new(northwest.x, 0),
+        ["N"] = geo.vec2.new(0, northwest.y),
+        ["E"] = geo.vec2.new(southeast.x, 0),
+        ["S"] = geo.vec2.new(0, southeast.y),
+        ["W"] = geo.vec2.new(northwest.x, 0),
         ["Z1"] = northwest.z,
         ["Z2"] = southeast.z,
     }
@@ -71,14 +72,13 @@ function HandleDrag.new(parent, maparea, x, y, handle)
         [maparea2d.grabbablebox.W] = CARDINAL.E,
     }
     local anchor = OPPOSITE_CORNER[handle]
-    anchor.z = CARDINAL.Z1
 
     local drag = {}
     drag.parent = parent
     drag.maparea = maparea
     drag.moved = false
     drag.handle = handle
-    drag.anchor = anchor
+    drag.anchor = geo.vec3.new(anchor.x, anchor.y, CARDINAL.Z1)
     drag.orig_cardinals = CARDINAL
     setmetatable(drag, HandleDrag.metatable)
     return drag

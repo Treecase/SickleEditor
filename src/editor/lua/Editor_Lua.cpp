@@ -39,7 +39,7 @@ static int add_brush(lua_State *L)
     std::vector<glm::vec3> points{};
     for (int i = 0; i < n - 1; ++i)
     {
-        auto const v = lgeo_tovector(L, i + 2);
+        auto const v = lgeo_tovector<glm::vec3>(L, i + 2);
         points.push_back(v);
     }
     try {

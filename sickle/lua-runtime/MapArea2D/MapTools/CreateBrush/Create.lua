@@ -30,17 +30,18 @@ function Create.metatable:on_motion_notify_event(event)
     -- click, too.
     self.maparea:get_editor():get_selection():clear()
 
-    local curr = self.maparea:screenspace_to_drawspace(event)
+    local curr = self.maparea:screenspace_to_drawspace(
+        geo.vec2.new(event.x, event.y))
     if snapped then
-        curr = geo.vector.map(round_to_grid, curr)
+        curr = geo.vec2.map(round_to_grid, curr)
     end
-    curr.z = gAppWin:get_grid_size()
 
     local brushbox = self.maparea:get_editor():get_brushbox()
     if not self.moved then
         brushbox:set_start(self.maparea:drawspace_to_worldspace(curr))
     end
-    brushbox:set_end(self.maparea:drawspace3_to_worldspace(curr))
+    local curr3 = geo.vec3.new(curr.x, curr.y, gAppWin:get_grid_size())
+    brushbox:set_end(self.maparea:drawspace3_to_worldspace(curr3))
 
     self.moved = true
     return true
@@ -52,8 +53,8 @@ end
 
 function Create.new(parent, maparea, x, y)
     local brushbox = maparea:get_editor():get_brushbox()
-    brushbox:set_start(geo.vector.new())
-    brushbox:set_end(geo.vector.new())
+    brushbox:set_start(geo.vec3.new())
+    brushbox:set_end(geo.vec3.new())
 
     local drag = {}
     drag.parent = parent

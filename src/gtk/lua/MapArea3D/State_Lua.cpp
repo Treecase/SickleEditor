@@ -37,7 +37,7 @@ static int get_pointer_prev(lua_State *L)
 static int set_pointer_prev(lua_State *L)
 {
     auto s = lmaparea3d_state_check(L, 1);
-    auto const &v = lgeo_checkvector(L, 2);
+    auto const v = lgeo_checkvector<glm::vec2>(L, 2);
     s->pointer_prev = v;
     return 0;
 }
@@ -59,7 +59,7 @@ static int get_move_direction(lua_State *L)
 static int set_move_direction(lua_State *L)
 {
     auto s = lmaparea3d_state_check(L, 1);
-    auto const &v = lgeo_checkvector(L, 2);
+    auto const v = lgeo_checkvector<glm::vec3>(L, 2);
     s->move_direction = v;
     return 0;
 }
@@ -74,7 +74,7 @@ static int get_turn_rates(lua_State *L)
 static int set_turn_rates(lua_State *L)
 {
     auto s = lmaparea3d_state_check(L, 1);
-    auto const &v = lgeo_checkvector(L, 2);
+    auto const v = lgeo_checkvector<glm::vec2>(L, 2);
     s->turn_rates = v;
     return 0;
 }

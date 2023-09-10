@@ -17,8 +17,8 @@ EventListener.inherit(CreateBrush.metatable)
 
 function CreateBrush.metatable:on_removed()
     local brushbox = self.maparea:get_editor():get_brushbox()
-    brushbox:set_start(geo.vector.new())
-    brushbox:set_end(geo.vector.new())
+    brushbox:set_start(geo.vec3.new())
+    brushbox:set_end(geo.vec3.new())
 end
 
 
@@ -26,7 +26,7 @@ function CreateBrush.metatable:on_button_press_event(event)
     if self:doEvent("on_button_press_event", event) then return true end
 
     local hovered = self.maparea:get_brushbox():check_point(
-        self.maparea:screenspace_to_drawspace(event))
+        self.maparea:screenspace_to_drawspace(geo.vec2.new(event.x, event.y)))
 
     if event.button == 1 then
         if hovered == maparea2d.grabbablebox.NONE then
@@ -63,7 +63,8 @@ end
 function CreateBrush.metatable:on_motion_notify_event(event)
     if self:doEvent("on_motion_notify_event", event) then return true end
 
-    local mouse_position_ds = self.maparea:screenspace_to_drawspace(event)
+    local mouse_position_ds = self.maparea:screenspace_to_drawspace(
+        geo.vec2.new(event.x, event.y))
     local hovered = self.maparea:get_brushbox():check_point(mouse_position_ds)
     local CURSORS = {
         [maparea2d.grabbablebox.CENTER] = "crosshair",

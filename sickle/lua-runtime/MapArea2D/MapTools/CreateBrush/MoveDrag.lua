@@ -27,9 +27,10 @@ end
 
 function MoveDrag.metatable:on_motion_notify_event(event)
     local snapped = (self.maparea.alt ~= true)
-    local mousepos = self.maparea:screenspace_to_drawspace(event)
+    local mousepos = self.maparea:screenspace_to_drawspace(
+        geo.vec2.new(event.x, event.y))
     if snapped then
-        mousepos = geo.vector.map(round_to_grid, mousepos)
+        mousepos = geo.vec2.map(round_to_grid, mousepos)
     end
 
     local delta = (
@@ -46,23 +47,23 @@ end
 
 
 function MoveDrag.new(parent, maparea, x, y)
-    local click_pos = maparea:screenspace_to_drawspace({x, y})
+    local click_pos = maparea:screenspace_to_drawspace(geo.vec2.new(x, y))
     local snapped = (maparea.alt ~= true)
     if snapped then
-        click_pos = geo.vector.map(round_to_grid, click_pos)
+        click_pos = geo.vec2.map(round_to_grid, click_pos)
     end
     local brushbox = maparea:get_editor():get_brushbox()
 
     local northwest, southeast = utils.find_corners(brushbox, maparea)
     local corners = {
         northwest,
-        geo.vector.new(southeast.x, northwest.y),
-        geo.vector.new(northwest.x, southeast.y),
+        geo.vec2.new(southeast.x, northwest.y),
+        geo.vec2.new(northwest.x, southeast.y),
         southeast
     }
     local closest = {corners[1], math.maxinteger}
     for _,corner in ipairs(corners) do
-        local distance = geo.vector.length(corner - click_pos)
+        local distance = geo.vec2.length(corner - click_pos)
         if distance < closest[2] then
             closest = {corner, distance}
         end

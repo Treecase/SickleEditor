@@ -22,9 +22,13 @@
 int luaopen_geo(lua_State *L)
 {
     lua_newtable(L);
-    luaL_requiref(L, "geo.vector", luaopen_geo_vector, 0);
+    luaL_requiref(L, "geo.vec2", luaopen_geo_vector<glm::vec2>, 0);
+    luaL_requiref(L, "geo.vec3", luaopen_geo_vector<glm::vec3>, 0);
+    luaL_requiref(L, "geo.vec4", luaopen_geo_vector<glm::vec4>, 0);
     luaL_requiref(L, "geo.matrix", luaopen_geo_matrix, 0);
-    lua_setfield(L, -3, "matrix");
-    lua_setfield(L, -2, "vector");
+    lua_setfield(L, -5, "matrix");
+    lua_setfield(L, -4, "vec4");
+    lua_setfield(L, -3, "vec3");
+    lua_setfield(L, -2, "vec2");
     return 1;
 }
