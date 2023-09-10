@@ -23,6 +23,59 @@
 using namespace Sickle::AppWin;
 
 
+// TODO: error hardening
+struct NumberConfig : public Gtk::Entry, public Config
+{
+    NumberConfig()
+    :   Gtk::Entry{}
+    {
+        set_text("0.0");
+    }
+
+    Sickle::Editor::Operation::Arg get_value() override
+    {
+        return Sickle::Editor::Operation::Arg{std::stod(get_text())};
+    }
+};
+
+
+class Vec3Config : public Gtk::Box, public Config
+{
+    std::array<NumberConfig, 3> _xyz{};
+public:
+
+    Vec3Config()
+    :   Gtk::Box{Gtk::Orientation::ORIENTATION_VERTICAL}
+    ,   Config{}
+    {
+        add(_xyz.at(0));
+        add(_xyz.at(1));
+        add(_xyz.at(2));
+    }
+
+    Sickle::Editor::Operation::Arg get_value() override
+    {
+        return Sickle::Editor::Operation::Arg{
+            glm::vec3{
+                std::get<lua_Number>(_xyz.at(0).get_value()),
+                std::get<lua_Number>(_xyz.at(1).get_value()),
+                std::get<lua_Number>(_xyz.at(2).get_value())}};
+    }
+};
+
+
+static Glib::RefPtr<Gtk::Widget> make_config_for(std::string const &type)
+{
+    if (type == "f")
+        return Glib::RefPtr{new NumberConfig{}};
+    else if (type == "vec3")
+        return Glib::RefPtr{new Vec3Config{}};
+    else
+        throw std::logic_error{"bad arg type"};
+}
+
+
+
 MapToolConfig::MapToolConfig()
 :   Glib::ObjectBase{typeid(MapToolConfig)}
 ,   Gtk::Frame{}
@@ -57,29 +110,16 @@ bool MapToolConfig::has_operation() const
 void MapToolConfig::set_operation(Editor::Operation const &op)
 {
     _operation.reset(new Editor::Operation{op});
-    _args.clear();
 
-    for (auto &entry : _entries)
-        _box.remove(entry);
-    _entries.clear();
+    for (auto &config : _arg_configs)
+        _box.remove(*config.get());
+    _arg_configs.clear();
 
-    for (size_t i = 0; i < _operation->arg_types.size(); ++i)
+    for (auto const &type : _operation->arg_types)
     {
-        auto &entry = _entries.emplace_back();
-        auto const type = _operation->arg_types.at(i);
-        switch (type)
-        {
-        case 'f':{
-            auto const arg = _args.emplace_back(std::make_any<lua_Number>());
-            entry.set_text(std::to_string(std::any_cast<lua_Number>(arg)));
-            break;}
-        }
-        entry.property_text().signal_changed().connect(
-            sigc::bind(
-                sigc::mem_fun(*this, &MapToolConfig::on_entry_changed),
-                i));
-
-        _box.add(entry);
+        auto widget = make_config_for(type);
+        _arg_configs.push_back(widget);
+        _box.add(*widget.get());
     }
     _box.show_all_children();
     _confirm.show();
@@ -97,32 +137,20 @@ Sickle::Editor::Operation MapToolConfig::get_operation() const
 void MapToolConfig::clear_operation()
 {
     _operation.release();
-    for (auto &entry : _entries)
-        _box.remove(entry);
-    _entries.clear();
+    for (auto &config : _arg_configs)
+        _box.remove(*config.get());
+    _arg_configs.clear();
     _confirm.hide();
 }
 
 
 Sickle::Editor::Operation::ArgList MapToolConfig::get_arguments() const
 {
-    return _args;
-}
-
-
-
-void MapToolConfig::on_entry_changed(size_t argument_index)
-{
-    auto const type = _operation->arg_types.at(argument_index);
-    auto &arg = _args.at(argument_index);
-    auto &entry = _entries.at(argument_index);
-
-    auto const text = entry.get_text();
-
-    switch (type)
+    Editor::Operation::ArgList args{};
+    for (auto &config : _arg_configs)
     {
-    case 'f':
-        arg.emplace<lua_Number>(strtof(text.c_str(), nullptr));
-        break;
+        auto c = dynamic_cast<Config *>(config.get());
+        args.push_back(c->get_value());
     }
+    return args;
 }

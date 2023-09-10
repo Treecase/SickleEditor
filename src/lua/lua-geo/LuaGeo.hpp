@@ -42,6 +42,9 @@ namespace Lua
     void push(lua_State *L, glm::vec3 vec);
     void push(lua_State *L, glm::vec2 vec);
     void push(lua_State *L, glm::mat4 mat);
+    template<> glm::vec4 get_as(lua_State *L, int idx);
+    template<> glm::vec3 get_as(lua_State *L, int idx);
+    template<> glm::vec2 get_as(lua_State *L, int idx);
 }
 
 #endif

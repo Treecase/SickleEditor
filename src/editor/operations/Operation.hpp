@@ -22,10 +22,12 @@
 #include <se-lua/se-lua.hpp>
 
 #include <glibmm/refptr.h>
+#include <glm/glm.hpp>
 
-#include <any>
 #include <string>
+#include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
 
@@ -37,14 +39,15 @@ namespace Sickle::Editor
     {
         lua_State *const L;
     public:
-        using ArgList = std::vector<std::any>;
+        using Arg = std::variant<lua_Number, glm::vec3>;
+        using ArgList = std::vector<Arg>;
 
-        static std::string const VALID_TYPES;
+        static std::unordered_set<std::string> const VALID_TYPES;
 
         std::string const module_name;
         std::string const name;
         std::string const mode;
-        std::string const arg_types;
+        std::vector<std::string> const arg_types;
 
         /**
          * Return the identifier for the given operation.
@@ -63,12 +66,20 @@ namespace Sickle::Editor
          */
         auto id() const {return id(module_name, name);};
 
+        Arg make_arg(size_t argument) const;
+        Arg make_arg_from_string(
+            size_t argument,
+            std::string const &value) const;
+        Arg make_arg_from_lua(size_t argument, lua_State *L, int idx) const;
+
+        bool check_type(size_t argument, Arg const &arg) const;
+
         Operation(
             lua_State *L,
             std::string const &module_name,
             std::string const &operation_name,
             std::string const &mode,
-            std::string const &args);
+            std::vector<std::string> const &args);
 
         void execute(Editor *ed, ArgList const &args) const;
         void execute(Glib::RefPtr<Editor> ed, ArgList const &args) const;

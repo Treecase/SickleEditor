@@ -45,6 +45,25 @@ void Lua::push(lua_State *L, glm::vec2 vector)
 }
 
 
+template<>
+glm::vec4 Lua::get_as(lua_State *L, int idx)
+{
+    return lgeo_tovector(L, idx);
+}
+
+template<>
+glm::vec3 Lua::get_as(lua_State *L, int idx)
+{
+    return lgeo_tovector(L, idx);
+}
+
+template<>
+glm::vec2 Lua::get_as(lua_State *L, int idx)
+{
+    return lgeo_tovector(L, idx);
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Metamethods
 static int vector_add(lua_State *L)

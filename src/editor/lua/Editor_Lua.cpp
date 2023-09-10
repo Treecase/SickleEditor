@@ -68,16 +68,7 @@ static int do_operation(lua_State *L)
 
     Operation::ArgList args{};
     for (size_t i = 0; i < op.arg_types.size(); ++i)
-    {
-        auto const ch = op.arg_types.at(i);
-        switch (ch)
-        {
-        case 'f':
-            args.push_back(
-                std::make_any<lua_Number>(luaL_checknumber(L, 3 + i)));
-            break;
-        }
-    }
+        args.push_back(op.make_arg_from_lua(i, L, 3 + i));
 
     try {
         op.execute(ed, args);

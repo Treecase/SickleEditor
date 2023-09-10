@@ -22,11 +22,15 @@
 #include "OperationLoader.hpp"
 
 #include <core/Editor.hpp>
+#include <LuaGeo.hpp>
 
 using namespace Sickle::Editor;
 
 
-std::string const Operation::VALID_TYPES = "f";
+std::unordered_set<std::string> const Operation::VALID_TYPES = {
+    "f",
+    "vec3"
+};
 
 
 Operation::Operation(
@@ -34,16 +38,16 @@ Operation::Operation(
     std::string const &module_name,
     std::string const &operation_name,
     std::string const &mode,
-    std::string const &args)
+    std::vector<std::string> const &args)
 :   L{L}
 ,   module_name{module_name}
 ,   name{operation_name}
 ,   mode{mode}
 ,   arg_types{args}
 {
-    for (auto const ch : arg_types)
-        if (VALID_TYPES.find(ch) == std::string::npos)
-            throw std::runtime_error{"bad arg type '" + std::string{ch} + "'"};
+    for (auto const type : arg_types)
+        if (VALID_TYPES.count(type) == 0)
+            throw std::runtime_error{"bad arg type '" + type + "'"};
 }
 
 
@@ -52,6 +56,59 @@ std::string Operation::id(
     std::string const &operation)
 {
     return module + "." + operation;
+}
+
+
+Operation::Arg Operation::make_arg(size_t argument) const
+{
+    auto const &type = arg_types.at(argument);
+    if (type == "f")
+        return Arg{0.0};
+    else if (type == "vec3")
+        return Arg{glm::vec3{}};
+    else
+        throw std::logic_error{"bad argument type '" + type + "'"};
+}
+
+
+Operation::Arg Operation::make_arg_from_string(
+    size_t argument,
+    std::string const &value) const
+{
+    auto const &type = arg_types.at(argument);
+    if (type == "f")
+        return Arg{std::stod(value)};
+    else if (type == "vec3")
+        throw std::invalid_argument{"can't make vec3 from string"};
+    else
+        throw std::logic_error{"bad argument type '" + type + "'"};
+}
+
+
+Operation::Arg Operation::make_arg_from_lua(
+    size_t argument,
+    lua_State *l,
+    int idx) const
+{
+    auto const &type = arg_types.at(argument);
+    if (type == "f")
+        return Arg{Lua::get_as<lua_Number>(l, idx)};
+    else if (type == "vec3")
+        return Arg{Lua::get_as<glm::vec3>(l, idx)};
+    else
+        throw std::logic_error{"bad argument type '" + type + "'"};
+}
+
+
+bool Operation::check_type(size_t argument, Arg const &arg) const
+{
+    auto const &type = arg_types.at(argument);
+    if (type == "f")
+        return std::holds_alternative<lua_Number>(arg);
+    else if (type == "vec3")
+        return std::holds_alternative<glm::vec3>(arg);
+    else
+        throw std::logic_error{"bad argument type '" + type + "'"};
 }
 
 
@@ -111,13 +168,10 @@ void Operation::execute(Editor *ed, ArgList const &args) const
     // Push arguments.
     for (size_t i = 0; i < arg_types.size(); ++i)
     {
-        auto const type = arg_types.at(i);
-        switch (type)
-        {
-        case 'f':
-            Lua::push(L, std::any_cast<lua_Number>(args.at(i)));
-            break;
-        }
+        auto const &arg = args.at(i);
+        if (!check_type(i, arg))
+            throw std::runtime_error{"mismatched Arg type"};
+        std::visit([this](auto v){Lua::push(L, v);}, arg);
     }
     Lua::checkerror(L, lua_pcall(L, 2+args.size(), 0, 0));
 

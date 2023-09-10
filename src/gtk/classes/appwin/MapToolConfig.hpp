@@ -32,6 +32,11 @@
 
 namespace Sickle::AppWin
 {
+    struct Config
+    {
+        virtual Editor::Operation::Arg get_value()=0;
+    };
+
     class MapToolConfig : public Gtk::Frame
     {
     public:
@@ -45,18 +50,14 @@ namespace Sickle::AppWin
         void clear_operation();
         Editor::Operation::ArgList get_arguments() const;
 
-    protected:
-        void on_entry_changed(size_t argument_index);
-
     private:
         std::unique_ptr<Editor::Operation> _operation{nullptr};
-        Editor::Operation::ArgList _args{};
 
         sigc::signal<void()> _sig_confirmed{};
 
         Gtk::Box _box{};
         Gtk::Button _confirm{"Confirm"};
-        std::vector<Gtk::Entry> _entries{};
+        std::vector<Glib::RefPtr<Gtk::Widget>> _arg_configs{};
         Gtk::ScrolledWindow _scrolled_window{};
     };
 }

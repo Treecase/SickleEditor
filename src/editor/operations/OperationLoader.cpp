@@ -48,6 +48,44 @@ static char _REGISTRY_KEY_BASE = 'k';
 static void *const REGISTRY_KEY = static_cast<void *>(&_REGISTRY_KEY_BASE);
 
 
+template<>
+Operation Lua::get_as<Operation>(lua_State *L, int idx)
+{
+    int const i = lua_absindex(L, idx);
+
+    int const module_type = lua_getfield(L, i, "module");
+    int const name_type = lua_getfield(L, i, "name");
+    int const mode_type = lua_getfield(L, i, "mode");
+    int const args_type = lua_getfield(L, i, "args");
+
+    if (module_type != LUA_TSTRING) throw Lua::Error{"module is not a string"};
+    if (name_type != LUA_TSTRING) throw Lua::Error{"name is not a string"};
+    if (mode_type != LUA_TSTRING) throw Lua::Error{"mode is not a string"};
+    if (args_type != LUA_TTABLE) throw Lua::Error{"args is not a table"};
+
+    auto const module = lua_tostring(L, -4);
+    auto const name = lua_tostring(L, -3);
+    auto const mode = lua_tostring(L, -2);
+
+    std::vector<std::string> args{};
+    for (lua_Integer i = 1; ; ++i)
+    {
+        int const arg_type = lua_geti(L, -1, i);
+        if (arg_type == LUA_TNIL)
+            break;
+        else if (arg_type == LUA_TSTRING)
+            args.push_back(lua_tostring(L, -1));
+        else
+            throw Lua::Error{"arg is not a string"};
+        lua_pop(L, 1);
+    }
+
+    lua_pop(L, 4);
+
+    return Operation{L, module, name, mode, args};
+}
+
+
 void OperationLoader::_push_module_table(lua_State *L)
 {
     lua_pushlightuserdata(L, REGISTRY_KEY);
@@ -86,8 +124,8 @@ void OperationLoader::_push_operation(
 
 
 /**
- * add_operation(module: String, operation: String, mode: String, args: String,
- *               fn: Callable)
+ * add_operation(module: String, operation: String, mode: String,
+ *               args: Array[String], fn: Callable)
  *
  * If an operation with the same name already exists in the table, it will be
  * overwritten.
@@ -97,7 +135,7 @@ static int fn_add_operation(lua_State *L)
     auto const modname = luaL_checkstring(L, 1);
     auto const opname = luaL_checkstring(L, 2);
     auto const mode = luaL_checkstring(L, 3);
-    auto const args = luaL_checkstring(L, 4);
+    luaL_argexpected(L, lua_istable(L, 4), 4, "table");
     auto const ptr = static_cast<OperationLoader *>(
         lua_touserdata(L, lua_upvalueindex(1)));
     if (!ptr)
@@ -123,8 +161,11 @@ static int fn_add_operation(lua_State *L)
     }
 
     // Add the operation to the module.
-    // Operation{mode:String, args:String, function:Callable}
     lua_newtable(L);
+    lua_pushvalue(L, 1);
+    lua_setfield(L, -2, "module");
+    lua_pushvalue(L, 2);
+    lua_setfield(L, -2, "name");
     lua_pushvalue(L, 3);
     lua_setfield(L, -2, "mode");
     lua_pushvalue(L, 4);
@@ -198,22 +239,8 @@ Operation OperationLoader::get_operation(
     std::string const &module,
     std::string const &operation) const
 {
-    auto const pre = lua_gettop(L);
-
     _push_operation(L, module, operation);
-    int const modetype = lua_getfield(L, -1, "mode");
-    int const argstype = lua_getfield(L, -2, "args");
-
-    if (modetype != LUA_TSTRING) throw Lua::Error{"mode is not a string"};
-    if (argstype != LUA_TSTRING) throw Lua::Error{"args is not a string"};
-
-    auto const mode = lua_tostring(L, -2);
-    auto const args = lua_tostring(L, -1);
-    lua_pop(L, 3);
-
-    Operation op{L, module, operation, mode, args};
-
-    assert(lua_gettop(L) == pre);
+    auto const op = Lua::get_as<Operation>(L, -1);
     return op;
 }
 
@@ -244,24 +271,11 @@ std::vector<Operation>
 OperationLoader::L_get_module_operations(std::string const &module_name) const
 {
     std::vector<Operation> ops{};
-
-    // Iterate through operations in the module.
     lua_pushnil(L);
     while (lua_next(L, -2) != 0)
     {
-        auto const operation_name = lua_tostring(L, -2);
-
-        // Get the mode and args from the operation.
-        lua_getfield(L, -1, "mode");
-        lua_getfield(L, -2, "args");
-        auto const mode = lua_tostring(L, -2);
-        auto const args = lua_tostring(L, -1);
-        lua_pop(L, 2);
-
-        ops.emplace_back(L, module_name, operation_name, mode, args);
-
+        ops.push_back(Lua::get_as<Operation>(L, -1));
         lua_pop(L, 1);
     }
-
     return ops;
 }

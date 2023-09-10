@@ -8,6 +8,7 @@ target_include_directories(editor-lua PUBLIC .)
 target_link_libraries(editor-lua
     PRIVATE
         editor-core
+        editor-operations
         luageo
     PUBLIC
         se-lua
