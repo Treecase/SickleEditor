@@ -67,7 +67,7 @@ static int do_operation(lua_State *L)
     auto const op = ed->oploader->get_operation(id);
 
     Operation::ArgList args{};
-    for (size_t i = 0; i < op.arg_types.size(); ++i)
+    for (size_t i = 0; i < op.args.size(); ++i)
         args.push_back(op.make_arg_from_lua(i, L, 3 + i));
 
     try {

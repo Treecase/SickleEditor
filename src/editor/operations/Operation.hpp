@@ -37,17 +37,26 @@ namespace Sickle::Editor
 
     class Operation
     {
-        lua_State *const L;
     public:
         using Arg = std::variant<lua_Number, glm::vec3>;
         using ArgList = std::vector<Arg>;
 
-        static std::unordered_set<std::string> const VALID_TYPES;
+        struct ArgDef
+        {
+            std::string const type;
+            Arg const default_value;
+
+            ArgDef(std::string const &type, Arg const &default_value)
+            :   type{type}
+            ,   default_value{default_value}
+            {
+            }
+        };
 
         std::string const module_name;
         std::string const name;
         std::string const mode;
-        std::vector<std::string> const arg_types;
+        std::vector<ArgDef> const args;
 
         /**
          * Return the identifier for the given operation.
@@ -60,6 +69,9 @@ namespace Sickle::Editor
         /** Break an ID into the module and operation names (in that order). */
         static std::pair<std::string, std::string> unid(std::string const &id);
 
+        static Arg arg_default_construct(std::string const &type);
+        static Arg arg_from_lua(std::string const &type, lua_State *L, int idx);
+
         /**
          * Return the Operation's ID.
          * Current ID format is "<module>.<operation>".
@@ -67,23 +79,31 @@ namespace Sickle::Editor
         auto id() const {return id(module_name, name);};
 
         Arg make_arg(size_t argument) const;
-        Arg make_arg_from_string(
-            size_t argument,
-            std::string const &value) const;
         Arg make_arg_from_lua(size_t argument, lua_State *L, int idx) const;
 
         bool check_type(size_t argument, Arg const &arg) const;
+
+        void execute(Editor *ed, ArgList const &args) const;
+        void execute(Glib::RefPtr<Editor> ed, ArgList const &args) const;
+
+    private:
+        lua_State *const L;
+
+        static std::unordered_set<std::string> const VALID_TYPES;
+        static std::unordered_set<std::string> const VALID_MODES;
 
         Operation(
             lua_State *L,
             std::string const &module_name,
             std::string const &operation_name,
             std::string const &mode,
-            std::vector<std::string> const &args);
+            std::vector<ArgDef> const &args);
 
-        void execute(Editor *ed, ArgList const &args) const;
-        void execute(Glib::RefPtr<Editor> ed, ArgList const &args) const;
+        // Operations can only be constructed through this function.
+        friend Sickle::Editor::Operation Lua::get_as(lua_State *L, int idx);
     };
 }
+
+template<> Sickle::Editor::Operation Lua::get_as(lua_State *L, int idx);
 
 #endif

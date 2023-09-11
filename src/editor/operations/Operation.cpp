@@ -27,28 +27,70 @@
 using namespace Sickle::Editor;
 
 
-std::unordered_set<std::string> const Operation::VALID_TYPES = {
+template<>
+Operation Lua::get_as<Operation>(lua_State *L, int idx)
+{
+    int const I = lua_absindex(L, idx);
+
+    int const module_type = lua_getfield(L, I, "module");
+    int const name_type = lua_getfield(L, I, "name");
+    int const mode_type = lua_getfield(L, I, "mode");
+    int const args_type = lua_getfield(L, I, "args");
+    int const defaults_type = lua_getfield(L, I, "defaults");
+    bool const has_defaults = (defaults_type != LUA_TNIL);
+
+    if (module_type != LUA_TSTRING) throw Lua::Error{"module is not a string"};
+    if (name_type != LUA_TSTRING) throw Lua::Error{"name is not a string"};
+    if (mode_type != LUA_TSTRING) throw Lua::Error{"mode is not a string"};
+    if (args_type != LUA_TTABLE) throw Lua::Error{"args is not a table"};
+    if (has_defaults && defaults_type != LUA_TTABLE)
+        throw Lua::Error{"args is not a table"};
+
+    auto const module = lua_tostring(L, I + 1);
+    auto const name = lua_tostring(L, I + 2);
+    auto const mode = lua_tostring(L, I + 3);
+
+    std::vector<Operation::ArgDef> args{};
+    for (lua_Integer i = 1; ; ++i)
+    {
+        int const arg_type = lua_geti(L, I + 4, i);
+        if (arg_type == LUA_TNIL)
+            break;
+        else if (arg_type == LUA_TSTRING)
+        {
+            auto const type = lua_tostring(L, -1);
+            Operation::Arg value{};
+            if (has_defaults)
+            {
+                lua_geti(L, I + 5, i);
+                value = Operation::arg_from_lua(type, L, -1);
+                lua_pop(L, 1);
+            }
+            else
+                value = Operation::arg_default_construct(type);
+            args.emplace_back(type, value);
+
+        }
+        else
+            throw Lua::Error{"arg is not a string"};
+        lua_pop(L, 1);
+    }
+
+    lua_pop(L, 6);
+    return Operation{L, module, name, mode, args};
+}
+
+
+
+std::unordered_set<std::string> const Operation::VALID_TYPES{
     "f",
     "vec3"
 };
 
 
-Operation::Operation(
-    lua_State *L,
-    std::string const &module_name,
-    std::string const &operation_name,
-    std::string const &mode,
-    std::vector<std::string> const &args)
-:   L{L}
-,   module_name{module_name}
-,   name{operation_name}
-,   mode{mode}
-,   arg_types{args}
-{
-    for (auto const type : arg_types)
-        if (VALID_TYPES.count(type) == 0)
-            throw std::runtime_error{"bad arg type '" + type + "'"};
-}
+std::unordered_set<std::string> const Operation::VALID_MODES{
+    "brush"
+};
 
 
 std::string Operation::id(
@@ -56,59 +98,6 @@ std::string Operation::id(
     std::string const &operation)
 {
     return module + "." + operation;
-}
-
-
-Operation::Arg Operation::make_arg(size_t argument) const
-{
-    auto const &type = arg_types.at(argument);
-    if (type == "f")
-        return Arg{0.0};
-    else if (type == "vec3")
-        return Arg{glm::vec3{}};
-    else
-        throw std::logic_error{"bad argument type '" + type + "'"};
-}
-
-
-Operation::Arg Operation::make_arg_from_string(
-    size_t argument,
-    std::string const &value) const
-{
-    auto const &type = arg_types.at(argument);
-    if (type == "f")
-        return Arg{std::stod(value)};
-    else if (type == "vec3")
-        throw std::invalid_argument{"can't make vec3 from string"};
-    else
-        throw std::logic_error{"bad argument type '" + type + "'"};
-}
-
-
-Operation::Arg Operation::make_arg_from_lua(
-    size_t argument,
-    lua_State *l,
-    int idx) const
-{
-    auto const &type = arg_types.at(argument);
-    if (type == "f")
-        return Arg{Lua::get_as<lua_Number>(l, idx)};
-    else if (type == "vec3")
-        return Arg{Lua::get_as<glm::vec3>(l, idx)};
-    else
-        throw std::logic_error{"bad argument type '" + type + "'"};
-}
-
-
-bool Operation::check_type(size_t argument, Arg const &arg) const
-{
-    auto const &type = arg_types.at(argument);
-    if (type == "f")
-        return std::holds_alternative<lua_Number>(arg);
-    else if (type == "vec3")
-        return std::holds_alternative<glm::vec3>(arg);
-    else
-        throw std::logic_error{"bad argument type '" + type + "'"};
 }
 
 
@@ -123,15 +112,87 @@ std::pair<std::string, std::string> Operation::unid(std::string const &id)
 }
 
 
+Operation::Arg Operation::arg_from_lua(
+    std::string const &type,
+    lua_State *l,
+    int idx)
+{
+    if (type == "f")
+        return Arg{Lua::get_as<lua_Number>(l, idx)};
+    else if (type == "vec3")
+        return Arg{Lua::get_as<glm::vec3>(l, idx)};
+    else
+        throw std::logic_error{"bad argument type '" + type + "'"};
+}
+
+
+Operation::Arg Operation::arg_default_construct(std::string const &type)
+{
+    if (type == "f")
+        return Arg{0.0};
+    else if (type == "vec3")
+        return Arg{glm::vec3{}};
+    else
+        throw std::logic_error{"bad argument type '" + type + "'"};
+}
+
+
+Operation::Operation(
+    lua_State *L,
+    std::string const &module_name,
+    std::string const &operation_name,
+    std::string const &mode,
+    std::vector<ArgDef> const &args)
+:   L{L}
+,   module_name{module_name}
+,   name{operation_name}
+,   mode{mode}
+,   args{args}
+{
+    for (auto const arg : args)
+        if (VALID_TYPES.count(arg.type) == 0)
+            throw std::runtime_error{"bad arg type '" + arg.type + "'"};
+    if (VALID_MODES.count(mode) == 0)
+        throw std::runtime_error{"bad mode '" + mode + "'"};
+}
+
+
+Operation::Arg Operation::make_arg(size_t argument) const
+{
+    return args.at(argument).default_value;
+}
+
+
+Operation::Arg Operation::make_arg_from_lua(
+    size_t argument,
+    lua_State *l,
+    int idx) const
+{
+    return arg_from_lua(args.at(argument).type, l, idx);
+}
+
+
+bool Operation::check_type(size_t argument, Arg const &arg) const
+{
+    auto const &type = args.at(argument).type;
+    if (type == "f")
+        return std::holds_alternative<lua_Number>(arg);
+    else if (type == "vec3")
+        return std::holds_alternative<glm::vec3>(arg);
+    else
+        throw std::logic_error{"bad argument type '" + type + "'"};
+}
+
+
 void Operation::execute(Glib::RefPtr<Editor> ed, ArgList const &args) const
 {
     execute(ed.get(), args);
 }
 
 
-void Operation::execute(Editor *ed, ArgList const &args) const
+void Operation::execute(Editor *ed, ArgList const &passed_args) const
 {
-    if (arg_types.size() != args.size())
+    if (args.size() != passed_args.size())
         throw std::invalid_argument{"incorrect number of arguments"};
 
     int const pre = lua_gettop(L);
@@ -139,9 +200,6 @@ void Operation::execute(Editor *ed, ArgList const &args) const
     OperationLoader::_push_operation(L, module_name, name);
     // Push function.
     lua_getfield(L, -1, "function");
-
-    // FIXME: TEMP
-    assert(mode == "brush");
 
     Lua::push(L, ed);
     if (mode == "brush")
@@ -163,12 +221,12 @@ void Operation::execute(Editor *ed, ArgList const &args) const
         }
     }
     else
-        throw std::runtime_error{"invalid mode '" + mode + "'"};
+        throw std::logic_error{"invalid mode '" + mode + "'"};
 
     // Push arguments.
-    for (size_t i = 0; i < arg_types.size(); ++i)
+    for (size_t i = 0; i < args.size(); ++i)
     {
-        auto const &arg = args.at(i);
+        auto const &arg = passed_args.at(i);
         if (!check_type(i, arg))
             throw std::runtime_error{"mismatched Arg type"};
         std::visit([this](auto v){Lua::push(L, v);}, arg);

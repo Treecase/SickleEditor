@@ -48,44 +48,6 @@ static char _REGISTRY_KEY_BASE = 'k';
 static void *const REGISTRY_KEY = static_cast<void *>(&_REGISTRY_KEY_BASE);
 
 
-template<>
-Operation Lua::get_as<Operation>(lua_State *L, int idx)
-{
-    int const i = lua_absindex(L, idx);
-
-    int const module_type = lua_getfield(L, i, "module");
-    int const name_type = lua_getfield(L, i, "name");
-    int const mode_type = lua_getfield(L, i, "mode");
-    int const args_type = lua_getfield(L, i, "args");
-
-    if (module_type != LUA_TSTRING) throw Lua::Error{"module is not a string"};
-    if (name_type != LUA_TSTRING) throw Lua::Error{"name is not a string"};
-    if (mode_type != LUA_TSTRING) throw Lua::Error{"mode is not a string"};
-    if (args_type != LUA_TTABLE) throw Lua::Error{"args is not a table"};
-
-    auto const module = lua_tostring(L, -4);
-    auto const name = lua_tostring(L, -3);
-    auto const mode = lua_tostring(L, -2);
-
-    std::vector<std::string> args{};
-    for (lua_Integer i = 1; ; ++i)
-    {
-        int const arg_type = lua_geti(L, -1, i);
-        if (arg_type == LUA_TNIL)
-            break;
-        else if (arg_type == LUA_TSTRING)
-            args.push_back(lua_tostring(L, -1));
-        else
-            throw Lua::Error{"arg is not a string"};
-        lua_pop(L, 1);
-    }
-
-    lua_pop(L, 4);
-
-    return Operation{L, module, name, mode, args};
-}
-
-
 void OperationLoader::_push_module_table(lua_State *L)
 {
     lua_pushlightuserdata(L, REGISTRY_KEY);
@@ -125,10 +87,16 @@ void OperationLoader::_push_operation(
 
 /**
  * add_operation(module: String, operation: String, mode: String,
- *               args: Array[String], fn: Callable)
+ *               args: Array[String], fn: Callable, [defaults: Array])
  *
- * If an operation with the same name already exists in the table, it will be
- * overwritten.
+ * Adds an operation with ID of 'MODULE.OPERATION'. MODE specifies which editor
+ * mode the operation will be active in. ARGS is a list of strings naming the
+ * types of any extra arguments to be passed to the function. FN is a callable
+ * to be called when the operation is invoked. DEFAULTS is an optional
+ * parameter, which is an array of values matching the types listed in ARGS.
+ * These values are the defaults for the corresponding operation argument.
+ *
+ * If an operation with the same ID already exists, it will be overwritten.
  */
 static int fn_add_operation(lua_State *L)
 {
@@ -136,6 +104,10 @@ static int fn_add_operation(lua_State *L)
     auto const opname = luaL_checkstring(L, 2);
     auto const mode = luaL_checkstring(L, 3);
     luaL_argexpected(L, lua_istable(L, 4), 4, "table");
+    bool const has_defaults = (lua_gettop(L) >= 6);
+    if (has_defaults)
+        luaL_argexpected(L, lua_istable(L, 6), 6, "table");
+
     auto const ptr = static_cast<OperationLoader *>(
         lua_touserdata(L, lua_upvalueindex(1)));
     if (!ptr)
@@ -172,6 +144,11 @@ static int fn_add_operation(lua_State *L)
     lua_setfield(L, -2, "args");
     lua_pushvalue(L, 5);
     lua_setfield(L, -2, "function");
+    if (has_defaults)
+    {
+        lua_pushvalue(L, 6);
+        lua_setfield(L, -2, "defaults");
+    }
 
     lua_setfield(L, -2, opname);
 

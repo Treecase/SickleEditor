@@ -28,7 +28,8 @@ add_operation(
         for _,b in ipairs(brushes) do
             b:scale(scale)
         end
-    end)
+    end,
+    {geo.vec3.new(1, 1, 1)})
 
 add_operation(
     "Brush",

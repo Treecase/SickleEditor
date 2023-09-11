@@ -21,6 +21,7 @@
 #include <cstdlib>
 
 using namespace Sickle::AppWin;
+using namespace Sickle::Editor;
 
 
 // TODO: error hardening
@@ -29,12 +30,24 @@ struct NumberConfig : public Gtk::Entry, public Config
     NumberConfig()
     :   Gtk::Entry{}
     {
-        set_text("0.0");
+        set_value(0.0);
     }
 
-    Sickle::Editor::Operation::Arg get_value() override
+    NumberConfig(Operation::Arg const &arg)
+    :   Gtk::Entry{}
     {
-        return Sickle::Editor::Operation::Arg{std::stod(get_text())};
+        auto const value = std::get<lua_Number>(arg);
+        set_value(value);
+    }
+
+    void set_value(lua_Number value)
+    {
+        set_text(std::to_string(value));
+    }
+
+    Operation::Arg get_value() override
+    {
+        return Operation::Arg{std::stod(get_text())};
     }
 };
 
@@ -44,18 +57,25 @@ class Vec3Config : public Gtk::Box, public Config
     std::array<NumberConfig, 3> _xyz{};
 public:
 
-    Vec3Config()
+    Vec3Config(Operation::Arg const &arg)
     :   Gtk::Box{Gtk::Orientation::ORIENTATION_VERTICAL}
     ,   Config{}
     {
-        add(_xyz.at(0));
-        add(_xyz.at(1));
-        add(_xyz.at(2));
+        auto const &value = std::get<glm::vec3>(arg);
+        auto &x = _xyz.at(0);
+        auto &y = _xyz.at(1);
+        auto &z = _xyz.at(2);
+        x.set_value(value.x);
+        y.set_value(value.y);
+        z.set_value(value.z);
+        add(x);
+        add(y);
+        add(z);
     }
 
-    Sickle::Editor::Operation::Arg get_value() override
+    Operation::Arg get_value() override
     {
-        return Sickle::Editor::Operation::Arg{
+        return Operation::Arg{
             glm::vec3{
                 std::get<lua_Number>(_xyz.at(0).get_value()),
                 std::get<lua_Number>(_xyz.at(1).get_value()),
@@ -64,12 +84,15 @@ public:
 };
 
 
-static Glib::RefPtr<Gtk::Widget> make_config_for(std::string const &type)
+static Glib::RefPtr<Gtk::Widget> make_config_for(
+    Operation const &op,
+    size_t argument)
 {
-    if (type == "f")
-        return Glib::RefPtr{new NumberConfig{}};
-    else if (type == "vec3")
-        return Glib::RefPtr{new Vec3Config{}};
+    auto const &def = op.args.at(argument);
+    if (def.type == "f")
+        return Glib::RefPtr{new NumberConfig{def.default_value}};
+    else if (def.type == "vec3")
+        return Glib::RefPtr{new Vec3Config{def.default_value}};
     else
         throw std::logic_error{"bad arg type"};
 }
@@ -115,9 +138,9 @@ void MapToolConfig::set_operation(Editor::Operation const &op)
         _box.remove(*config.get());
     _arg_configs.clear();
 
-    for (auto const &type : _operation->arg_types)
+    for (size_t i = 0; i < _operation->args.size(); ++i)
     {
-        auto widget = make_config_for(type);
+        auto widget = make_config_for(*_operation, i);
         _arg_configs.push_back(widget);
         _box.add(*widget.get());
     }
@@ -126,7 +149,7 @@ void MapToolConfig::set_operation(Editor::Operation const &op)
 }
 
 
-Sickle::Editor::Operation MapToolConfig::get_operation() const
+Operation MapToolConfig::get_operation() const
 {
     if (_operation)
         return *_operation;
@@ -144,12 +167,12 @@ void MapToolConfig::clear_operation()
 }
 
 
-Sickle::Editor::Operation::ArgList MapToolConfig::get_arguments() const
+Operation::ArgList MapToolConfig::get_arguments() const
 {
     Editor::Operation::ArgList args{};
     for (auto &config : _arg_configs)
     {
-        auto c = dynamic_cast<Config *>(config.get());
+        auto const c = dynamic_cast<Config *>(config.get());
         args.push_back(c->get_value());
     }
     return args;
