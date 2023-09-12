@@ -55,6 +55,21 @@ static int translate(lua_State *L)
 }
 
 
+/**
+ * Brush:rotate(angle: number, axis: geo.vec3)
+ *
+ * ANGLE is in degrees.
+ */
+static int rotate(lua_State *L)
+{
+    auto brush = leditorbrush_check(L, 1);
+    auto const angle = static_cast<float>(luaL_checknumber(L, 2));
+    auto const vec = lgeo_checkvector<glm::vec3>(L, 3);
+    brush->transform(glm::rotate(glm::mat4{1.0}, glm::degrees(angle), vec));
+    return 0;
+}
+
+
 static int scale(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
@@ -91,6 +106,7 @@ static luaL_Reg methods[] = {
     {"is_selected", is_selected},
     {"transform", transform},
     {"translate", translate},
+    {"rotate", rotate},
     {"scale", scale},
     {"get_vertices", get_vertices},
 

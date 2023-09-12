@@ -1,11 +1,3 @@
--- TODO
-add_operation(
-    "Basic", "Rotate", "brush", {"f", "f", "f"},--{"vec3"},
-    function(editor, brushes, x, y, z)
-        print("Rotate brush: ", x, y, z)
-        for _,b in ipairs(brushes) do print(b) end
-    end)
-
 -- add_operation(
 --     "Basic", "Transform", "brush", {"mat4"},
 --     function(editor, brushes)
@@ -19,6 +11,25 @@ add_operation(
     function(editor, brushes, delta)
         for _,b in ipairs(brushes) do
             b:translate(delta)
+        end
+    end)
+
+add_operation(
+    "Basic", "Rotate", "brush", {"f", "vec3"},
+    function(editor, brushes, angle, axis)
+        for _,b in ipairs(brushes) do
+            local verts = b:get_vertices()
+            local center = geo.vec3.new()
+            local i = 0.0
+            for _,vertex in ipairs(verts) do
+                center = center + vertex
+                i = i + 1.0
+            end
+            center = center / i
+
+            b:translate(-center)
+            b:rotate(angle, axis)
+            b:translate(center)
         end
     end)
 
