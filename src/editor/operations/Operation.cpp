@@ -84,7 +84,8 @@ Operation Lua::get_as<Operation>(lua_State *L, int idx)
 
 std::unordered_set<std::string> const Operation::VALID_TYPES{
     "f",
-    "vec3"
+    "vec3",
+    "mat4",
 };
 
 
@@ -121,6 +122,8 @@ Operation::Arg Operation::arg_from_lua(
         return Arg{Lua::get_as<lua_Number>(l, idx)};
     else if (type == "vec3")
         return Arg{Lua::get_as<glm::vec3>(l, idx)};
+    else if (type == "mat4")
+        return Arg{Lua::get_as<glm::mat4>(l, idx)};
     else
         throw std::logic_error{"bad argument type '" + type + "'"};
 }
@@ -132,6 +135,8 @@ Operation::Arg Operation::arg_default_construct(std::string const &type)
         return Arg{0.0};
     else if (type == "vec3")
         return Arg{glm::vec3{}};
+    else if (type == "mat4")
+        return Arg{glm::identity<glm::mat4>()};
     else
         throw std::logic_error{"bad argument type '" + type + "'"};
 }
@@ -179,6 +184,8 @@ bool Operation::check_type(size_t argument, Arg const &arg) const
         return std::holds_alternative<lua_Number>(arg);
     else if (type == "vec3")
         return std::holds_alternative<glm::vec3>(arg);
+    else if (type == "mat4")
+        return std::holds_alternative<glm::mat4>(arg);
     else
         throw std::logic_error{"bad argument type '" + type + "'"};
 }

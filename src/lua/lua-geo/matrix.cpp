@@ -24,20 +24,36 @@
 static void lgeo_checkmatrixfast(lua_State *L, int arg);
 
 
+template<>
 void Lua::push(lua_State *L, glm::mat4 matrix)
 {
     lua_newuserdatauv(L, 0, 1);
-    luaL_setmetatable(L, "geo.matrix");
+    luaL_setmetatable(L, "geo.mat4");
     lua_newtable(L);
-    Lua::push(L, matrix[0]);
-    Lua::push(L, matrix[1]);
-    Lua::push(L, matrix[2]);
-    Lua::push(L, matrix[3]);
-    lua_rawseti(L, -5, 3);
-    lua_rawseti(L, -4, 2);
-    lua_rawseti(L, -3, 1);
-    lua_rawseti(L, -2, 0);
+    for (lua_Integer i = 1; i <= 4; ++i)
+    {
+        Lua::push(L, matrix[i - 1]);
+        lua_rawseti(L, -2, i);
+    }
     lua_setiuservalue(L, -2, 1);
+}
+
+
+template<>
+glm::mat4 Lua::get_as(lua_State *L, int idx)
+{
+    auto const I = lua_absindex(L, idx);
+
+    for (lua_Integer i = 1; i <= 4; ++i)
+        lua_geti(L, I, i);
+
+    glm::mat4 m{
+        Lua::get_as<glm::vec4>(L, -4),
+        Lua::get_as<glm::vec4>(L, -3),
+        Lua::get_as<glm::vec4>(L, -2),
+        Lua::get_as<glm::vec4>(L, -1)};
+    lua_pop(L, 4);
+    return m;
 }
 
 
@@ -69,12 +85,12 @@ static int matrix_newindex(lua_State *L)
 
 static int matrix_tostring(lua_State *L)
 {
-    auto m = lgeo_checkmatrix(L, 1);
+    auto const m = lgeo_checkmatrix(L, 1);
     lua_pushfstring(L,
-        "<matrix %f %f %f %f\n"
-        "        %f %f %f %f\n"
-        "        %f %f %f %f\n"
-        "        %f %f %f %f>",
+        "<mat4 %f %f %f %f\n"
+        "      %f %f %f %f\n"
+        "      %f %f %f %f\n"
+        "      %f %f %f %f>",
         m[0].x, m[1].x, m[2].x, m[3].x,
         m[0].y, m[1].y, m[2].y, m[3].y,
         m[0].z, m[1].z, m[2].z, m[3].z,
@@ -100,6 +116,7 @@ int lgeo_matrix_new(lua_State *L)
     return 1;
 }
 
+
 static int matrix_translate(lua_State *L)
 {
     auto const m = lgeo_checkmatrix(L, 1);
@@ -107,6 +124,7 @@ static int matrix_translate(lua_State *L)
     Lua::push(L, glm::translate(m, v));
     return 1;
 }
+
 
 static int matrix_rotate(lua_State *L)
 {
@@ -116,6 +134,7 @@ static int matrix_rotate(lua_State *L)
     Lua::push(L, glm::rotate(m, angle, v));
     return 1;
 }
+
 
 static int matrix_scale(lua_State *L)
 {
@@ -137,7 +156,7 @@ static luaL_Reg functions[] = {
 
 void lgeo_checkmatrixfast(lua_State *L, int arg)
 {
-    luaL_checkudata(L, arg, "geo.matrix");
+    luaL_checkudata(L, arg, "geo.mat4");
 }
 
 glm::mat4 lgeo_checkmatrix(lua_State *L, int arg)
@@ -148,24 +167,12 @@ glm::mat4 lgeo_checkmatrix(lua_State *L, int arg)
 
 glm::mat4 lgeo_tomatrix(lua_State *L, int i)
 {
-    if (i < 0)
-        i = lua_gettop(L) + i + 1;
-    lua_geti(L, i, 0);
-    lua_geti(L, i, 1);
-    lua_geti(L, i, 2);
-    lua_geti(L, i, 3);
-    glm::mat4 m{
-        lgeo_tovector<glm::vec4>(L, -4),
-        lgeo_tovector<glm::vec4>(L, -3),
-        lgeo_tovector<glm::vec4>(L, -2),
-        lgeo_tovector<glm::vec4>(L, -1)};
-    lua_pop(L, 4);
-    return m;
+    return Lua::get_as<glm::mat4>(L, i);
 }
 
 int luaopen_geo_matrix(lua_State *L)
 {
-    luaL_newmetatable(L, "geo.matrix");
+    luaL_newmetatable(L, "geo.mat4");
     luaL_setfuncs(L, metamethods, 0);
     luaL_newlib(L, functions);
     return 1;

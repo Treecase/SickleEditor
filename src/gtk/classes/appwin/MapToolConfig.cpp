@@ -18,6 +18,8 @@
 
 #include "MapToolConfig.hpp"
 
+#include <gtkmm/grid.h>
+
 #include <cstdlib>
 
 using namespace Sickle::AppWin;
@@ -84,6 +86,52 @@ public:
 };
 
 
+class Mat4Config : public Gtk::Grid, public Config
+{
+    std::array<NumberConfig, 4*4> _elements{};
+
+    NumberConfig &_config_for(size_t column, size_t row)
+    {
+        return _elements.at((4 * column) + row);
+    }
+public:
+
+    Mat4Config(Operation::Arg const &arg)
+    :   Gtk::Grid{}
+    ,   Config{}
+    {
+        set_row_homogeneous(true);
+        set_column_homogeneous(true);
+        auto const &value = std::get<glm::mat4>(arg);
+        for (size_t col = 0; col < 4; ++col)
+        {
+            for (size_t row = 0; row < 4; ++row)
+            {
+                auto &config = _config_for(col, row);
+                config.set_value(value[col][row]);
+                config.set_width_chars(3);
+                attach(config, col, row);
+            }
+        }
+    }
+
+    Operation::Arg get_value() override
+    {
+        glm::mat4 out{};
+        for (size_t col = 0; col < 4; ++col)
+        {
+            for (size_t row = 0; row < 4; ++row)
+            {
+                auto &config = _config_for(col, row);
+                auto const value = std::get<lua_Number>(config.get_value());
+                out[col][row] = value;
+            }
+        }
+        return Operation::Arg{out};
+    }
+};
+
+
 static Glib::RefPtr<Gtk::Widget> make_config_for(
     Operation const &op,
     size_t argument)
@@ -93,6 +141,8 @@ static Glib::RefPtr<Gtk::Widget> make_config_for(
         return Glib::RefPtr{new NumberConfig{def.default_value}};
     else if (def.type == "vec3")
         return Glib::RefPtr{new Vec3Config{def.default_value}};
+    else if (def.type == "mat4")
+        return Glib::RefPtr{new Mat4Config{def.default_value}};
     else
         throw std::logic_error{"bad arg type"};
 }
