@@ -67,6 +67,9 @@ OperationSearch::OperationSearch(Glib::RefPtr<Editor::Editor> editor)
 
     _editor->oploader->signal_operation_added().connect(
         sigc::mem_fun(*this, &OperationSearch::on_editor_operation_added));
+    _editor->property_mode().signal_changed().connect(
+        [this](){filtered->refilter();});
+
     auto const &ops = _editor->oploader->get_operations();
     for (auto const &operation : ops)
         _add_row(operation);
@@ -127,7 +130,8 @@ bool OperationSearch::filter_visible_func(
     auto const name = Glib::ustring{op->name}.lowercase();
     bool const name_matches = similarity(name, query) >= query.size();
 
-    bool const correct_mode = op->mode == mode;
+    auto const mode = _editor->property_mode().get_value();
+    bool const correct_mode = (op->mode == mode);
 
     return name_matches && correct_mode;
 }

@@ -33,6 +33,7 @@ Editor::Editor(lua_State *L)
 ,   oploader{std::make_shared<OperationLoader>(L)}
 ,   _prop_map{*this, "map", World::create()}
 ,   _prop_maptool{*this, "maptool", ""}
+,   _prop_mode{*this, "mode", {}}
 ,   _prop_wads{*this, "wads", {}}
 {
     property_map().signal_changed().connect(

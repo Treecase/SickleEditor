@@ -21,6 +21,7 @@
 
 #include <operations/Operation.hpp>
 
+#include <glibmm/property.h>
 #include <glibmm/refptr.h>
 #include <glibmm/ustring.h>
 #include <gtkmm/liststore.h>
@@ -36,7 +37,7 @@
 namespace Sickle::AppWin
 {
     /** Popup for searching Operations. */
-    class OperationSearch
+    class OperationSearch : public Glib::ObjectBase
     {
         struct OperationModel : public Gtk::TreeModelColumnRecord
         {
@@ -74,8 +75,6 @@ namespace Sickle::AppWin
         void _add_row(Editor::Operation const &op);
 
     public:
-        std::string mode{"brush"};
-
         OperationSearch(Glib::RefPtr<Editor::Editor> editor);
         virtual ~OperationSearch();
 

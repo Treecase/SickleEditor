@@ -24,6 +24,7 @@
 #include "../MapArea3D.hpp"
 #include "MapToolConfig.hpp"
 #include "MapTools.hpp"
+#include "ModeSelector.hpp"
 #include "OperationSearch.hpp"
 
 #include <core/Editor.hpp>
@@ -39,6 +40,7 @@
 #include <gtkmm/hvbox.h>
 #include <gtkmm/infobar.h>
 #include <gtkmm/label.h>
+#include <gtkmm/overlay.h>
 #include <gtkmm/paned.h>
 #include <gtkmm/searchentry.h>
 
@@ -102,6 +104,7 @@ namespace Sickle::AppWin
         LuaConsole _luaconsole{};
         Gtk::InfoBar _luainfobar{};
         OperationSearch _opsearch;
+        ModeSelector _mode_selector{"brush", "face", "vertex"};
 
         // Structural widgets
         Gtk::Grid _basegrid{};
@@ -114,12 +117,14 @@ namespace Sickle::AppWin
             Gtk::Orientation::ORIENTATION_HORIZONTAL};
         Gtk::Paned _sidebar_splitter_R{
             Gtk::Orientation::ORIENTATION_HORIZONTAL};
+        Gtk::Overlay _overlay{};
 
         Glib::Property<guint> _prop_grid_size;
         Glib::RefPtr<Glib::Binding> _binding_grid_size_top,
             _binding_grid_size_front,
             _binding_grid_size_right;
         Glib::RefPtr<Glib::Binding> _binding_left_right_views_position;
+        Glib::RefPtr<Glib::Binding> _binding_editor_modeselector_mode;
         sigc::signal<void()> _sig_lua_reloaded{};
 
         std::vector<std::string> _lua_script_dirs{

@@ -107,6 +107,11 @@ AppWin::AppWin()
             _left_views.property_position(),
             _right_views.property_position(),
             Glib::BindingFlags::BINDING_BIDIRECTIONAL)}
+,   _binding_editor_modeselector_mode{
+        Glib::Binding::bind_property(
+            editor->property_mode(),
+            _mode_selector.property_mode(),
+            Glib::BindingFlags::BINDING_BIDIRECTIONAL)}
 {
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
@@ -129,6 +134,7 @@ AppWin::AppWin()
 
     add_events(Gdk::EventMask::KEY_PRESS_MASK);
 
+    editor->property_mode() = "brush";
 
     // TODO: Use Gtk::Builder to clean this up?
     _view2d_top.set_draw_angle(Sickle::MapArea2D::DrawAngle::TOP);
@@ -147,7 +153,13 @@ AppWin::AppWin()
     _views.add2(_right_views);
     _views.set_wide_handle(true);
 
-    _sidebar_splitter_R.pack1(_views, Gtk::AttachOptions::EXPAND);
+    _mode_selector.set_halign(Gtk::Align::ALIGN_START);
+    _mode_selector.set_valign(Gtk::Align::ALIGN_START);
+
+    _overlay.add(_views);
+    _overlay.add_overlay(_mode_selector);
+
+    _sidebar_splitter_R.pack1(_overlay, Gtk::AttachOptions::EXPAND);
     _sidebar_splitter_R.pack2(_maptool_config, Gtk::AttachOptions::SHRINK);
 
     _sidebar_splitter_L.pack1(_maptools, Gtk::AttachOptions::SHRINK);

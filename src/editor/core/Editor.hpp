@@ -38,6 +38,9 @@ namespace Sickle::Editor
 {
     class OperationLoader;
 
+    // FIXME: temp -- probably want an enum or something.
+    using Mode = std::string;
+
     /**
      * The Editor class manages all the objects in the map, as well editor-only
      * data like visgroups.
@@ -58,6 +61,8 @@ namespace Sickle::Editor
         auto property_map() const {return _prop_map.get_proxy();}
         auto property_maptool() {return _prop_maptool.get_proxy();}
         auto property_maptool() const {return _prop_maptool.get_proxy();}
+        auto property_mode() {return _prop_mode.get_proxy();}
+        auto property_mode() const {return _prop_mode.get_proxy();}
         auto property_wads() {return _prop_wads.get_proxy();}
         auto property_wads() const {return _prop_wads.get_proxy();}
         auto &signal_maptools_changed() {return _sig_maptools_changed;}
@@ -65,12 +70,14 @@ namespace Sickle::Editor
         auto get_map() {return property_map().get_value();}
         MapTool get_maptool() const;
         auto &get_maptools() const {return _maptools;}
+        auto get_mode() const {return property_mode().get_value();}
         auto get_wads() {return property_wads().get_value();}
 
         void set_map(Glib::RefPtr<World> const &value) {
             property_map() = value;}
         void set_maptool(std::string const &value) {
             property_maptool() = value;}
+        void set_mode(Mode value) {property_mode() = value;}
         void set_wads(std::vector<std::string> const &value) {
             property_wads() = value;}
 
@@ -79,6 +86,7 @@ namespace Sickle::Editor
     private:
         Glib::Property<Glib::RefPtr<World>> _prop_map;
         Glib::Property<std::string> _prop_maptool;
+        Glib::Property<Mode> _prop_mode;
         Glib::Property<std::vector<std::string>> _prop_wads;
         sigc::signal<void()> _sig_maptools_changed{};
 
