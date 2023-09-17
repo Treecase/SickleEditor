@@ -19,17 +19,11 @@
 #include "world3d/world3d.hpp"
 
 
-World3D::Entity::Entity(World3D &parent, Sickle::Editor::Entity &src)
-:   _parent{parent}
+World3D::Entity::Entity(Sickle::Editor::Entity &src, TexManRef texman)
+:   _texman{texman}
 {
     for (auto &brush : src.brushes())
-        brushes.emplace_back(*this, brush);
-}
-
-
-World3D::TextureManager &World3D::Entity::texman() const
-{
-    return _parent.texman;
+        brushes.emplace_back(brush, _texman);
 }
 
 

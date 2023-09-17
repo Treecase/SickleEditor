@@ -78,7 +78,7 @@ Entity &Entity::operator=(Entity const &other)
 }
 
 
-std::vector<Entity::BrushRef> Entity::brushes() const
+std::vector<BrushRef> Entity::brushes() const
 {
     std::vector<BrushRef> the_brushes{};
     for (auto const brush : _brushes)

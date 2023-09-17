@@ -19,6 +19,7 @@
 #include "world/Face.hpp"
 
 #include <glm/gtc/epsilon.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <algorithm>
 
@@ -84,78 +85,107 @@ public:
 
 
 
-Face::Face(
+FaceRef Face::create(
     HalfPlane const &plane,
     std::vector<glm::vec3> const &brush_vertices)
-:   Glib::ObjectBase{typeid(Face)}
-,   vertices{}
-,   texture{*this, "texture", "TODO"} // TODO
-,   u{*this, "u", {1.0f, 0.0f, 0.0f}} // TODO
-,   v{*this, "v", {0.0f, 1.0f, 0.0f}} // TODO
-,   shift{*this, "shift", {0.0f, 0.0f}}
-,   scale{*this, "scale", {1.0f, 1.0f}}
-,   rotation{*this, "rotation", 0.0f}
 {
+    Glib::RefPtr ptr{new Face()};
+
+    ptr->set_texture(""); // TODO
+    ptr->set_u({1.0, 0.0, 0.0}); // TODO
+    ptr->set_v({1.0, 0.0, 0.0}); // TODO
+    ptr->set_shift({0.0, 0.0});
+    ptr->set_scale({1.0, 1.0});
+    ptr->set_rotation(0.0);
+
     // Build Face by finding all the vertices that lie on each plane.
+    auto &vertices = ptr->_vertices;
     std::copy_if(
         brush_vertices.cbegin(), brush_vertices.cend(),
         std::back_inserter(vertices),
         [&plane](auto v){return plane.isPointOnPlane(v);});
-    assert(vertices.size() >= 3);
+
+    if (vertices.size() < 3)
+        throw std::runtime_error{"not enough points for a face"};
+
     std::sort(
         vertices.begin(), vertices.end(),
         VectorLessCounterClockwise{plane, vertices});
-    if (vertices.size() < 3)
-        throw std::runtime_error{"not enough points for a face"};
+
+    return ptr;
 }
 
 
-Face::Face(
+FaceRef Face::create(
     MAP::Plane const &plane,
     std::unordered_set<glm::vec3> const &brush_vertices)
-:   Glib::ObjectBase{typeid(Face)}
-,   vertices{}
-,   texture{*this, "texture", plane.miptex}
-,   u{*this, "u", plane.s}
-,   v{*this, "v", plane.t}
-,   shift{*this, "shift", plane.offsets}
-,   scale{*this, "scale", plane.scale}
-,   rotation{*this, "rotation", plane.rotation}
 {
+    Glib::RefPtr ptr{new Face()};
+
+    ptr->set_texture(plane.miptex);
+    ptr->set_u(plane.s);
+    ptr->set_v(plane.t);
+    ptr->set_shift(plane.offsets);
+    ptr->set_scale(plane.scale);
+    ptr->set_rotation(plane.rotation);
+
     // Build Face by finding all the vertices that lie on each plane.
+    auto &vertices = ptr->_vertices;
+
     HalfPlane const mp{plane.a, plane.b, plane.c};
     assert(mp.isPointOnPlane(plane.a));
     assert(mp.isPointOnPlane(plane.b));
     assert(mp.isPointOnPlane(plane.c));
+
     std::copy_if(
         brush_vertices.cbegin(), brush_vertices.cend(),
         std::back_inserter(vertices),
         [&mp](auto v){return mp.isPointOnPlane(v);});
-    assert(vertices.size() >= 3);
+
+    if (vertices.size() < 3)
+        throw std::runtime_error{"not enough points for a face"};
+
     std::sort(
         vertices.begin(), vertices.end(),
         VectorLessCounterClockwise{mp, vertices});
 
-    if (vertices.size() < 3)
-        throw std::runtime_error{"not enough points for a face"};
+    return ptr;
 }
 
 
-Face::Face(RMF::Face const &face)
-:   Glib::ObjectBase{typeid(Face)}
-,   vertices{}
-,   texture{*this, "texture", face.texture_name}
-,   u{*this, "u", {face.texture_u.x, face.texture_u.y, face.texture_u.z}}
-,   v{*this, "v", {face.texture_v.x, face.texture_v.y, face.texture_v.z}}
-,   shift{*this, "shift", {face.texture_x_shift, face.texture_y_shift}}
-,   scale{*this, "scale", {face.texture_x_scale, face.texture_y_scale}}
-,   rotation{*this, "rotation", face.texture_rotation}
+FaceRef Face::create(RMF::Face const &face)
 {
+    Glib::RefPtr ptr{new Face()};
+
+    ptr->set_texture(face.texture_name);
+    ptr->set_u({face.texture_u.x, face.texture_u.y, face.texture_u.z});
+    ptr->set_v({face.texture_v.x, face.texture_v.y, face.texture_v.z});
+    ptr->set_shift({face.texture_x_shift, face.texture_y_shift});
+    ptr->set_scale({face.texture_x_scale, face.texture_y_scale});
+    ptr->set_rotation(face.texture_rotation);
+
     // RMF stores verts sorted clockwise. We need them counterclockwise.
+    auto &vertices = ptr->_vertices;
     for (auto const &vert : face.vertices)
         vertices.emplace(vertices.begin(), vert.x, vert.y, vert.z);
+
     if (vertices.size() < 3)
         throw std::runtime_error{"not enough points for a face"};
+
+    return ptr;
+}
+
+
+Face::Face()
+:   Glib::ObjectBase{typeid(Face)}
+,   Lua::Referenceable{}
+,   _prop_texture{*this, "texture", ""}
+,   _prop_u{*this, "u", {}}
+,   _prop_v{*this, "v", {}}
+,   _prop_shift{*this, "shift", {}}
+,   _prop_scale{*this, "scale", {1.0f, 1.0f}}
+,   _prop_rotation{*this, "rotation", 0.0f}
+{
 }
 
 
@@ -164,23 +194,29 @@ Face::operator MAP::Plane() const
     auto abc = get_plane_points();
     return {
         abc[2], abc[1], abc[0],
-        texture,
-        u, v,
-        shift,
-        rotation,
-        scale
+        get_texture(),
+        get_u(), get_v(),
+        get_shift(),
+        get_rotation(),
+        get_scale()
     };
 }
 
 
 std::array<glm::vec3, 3> Face::get_plane_points() const
 {
-    return {vertices.at(0), vertices.at(1), vertices.at(2)};
+    return {_vertices.at(0), _vertices.at(1), _vertices.at(2)};
 }
 
 
 void Face::set_vertex(size_t index, glm::vec3 vertex)
 {
-    vertices.at(index) = vertex;
+    _vertices.at(index) = vertex;
     signal_vertices_changed().emit();
+}
+
+
+glm::vec3 Face::get_vertex(size_t index) const
+{
+    return _vertices.at(index);
 }

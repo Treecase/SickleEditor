@@ -48,7 +48,7 @@ Brush::Brush(std::vector<glm::vec3> const &vertices)
     auto const facets = v.first;
     auto const vertices2 = v.second;
     for (auto const &facet : facets)
-        faces.emplace_back(std::make_shared<Face>(facet, vertices2));
+        faces.emplace_back(Face::create(facet, vertices2));
 }
 
 
@@ -61,7 +61,7 @@ Brush::Brush(MAP::Brush const &brush)
     auto const vertices = vertex_enumeration(halfplanes);
     assert(vertices.size() != 0);
     for (auto const &plane : brush.planes)
-        faces.emplace_back(std::make_shared<Face>(plane, vertices));
+        faces.emplace_back(Face::create(plane, vertices));
 }
 
 
@@ -69,7 +69,7 @@ Brush::Brush(RMF::Solid const &solid)
 :   Brush{}
 {
     for (auto const &face : solid.faces)
-        faces.emplace_back(std::make_shared<Face>(face));
+        faces.emplace_back(Face::create(face));
 }
 
 
@@ -77,7 +77,7 @@ Brush::operator MAP::Brush() const
 {
     MAP::Brush out{};
     for (auto const &face : faces)
-        out.planes.push_back(*face);
+        out.planes.push_back(*face.get());
     return out;
 }
 
@@ -85,9 +85,9 @@ Brush::operator MAP::Brush() const
 void Brush::transform(glm::mat4 const &matrix)
 {
     for (auto &face : faces)
-        for (size_t i = 0; i < face->vertices.size(); ++i)
+        for (size_t i = 0; i < face->get_vertices().size(); ++i)
             face->set_vertex(
-                i, glm::vec3{matrix * glm::vec4{face->vertices[i], 1.0}});
+                i, glm::vec3{matrix * glm::vec4{face->get_vertex(i), 1.0}});
 }
 
 

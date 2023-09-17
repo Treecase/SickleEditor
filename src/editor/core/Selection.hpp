@@ -35,7 +35,7 @@ namespace Sickle::Editor
     class Selection : public Lua::Referenceable
     {
     public:
-        using Item = Entity::BrushRef;
+        using Item = BrushRef;
 
         void clear();
         void add(Item item);

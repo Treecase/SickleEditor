@@ -79,6 +79,20 @@ static int scale(lua_State *L)
 }
 
 
+static int get_faces(lua_State *L)
+{
+    auto const brush = leditorbrush_check(L, 1);
+    lua_newtable(L);
+    lua_Integer idx = 1;
+    for (auto const &face : brush->faces)
+    {
+        Lua::push(L, face);
+        lua_seti(L, -2, idx++);
+    }
+    return 1;
+}
+
+
 static int get_vertices(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
@@ -86,7 +100,7 @@ static int get_vertices(lua_State *L)
     lua_Integer idx = 1;
     for (auto const &face : brush->faces)
     {
-        for (auto const &vertex : face->vertices)
+        for (auto const &vertex : face->get_vertices())
         {
             Lua::push(L, vertex);
             lua_seti(L, 2, idx++);
@@ -108,6 +122,7 @@ static luaL_Reg methods[] = {
     {"translate", translate},
     {"rotate", rotate},
     {"scale", scale},
+    {"get_faces", get_faces},
     {"get_vertices", get_vertices},
 
     {"on_selected", do_nothing},
@@ -119,7 +134,7 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Entity::BrushRef brush)
+void Lua::push(lua_State *L, BrushRef brush)
 {
     Lua::RefBuilder builder{L, METATABLE, brush};
     int const t1 = lua_gettop(L);
@@ -137,11 +152,11 @@ void Lua::push(lua_State *L, Entity::BrushRef brush)
 }
 
 
-Entity::BrushRef leditorbrush_check(lua_State *L, int arg)
+BrushRef leditorbrush_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, METATABLE);
     luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
-    return *static_cast<Entity::BrushRef *>(ud);
+    return *static_cast<BrushRef *>(ud);
 }
 
 

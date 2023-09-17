@@ -147,10 +147,10 @@ Sickle::MapArea3D::MapArea3D(Glib::RefPtr<Editor::Editor> ed)
 }
 
 
-Sickle::Editor::Entity::BrushRef
+Sickle::Editor::BrushRef
 Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
 {
-    Sickle::Editor::Entity::BrushRef picked{};
+    Sickle::Editor::BrushRef picked{};
     float pt = INFINITY;
 
     auto const &_camera = property_camera().get_value();
@@ -168,7 +168,7 @@ Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
         {
             BBox3 bbox{};
             for (auto const &face : brush->faces)
-                for (auto const &vertex : face->vertices)
+                for (auto const &vertex : face->get_vertices())
                     bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
 
             float t;

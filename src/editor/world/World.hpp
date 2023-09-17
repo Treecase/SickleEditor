@@ -51,7 +51,7 @@ namespace Sickle::Editor
 
         void add_brush(Brush const &brush);
         Entity &add_entity(Entity const &entity);
-        void remove_brush(Entity::BrushRef const &brush);
+        void remove_brush(BrushRef const &brush);
         Entity &worldspawn();
 
     private:

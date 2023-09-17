@@ -23,48 +23,37 @@ sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};
 
 
 World3D::Face::Face(
-    Brush &parent, std::shared_ptr<Sickle::Editor::Face> &face)
-:   _parent{parent}
+    Sickle::Editor::FaceRef face,
+    TexManRef texman,
+    GLint offset)
+:   sigc::trackable{}
 ,   _src{face}
+,   _texman{texman}
+,   offset{offset}
 {
-    try
-    {
-        texture = texman().at(face->texture);
-    }
-    catch (std::out_of_range const &e)
-    {
-        texture = Texture::make_missing_texture();
-        signal_missing_texture().emit(face->texture);
-    }
+    _on_src_texture_changed();
 
     _sync_vertices();
 
-    _verts_changed_connection = _src->signal_vertices_changed().connect(
+    _src->signal_vertices_changed().connect(
         sigc::mem_fun(*this, &Face::_on_src_verts_changed));
+    _src->property_texture().signal_changed().connect(
+        sigc::mem_fun(*this, &Face::_on_src_texture_changed));
 }
 
 
 World3D::Face::Face(Face const &other)
-:   _parent{other._parent}
+:   sigc::trackable{}
 ,   _src{other._src}
+,   _texman{other._texman}
 ,   texture{other.texture}
 ,   vertices{other.vertices}
 ,   offset{other.offset}
 {
-    _verts_changed_connection = _src->signal_vertices_changed().connect(
+    _src->signal_vertices_changed().connect(
         sigc::mem_fun(*this, &Face::_on_src_verts_changed));
-}
-
-
-World3D::Face::~Face()
-{
-    _verts_changed_connection.disconnect();
-}
-
-
-World3D::TextureManager &World3D::Face::texman() const
-{
-    return _parent.texman();
+    _src->property_texture().signal_changed().connect(
+        sigc::mem_fun(*this, &Face::_on_src_texture_changed));
 }
 
 
@@ -76,21 +65,34 @@ void World3D::Face::_on_src_verts_changed()
 }
 
 
+void World3D::Face::_on_src_texture_changed()
+{
+    printf("texture changed to '%s'\n", _src->get_texture().c_str());
+    try {
+        texture = _texman->at(_src->get_texture());
+    }
+    catch (std::out_of_range const &e) {
+        texture = Texture::make_missing_texture();
+        signal_missing_texture().emit(_src->get_texture());
+    }
+}
+
+
 void World3D::Face::_sync_vertices()
 {
-    auto const &u_axis = glm::normalize(_src->u.get_value());
-    auto const &v_axis = glm::normalize(_src->v.get_value());
+    auto const &u_axis = glm::normalize(_src->get_u());
+    auto const &v_axis = glm::normalize(_src->get_v());
     glm::vec2 const texture_size{texture.width, texture.height};
 
-    for (auto const &vertex : _src->vertices)
+    for (auto const &vertex : _src->get_vertices())
     {
         vertices.emplace_back(
             vertex,
             (   (   glm::vec2{
                         glm::dot(vertex, u_axis),
                         glm::dot(vertex, v_axis)}
-                    / _src->scale.get_value())
-                + _src->shift.get_value())
+                    / _src->get_scale())
+                + _src->get_shift())
             / texture_size);
     }
 }

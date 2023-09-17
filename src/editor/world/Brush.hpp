@@ -35,10 +35,13 @@
 
 namespace Sickle::Editor
 {
+    class Brush;
+    using BrushRef = Glib::RefPtr<Brush>;
+
     class Brush : public Glib::Object, public Lua::Referenceable
     {
     public:
-        std::vector<std::shared_ptr<Face>> faces{};
+        std::vector<FaceRef> faces{};
 
         Brush();
         Brush(Brush const &other);

@@ -56,7 +56,7 @@ namespace Sickle
 
         MapArea3D(Glib::RefPtr<Editor::Editor> ed);
 
-        Editor::Entity::BrushRef pick_brush(glm::vec2 const &P);
+        Editor::BrushRef pick_brush(glm::vec2 const &P);
         GLSpacePoint screenspace_to_glspace(ScreenSpacePoint const &) const;
 
         auto get_editor() {return _editor;}

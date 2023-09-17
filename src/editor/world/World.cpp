@@ -97,7 +97,7 @@ Entity &World::add_entity(Entity const &entity)
 }
 
 
-void World::remove_brush(Entity::BrushRef const &brush)
+void World::remove_brush(BrushRef const &brush)
 {
     for (auto &entity : _entities)
         entity.remove_brush(brush);

@@ -37,8 +37,6 @@ namespace Sickle::Editor
     class Entity : public Glib::Object
     {
     public:
-        using BrushRef = Glib::RefPtr<Brush>;
-
         std::unordered_map<std::string, std::string> properties{};
 
         Entity();

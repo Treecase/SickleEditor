@@ -223,10 +223,10 @@ Sickle::MapArea2D::worldspace_to_drawspace3(WorldSpacePoint const &v) const
 }
 
 
-Sickle::Editor::Entity::BrushRef
+Sickle::Editor::BrushRef
 Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
 {
-    Editor::Entity::BrushRef picked{};
+    Editor::BrushRef picked{};
     BBox2 pbbox{};
 
     for (auto const &entity : _editor->get_map()->entities())
@@ -235,7 +235,7 @@ Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
         {
             BBox2 bbox{};
             for (auto const &face : brush->faces)
-                for (auto const &vertex : face->vertices)
+                for (auto const &vertex : face->get_vertices())
                     bbox.add(worldspace_to_drawspace(vertex));
 
             if (bbox.contains(point))
@@ -403,7 +403,7 @@ void Sickle::MapArea2D::on_editor_selection_changed()
     BBox2 selection_bounds{};
     for (auto const &brush : _editor->selected)
         for (auto const &face : brush->faces)
-            for (auto const &vertex : face->vertices)
+            for (auto const &vertex : face->get_vertices())
                 selection_bounds.add(worldspace_to_drawspace(vertex));
     _selected_box.set_box(selection_bounds);
     queue_draw();
@@ -452,15 +452,15 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 
 void Sickle::MapArea2D::_draw_brush(
     Cairo::RefPtr<Cairo::Context> const &cr,
-    Editor::Entity::BrushRef const &brush) const
+    Editor::BrushRef const &brush) const
 {
     for (auto const &face : brush->faces)
     {
-        if (face->vertices.empty())
+        if (face->get_vertices().empty())
             continue;
-        auto const p0 = worldspace_to_drawspace(face->vertices[0]);
+        auto const p0 = worldspace_to_drawspace(face->get_vertex(0));
         cr->move_to(p0.x, p0.y);
-        for (auto const &vertex : face->vertices)
+        for (auto const &vertex : face->get_vertices())
         {
             auto const p = worldspace_to_drawspace(vertex);
             cr->line_to(p.x, p.y);

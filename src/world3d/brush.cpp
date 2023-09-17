@@ -20,18 +20,19 @@
 
 
 World3D::Brush::Brush(
-    Entity &parent,
-    Sickle::Editor::Entity::BrushRef const &src)
-:   _parent{parent}
+    Sickle::Editor::BrushRef const &src,
+    TexManRef texman)
+:   sigc::trackable{}
 ,   _src{src}
+,   _texman{texman}
 ,   _vao{std::make_shared<GLUtil::VertexArray>()}
 ,   _vbo{std::make_shared<GLUtil::Buffer>(GL_ARRAY_BUFFER)}
 {
     std::vector<GLfloat> vbo_data{};
     for (auto faceptr : _src->faces)
     {
-        auto &face = _faces.emplace_back(*this, faceptr);
-        face.offset = vbo_data.size() / Vertex::ELEMENTS;
+        auto const offset = vbo_data.size() / Vertex::ELEMENTS;
+        auto &face = _faces.emplace_back(faceptr, _texman, offset);
         for (auto const &vertex : face.vertices)
         {
             auto v = vertex.as_vbo();
@@ -57,36 +58,10 @@ World3D::Brush::Brush(
     _vao->unbind();
 
     for (size_t i = 0; i < _faces.size(); ++i)
-        _face_changed_connection.push_back(
-            _faces[i].signal_verts_changed().connect(
-                [this, i](){_on_face_changed(i);}));
-}
-
-
-World3D::Brush::Brush(Brush const &other)
-:   _parent{other._parent}
-,   _src{other._src}
-,   _faces{other._faces}
-,   _vao{other._vao}
-,   _vbo{other._vbo}
-{
-    for (size_t i = 0; i < _faces.size(); ++i)
-        _face_changed_connection.push_back(
-            _faces[i].signal_verts_changed().connect(
-                [this, i](){_on_face_changed(i);}));
-}
-
-
-World3D::Brush::~Brush()
-{
-    for (auto &conn : _face_changed_connection)
-        conn.disconnect();
-}
-
-
-World3D::TextureManager &World3D::Brush::texman() const
-{
-    return _parent.texman();
+    {
+        _faces[i].signal_verts_changed().connect(
+            [this, i](){_on_face_changed(i);});
+    }
 }
 
 

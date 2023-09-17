@@ -29,6 +29,7 @@ sigc::signal<void(std::string)> World3D::World3D::_signal_wad_load_error{};
 World3D::World3D::World3D(
     Glib::RefPtr<Sickle::Editor::World> src,
     std::vector<std::string> const &wads)
+:   _texman{std::make_shared<TexManRef::element_type>()}
 {
     Sickle::Editor::Entity const *worldspawn{nullptr};
     for (auto const &entity : src->entities())
@@ -40,7 +41,7 @@ World3D::World3D::World3D(
     for (auto const &path : wads)
     {
         try {
-            texman.add_wad(WAD::load(path));
+            _texman->add_wad(WAD::load(path));
         }
         catch (std::runtime_error const &e) {
             signal_wad_load_error().emit(path);
@@ -48,7 +49,7 @@ World3D::World3D::World3D(
     }
 
     for (auto &entity : src->entities())
-        entities.emplace_back(*this, entity);
+        entities.emplace_back(entity, _texman);
 }
 
 

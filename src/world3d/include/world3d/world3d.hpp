@@ -24,7 +24,7 @@
 #include <wad/lumps.hpp>
 #include <wad/TextureManager.hpp>
 
-#include <sigc++/connection.h>
+#include <sigc++/trackable.h>
 
 #include <memory>
 
@@ -46,7 +46,7 @@ namespace World3D
         Texture(WAD::TexLump const &texlump);
     };
 
-    using TextureManager = WAD::TextureManager<Texture>;
+    using TexManRef = std::shared_ptr<WAD::TextureManager<Texture>>;
 
 
     class Brush;
@@ -66,10 +66,10 @@ namespace World3D
         Vertex(glm::vec3 pos, glm::vec2 uv);
     };
 
-    class Face
+    class Face : public sigc::trackable
     {
-        Brush &_parent;
-        std::shared_ptr<Sickle::Editor::Face> _src{nullptr};
+        Sickle::Editor::FaceRef const _src{nullptr};
+        TexManRef const _texman{nullptr};
 
         static sigc::signal<void(std::string)> _signal_missing_texture;
         sigc::signal<void()> _signal_verts_changed{};
@@ -77,7 +77,7 @@ namespace World3D
         void _sync_vertices();
 
         void _on_src_verts_changed();
-        sigc::connection _verts_changed_connection;
+        void _on_src_texture_changed();
 
     public:
         Texture texture{};
@@ -87,57 +87,53 @@ namespace World3D
         static auto &signal_missing_texture() {return _signal_missing_texture;}
         auto &signal_verts_changed() {return _signal_verts_changed;}
 
-        TextureManager &texman() const;
-
         /** Length of span in _PARENT's VBO. */
         GLsizei count() const {return vertices.size();}
 
-        Face(Brush &parent, std::shared_ptr<Sickle::Editor::Face> &face);
+        Face(
+            Sickle::Editor::FaceRef face,
+            TexManRef texman,
+            GLint offset);
         Face(Face const &other);
-        virtual ~Face();
     };
 
-    class Brush
+    class Brush : public sigc::trackable
     {
-        Entity &_parent;
-        Sickle::Editor::Entity::BrushRef _src{};
+        Sickle::Editor::BrushRef const _src{nullptr};
+        TexManRef const _texman{nullptr};
         std::vector<Face> _faces{};
 
         std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
         std::shared_ptr<GLUtil::Buffer> _vbo{nullptr};
 
         void _on_face_changed(size_t face_index);
-        std::vector<sigc::connection> _face_changed_connection;
 
     public:
         bool is_selected() const;
         void render() const;
 
-        TextureManager &texman() const;
-
-        Brush(Entity &p, Sickle::Editor::Entity::BrushRef const &src);
-        Brush(Brush const &other);
-        virtual ~Brush();
+        Brush(Sickle::Editor::BrushRef const &src, TexManRef texman);
     };
 
     class Entity
     {
-        World3D &_parent;
+        TexManRef const _texman{nullptr};
+
     public:
         std::vector<Brush> brushes{};
 
-        TextureManager &texman() const;
         void render() const;
 
-        Entity(World3D &parent, Sickle::Editor::Entity &src);
+        Entity(Sickle::Editor::Entity &src, TexManRef texman);
     };
 
     class World3D
     {
+        TexManRef const _texman{nullptr};
+
         static sigc::signal<void(std::string)> _signal_wad_load_error;
 
     public:
-        TextureManager texman{};
         std::vector<Entity> entities{};
 
         static auto &signal_wad_load_error() {return _signal_wad_load_error;}
