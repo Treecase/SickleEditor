@@ -1,9 +1,9 @@
 add_operation(
-    "Face", "SetTexture", "brush", {}, -- TODO: face mode, texture name argument
-    function(editor, brushes)
+    "Face", "SetTexture", "brush", {"string"}, -- TODO: face mode
+    function(editor, brushes, texture_id)
         for _,b in ipairs(brushes) do
             for _,f in ipairs(b:get_faces()) do
-                f:set_texture("some texture") -- use texture name argument
+                f:set_texture(texture_id)
             end
         end
     end)

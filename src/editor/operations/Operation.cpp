@@ -84,6 +84,7 @@ Operation Lua::get_as<Operation>(lua_State *L, int idx)
 
 std::unordered_set<std::string> const Operation::VALID_TYPES{
     "f",
+    "string",
     "vec3",
     "mat4",
 };
@@ -91,6 +92,28 @@ std::unordered_set<std::string> const Operation::VALID_TYPES{
 
 std::unordered_set<std::string> const Operation::VALID_MODES{
     "brush"
+};
+
+
+static std::unordered_map<
+    std::string,
+    std::function<Operation::Arg(lua_State *, int)>> const ARG_FROM_LUA_MAP
+{
+    {"f", Lua::get_as<lua_Number>},
+    {"string", Lua::get_as<std::string>},
+    {"vec3", Lua::get_as<glm::vec3>},
+    {"mat4", Lua::get_as<glm::mat4>},
+};
+
+
+static std::unordered_map<
+    std::string,
+    Operation::Arg> const ARG_DEFAULT_CONSTRUCT
+{
+    {"f", static_cast<lua_Number>(0.0)},
+    {"string", std::string{}},
+    {"vec3", glm::vec3{}},
+    {"mat4", glm::identity<glm::mat4>()},
 };
 
 
@@ -118,27 +141,23 @@ Operation::Arg Operation::arg_from_lua(
     lua_State *l,
     int idx)
 {
-    if (type == "f")
-        return Arg{Lua::get_as<lua_Number>(l, idx)};
-    else if (type == "vec3")
-        return Arg{Lua::get_as<glm::vec3>(l, idx)};
-    else if (type == "mat4")
-        return Arg{Lua::get_as<glm::mat4>(l, idx)};
-    else
+    try {
+        return ARG_FROM_LUA_MAP.at(type)(l, idx);
+    }
+    catch (std::out_of_range const &e) {
         throw std::logic_error{"bad argument type '" + type + "'"};
+    }
 }
 
 
 Operation::Arg Operation::arg_default_construct(std::string const &type)
 {
-    if (type == "f")
-        return Arg{0.0};
-    else if (type == "vec3")
-        return Arg{glm::vec3{}};
-    else if (type == "mat4")
-        return Arg{glm::identity<glm::mat4>()};
-    else
+    try {
+        return ARG_DEFAULT_CONSTRUCT.at(type);
+    }
+    catch (std::out_of_range const &e) {
         throw std::logic_error{"bad argument type '" + type + "'"};
+    }
 }
 
 
@@ -182,6 +201,8 @@ bool Operation::check_type(size_t argument, Arg const &arg) const
     auto const &type = args.at(argument).type;
     if (type == "f")
         return std::holds_alternative<lua_Number>(arg);
+    else if (type == "string")
+        return std::holds_alternative<std::string>(arg);
     else if (type == "vec3")
         return std::holds_alternative<glm::vec3>(arg);
     else if (type == "mat4")

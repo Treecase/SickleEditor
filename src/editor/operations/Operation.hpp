@@ -38,7 +38,7 @@ namespace Sickle::Editor
     class Operation
     {
     public:
-        using Arg = std::variant<lua_Number, glm::vec3, glm::mat4>;
+        using Arg = std::variant<lua_Number, std::string, glm::vec3, glm::mat4>;
         using ArgList = std::vector<Arg>;
 
         struct ArgDef

@@ -29,13 +29,7 @@ using namespace Sickle::Editor;
 // TODO: error hardening
 struct NumberConfig : public Gtk::Entry, public Config
 {
-    NumberConfig()
-    :   Gtk::Entry{}
-    {
-        set_value(0.0);
-    }
-
-    NumberConfig(Operation::Arg const &arg)
+    NumberConfig(Operation::Arg const &arg=0.0)
     :   Gtk::Entry{}
     {
         auto const value = std::get<lua_Number>(arg);
@@ -50,6 +44,27 @@ struct NumberConfig : public Gtk::Entry, public Config
     Operation::Arg get_value() override
     {
         return Operation::Arg{std::stod(get_text())};
+    }
+};
+
+
+struct StringConfig : public Gtk::Entry, public Config
+{
+    StringConfig(Operation::Arg const &arg="")
+    :   Gtk::Entry{}
+    {
+        auto const value = std::get<std::string>(arg);
+        set_value(value);
+    }
+
+    void set_value(std::string const &value)
+    {
+        set_text(value);
+    }
+
+    Operation::Arg get_value() override
+    {
+        return Operation::Arg{get_text()};
     }
 };
 
@@ -139,6 +154,8 @@ static Glib::RefPtr<Gtk::Widget> make_config_for(
     auto const &def = op.args.at(argument);
     if (def.type == "f")
         return Glib::RefPtr{new NumberConfig{def.default_value}};
+    else if (def.type == "string")
+        return Glib::RefPtr{new StringConfig{def.default_value}};
     else if (def.type == "vec3")
         return Glib::RefPtr{new Vec3Config{def.default_value}};
     else if (def.type == "mat4")
