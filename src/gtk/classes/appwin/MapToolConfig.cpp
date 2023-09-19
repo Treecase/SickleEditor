@@ -17,7 +17,11 @@
  */
 
 #include "MapToolConfig.hpp"
+#include "TextureSelector.hpp"
 
+#include <core/Editor.hpp>
+
+#include <glibmm/binding.h>
 #include <gtkmm/grid.h>
 
 #include <cstdlib>
@@ -66,6 +70,60 @@ struct StringConfig : public Gtk::Entry, public Config
     {
         return Operation::Arg{get_text()};
     }
+};
+
+
+struct TextureConfig : public Gtk::Box, public Config
+{
+    TextureConfig(
+        Glib::RefPtr<Editor> const &editor,
+        Operation::Arg const &arg="")
+    :   Gtk::Box{Gtk::Orientation::ORIENTATION_HORIZONTAL}
+    ,   _texture_selector{TextureSelector::create()}
+    ,   _binding_wad_paths{
+            Glib::Binding::bind_property(
+                editor->property_wads(),
+                _texture_selector->property_wad_paths(),
+                Glib::BindingFlags::BINDING_SYNC_CREATE)}
+    {
+        _texture_selector_btn.signal_clicked().connect(
+            sigc::mem_fun(
+                *this,
+                &TextureConfig::on_texture_selector_button_clicked));
+
+        add(_texture);
+        add(_texture_selector_btn);
+
+        auto const value = std::get<std::string>(arg);
+        set_value(value);
+    }
+
+    void set_value(std::string const &value)
+    {
+        _texture.set_text(value);
+    }
+
+    Operation::Arg get_value() override
+    {
+        return Operation::Arg{_texture.get_text()};
+    }
+
+protected:
+    void on_texture_selector_button_clicked()
+    {
+        auto const result = _texture_selector->run();
+        if (result == Gtk::RESPONSE_ACCEPT)
+        {
+            auto const tex = _texture_selector->get_selected_texture();
+            set_value(tex);
+        }
+    }
+
+private:
+    Gtk::Entry _texture{};
+    Gtk::Button _texture_selector_btn{"Select Texture"};
+    Glib::RefPtr<TextureSelector> _texture_selector{nullptr};
+    Glib::RefPtr<Glib::Binding> _binding_wad_paths{nullptr};
 };
 
 
@@ -148,6 +206,7 @@ public:
 
 
 static Glib::RefPtr<Gtk::Widget> make_config_for(
+    Glib::RefPtr<Editor> const &editor,
     Operation const &op,
     size_t argument)
 {
@@ -156,6 +215,8 @@ static Glib::RefPtr<Gtk::Widget> make_config_for(
         return Glib::RefPtr{new NumberConfig{def.default_value}};
     else if (def.type == "string")
         return Glib::RefPtr{new StringConfig{def.default_value}};
+    else if (def.type == "texture")
+        return Glib::RefPtr{new TextureConfig{editor, def.default_value}};
     else if (def.type == "vec3")
         return Glib::RefPtr{new Vec3Config{def.default_value}};
     else if (def.type == "mat4")
@@ -166,9 +227,10 @@ static Glib::RefPtr<Gtk::Widget> make_config_for(
 
 
 
-MapToolConfig::MapToolConfig()
+MapToolConfig::MapToolConfig(Glib::RefPtr<Editor::Editor> const &editor)
 :   Glib::ObjectBase{typeid(MapToolConfig)}
 ,   Gtk::Frame{}
+,   _editor{editor}
 {
     set_label("Tool Options");
 
@@ -207,7 +269,7 @@ void MapToolConfig::set_operation(Editor::Operation const &op)
 
     for (size_t i = 0; i < _operation->args.size(); ++i)
     {
-        auto widget = make_config_for(*_operation, i);
+        auto widget = make_config_for(_editor, *_operation, i);
         _arg_configs.push_back(widget);
         _box.add(*widget.get());
     }

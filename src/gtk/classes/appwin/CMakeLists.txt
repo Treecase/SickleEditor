@@ -4,6 +4,7 @@ add_library(appwin STATIC
     MapTools.cpp
     ModeSelector.cpp
     OperationSearch.cpp
+    TextureSelector.cpp
 )
 target_link_libraries(appwin
     PUBLIC

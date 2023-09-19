@@ -3,6 +3,7 @@
   <gresource prefix="@GRESOURCE_PREFIX@">
     <file>gtk/menus.ui</file>
     <file>gtk/OperationSearch.glade</file>
+    <file>gtk/TextureSelector.glade</file>
     <file>lua/gdkevents.lua</file>
     <file>lua/gdkkeysyms.lua</file>
     <file>lua/gdktypes.lua</file>

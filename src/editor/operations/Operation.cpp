@@ -85,6 +85,7 @@ Operation Lua::get_as<Operation>(lua_State *L, int idx)
 std::unordered_set<std::string> const Operation::VALID_TYPES{
     "f",
     "string",
+    "texture",
     "vec3",
     "mat4",
 };
@@ -101,6 +102,7 @@ static std::unordered_map<
 {
     {"f", Lua::get_as<lua_Number>},
     {"string", Lua::get_as<std::string>},
+    {"texture", Lua::get_as<std::string>},
     {"vec3", Lua::get_as<glm::vec3>},
     {"mat4", Lua::get_as<glm::mat4>},
 };
@@ -112,6 +114,7 @@ static std::unordered_map<
 {
     {"f", static_cast<lua_Number>(0.0)},
     {"string", std::string{}},
+    {"texture", std::string{}},
     {"vec3", glm::vec3{}},
     {"mat4", glm::identity<glm::mat4>()},
 };
@@ -202,6 +205,8 @@ bool Operation::check_type(size_t argument, Arg const &arg) const
     if (type == "f")
         return std::holds_alternative<lua_Number>(arg);
     else if (type == "string")
+        return std::holds_alternative<std::string>(arg);
+    else if (type == "texture")
         return std::holds_alternative<std::string>(arg);
     else if (type == "vec3")
         return std::holds_alternative<glm::vec3>(arg);

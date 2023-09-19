@@ -98,7 +98,7 @@ namespace Sickle::AppWin
         MapArea3D _view3d;
         MapArea2D _view2d_top, _view2d_front, _view2d_right;
         MapTools _maptools;
-        MapToolConfig _maptool_config{};
+        MapToolConfig _maptool_config;
         Gtk::Label _gridsizelabel{};
         Gtk::Window _luaconsolewindow{};
         LuaConsole _luaconsole{};

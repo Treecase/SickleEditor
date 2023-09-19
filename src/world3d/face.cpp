@@ -67,7 +67,6 @@ void World3D::Face::_on_src_verts_changed()
 
 void World3D::Face::_on_src_texture_changed()
 {
-    printf("texture changed to '%s'\n", _src->get_texture().c_str());
     try {
         texture = _texman->at(_src->get_texture());
     }

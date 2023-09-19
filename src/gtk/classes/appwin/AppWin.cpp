@@ -85,6 +85,7 @@ AppWin::AppWin()
 ,   _view2d_front{editor}
 ,   _view2d_right{editor}
 ,   _maptools{editor}
+,   _maptool_config{editor}
 ,   _opsearch{editor}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _binding_grid_size_top{

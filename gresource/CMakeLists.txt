@@ -12,6 +12,7 @@ add_custom_command(
     DEPENDS
         gtk/menus.ui
         gtk/OperationSearch.glade
+        gtk/TextureSelector.glade
         lua/gdkevents.lua
         lua/gdkkeysyms.lua
         lua/gdktypes.lua

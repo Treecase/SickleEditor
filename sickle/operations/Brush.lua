@@ -1,5 +1,5 @@
 add_operation(
-    "Face", "SetTexture", "brush", {"string"}, -- TODO: face mode
+    "Face", "SetTexture", "brush", {"texture"}, -- TODO: face mode
     function(editor, brushes, texture_id)
         for _,b in ipairs(brushes) do
             for _,f in ipairs(b:get_faces()) do
