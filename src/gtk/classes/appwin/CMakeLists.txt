@@ -4,7 +4,6 @@ add_library(appwin STATIC
     MapTools.cpp
     ModeSelector.cpp
     OperationSearch.cpp
-    TextureSelector.cpp
 )
 target_link_libraries(appwin
     PUBLIC
@@ -12,6 +11,7 @@ target_link_libraries(appwin
         editor-core
         editor-operations
         sickle-gtk-lua
+        textureselector
         PkgConfig::GTKMM
         # vvv temp vvv
         glutils::glutils # maparea3d

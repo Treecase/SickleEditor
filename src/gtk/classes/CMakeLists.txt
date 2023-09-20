@@ -17,3 +17,4 @@ target_link_libraries(sickle PRIVATE
 )
 add_subdirectory(appwin)
 add_subdirectory(maparea2d)
+add_subdirectory(textureselector)

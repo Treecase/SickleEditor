@@ -28,6 +28,7 @@
 
 using namespace Sickle::AppWin;
 using namespace Sickle::Editor;
+using namespace Sickle::TextureSelector;
 
 
 // TODO: error hardening

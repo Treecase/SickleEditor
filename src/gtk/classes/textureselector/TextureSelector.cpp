@@ -20,30 +20,9 @@
 
 #include <appid.hpp>
 
-using namespace Sickle::AppWin;
+#include <gtkmm/builder.h>
 
-
-TextureSelector::Image::Image(WAD::Lump const &lump)
-{
-    auto const texlump = WAD::readTexLump(lump);
-    for (size_t i = 0; i < texlump.width * texlump.height; ++i)
-    {
-        auto const pixel = texlump.tex1.at(i);
-        auto const &rgb = texlump.palette.at(pixel);
-        rgb_data.push_back(rgb.at(0));
-        rgb_data.push_back(rgb.at(1));
-        rgb_data.push_back(rgb.at(2));
-    }
-    pixbuf = Gdk::Pixbuf::create_from_data(
-        rgb_data.data(),
-        Gdk::Colorspace::COLORSPACE_RGB,
-        false,
-        8,
-        texlump.width, texlump.height,
-        texlump.width * 3);
-    img = Gtk::Image{pixbuf};
-    name = lump.name;
-}
+using namespace Sickle::TextureSelector;
 
 
 Glib::RefPtr<TextureSelector> TextureSelector::create()
@@ -62,28 +41,33 @@ TextureSelector::TextureSelector()
 
     auto const builder = Gtk::Builder::create_from_resource(
         SE_GRESOURCE_PREFIX "gtk/TextureSelector.glade");
-    builder->get_widget<Gtk::Dialog>("textureselector", _dialog);
-    builder->get_widget<Gtk::FlowBox>("flow", _flow);
-    builder->get_widget<Gtk::Button>("cancel", _cancel);
-    builder->get_widget<Gtk::Button>("confirm", _confirm);
+    builder->get_widget("textureselector", _dialog);
+    builder->get_widget("search", _search);
+    builder->get_widget("flow", _flow);
+    builder->get_widget("cancel", _cancel);
+    builder->get_widget("confirm", _confirm);
+
+    _dialog->signal_response().connect([this](int){_dialog->hide();});
+
+    _search->signal_search_changed().connect(
+        sigc::mem_fun(*this, &TextureSelector::on_search_changed));
+
+    _flow->set_filter_func(
+        sigc::mem_fun(*this, &TextureSelector::filter_func));
 
     _cancel->signal_clicked().connect(
         [this](){_dialog->response(Gtk::ResponseType::RESPONSE_CANCEL);});
     _confirm->signal_clicked().connect(
         [this](){_dialog->response(Gtk::ResponseType::RESPONSE_ACCEPT);});
-
-    _dialog->signal_response().connect([this](int){_dialog->hide();});
 }
 
 
 std::string TextureSelector::get_selected_texture() const
 {
     auto const selected = _flow->get_selected_children();
-    auto const child = selected.at(0)->get_child();
-    for (auto const &img : _images)
-        if (child == &img.img)
-            return img.name;
-    throw std::runtime_error{"selected child could not be found"};
+    auto const child = dynamic_cast<TextureImage *>(
+        selected.at(0)->get_child());
+    return child->get_name();
 }
 
 
@@ -101,6 +85,29 @@ void TextureSelector::on_wad_paths_changed()
 }
 
 
+void TextureSelector::on_search_changed()
+{
+    _flow->invalidate_filter();
+}
+
+
+bool TextureSelector::filter_func(Gtk::FlowBoxChild const *child)
+{
+    auto const image = dynamic_cast<TextureImage const *>(child->get_child());
+
+    auto const &search = _search->get_text();
+    Glib::ustring const name{image->get_name()};
+
+    // Search behaviour: Filter in any textures whose name includes SEARCH as a
+    // substring, ignoring case.
+    auto const search_cmp = search.casefold();
+    auto const name_cmp = name.casefold();
+
+    auto const it = name_cmp.find(search_cmp);
+    return it != Glib::ustring::npos;
+}
+
+
 
 void TextureSelector::_refresh_textures()
 {
@@ -112,7 +119,7 @@ void TextureSelector::_refresh_textures()
 void TextureSelector::_clear_textures()
 {
     for (auto &img : _images)
-        _flow->remove(img.img);
+        _flow->remove(img);
     _images.clear();
 }
 
@@ -131,5 +138,5 @@ void TextureSelector::_add_textures()
 void TextureSelector::_add_texture(WAD::Lump const &lump)
 {
     auto &image = _images.emplace_back(lump);
-    _flow->add(image.img);
+    _flow->add(image);
 }

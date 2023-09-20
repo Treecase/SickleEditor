@@ -19,52 +19,51 @@
 #ifndef SE_APPWIN_TEXTURESELECTOR_HPP
 #define SE_APPWIN_TEXTURESELECTOR_HPP
 
+#include "TextureImage.hpp"
+
 #include <wad/wad.hpp>
-#include <wad/lumps.hpp>
 
 #include <glibmm/property.h>
 #include <glibmm/refptr.h>
-#include <gtkmm/builder.h>
 #include <gtkmm/button.h>
 #include <gtkmm/dialog.h>
 #include <gtkmm/flowbox.h>
-#include <gtkmm/image.h>
-#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/searchentry.h>
 
 
-namespace Sickle::AppWin
+namespace Sickle::TextureSelector
 {
+    /**
+     * Allows the user to select a texture from available WAD files.
+     */
     class TextureSelector : public Glib::Object
     {
     public:
         static Glib::RefPtr<TextureSelector> create();
 
+        /** List of WAD filepaths to pull textures from. */
         auto property_wad_paths() {return _prop_wad_paths.get_proxy();}
+        /** List of WAD filepaths to pull textures from. */
         auto property_wad_paths() const {return _prop_wad_paths.get_proxy();}
 
+        /** Get the name of the texture currently selected by the user. */
         std::string get_selected_texture() const;
 
+        /** See Gtk::Dialog::run. */
         int run();
 
     protected:
         void on_wad_paths_changed();
+        void on_search_changed();
+        bool filter_func(Gtk::FlowBoxChild const *child);
 
     private:
-        struct Image
-        {
-            std::vector<guint8> rgb_data{};
-            Glib::RefPtr<Gdk::Pixbuf> pixbuf{nullptr};
-            Gtk::Image img;
-            std::string name{};
-
-            Image(WAD::Lump const &lump);
-        };
-
         Gtk::Dialog *_dialog{nullptr};
+        Gtk::SearchEntry *_search{nullptr};
         Gtk::FlowBox *_flow{nullptr};
         Gtk::Button *_cancel{nullptr};
         Gtk::Button *_confirm{nullptr};
-        std::vector<Image> _images{};
+        std::vector<TextureImage> _images{};
 
         Glib::Property<std::vector<std::string>> _prop_wad_paths;
 
