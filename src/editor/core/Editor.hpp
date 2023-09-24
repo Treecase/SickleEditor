@@ -49,8 +49,6 @@ namespace Sickle::Editor
     class Editor : public Glib::Object, public Lua::Referenceable
     {
     public:
-        using TextureManager = WAD::TextureManager<WAD::TexLump>;
-
         /** Box used to create new brushes. */
         BrushBox brushbox{};
         /** Selected brushes/entities. */
@@ -66,8 +64,6 @@ namespace Sickle::Editor
         auto property_maptool() const {return _prop_maptool.get_proxy();}
         auto property_mode() {return _prop_mode.get_proxy();}
         auto property_mode() const {return _prop_mode.get_proxy();}
-        auto property_texman() {return _prop_texman.get_proxy();}
-        auto property_texman() const {return _prop_texman.get_proxy();}
         auto property_wads() {return _prop_wads.get_proxy();}
         auto property_wads() const {return _prop_wads.get_proxy();}
         auto &signal_maptools_changed() {return _sig_maptools_changed;}
@@ -76,7 +72,6 @@ namespace Sickle::Editor
         MapTool get_maptool() const;
         auto &get_maptools() const {return _maptools;}
         auto get_mode() const {return property_mode().get_value();}
-        auto get_texman() {return property_texman().get_value();}
         auto get_wads() {return property_wads().get_value();}
 
         void set_map(Glib::RefPtr<World> const &value) {
@@ -84,8 +79,6 @@ namespace Sickle::Editor
         void set_maptool(std::string const &value) {
             property_maptool() = value;}
         void set_mode(Mode value) {property_mode() = value;}
-        void set_texman(std::shared_ptr<TextureManager> const &value) {
-            property_texman() = value;}
         void set_wads(std::vector<std::string> const &value) {
             property_wads() = value;}
 
@@ -95,7 +88,6 @@ namespace Sickle::Editor
         Glib::Property<Glib::RefPtr<World>> _prop_map;
         Glib::Property<std::string> _prop_maptool;
         Glib::Property<Mode> _prop_mode;
-        Glib::Property<std::shared_ptr<TextureManager>> _prop_texman;
         Glib::Property<std::vector<std::string>> _prop_wads;
         sigc::signal<void()> _sig_maptools_changed{};
 

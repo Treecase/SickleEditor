@@ -128,11 +128,11 @@ void TextureSelector::_clear_textures()
 
 void TextureSelector::_add_textures()
 {
-    auto texman = _editor->get_texman();
-    for (auto const &kv : texman->lumps)
+    auto &texman = WAD::TextureManager::get_reference();
+    for (auto const &kv : texman.lumps)
     {
-        auto const &texlump = texman->at(kv.first);
-        auto &image = _images.emplace_back(kv.first, texlump);
+        auto &image = _images.emplace_back(kv.first, texman.at(kv.first));
+        image.set_name(kv.first);
         _flow->add(image);
     }
 }

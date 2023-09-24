@@ -22,13 +22,9 @@
 sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};
 
 
-World3D::Face::Face(
-    Sickle::Editor::FaceRef face,
-    TexManRef texman,
-    GLint offset)
+World3D::Face::Face(Sickle::Editor::FaceRef face, GLint offset)
 :   sigc::trackable{}
 ,   _src{face}
-,   _texman{texman}
 ,   offset{offset}
 {
     _on_src_texture_changed();
@@ -45,7 +41,6 @@ World3D::Face::Face(
 World3D::Face::Face(Face const &other)
 :   sigc::trackable{}
 ,   _src{other._src}
-,   _texman{other._texman}
 ,   texture{other.texture}
 ,   vertices{other.vertices}
 ,   offset{other.offset}
@@ -67,8 +62,9 @@ void World3D::Face::_on_src_verts_changed()
 
 void World3D::Face::_on_src_texture_changed()
 {
+    auto &texman = WAD::TextureManagerProxy<Texture>::create();
     try {
-        texture = _texman->at(_src->get_texture());
+        texture = texman.at(_src->get_texture());
     }
     catch (std::out_of_range const &e) {
         texture = Texture::make_missing_texture();

@@ -34,7 +34,6 @@ Editor::Editor(lua_State *L)
 ,   _prop_map{*this, "map", World::create()}
 ,   _prop_maptool{*this, "maptool", ""}
 ,   _prop_mode{*this, "mode", {}}
-,   _prop_texman{*this, "texman", std::make_shared<TextureManager>()}
 ,   _prop_wads{*this, "wads", {}}
 {
     property_map().signal_changed().connect(
@@ -75,9 +74,10 @@ void Editor::_on_map_changed()
 
 void Editor::_on_wads_changed()
 {
+    auto &texman = WAD::TextureManager::get_reference();
     for (auto const &path : get_wads())
     {
         auto const wad = WAD::load(path);
-        get_texman()->add_wad(wad);
+        texman.add_wad(wad);
     }
 }

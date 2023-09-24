@@ -19,12 +19,9 @@
 #include "world3d/world3d.hpp"
 
 
-World3D::Brush::Brush(
-    Sickle::Editor::BrushRef const &src,
-    TexManRef texman)
+World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)
 :   sigc::trackable{}
 ,   _src{src}
-,   _texman{texman}
 ,   _vao{std::make_shared<GLUtil::VertexArray>()}
 ,   _vbo{std::make_shared<GLUtil::Buffer>(GL_ARRAY_BUFFER)}
 {
@@ -32,7 +29,7 @@ World3D::Brush::Brush(
     for (auto faceptr : _src->faces)
     {
         auto const offset = vbo_data.size() / Vertex::ELEMENTS;
-        auto &face = _faces.emplace_back(faceptr, _texman, offset);
+        auto &face = _faces.emplace_back(faceptr, offset);
         for (auto const &vertex : face.vertices)
         {
             auto v = vertex.as_vbo();

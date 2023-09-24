@@ -37,21 +37,22 @@ namespace WAD
      * LoadedTexture must have a constructor that takes a TexLump as the sole
      * argument.
      */
-    template<typename LoadedTexture>
-    struct TextureManager
+    class TextureManager
     {
-        std::unordered_map<std::string, Lump> lumps{};
-        std::unordered_map<std::string, LoadedTexture> textures;
-
         TextureManager()
-        :   lumps{}
-        ,   textures{}
         {
         }
-        TextureManager(WAD const &wad)
-        :   TextureManager()
+        TextureManager(TextureManager const &)=delete;
+        TextureManager(TextureManager &&)=delete;
+    public:
+        std::unordered_map<std::string, Lump> lumps{};
+        std::unordered_map<std::string, TexLump> textures{};
+
+        /** Get a reference to the TextureManager singleton. */
+        static TextureManager &get_reference()
         {
-            add_wad(wad);
+            static TextureManager texman{};
+            return texman;
         }
 
         /** Add a WAD to the manager. */
@@ -61,20 +62,53 @@ namespace WAD
                 if (lump.type == 0x43)
                     lumps.emplace(lump.name, lump);
         }
+
         /** Same as `textures.at(key)`, unless this would fail, in which case
          *  attempt to load the lump identified by `key` from the WAD. */
-        LoadedTexture &at(std::string const &key)
+        TexLump &at(std::string const &key)
         {
-            try
-            {
+            try {
                 return textures.at(key);
             }
-            catch (std::out_of_range const &)
-            {
-                return textures[key] = LoadedTexture{
-                    readTexLump(lumps.at(key))};
+            catch (std::out_of_range const &) {
+                return textures[key] = readTexLump(lumps.at(key));
             }
         }
+    };
+
+
+    template<typename ProxyType>
+    struct TextureManagerProxy
+    {
+        std::unordered_map<std::string, ProxyType> textures{};
+
+        static TextureManagerProxy &create()
+        {
+            static TextureManagerProxy proxy{};
+            return proxy;
+        }
+
+        ProxyType &at(std::string const &key)
+        {
+            try {
+                return textures.at(key);
+            }
+            catch (std::out_of_range const &) {
+                printf("Proxy<%s> -- construct for %s\n",
+                    typeid(ProxyType).name(),
+                    key.c_str());
+                auto &texman = TextureManager::get_reference();
+                auto kv = textures.emplace(key, texman.at(key));
+                return kv.first->second;
+            }
+        }
+
+    private:
+        TextureManagerProxy()
+        {
+        }
+        TextureManagerProxy(TextureManagerProxy const &)=delete;
+        TextureManagerProxy(TextureManagerProxy &&)=delete;
     };
 }
 

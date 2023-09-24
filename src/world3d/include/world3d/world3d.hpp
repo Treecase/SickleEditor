@@ -46,8 +46,6 @@ namespace World3D
         Texture(WAD::TexLump const &texlump);
     };
 
-    using TexManRef = std::shared_ptr<WAD::TextureManager<Texture>>;
-
 
     class Brush;
     class Entity;
@@ -69,7 +67,6 @@ namespace World3D
     class Face : public sigc::trackable
     {
         Sickle::Editor::FaceRef const _src{nullptr};
-        TexManRef const _texman{nullptr};
 
         static sigc::signal<void(std::string)> _signal_missing_texture;
         sigc::signal<void()> _signal_verts_changed{};
@@ -92,7 +89,6 @@ namespace World3D
 
         Face(
             Sickle::Editor::FaceRef face,
-            TexManRef texman,
             GLint offset);
         Face(Face const &other);
     };
@@ -100,7 +96,6 @@ namespace World3D
     class Brush : public sigc::trackable
     {
         Sickle::Editor::BrushRef const _src{nullptr};
-        TexManRef const _texman{nullptr};
         std::vector<Face> _faces{};
 
         std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
@@ -112,25 +107,21 @@ namespace World3D
         bool is_selected() const;
         void render() const;
 
-        Brush(Sickle::Editor::BrushRef const &src, TexManRef texman);
+        Brush(Sickle::Editor::BrushRef const &src);
     };
 
     class Entity
     {
-        TexManRef const _texman{nullptr};
-
     public:
         std::vector<Brush> brushes{};
 
         void render() const;
 
-        Entity(Sickle::Editor::Entity &src, TexManRef texman);
+        Entity(Sickle::Editor::Entity &src);
     };
 
     class World3D
     {
-        TexManRef const _texman{nullptr};
-
         static sigc::signal<void(std::string)> _signal_wad_load_error;
 
     public:
@@ -140,9 +131,7 @@ namespace World3D
 
         void render() const;
 
-        World3D(
-            Glib::RefPtr<Sickle::Editor::World> src,
-            std::vector<std::string> const &wads);
+        World3D(Glib::RefPtr<Sickle::Editor::World> src);
     };
 }
 
