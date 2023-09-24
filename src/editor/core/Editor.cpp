@@ -34,10 +34,13 @@ Editor::Editor(lua_State *L)
 ,   _prop_map{*this, "map", World::create()}
 ,   _prop_maptool{*this, "maptool", ""}
 ,   _prop_mode{*this, "mode", {}}
+,   _prop_texman{*this, "texman", std::make_shared<TextureManager>()}
 ,   _prop_wads{*this, "wads", {}}
 {
     property_map().signal_changed().connect(
         sigc::mem_fun(*this, &Editor::_on_map_changed));
+    property_wads().signal_changed().connect(
+        sigc::mem_fun(*this, &Editor::_on_wads_changed));
 }
 
 
@@ -67,4 +70,14 @@ void Editor::_on_map_changed()
     brushbox.p1(glm::vec3{});
     brushbox.p2(glm::vec3{});
     selected.clear();
+}
+
+
+void Editor::_on_wads_changed()
+{
+    for (auto const &path : get_wads())
+    {
+        auto const wad = WAD::load(path);
+        get_texman()->add_wad(wad);
+    }
 }

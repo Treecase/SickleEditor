@@ -21,6 +21,8 @@
 
 #include "TextureImage.hpp"
 
+#include <core/Editor.hpp>
+#include <wad/TextureManager.hpp>
 #include <wad/wad.hpp>
 
 #include <glibmm/property.h>
@@ -39,12 +41,8 @@ namespace Sickle::TextureSelector
     class TextureSelector : public Glib::Object
     {
     public:
-        static Glib::RefPtr<TextureSelector> create();
-
-        /** List of WAD filepaths to pull textures from. */
-        auto property_wad_paths() {return _prop_wad_paths.get_proxy();}
-        /** List of WAD filepaths to pull textures from. */
-        auto property_wad_paths() const {return _prop_wad_paths.get_proxy();}
+        static Glib::RefPtr<TextureSelector> create(
+            Glib::RefPtr<Editor::Editor> const &editor);
 
         /** Get the name of the texture currently selected by the user. */
         std::string get_selected_texture() const;
@@ -53,7 +51,7 @@ namespace Sickle::TextureSelector
         int run();
 
     protected:
-        void on_wad_paths_changed();
+        void on_wads_changed();
         void on_search_changed();
         bool filter_func(Gtk::FlowBoxChild const *child);
 
@@ -65,14 +63,13 @@ namespace Sickle::TextureSelector
         Gtk::Button *_confirm{nullptr};
         std::vector<TextureImage> _images{};
 
-        Glib::Property<std::vector<std::string>> _prop_wad_paths;
+        Glib::RefPtr<Editor::Editor> _editor{nullptr};
 
-        TextureSelector();
+        TextureSelector(Glib::RefPtr<Editor::Editor> const &editor);
 
         void _refresh_textures();
         void _clear_textures();
         void _add_textures();
-        void _add_texture(WAD::Lump const &lump);
     };
 }
 

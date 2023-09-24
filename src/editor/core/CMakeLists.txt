@@ -9,6 +9,7 @@ target_link_libraries(editor-core
     PUBLIC
         editor-world
         se-lua
+        wad
         glm::glm
         PkgConfig::sigc++
 )

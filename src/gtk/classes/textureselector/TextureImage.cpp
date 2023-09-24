@@ -39,13 +39,12 @@ TextureImage::convert_texlump_to_rgb_data(WAD::TexLump const &texlump)
 }
 
 
-TextureImage::TextureImage(WAD::Lump const &lump)
+TextureImage::TextureImage(std::string const &name, WAD::TexLump const &texlump)
 :   Glib::ObjectBase{typeid(TextureImage)}
 ,   Gtk::Box{Gtk::Orientation::ORIENTATION_VERTICAL}
-,   _name{lump.name}
-,   _label{lump.name}
+,   _name{name}
+,   _label{_name}
 {
-    auto const texlump = WAD::readTexLump(lump);
     _rgb_data = convert_texlump_to_rgb_data(texlump);
     auto const pixbuf = Gdk::Pixbuf::create_from_data(
         _rgb_data.data(),

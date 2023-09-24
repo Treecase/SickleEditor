@@ -25,19 +25,19 @@
 using namespace Sickle::TextureSelector;
 
 
-Glib::RefPtr<TextureSelector> TextureSelector::create()
+Glib::RefPtr<TextureSelector> TextureSelector::create(
+    Glib::RefPtr<Sickle::Editor::Editor> const &editor)
 {
-    return Glib::RefPtr{new TextureSelector{}};
+    return Glib::RefPtr{new TextureSelector{editor}};
 }
 
 
-TextureSelector::TextureSelector()
+TextureSelector::TextureSelector(Glib::RefPtr<Sickle::Editor::Editor> const &editor)
 :   Glib::ObjectBase{typeid(TextureSelector)}
-,   _prop_wad_paths{*this, "wad-paths", {}}
+,   _editor{editor}
 {
-    property_wad_paths().signal_changed().connect(
-        sigc::mem_fun(*this, &TextureSelector::on_wad_paths_changed));
-
+    _editor->property_wads().signal_changed().connect(
+        sigc::mem_fun(*this, &TextureSelector::on_wads_changed));
 
     auto const builder = Gtk::Builder::create_from_resource(
         SE_GRESOURCE_PREFIX "gtk/TextureSelector.glade");
@@ -59,6 +59,8 @@ TextureSelector::TextureSelector()
         [this](){_dialog->response(Gtk::ResponseType::RESPONSE_CANCEL);});
     _confirm->signal_clicked().connect(
         [this](){_dialog->response(Gtk::ResponseType::RESPONSE_ACCEPT);});
+
+    _refresh_textures();
 }
 
 
@@ -79,7 +81,7 @@ int TextureSelector::run()
 
 
 
-void TextureSelector::on_wad_paths_changed()
+void TextureSelector::on_wads_changed()
 {
     _refresh_textures();
 }
@@ -126,17 +128,11 @@ void TextureSelector::_clear_textures()
 
 void TextureSelector::_add_textures()
 {
-    for (auto const &path : property_wad_paths().get_value())
+    auto texman = _editor->get_texman();
+    for (auto const &kv : texman->lumps)
     {
-        auto const wad = WAD::load(path);
-        for (auto const &lump : wad.directory)
-            _add_texture(lump);
+        auto const &texlump = texman->at(kv.first);
+        auto &image = _images.emplace_back(kv.first, texlump);
+        _flow->add(image);
     }
-}
-
-
-void TextureSelector::_add_texture(WAD::Lump const &lump)
-{
-    auto &image = _images.emplace_back(lump);
-    _flow->add(image);
 }

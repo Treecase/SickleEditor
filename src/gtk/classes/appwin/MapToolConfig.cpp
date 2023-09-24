@@ -80,12 +80,7 @@ struct TextureConfig : public Gtk::Box, public Config
         Glib::RefPtr<Editor> const &editor,
         Operation::Arg const &arg="")
     :   Gtk::Box{Gtk::Orientation::ORIENTATION_HORIZONTAL}
-    ,   _texture_selector{TextureSelector::create()}
-    ,   _binding_wad_paths{
-            Glib::Binding::bind_property(
-                editor->property_wads(),
-                _texture_selector->property_wad_paths(),
-                Glib::BindingFlags::BINDING_SYNC_CREATE)}
+    ,   _texture_selector{TextureSelector::create(editor)}
     {
         _texture_selector_btn.signal_clicked().connect(
             sigc::mem_fun(
@@ -124,7 +119,6 @@ private:
     Gtk::Entry _texture{};
     Gtk::Button _texture_selector_btn{"Select Texture"};
     Glib::RefPtr<TextureSelector> _texture_selector{nullptr};
-    Glib::RefPtr<Glib::Binding> _binding_wad_paths{nullptr};
 };
 
 

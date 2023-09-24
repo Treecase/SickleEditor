@@ -36,7 +36,7 @@ namespace Sickle::TextureSelector
     class TextureImage : public Gtk::Box
     {
     public:
-        TextureImage(WAD::Lump const &lump);
+        TextureImage(std::string const &name, WAD::TexLump const &texlump);
 
         /** Get the Texture's name in the WAD. */
         std::string get_name() const;

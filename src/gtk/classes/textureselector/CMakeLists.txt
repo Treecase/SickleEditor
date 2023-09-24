@@ -4,6 +4,7 @@ add_library(textureselector STATIC
 )
 target_link_libraries(textureselector
     PUBLIC
+        editor-core
         wad
         PkgConfig::GTKMM
     PRIVATE
