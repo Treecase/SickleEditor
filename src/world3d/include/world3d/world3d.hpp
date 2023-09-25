@@ -122,12 +122,8 @@ namespace World3D
 
     class World3D
     {
-        static sigc::signal<void(std::string)> _signal_wad_load_error;
-
     public:
         std::vector<Entity> entities{};
-
-        static auto &signal_wad_load_error() {return _signal_wad_load_error;}
 
         void render() const;
 

@@ -117,8 +117,6 @@ Sickle::MapArea3D::MapArea3D(Glib::RefPtr<Editor::Editor> ed)
     _editor->brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea3D::queue_render));
 
-    World3D::World3D::signal_wad_load_error().connect(
-        sigc::mem_fun(*this, &MapArea3D::on_world3d_wad_load_error));
     World3D::Face::signal_missing_texture().connect(
         sigc::mem_fun(*this, &MapArea3D::on_world3d_face_missing_texture));
 
@@ -355,12 +353,6 @@ void Sickle::MapArea3D::on_wireframe_changed()
 }
 
 
-void Sickle::MapArea3D::on_world3d_wad_load_error(std::string const &what)
-{
-    _error_tracker.missing_wads.insert(what);
-}
-
-
 void Sickle::MapArea3D::on_world3d_face_missing_texture(std::string const &what)
 {
     _error_tracker.missing_textures.insert(what);
@@ -373,12 +365,6 @@ void Sickle::MapArea3D::_check_errors()
     if (_error_tracker.error_occurred())
     {
         std::string msg = "<big><b>World3D Error(s):</b></big>";
-        if (!_error_tracker.missing_wads.empty())
-        {
-            msg += "\nMissing WADs:";
-            for (auto const &wad : _error_tracker.missing_wads)
-                msg += "\n<small>" + wad + "</small>";
-        }
         if (!_error_tracker.missing_textures.empty())
         {
             msg += "\nMissing textures:";

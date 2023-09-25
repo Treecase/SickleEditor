@@ -60,6 +60,8 @@ namespace Sickle
         // Help
         void on_action_about();
 
+        void on_TextureManager_texlump_load_error(std::string const &msg);
+
     private:
         Glib::RefPtr<Gio::Settings> _settings;
         FGD::GameDef _game_definition;

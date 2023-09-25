@@ -50,6 +50,7 @@ find_package(GLEW REQUIRED)
 # gtkmm3
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
+pkg_check_modules(sigc++ REQUIRED IMPORTED_TARGET sigc++-2.0)
 
 # GL library depends on platform, so define an alias for it
 add_library(SickleGL INTERFACE)

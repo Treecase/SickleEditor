@@ -22,6 +22,7 @@
 #include "WADDialog.hpp"
 
 #include <gtkmm/filechoosernative.h>
+#include <gtkmm/messagedialog.h>
 
 
 Glib::RefPtr<Sickle::App> Sickle::App::create()
@@ -43,6 +44,9 @@ Sickle::App::App()
         sigc::mem_fun(*this, &App::_on_fgd_path_changed));
     _settings->bind("fgd-path", property_fgd_path());
     _settings->bind("wad-paths", property_wad_paths());
+
+    WAD::TextureManager::signal_texlump_load_error().connect(
+        sigc::mem_fun(*this, &App::on_TextureManager_texlump_load_error));
 }
 
 
@@ -219,6 +223,14 @@ void Sickle::App::on_action_about()
     auto about = Sickle::About{};
     about.set_transient_for(*get_active_window());
     about.run();
+}
+
+
+void Sickle::App::on_TextureManager_texlump_load_error(std::string const &msg)
+{
+    Gtk::MessageDialog d{msg, true, Gtk::MessageType::MESSAGE_WARNING};
+    d.set_title("WAD TexLump load error");
+    d.run();
 }
 
 

@@ -1,6 +1,6 @@
 /**
  * TextureManager.hpp - Lazy-loading WAD texture manager.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 #include "wad.hpp"
 #include "lumps.hpp"
 
+#include <sigc++/signal.h>
+
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -39,41 +41,36 @@ namespace WAD
      */
     class TextureManager
     {
-        TextureManager()
-        {
-        }
+        static sigc::signal<void(std::string)> _sig_texlump_load_error;
+        std::unordered_map<std::string, TexLump> _textures{};
+
+        TextureManager();
         TextureManager(TextureManager const &)=delete;
         TextureManager(TextureManager &&)=delete;
+
     public:
         std::unordered_map<std::string, Lump> lumps{};
-        std::unordered_map<std::string, TexLump> textures{};
+
+        /** Emitted if an error is encountered while reading a TexLump. */
+        static auto &signal_texlump_load_error() {
+            return _sig_texlump_load_error;}
 
         /** Get a reference to the TextureManager singleton. */
-        static TextureManager &get_reference()
-        {
-            static TextureManager texman{};
-            return texman;
-        }
+        static TextureManager &get_reference();
 
         /** Add a WAD to the manager. */
-        void add_wad(WAD const &wad)
-        {
-            for (auto const &lump : wad.directory)
-                if (lump.type == 0x43)
-                    lumps.emplace(lump.name, lump);
-        }
+        void add_wad(WAD const &wad);
 
-        /** Same as `textures.at(key)`, unless this would fail, in which case
-         *  attempt to load the lump identified by `key` from the WAD. */
-        TexLump &at(std::string const &key)
-        {
-            try {
-                return textures.at(key);
-            }
-            catch (std::out_of_range const &) {
-                return textures[key] = readTexLump(lumps.at(key));
-            }
-        }
+        /**
+         * Get the texture lump identified by KEY.
+         *
+         * If the lump has not already been loaded from the WAD, it will be
+         * loaded. If it has, the cached object will be returned.
+         *
+         * If a WAD read error is encountered, signal_texlump_read_error will be
+         * emitted.
+         */
+        TexLump &at(std::string const &key);
     };
 
 
@@ -94,9 +91,6 @@ namespace WAD
                 return textures.at(key);
             }
             catch (std::out_of_range const &) {
-                printf("Proxy<%s> -- construct for %s\n",
-                    typeid(ProxyType).name(),
-                    key.c_str());
                 auto &texman = TextureManager::get_reference();
                 auto kv = textures.emplace(key, texman.at(key));
                 return kv.first->second;

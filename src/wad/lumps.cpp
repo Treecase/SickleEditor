@@ -1,6 +1,6 @@
 /**
  * lumps.cpp - WAD lump types.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,15 +18,23 @@
 
 #include "wad/lumps.hpp"
 
-#include <stdexcept>
-
 #include <cstring>
 
+using namespace WAD;
 
-WAD::TexLump WAD::readTexLump(Lump const &lump)
+
+TexLumpLoadError::TexLumpLoadError(Lump const &lump, std::string const &what)
+:   std::runtime_error{lump.name + ": " + what}
+,   name{lump.name}
+{
+}
+
+
+
+TexLump WAD::readTexLump(Lump const &lump)
 {
     if (lump.type != 0x43)
-        throw std::runtime_error{"Expected lump.type = 0x43"};
+        throw TexLumpLoadError{lump, "lump type is not 0x43"};
 
     TexLump out{};
 

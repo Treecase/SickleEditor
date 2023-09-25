@@ -19,9 +19,6 @@
 #include "world3d/world3d.hpp"
 
 
-sigc::signal<void(std::string)> World3D::World3D::_signal_wad_load_error{};
-
-
 World3D::World3D::World3D(Glib::RefPtr<Sickle::Editor::World> src)
 {
     Sickle::Editor::Entity const *worldspawn{nullptr};

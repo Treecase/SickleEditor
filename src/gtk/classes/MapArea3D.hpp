@@ -85,19 +85,16 @@ namespace Sickle
 
         void on_editor_map_changed();
         void on_wireframe_changed();
-        void on_world3d_wad_load_error(std::string const &what);
         void on_world3d_face_missing_texture(std::string const &what);
 
     private:
         struct ErrorTracker
         {
-            std::unordered_set<std::string> missing_wads{};
             std::unordered_set<std::string> missing_textures{};
 
             bool error_occurred() const
             {
-                return (
-                    !missing_wads.empty() && !missing_textures.empty());
+                return !missing_textures.empty();
             }
         };
 

@@ -1,6 +1,6 @@
 /**
  * lumps.hpp - WAD lump types.
- * Copyright (C) 2022 Trevor Last
+ * Copyright (C) 2022-2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,12 +23,20 @@
 
 #include <array>
 #include <vector>
+#include <stdexcept>
 
 #include <cstdint>
 
 
 namespace WAD
 {
+    /** Thrown when loading a TexLump fails. */
+    struct TexLumpLoadError : public std::runtime_error
+    {
+        std::string const name;
+        TexLumpLoadError(Lump const &lump, std::string const &what);
+    };
+
     /**
      * Texture lump. Type 0x43.
      */
