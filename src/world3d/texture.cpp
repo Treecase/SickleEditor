@@ -24,9 +24,10 @@ auto
 mipmap_to_rgba(WAD::TexLump const &lump, std::vector<uint8_t> const &mipmap)
 {
     std::vector<uint8_t> rgba{};
+    auto const &palette = lump.palette();
     for (auto const &palette_index : mipmap)
     {
-        auto const &rgb = lump.palette.at(palette_index);
+        auto const &rgb = palette.at(palette_index);
         rgba.insert(rgba.end(), rgb.cbegin(), rgb.cend());
         rgba.push_back(0xff);
     }
@@ -38,7 +39,9 @@ mipmap_to_rgba(WAD::TexLump const &lump, std::vector<uint8_t> const &mipmap)
 auto texlump_to_rgba(WAD::TexLump const &lump)
 {
     std::vector<std::vector<uint8_t>> rgba_mipmaps{};
-    for (auto const &mipmap : {lump.tex1, lump.tex2, lump.tex4, lump.tex8})
+    std::vector const mipmaps{
+        lump.tex1(), lump.tex2(), lump.tex4(), lump.tex8()};
+    for (auto const &mipmap : mipmaps)
         rgba_mipmaps.emplace_back(mipmap_to_rgba(lump, mipmap));
     return rgba_mipmaps;
 }
@@ -47,8 +50,7 @@ auto texlump_to_rgba(WAD::TexLump const &lump)
 /** Create a GLUtil::Texture shared_ptr. */
 auto make_texture(std::string const &name)
 {
-    auto texture = std::make_shared<GLUtil::Texture>(
-        GL_TEXTURE_2D, name);
+    auto texture = std::make_shared<GLUtil::Texture>(GL_TEXTURE_2D, name);
     texture->bind();
     texture->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     texture->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -63,15 +65,15 @@ auto make_texture(std::string const &name)
 /** Make a GL Texture from a WAD lump. */
 auto texture_from_lump(WAD::TexLump const &texlump)
 {
-    auto texture = make_texture(texlump.name);
-    auto mipmaps = texlump_to_rgba(texlump);
+    auto const texture = make_texture(texlump.name());
+    auto const mipmaps = texlump_to_rgba(texlump);
     for (size_t mipmap = 0; mipmap < mipmaps.size(); ++mipmap)
     {
-        GLsizei scale = pow(2, mipmap);
+        GLsizei const scale = pow(2, mipmap);
         glTexImage2D(
             texture->type(), mipmap, GL_RGBA,
-            texlump.width/scale, texlump.height/scale, 0,
-            GL_RGBA, GL_UNSIGNED_BYTE, mipmaps[mipmap].data());
+            texlump.width() / scale, texlump.height() / scale, 0,
+            GL_RGBA, GL_UNSIGNED_BYTE, mipmaps.at(mipmap).data());
     }
     texture->unbind();
     return texture;
@@ -81,8 +83,8 @@ auto texture_from_lump(WAD::TexLump const &texlump)
 
 World3D::Texture::Texture(WAD::TexLump const &texlump)
 :   texture{texture_from_lump(texlump)}
-,   width{(int)texlump.width}
-,   height{(int)texlump.height}
+,   width{static_cast<int>(texlump.width())}
+,   height{static_cast<int>(texlump.height())}
 {
 }
 
@@ -104,7 +106,7 @@ World3D::Texture World3D::Texture::make_missing_texture()
     {
         for (size_t x = 0; x < SIZE; ++x)
         {
-            auto idx = 4 * (y * SIZE + x);
+            auto const idx = 4 * (y * SIZE + x);
             if (x < HSIZE && y < HSIZE || x >= HSIZE && y >= HSIZE)
             {
                 pixels[idx+0] = 0x00;

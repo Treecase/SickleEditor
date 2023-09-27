@@ -27,10 +27,12 @@ decltype(TextureImage::_rgb_data)
 TextureImage::convert_texlump_to_rgb_data(WAD::TexLump const &texlump)
 {
     decltype(TextureImage::_rgb_data) buffer{};
-    for (size_t i = 0; i < texlump.width * texlump.height; ++i)
+    auto const &tex1 = texlump.tex1();
+    auto const &palette = texlump.palette();
+    for (size_t i = 0; i < texlump.width() * texlump.height(); ++i)
     {
-        auto const pixel = texlump.tex1.at(i);
-        auto const &rgb = texlump.palette.at(pixel);
+        auto const pixel = tex1.at(i);
+        auto const &rgb = palette.at(pixel);
         buffer.push_back(rgb.at(0));
         buffer.push_back(rgb.at(1));
         buffer.push_back(rgb.at(2));
@@ -51,8 +53,8 @@ TextureImage::TextureImage(std::string const &name, WAD::TexLump const &texlump)
         Gdk::Colorspace::COLORSPACE_RGB,
         false,
         8,
-        texlump.width, texlump.height,
-        texlump.width * 3);
+        texlump.width(), texlump.height(),
+        texlump.width() * 3);
     _image = Gtk::Image{pixbuf};
 
     add(_image);

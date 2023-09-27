@@ -33,54 +33,115 @@ TexLumpLoadError::TexLumpLoadError(Lump const &lump, std::string const &what)
 
 TexLump WAD::readTexLump(Lump const &lump)
 {
-    if (lump.type != 0x43)
-        throw TexLumpLoadError{lump, "lump type is not 0x43"};
+    return TexLump{lump};
+}
 
-    TexLump out{};
 
-    auto const ptr0 = lump.data.data();
-    auto ptr = ptr0;
 
-    memcpy(out.name, ptr, 16);
-    ptr += 16;
+TexLump::TexLump(Lump const &src)
+:   _src{std::make_shared<Lump>(src)}
+,   _cached{std::make_shared<DataCache>()}
+{
+    if (_src->type != 0x43)
+        throw TexLumpLoadError{*_src, "lump type is not 0x43"};
 
-    memcpy(&out.width, ptr, 4);
-    ptr += 4;
-    memcpy(&out.height, ptr, 4);
-    ptr += 4;
+    auto ptr = _src->data.data();
 
-    uint32_t ptrs[4];
-    memcpy(ptrs, ptr, 4 * 4);
+    char name[16];
+    memcpy(name, ptr, 16);
+    _name = std::string{name, 16};
 
-    auto n = out.width * out.height;
-    out.tex1.reserve(n);
-    for (uint32_t i = 0; i < n; ++i)
-        out.tex1.push_back(ptr0[ptrs[0] + i]);
+    memcpy(&_width, ptr + 16, 4);
+    memcpy(&_height, ptr + 20, 4);
 
-    n = (out.width/2) * (out.height/2);
-    out.tex2.reserve(n);
-    for (uint32_t i = 0; i < n; ++i)
-        out.tex2.push_back(ptr0[ptrs[1] + i]);
+    memcpy(_ptrs.data(), ptr + 24, 4 * 4);
+}
 
-    n = (out.width/4) * (out.height/4);
-    out.tex4.reserve(n);
-    for (uint32_t i = 0; i < n; ++i)
-        out.tex4.push_back(ptr0[ptrs[2] + i]);
 
-    n = (out.width/8) * (out.height/8);
-    out.tex8.reserve(n);
-    for (uint32_t i = 0; i < n; ++i)
-        out.tex8.push_back(ptr0[ptrs[3] + i]);
+std::string TexLump::name() const
+{
+    return _name;
+}
 
-    ptr = ptr0 + ptrs[3] + n;
 
-    uint16_t palsize;
-    memcpy(&palsize, ptr, 2);
-    ptr += 2;
+uint32_t TexLump::width() const
+{
+    return _width;
+}
 
-    out.palette.reserve(palsize);
-    for (uint16_t i = 0, j = 0; i < palsize; ++i, j += 3)
-        out.palette.push_back({ptr[j+0], ptr[j+1], ptr[j+2]});
 
-    return out;
+uint32_t TexLump::height() const
+{
+    return _height;
+}
+
+
+std::vector<uint8_t> TexLump::tex1() const
+{
+    if (!_cached->tex1.has_value())
+    {
+        auto const ptr = _src->data.data() + _ptrs.at(0);
+        auto const n = _width * _height;
+        _cached->tex1.emplace(ptr, ptr + n);
+    }
+    return _cached->tex1.value();
+}
+
+
+std::vector<uint8_t> TexLump::tex2() const
+{
+    if (!_cached->tex2.has_value())
+    {
+        auto const ptr = _src->data.data() + _ptrs.at(1);
+        auto const n = (_width / 2) * (_height / 2);
+        _cached->tex2.emplace(ptr, ptr + n);
+    }
+    return _cached->tex2.value();
+}
+
+
+std::vector<uint8_t> TexLump::tex4() const
+{
+    if (!_cached->tex4.has_value())
+    {
+        auto const ptr = _src->data.data() + _ptrs.at(2);
+        auto const n = (_width / 4) * (_height / 4);
+        _cached->tex4.emplace(ptr, ptr + n);
+    }
+    return _cached->tex4.value();
+}
+
+
+std::vector<uint8_t> TexLump::tex8() const
+{
+    if (!_cached->tex8.has_value())
+    {
+        auto const ptr = _src->data.data() + _ptrs.at(3);
+        auto const n = (_width / 8) * (_height / 8);
+        _cached->tex8.emplace(ptr, ptr + n);
+    }
+    return _cached->tex8.value();
+}
+
+
+std::vector<std::array<uint8_t, 3>> TexLump::palette() const
+{
+    if (!_cached->palette.has_value())
+    {
+        auto const ptr = (
+            _src->data.data()
+            + _ptrs.at(3)
+            + ((_width / 8) * (_height / 8)));
+
+        uint16_t palsize;
+        memcpy(&palsize, ptr, 2);
+
+        auto &palette = _cached->palette.emplace();
+        for (uint16_t i = 0; i < palsize; ++i)
+        {
+            auto const j = i * 3;
+            palette.push_back({ptr[2 + j + 0], ptr[2 + j + 1], ptr[2 + j + 2]});
+        }
+    }
+    return _cached->palette.value();
 }

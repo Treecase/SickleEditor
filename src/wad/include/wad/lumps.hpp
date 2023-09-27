@@ -22,8 +22,10 @@
 #include "wad.hpp"
 
 #include <array>
-#include <vector>
+#include <optional>
 #include <stdexcept>
+#include <vector>
+#include <memory>
 
 #include <cstdint>
 
@@ -42,13 +44,35 @@ namespace WAD
      */
     struct TexLump
     {
-        char name[16];
-        uint32_t width, height;
-        std::vector<uint8_t> tex1;
-        std::vector<uint8_t> tex2;
-        std::vector<uint8_t> tex4;
-        std::vector<uint8_t> tex8;
-        std::vector<std::array<uint8_t, 3>> palette;
+        std::string name() const;
+        uint32_t width() const;
+        uint32_t height() const;
+        std::vector<uint8_t> tex1() const;
+        std::vector<uint8_t> tex2() const;
+        std::vector<uint8_t> tex4() const;
+        std::vector<uint8_t> tex8() const;
+        std::vector<std::array<uint8_t, 3>> palette() const;
+
+        TexLump()=default;
+        TexLump(TexLump const &)=default;
+        TexLump(Lump const &src);
+
+    private:
+        struct DataCache
+        {
+            std::optional<std::vector<uint8_t>> tex1{};
+            std::optional<std::vector<uint8_t>> tex2{};
+            std::optional<std::vector<uint8_t>> tex4{};
+            std::optional<std::vector<uint8_t>> tex8{};
+            std::optional<std::vector<std::array<uint8_t, 3>>> palette{};
+        };
+
+        std::shared_ptr<Lump> _src{nullptr};
+        std::shared_ptr<DataCache> _cached{nullptr};
+
+        std::string _name{};
+        uint32_t _width, _height;
+        std::array<uint32_t, 4> _ptrs{};
     };
 
     /* Read a TexLump from a Lump. */
