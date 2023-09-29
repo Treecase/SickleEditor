@@ -1,5 +1,3 @@
-require "AppWin"
-
 local moremath = require "moremath"
 local EventListener = require "EventListener"
 local MapTools = require "MapArea2D/MapTools/MapTools"

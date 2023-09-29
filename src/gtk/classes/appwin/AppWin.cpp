@@ -380,45 +380,6 @@ bool AppWin::on_key_press_event(GdkEventKey *event)
 
 
 
-std::vector<std::string> AppWin::_filter_dirs(
-    std::vector<std::string> const &dirs)
-{
-    std::vector<std::string> filtered{};
-    for (auto const &path : dirs)
-    {
-        auto const dir = Gio::File::create_for_path(path);
-        if (!dir->query_exists())
-            std::cerr << "'" << path << "' does not exist\n";
-        else
-            filtered.push_back(path);
-    }
-    return filtered;
-}
-
-
-std::vector<std::string> AppWin::_find_scripts_in_dirs(
-    std::vector<std::string> const &dirs)
-{
-    std::vector<std::string> scripts{};
-    for (auto const &path : dirs)
-    {
-        auto const dir = Gio::File::create_for_path(path);
-        auto enumeration = dir->enumerate_children();
-        for (
-            auto file = enumeration->next_file();
-            file;
-            file = enumeration->next_file())
-        {
-            auto const &filepath = dir->get_path() + "/" + file->get_name();
-            if (Glib::file_test(filepath, Glib::FileTest::FILE_TEST_IS_DIR))
-                continue;
-            scripts.push_back(filepath);
-        }
-    }
-    return scripts;
-}
-
-
 std::string AppWin::_make_lua_include_path(std::string const &path)
 {
     return path + "/?.lua;" + path + "/?";
@@ -440,14 +401,23 @@ void AppWin::_on_opsearch_op_chosen(Editor::Operation const &op)
 
 void AppWin::_run_internal_scripts()
 {
+    int const start_top = lua_gettop(L);
     for (auto const &path : _internal_scripts)
     {
         auto const &res = Gio::Resource::lookup_data_global(
             SE_GRESOURCE_PREFIX + path);
         gsize _size;
-        Lua::checkerror(L,
-            luaL_dostring(L, static_cast<char const *>(res->get_data(_size))));
+        try {
+            Lua::checkerror(L,
+                luaL_dostring(
+                    L,
+                    static_cast<char const *>(res->get_data(_size))));
+        }
+        catch (Lua::Error const &e) {
+            std::cerr << e.what() << std::endl;
+        }
     }
+    lua_pop(L, lua_gettop(L) - start_top);
 }
 
 
@@ -455,35 +425,47 @@ void AppWin::_run_runtime_scripts()
 {
     int const start_top = lua_gettop(L);
 
-    auto const runtime_script_dirs = _filter_dirs(_lua_script_dirs);
-    auto const runtime_scripts = _find_scripts_in_dirs(runtime_script_dirs);
-
     // Save old include paths.
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "path");
-    std::string const oldpath{lua_tostring(L, -1)};
+    std::string const oldPATH{lua_tostring(L, -1)};
     lua_pop(L, 1);
 
-    // Set Lua include paths.
-    std::string newpath = oldpath;
-    for (auto const dir : runtime_script_dirs)
+    // Load and execute runtime scripts.
+    int const start_top1 = lua_gettop(L);
+    for (auto const dir_path : _lua_script_dirs)
     {
-        auto const pattern = _make_lua_include_path(dir);
-        newpath += ";" + pattern;
-    }
-    Lua::push(L, newpath);
-    lua_setfield(L, -2, "path");
-    lua_pop(L, 1);
+        auto const newPATH = oldPATH + ";" + _make_lua_include_path(dir_path);
+        Lua::push(L, newPATH);
+        lua_setfield(L, -2, "path");
 
-    for (auto const &script : runtime_scripts)
-        Lua::checkerror(L, luaL_dofile(L, script.c_str()));
+        auto const script_path = dir_path + "/main.lua";
+        auto const r = luaL_loadfile(L, script_path.c_str());
+        switch (r)
+        {
+        case LUA_OK:
+            try {
+                Lua::checkerror(L, lua_pcall(L, 0, LUA_MULTRET, 0));
+            }
+            catch (Lua::Error const &e) {
+                std::cout << e.what() << std::endl;
+            }
+            break;
+        default:
+            auto const errmsg = lua_tostring(L, -1);
+            std::cout << errmsg << std::endl;
+            lua_pop(L, 1);
+            break;
+        }
+        lua_pop(L, lua_gettop(L) - start_top1);
+    }
 
     // Reset include paths.
-    lua_getglobal(L, "package");
-    Lua::push(L, oldpath);
+    Lua::push(L, oldPATH);
     lua_setfield(L, -2, "path");
     lua_pop(L, 1);
 
+    assert(lua_gettop(L) == start_top);
     lua_pop(L, lua_gettop(L) - start_top);
 }
 
@@ -492,34 +474,48 @@ void AppWin::_run_operations_scripts()
 {
     int const start_top = lua_gettop(L);
 
-    auto const operation_script_dirs = _filter_dirs(_operation_script_dirs);
-    auto const operation_scripts = _find_scripts_in_dirs(operation_script_dirs);
-
     // Save old include paths.
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "path");
-    std::string const oldpath{lua_tostring(L, -1)};
+    std::string const oldPATH{lua_tostring(L, -1)};
     lua_pop(L, 1);
 
-    // Set Lua include paths.
-    std::string newpath = oldpath;
-    for (auto const dir : operation_script_dirs)
+    // Load and execute operation scripts.
+    int const start_top1 = lua_gettop(L);
+    for (auto const dir_path : _operation_script_dirs)
     {
-        auto const pattern = _make_lua_include_path(dir);
-        newpath += ";" + pattern;
-    }
-    Lua::push(L, newpath);
-    lua_setfield(L, -2, "path");
-    lua_pop(L, 1);
+        auto const newPATH = oldPATH + ";" + _make_lua_include_path(dir_path);
+        Lua::push(L, newPATH);
+        lua_setfield(L, -2, "path");
 
-    for (auto const &script : operation_scripts)
-        editor->oploader->add_source_from_file(script);
+        auto const dir = Gio::File::create_for_path(dir_path);
+        Glib::RefPtr<Gio::FileEnumerator> e{nullptr};
+        try {
+            e = dir->enumerate_children();
+        }
+        catch (Gio::Error const &e) {
+            std::cerr << e.what() << std::endl;
+            continue;
+        }
+
+        for (auto file = e->next_file(); file; file = e->next_file())
+        {
+            try {
+                editor->oploader->add_source_from_file(
+                    dir_path + "/" + file->get_name());
+            }
+            catch (Lua::Error const &e) {
+                std::cerr << e.what() << std::endl;
+            }
+        }
+        lua_pop(L, lua_gettop(L) - start_top1);
+    }
 
     // Reset include paths.
-    lua_getglobal(L, "package");
-    Lua::push(L, oldpath);
+    Lua::push(L, oldPATH);
     lua_setfield(L, -2, "path");
     lua_pop(L, 1);
 
+    assert(lua_gettop(L) == start_top);
     lua_pop(L, lua_gettop(L) - start_top);
 }

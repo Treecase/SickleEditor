@@ -143,10 +143,6 @@ namespace Sickle::AppWin
 
         std::vector<Editor::MapTool> _predefined_maptools{};
 
-        static std::vector<std::string> _filter_dirs(
-            std::vector<std::string> const &dirs);
-        static std::vector<std::string> _find_scripts_in_dirs(
-            std::vector<std::string> const &dirs);
         static std::string _make_lua_include_path(std::string const &dir);
 
         void _on_grid_size_changed();
