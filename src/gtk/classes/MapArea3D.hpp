@@ -54,7 +54,7 @@ namespace Sickle
 
         DebugDrawer3D debug{};
 
-        MapArea3D(Glib::RefPtr<Editor::Editor> ed);
+        MapArea3D(Editor::EditorRef ed);
 
         Editor::BrushRef pick_brush(glm::vec2 const &P);
         GLSpacePoint screenspace_to_glspace(ScreenSpacePoint const &) const;
@@ -98,7 +98,7 @@ namespace Sickle
             }
         };
 
-        Glib::RefPtr<Editor::Editor> _editor;
+        Editor::EditorRef _editor;
         std::shared_ptr<GLUtil::Program> _shader{nullptr};
         std::unique_ptr<World3D::World3D> _mapview{nullptr};
         ErrorTracker _error_tracker{};

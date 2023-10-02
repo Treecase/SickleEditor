@@ -44,7 +44,7 @@ namespace Sickle::AppWin
     class MapTools : public Gtk::Frame
     {
     public:
-        MapTools(Glib::RefPtr<Editor::Editor> editor);
+        MapTools(Editor::EditorRef editor);
 
     protected:
         void on_tool_button_toggled(std::string const &tool);
@@ -52,7 +52,7 @@ namespace Sickle::AppWin
         void on_maptools_changed();
 
     private:
-        Glib::RefPtr<Editor::Editor> _editor;
+        Editor::EditorRef _editor;
         std::unordered_map<std::string, Gtk::RadioButton> _buttons{};
 
         Gtk::ScrolledWindow _scrolled{};

@@ -19,6 +19,7 @@
 #ifndef SE_EDITOR_OPERATION_HPP
 #define SE_EDITOR_OPERATION_HPP
 
+#include <core/Editor.hpp>
 #include <se-lua/se-lua.hpp>
 
 #include <glibmm/refptr.h>
@@ -33,8 +34,6 @@
 
 namespace Sickle::Editor
 {
-    class Editor;
-
     class Operation
     {
     public:
@@ -83,8 +82,7 @@ namespace Sickle::Editor
 
         bool check_type(size_t argument, Arg const &arg) const;
 
-        void execute(Editor *ed, ArgList const &args) const;
-        void execute(Glib::RefPtr<Editor> ed, ArgList const &args) const;
+        void execute(EditorRef ed, ArgList const &args) const;
 
     private:
         lua_State *const L;

@@ -48,7 +48,7 @@ namespace Sickle::AppWin
 
         sigc::signal<void(Editor::Operation)> _sig_operation_chosen{};
 
-        Glib::RefPtr<Editor::Editor> _editor;
+        Editor::EditorRef _editor;
         Gtk::Window *window{nullptr};
         Gtk::SearchEntry *searchbar{nullptr};
         Gtk::TreeView *treeview{nullptr};
@@ -75,7 +75,7 @@ namespace Sickle::AppWin
         void _add_row(Editor::Operation const &op);
 
     public:
-        OperationSearch(Glib::RefPtr<Editor::Editor> editor);
+        OperationSearch(Editor::EditorRef editor);
         virtual ~OperationSearch();
 
         void set_transient_for(Gtk::Window &parent);

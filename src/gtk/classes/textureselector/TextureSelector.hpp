@@ -42,7 +42,7 @@ namespace Sickle::TextureSelector
     {
     public:
         static Glib::RefPtr<TextureSelector> create(
-            Glib::RefPtr<Editor::Editor> const &editor);
+            Editor::EditorRef const &editor);
 
         /** Get the name of the texture currently selected by the user. */
         std::string get_selected_texture() const;
@@ -63,9 +63,9 @@ namespace Sickle::TextureSelector
         Gtk::Button *_confirm{nullptr};
         std::vector<TextureImage> _images{};
 
-        Glib::RefPtr<Editor::Editor> _editor{nullptr};
+        Editor::EditorRef _editor{nullptr};
 
-        TextureSelector(Glib::RefPtr<Editor::Editor> const &editor);
+        TextureSelector(Editor::EditorRef const &editor);
 
         void _refresh_textures();
         void _clear_textures();

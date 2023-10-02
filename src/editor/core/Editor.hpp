@@ -20,10 +20,8 @@
 #define SE_EDITOR_HPP
 
 #include "BrushBox.hpp"
-#include "MapTools.hpp"
 #include "Selection.hpp"
 
-#include <operations/OperationLoader.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 #include <wad/TextureManager.hpp>
 
@@ -37,10 +35,15 @@
 
 namespace Sickle::Editor
 {
+    class Operation;
     class OperationLoader;
+    class MapTool;
 
     // FIXME: temp -- probably want an enum or something.
     using Mode = std::string;
+
+    class Editor;
+    using EditorRef = Glib::RefPtr<Editor>;
 
     /**
      * The Editor class manages all the objects in the map, as well editor-only
@@ -56,7 +59,7 @@ namespace Sickle::Editor
 
         std::shared_ptr<OperationLoader> oploader{nullptr};
 
-        static Glib::RefPtr<Editor> create(lua_State *L);
+        static EditorRef create(lua_State *L);
 
         auto property_map() {return _prop_map.get_proxy();}
         auto property_map() const {return _prop_map.get_proxy();}
@@ -101,5 +104,8 @@ namespace Sickle::Editor
         Editor &operator=(Editor const &)=delete;
     };
 }
+
+#include "MapTools.hpp"
+#include <operations/OperationLoader.hpp>
 
 #endif

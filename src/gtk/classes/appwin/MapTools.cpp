@@ -24,7 +24,7 @@
 using namespace Sickle::AppWin;
 
 
-MapTools::MapTools(Glib::RefPtr<Editor::Editor> editor)
+MapTools::MapTools(Editor::EditorRef editor)
 :   Glib::ObjectBase{typeid(MapTools)}
 ,   Gtk::Frame{}
 ,   _editor{editor}

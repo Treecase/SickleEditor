@@ -77,7 +77,7 @@ static void _test_space_conversions(Sickle::MapArea2D const &maparea);
 
 
 /* ===[ MapArea2D ]=== */
-Sickle::MapArea2D::MapArea2D(Glib::RefPtr<Editor::Editor> ed)
+Sickle::MapArea2D::MapArea2D(Editor::EditorRef ed)
 :   Glib::ObjectBase{typeid(MapArea2D)}
 ,   Gtk::DrawingArea{}
 ,   Lua::Referenceable{}

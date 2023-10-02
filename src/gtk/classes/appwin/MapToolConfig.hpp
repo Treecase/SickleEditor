@@ -40,7 +40,7 @@ namespace Sickle::AppWin
     class MapToolConfig : public Gtk::Frame
     {
     public:
-        MapToolConfig(Glib::RefPtr<Editor::Editor> const &editor);
+        MapToolConfig(Editor::EditorRef const &editor);
 
         auto &signal_confirmed() {return _sig_confirmed;}
 
@@ -51,7 +51,7 @@ namespace Sickle::AppWin
         Editor::Operation::ArgList get_arguments() const;
 
     private:
-        Glib::RefPtr<Editor::Editor> _editor{nullptr};
+        Editor::EditorRef _editor{nullptr};
         std::unique_ptr<Editor::Operation> _operation{nullptr};
 
         sigc::signal<void()> _sig_confirmed{};

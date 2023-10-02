@@ -77,10 +77,10 @@ static int add_maptool(lua_State *L)
 
     // Argument 4 is the "Should Popup?" function.
     auto const ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    auto const fn = [L, ref](Glib::RefPtr<Sickle::Editor::Editor> const &editor)
+    auto const fn = [L, ref](Sickle::Editor::EditorRef const &editor)
         {
             lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-            Lua::push(L, editor.get());
+            Lua::push(L, editor);
             Lua::checkerror(L, lua_pcall(L, 1, 1, 0));
             bool const result = lua_toboolean(L, -1);
             return result;

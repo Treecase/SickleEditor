@@ -86,7 +86,7 @@ raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
 
 
 /* ===[ MapArea3D ]=== */
-Sickle::MapArea3D::MapArea3D(Glib::RefPtr<Editor::Editor> ed)
+Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
 :   Glib::ObjectBase{typeid(MapArea3D)}
 ,   Gtk::GLArea{}
 ,   Lua::Referenceable{}

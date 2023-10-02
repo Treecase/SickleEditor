@@ -114,7 +114,7 @@ static luaL_Reg methods[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 template<>
-void Lua::push(lua_State *L, Editor *editor)
+void Lua::push(lua_State *L, EditorRef editor)
 {
     Lua::RefBuilder builder{L, METATABLE, editor};
     if (builder.pushnew())
@@ -125,11 +125,11 @@ void Lua::push(lua_State *L, Editor *editor)
     builder.finish();
 }
 
-Editor *leditor_check(lua_State *L, int arg)
+EditorRef leditor_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, METATABLE);
     luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
-    return *static_cast<Editor **>(ud);
+    return *static_cast<EditorRef *>(ud);
 }
 
 int luaopen_editor(lua_State *L)

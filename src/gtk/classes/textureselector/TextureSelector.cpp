@@ -26,13 +26,13 @@ using namespace Sickle::TextureSelector;
 
 
 Glib::RefPtr<TextureSelector> TextureSelector::create(
-    Glib::RefPtr<Sickle::Editor::Editor> const &editor)
+    Sickle::Editor::EditorRef const &editor)
 {
     return Glib::RefPtr{new TextureSelector{editor}};
 }
 
 
-TextureSelector::TextureSelector(Glib::RefPtr<Sickle::Editor::Editor> const &editor)
+TextureSelector::TextureSelector(Sickle::Editor::EditorRef const &editor)
 :   Glib::ObjectBase{typeid(TextureSelector)}
 ,   _editor{editor}
 {

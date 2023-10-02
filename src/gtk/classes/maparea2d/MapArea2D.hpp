@@ -60,7 +60,7 @@ namespace Sickle
 
         enum DrawAngle {TOP, FRONT, RIGHT};
 
-        MapArea2D(Glib::RefPtr<Editor::Editor> ed);
+        MapArea2D(Editor::EditorRef ed);
 
         /** Convert screen-space coordinates to draw-space coordinates. */
         DrawSpacePoint screenspace_to_drawspace(double x, double y) const;
@@ -105,7 +105,7 @@ namespace Sickle
         bool on_enter_notify_event(GdkEventCrossing *event) override;
 
     private:
-        Glib::RefPtr<Editor::Editor> _editor;
+        Editor::EditorRef _editor;
 
         GrabbableBox _selected_box{};
         GrabbableBoxView _selected_box_view;

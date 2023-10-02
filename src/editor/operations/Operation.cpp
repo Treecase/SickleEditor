@@ -217,13 +217,7 @@ bool Operation::check_type(size_t argument, Arg const &arg) const
 }
 
 
-void Operation::execute(Glib::RefPtr<Editor> ed, ArgList const &args) const
-{
-    execute(ed.get(), args);
-}
-
-
-void Operation::execute(Editor *ed, ArgList const &passed_args) const
+void Operation::execute(EditorRef ed, ArgList const &passed_args) const
 {
     if (args.size() != passed_args.size())
         throw std::invalid_argument{"incorrect number of arguments"};

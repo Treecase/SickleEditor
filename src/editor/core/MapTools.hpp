@@ -19,7 +19,7 @@
 #ifndef SE_EDITOR_MAPTOOLS_HPP
 #define SE_EDITOR_MAPTOOLS_HPP
 
-#include <glibmm/refptr.h>
+#include <core/Editor.hpp>
 
 #include <functional> // temp
 #include <string>
@@ -28,8 +28,6 @@
 
 namespace Sickle::Editor
 {
-    class Editor;
-
     class MapTool
     {
     public:
@@ -39,7 +37,7 @@ namespace Sickle::Editor
             std::string const operation_id;
         };
         // temp
-        std::function<bool(Glib::RefPtr<Editor>)> x;
+        std::function<bool(EditorRef)> x;
 
         MapTool(
             std::string const &name,

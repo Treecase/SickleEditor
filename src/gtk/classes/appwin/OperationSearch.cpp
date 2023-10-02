@@ -37,7 +37,7 @@ size_t OperationSearch::similarity(
 }
 
 
-OperationSearch::OperationSearch(Glib::RefPtr<Editor::Editor> editor)
+OperationSearch::OperationSearch(Editor::EditorRef editor)
 :   _editor{editor}
 {
     auto const builder = Gtk::Builder::create_from_resource(

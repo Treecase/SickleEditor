@@ -53,7 +53,7 @@ namespace Sickle::AppWin
     {
     public:
         lua_State *const L;
-        Glib::RefPtr<Editor::Editor> editor;
+        Editor::EditorRef editor;
 
         AppWin();
 

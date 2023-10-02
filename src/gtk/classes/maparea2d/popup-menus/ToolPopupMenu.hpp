@@ -33,7 +33,7 @@ namespace Sickle
     class ToolPopupMenu : public Gtk::Menu
     {
         Glib::RefPtr<Gio::SimpleActionGroup> _actions{};
-        Glib::RefPtr<Editor::Editor> _editor{nullptr};
+        Editor::EditorRef _editor{nullptr};
         Editor::MapTool _tool; // FIXME: temp?
 
     public:

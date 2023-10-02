@@ -21,9 +21,9 @@
 using namespace Sickle::Editor;
 
 
-Glib::RefPtr<Editor> Editor::create(lua_State *L)
+EditorRef Editor::create(lua_State *L)
 {
-    return Glib::RefPtr<Editor>{new Editor{L}};
+    return EditorRef{new Editor{L}};
 }
 
 

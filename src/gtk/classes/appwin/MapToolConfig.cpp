@@ -77,7 +77,7 @@ struct StringConfig : public Gtk::Entry, public Config
 struct TextureConfig : public Gtk::Box, public Config
 {
     TextureConfig(
-        Glib::RefPtr<Editor> const &editor,
+        EditorRef const &editor,
         Operation::Arg const &arg="")
     :   Gtk::Box{Gtk::Orientation::ORIENTATION_HORIZONTAL}
     ,   _texture_selector{TextureSelector::create(editor)}
@@ -201,7 +201,7 @@ public:
 
 
 static Glib::RefPtr<Gtk::Widget> make_config_for(
-    Glib::RefPtr<Editor> const &editor,
+    EditorRef const &editor,
     Operation const &op,
     size_t argument)
 {
@@ -222,7 +222,7 @@ static Glib::RefPtr<Gtk::Widget> make_config_for(
 
 
 
-MapToolConfig::MapToolConfig(Glib::RefPtr<Editor::Editor> const &editor)
+MapToolConfig::MapToolConfig(Editor::EditorRef const &editor)
 :   Glib::ObjectBase{typeid(MapToolConfig)}
 ,   Gtk::Frame{}
 ,   _editor{editor}
