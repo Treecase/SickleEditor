@@ -154,8 +154,12 @@ AppWin::AppWin()
     _views.add2(_right_views);
     _views.set_wide_handle(true);
 
-    _mode_selector.set_halign(Gtk::Align::ALIGN_START);
-    _mode_selector.set_valign(Gtk::Align::ALIGN_START);
+    _mode_selector.add_mode("brush", "Brush");
+    _mode_selector.add_mode("face", "Face");
+    _mode_selector.add_mode("vertex", "Vertex");
+    _mode_selector.property_mode() = "brush";
+    _mode_selector.add_mode("extra", "JDKASj");
+    _mode_selector.remove_mode("extra");
 
     _overlay.add(_views);
     _overlay.add_overlay(_mode_selector);
@@ -313,7 +317,6 @@ void AppWin::search_operations()
 
 void AppWin::add_maptool(Editor::MapTool const &maptool)
 {
-    _predefined_maptools.push_back(maptool);
     editor->add_maptool(maptool);
 }
 

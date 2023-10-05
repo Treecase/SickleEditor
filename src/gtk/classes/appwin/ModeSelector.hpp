@@ -19,6 +19,8 @@
 #ifndef SE_APPWIN_MODESELECTOR_HPP
 #define SE_APPWIN_MODESELECTOR_HPP
 
+#include <core/Editor.hpp>
+
 #include <glibmm/property.h>
 #include <gtkmm/box.h>
 #include <gtkmm/radiobutton.h>
@@ -32,19 +34,32 @@ namespace Sickle::AppWin
     class ModeSelector : public Gtk::Box
     {
     public:
-        ModeSelector(std::initializer_list<std::string> const &modes);
+        ModeSelector();
 
         auto property_mode() {return _prop_mode.get_proxy();}
 
+        /** Add a Mode to the selector. */
+        void add_mode(Editor::Mode const &mode, Glib::ustring const &label);
+        /**
+         * Remove a Mode from the selector. Does nothing if the mode is not in
+         * the selector.
+         */
+        void remove_mode(Editor::Mode const &mode);
+
     protected:
-        void on_button_clicked(std::string const &mode);
+        void on_button_clicked(Editor::Mode const &mode);
 
     private:
-        Glib::Property<std::string> _prop_mode;
+        Glib::Property<Editor::Mode> _prop_mode;
 
         Gtk::RadioButtonGroup _group{};
 
-        std::unordered_map<std::string, Gtk::RadioButton> _buttons{};
+        struct ModeData
+        {
+            Gtk::RadioButton btn;
+            sigc::connection conn;
+        };
+        std::unordered_map<Editor::Mode, ModeData> _buttons{};
     };
 }
 

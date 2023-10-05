@@ -104,7 +104,7 @@ namespace Sickle::AppWin
         LuaConsole _luaconsole{};
         Gtk::InfoBar _luainfobar{};
         OperationSearch _opsearch;
-        ModeSelector _mode_selector{"brush", "face", "vertex"};
+        ModeSelector _mode_selector{};
 
         // Structural widgets
         Gtk::Grid _basegrid{};
@@ -140,8 +140,6 @@ namespace Sickle::AppWin
             "lua/gdkkeysyms.lua",
             "lua/gdktypes.lua",
         };
-
-        std::vector<Editor::MapTool> _predefined_maptools{};
 
         static std::string _make_lua_include_path(std::string const &dir);
 
