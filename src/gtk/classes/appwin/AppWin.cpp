@@ -113,6 +113,10 @@ AppWin::AppWin()
             editor->property_mode(),
             _mode_selector.property_mode(),
             Glib::BindingFlags::BINDING_BIDIRECTIONAL)}
+,   _binding_editor_outliner_world{
+        Glib::Binding::bind_property(
+            editor->property_map(),
+            _outliner.property_world())}
 {
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
@@ -164,8 +168,11 @@ AppWin::AppWin()
     _overlay.add(_views);
     _overlay.add_overlay(_mode_selector);
 
+    _sidebar_vsplitter_R.pack1(_outliner, Gtk::AttachOptions::SHRINK);
+    _sidebar_vsplitter_R.pack2(_maptool_config, Gtk::AttachOptions::EXPAND);
+
     _sidebar_splitter_R.pack1(_overlay, Gtk::AttachOptions::EXPAND);
-    _sidebar_splitter_R.pack2(_maptool_config, Gtk::AttachOptions::SHRINK);
+    _sidebar_splitter_R.pack2(_sidebar_vsplitter_R, Gtk::AttachOptions::SHRINK);
 
     _sidebar_splitter_L.pack1(_maptools, Gtk::AttachOptions::SHRINK);
     _sidebar_splitter_L.pack2(_sidebar_splitter_R, Gtk::AttachOptions::EXPAND);

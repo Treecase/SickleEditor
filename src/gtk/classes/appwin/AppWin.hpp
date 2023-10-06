@@ -26,6 +26,7 @@
 #include "MapTools.hpp"
 #include "ModeSelector.hpp"
 #include "OperationSearch.hpp"
+#include "Outliner.hpp"
 
 #include <core/Editor.hpp>
 #include <operations/Operation.hpp>
@@ -105,6 +106,7 @@ namespace Sickle::AppWin
         Gtk::InfoBar _luainfobar{};
         OperationSearch _opsearch;
         ModeSelector _mode_selector{};
+        Outliner _outliner{};
 
         // Structural widgets
         Gtk::Grid _basegrid{};
@@ -117,6 +119,7 @@ namespace Sickle::AppWin
             Gtk::Orientation::ORIENTATION_HORIZONTAL};
         Gtk::Paned _sidebar_splitter_R{
             Gtk::Orientation::ORIENTATION_HORIZONTAL};
+        Gtk::Paned _sidebar_vsplitter_R{Gtk::Orientation::ORIENTATION_VERTICAL};
         Gtk::Overlay _overlay{};
 
         Glib::Property<guint> _prop_grid_size;
@@ -125,6 +128,7 @@ namespace Sickle::AppWin
             _binding_grid_size_right;
         Glib::RefPtr<Glib::Binding> _binding_left_right_views_position;
         Glib::RefPtr<Glib::Binding> _binding_editor_modeselector_mode;
+        Glib::RefPtr<Glib::Binding> _binding_editor_outliner_world;
         sigc::signal<void()> _sig_lua_reloaded{};
 
         std::vector<std::string> _lua_script_dirs{
