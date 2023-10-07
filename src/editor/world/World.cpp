@@ -51,7 +51,7 @@ Glib::RefPtr<World> World::create(RMF::RichMap const &map)
         auto group = groups.top();
         groups.pop();
         for (auto const &brush : group.brushes)
-            worldspawn.add_brush(brush);
+            worldspawn.add_brush(Brush::create(brush));
         for (auto const &entity : group.entities)
             world->add_entity(entity);
         for (auto group2 : group.groups)
@@ -82,17 +82,9 @@ World::operator MAP::Map() const
 }
 
 
-void World::add_brush(Brush const &brush)
-{
-    worldspawn().add_brush(brush);
-    signal_changed().emit();
-}
-
-
 Entity &World::add_entity(Entity const &entity)
 {
     auto &e = _entities.emplace_back(entity);
-    signal_changed().emit();
     return e;
 }
 
@@ -101,7 +93,6 @@ void World::remove_brush(BrushRef const &brush)
 {
     for (auto &entity : _entities)
         entity.remove_brush(brush);
-    signal_changed().emit();
 }
 
 

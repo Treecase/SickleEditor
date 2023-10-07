@@ -44,12 +44,10 @@ namespace Sickle::Editor
         /** Convert to .map format. */
         operator MAP::Map() const;
 
-        auto &signal_changed() {return _signal_changed;}
         // WARNING: You are expected to not modify the collection itself, only
         // contained items.
         auto &entities() {return _entities;}
 
-        void add_brush(Brush const &brush);
         Entity &add_entity(Entity const &entity);
         void remove_brush(BrushRef const &brush);
         Entity &worldspawn();

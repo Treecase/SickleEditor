@@ -42,8 +42,9 @@ static int add_brush(lua_State *L)
         auto const v = lgeo_tovector<glm::vec3>(L, i + 2);
         points.push_back(v);
     }
+
     try {
-        ed->get_map()->add_brush(points);
+        ed->get_map()->worldspawn().add_brush(Brush::create(points));
     }
     catch (std::runtime_error const &e) {
         // Brush construction degenerate case.

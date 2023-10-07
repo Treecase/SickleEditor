@@ -21,55 +21,55 @@
 using namespace Sickle::Editor;
 
 
-Brush::Brush()
-:   Glib::ObjectBase{typeid(Brush)}
-,   Lua::Referenceable{}
-,   _prop_selected{*this, "selected", false}
-,   _prop_real{*this, "real", false}
+BrushRef Brush::create()
 {
+    return Glib::RefPtr{new Brush()};
 }
 
 
-Brush::Brush(Brush const &other)
-:   Glib::ObjectBase{typeid(Brush)}
-,   Lua::Referenceable{other}
-,   _prop_selected{*this, "selected", false}
-,   _prop_real{*this, "real", false}
-{
-    faces = other.faces;
-    property_selected().set_value(other.is_selected());
-}
-
-
-Brush::Brush(std::vector<glm::vec3> const &vertices)
-:   Brush{}
+BrushRef Brush::create(std::vector<glm::vec3> const &vertices)
 {
     auto const v = facet_enumeration(vertices);
     auto const facets = v.first;
     auto const vertices2 = v.second;
+
+    auto result = Brush::create();
     for (auto const &facet : facets)
-        faces.emplace_back(Face::create(facet, vertices2));
+        result->faces.emplace_back(Face::create(facet, vertices2));
+    return result;
 }
 
 
-Brush::Brush(MAP::Brush const &brush)
-:   Brush{}
+BrushRef Brush::create(MAP::Brush const &brush)
 {
     std::vector<HalfPlane> halfplanes{};
     for (auto const &plane : brush.planes)
         halfplanes.emplace_back(plane.a, plane.b, plane.c);
     auto const vertices = vertex_enumeration(halfplanes);
     assert(vertices.size() != 0);
+
+    auto result = Brush::create();
     for (auto const &plane : brush.planes)
-        faces.emplace_back(Face::create(plane, vertices));
+        result->faces.emplace_back(Face::create(plane, vertices));
+    return result;
 }
 
 
-Brush::Brush(RMF::Solid const &solid)
-:   Brush{}
+BrushRef Brush::create(RMF::Solid const &solid)
 {
+    auto result = Brush::create();
     for (auto const &face : solid.faces)
-        faces.emplace_back(Face::create(face));
+        result->faces.emplace_back(Face::create(face));
+    return result;
+}
+
+
+Brush::Brush()
+:   Glib::ObjectBase{typeid(Brush)}
+,   Lua::Referenceable{}
+,   _prop_selected{*this, "selected", false}
+,   _prop_real{*this, "real", false}
+{
 }
 
 

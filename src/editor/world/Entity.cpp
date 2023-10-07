@@ -43,7 +43,7 @@ Entity::Entity(MAP::Entity const &entity)
 {
     properties = entity.properties;
     for (auto const &brush : entity.brushes)
-        _brushes.push_back(Glib::RefPtr{new Brush{brush}});
+        _brushes.push_back(Brush::create(brush));
 }
 
 
@@ -53,7 +53,7 @@ Entity::Entity(RMF::Entity const &entity)
     properties = entity.kv_pairs;
     properties["classname"] = entity.classname;
     for (auto const &brush : entity.brushes)
-        _brushes.push_back(Glib::RefPtr{new Brush{brush}});
+        _brushes.push_back(Brush::create(brush));
 }
 
 
@@ -87,11 +87,10 @@ std::vector<BrushRef> Entity::brushes() const
 }
 
 
-void Entity::add_brush(Brush const &brush)
+void Entity::add_brush(BrushRef const &brush)
 {
-    Glib::RefPtr the_brush{new Brush{brush}};
-    _brushes.push_back(the_brush);
-    the_brush->property_real() = true;
+    _brushes.push_back(brush);
+    brush->property_real() = true;
     signal_changed().emit();
 }
 

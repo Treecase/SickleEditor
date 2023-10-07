@@ -22,7 +22,7 @@
 sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};
 
 
-World3D::Face::Face(Sickle::Editor::FaceRef face, GLint offset)
+World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
 :   sigc::trackable{}
 ,   _src{face}
 ,   offset{offset}
@@ -38,25 +38,10 @@ World3D::Face::Face(Sickle::Editor::FaceRef face, GLint offset)
 }
 
 
-World3D::Face::Face(Face const &other)
-:   sigc::trackable{}
-,   _src{other._src}
-,   texture{other.texture}
-,   vertices{other.vertices}
-,   offset{other.offset}
-{
-    _src->signal_vertices_changed().connect(
-        sigc::mem_fun(*this, &Face::_on_src_verts_changed));
-    _src->property_texture().signal_changed().connect(
-        sigc::mem_fun(*this, &Face::_on_src_texture_changed));
-}
-
-
 void World3D::Face::_on_src_verts_changed()
 {
     vertices.clear();
     _sync_vertices();
-    signal_verts_changed().emit();
 }
 
 

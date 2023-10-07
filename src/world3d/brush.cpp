@@ -26,16 +26,23 @@ World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)
 ,   _vbo{std::make_shared<GLUtil::Buffer>(GL_ARRAY_BUFFER)}
 {
     std::vector<GLfloat> vbo_data{};
-    for (auto faceptr : _src->faces)
+    for (auto const &faceptr : _src->faces)
     {
         auto const offset = vbo_data.size() / Vertex::ELEMENTS;
-        auto &face = _faces.emplace_back(faceptr, offset);
-        for (auto const &vertex : face.vertices)
+        auto &face = _faces.emplace_back(
+            std::make_shared<Face>(faceptr, offset));
+        for (auto const &vertex : face->vertices)
         {
             auto v = vertex.as_vbo();
             vbo_data.insert(vbo_data.end(), v.cbegin(), v.cend());
         }
+        faceptr->signal_vertices_changed().connect(
+            sigc::bind(
+                sigc::mem_fun(*this, &Brush::_on_face_changed), face));
     }
+
+    _src->property_real().signal_changed().connect(
+        sigc::mem_fun(*this, &Brush::_on_real_changed));
 
     _vao->bind();
 
@@ -53,12 +60,6 @@ World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)
 
     _vbo->unbind();
     _vao->unbind();
-
-    for (size_t i = 0; i < _faces.size(); ++i)
-    {
-        _faces[i].signal_verts_changed().connect(
-            [this, i](){_on_face_changed(i);});
-    }
 }
 
 
@@ -73,17 +74,16 @@ void World3D::Brush::render() const
     _vao->bind();
     for (auto const &face : _faces)
     {
-        face.texture.texture->bind();
-        glDrawArrays(GL_TRIANGLE_FAN, face.offset, face.count());
+        face->texture.texture->bind();
+        glDrawArrays(GL_TRIANGLE_FAN, face->offset, face->count());
     }
 }
 
 
-void World3D::Brush::_on_face_changed(size_t face_index)
+void World3D::Brush::_on_face_changed(std::shared_ptr<Face> const &face)
 {
-    auto &face = _faces[face_index];
     std::vector<GLfloat> vbo_data{};
-    for (auto const &vertex : face.vertices)
+    for (auto const &vertex : face->vertices)
     {
         auto v = vertex.as_vbo();
         vbo_data.insert(vbo_data.end(), v.cbegin(), v.cend());
@@ -91,7 +91,14 @@ void World3D::Brush::_on_face_changed(size_t face_index)
     _vbo->bind();
     _vbo->update(
         vbo_data,
-        face.offset * Vertex::ELEMENTS,
-        face.count() * Vertex::ELEMENTS);
+        face->offset * Vertex::ELEMENTS,
+        face->count() * Vertex::ELEMENTS);
     _vbo->unbind();
+}
+
+
+void World3D::Brush::_on_real_changed()
+{
+    if (!_src->property_real().get_value())
+        signal_deleted().emit();
 }

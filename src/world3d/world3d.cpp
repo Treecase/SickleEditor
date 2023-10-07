@@ -28,12 +28,12 @@ World3D::World3D::World3D(Glib::RefPtr<Sickle::Editor::World> src)
     if (!worldspawn)
         return;
     for (auto &entity : src->entities())
-        entities.emplace_back(entity);
+        entities.push_back(std::make_shared<Entity>(entity));
 }
 
 
 void World3D::World3D::render() const
 {
     for (auto const &entity : entities)
-        entity.render();
+        entity->render();
 }

@@ -110,8 +110,6 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
 
     _editor->property_map().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea3D::on_editor_map_changed));
-    _editor->get_map()->signal_changed().connect(
-        sigc::mem_fun(*this, &Sickle::MapArea3D::_synchronize_glmap));
     _editor->selected.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea3D::queue_render));
     _editor->brushbox.signal_updated().connect(
@@ -268,13 +266,13 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     // TODO: Do this properly, very brittle right now
     for (auto const &entity : _mapview->entities)
     {
-        for (auto const &brush : entity.brushes)
+        for (auto const &brush : entity->brushes)
         {
-            if (brush.is_selected())
+            if (brush->is_selected())
                 _shader->setUniformS("modulate", glm::vec3{1, 0, 0});
             else
                 _shader->setUniformS("modulate", glm::vec3{1, 1, 1});
-            brush.render();
+            brush->render();
         }
     }
 
@@ -333,8 +331,6 @@ void Sickle::MapArea3D::on_editor_map_changed()
     property_state().reset_value();
     property_camera().set_value(DEFAULT_CAMERA);
     property_transform().set_value(DEFAULT_TRANSFORM);
-    _editor->get_map()->signal_changed().connect(
-        sigc::mem_fun(*this, &Sickle::MapArea3D::_synchronize_glmap));
     if (get_realized())
     {
         _synchronize_glmap();

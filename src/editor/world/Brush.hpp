@@ -43,11 +43,10 @@ namespace Sickle::Editor
     public:
         std::vector<FaceRef> faces{};
 
-        Brush();
-        Brush(Brush const &other);
-        Brush(std::vector<glm::vec3> const &points);
-        Brush(MAP::Brush const &brush);
-        Brush(RMF::Solid const &solid);
+        static BrushRef create();
+        static BrushRef create(std::vector<glm::vec3> const &points);
+        static BrushRef create(MAP::Brush const &brush);
+        static BrushRef create(RMF::Solid const &solid);
 
         operator MAP::Brush() const;
 
@@ -65,6 +64,8 @@ namespace Sickle::Editor
     private:
         Glib::Property<bool> _prop_selected;
         Glib::Property<bool> _prop_real;
+
+        Brush();
         // TODO:
         // - visgroup id
         // - color

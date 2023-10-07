@@ -51,7 +51,7 @@ namespace Sickle::Editor
 
         std::vector<BrushRef> brushes() const;
 
-        void add_brush(Brush const &brush);
+        void add_brush(BrushRef const &brush);
         void remove_brush(BrushRef const &brush);
 
     private:

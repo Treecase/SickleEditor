@@ -69,12 +69,13 @@ namespace World3D
         Sickle::Editor::FaceRef const _src{nullptr};
 
         static sigc::signal<void(std::string)> _signal_missing_texture;
-        sigc::signal<void()> _signal_verts_changed{};
 
         void _sync_vertices();
 
         void _on_src_verts_changed();
         void _on_src_texture_changed();
+
+        Face(Face const &)=delete;
 
     public:
         Texture texture{};
@@ -82,28 +83,33 @@ namespace World3D
         GLint offset; // offset into _PARENT's VBO.
 
         static auto &signal_missing_texture() {return _signal_missing_texture;}
-        auto &signal_verts_changed() {return _signal_verts_changed;}
 
         /** Length of span in _PARENT's VBO. */
         GLsizei count() const {return vertices.size();}
 
         Face(
-            Sickle::Editor::FaceRef face,
+            Sickle::Editor::FaceRef const &face,
             GLint offset);
-        Face(Face const &other);
     };
 
     class Brush : public sigc::trackable
     {
         Sickle::Editor::BrushRef const _src{nullptr};
-        std::vector<Face> _faces{};
+        std::vector<std::shared_ptr<Face>> _faces{};
 
         std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
         std::shared_ptr<GLUtil::Buffer> _vbo{nullptr};
 
-        void _on_face_changed(size_t face_index);
+        sigc::signal<void()> _sig_deleted{};
+
+        void _on_face_changed(std::shared_ptr<Face> const &face);
+        void _on_real_changed();
+
+        Brush(Brush const &)=delete;
 
     public:
+        auto &signal_deleted() {return _sig_deleted;}
+
         bool is_selected() const;
         void render() const;
 
@@ -112,8 +118,12 @@ namespace World3D
 
     class Entity
     {
+        Entity(Entity const &)=delete;
+
+        void _on_brush_deleted(std::shared_ptr<Brush> const &brush);
+
     public:
-        std::vector<Brush> brushes{};
+        std::vector<std::shared_ptr<Brush>> brushes{};
 
         void render() const;
 
@@ -122,8 +132,9 @@ namespace World3D
 
     class World3D
     {
+        World3D(World3D const &)=delete;
     public:
-        std::vector<Entity> entities{};
+        std::vector<std::shared_ptr<Entity>> entities{};
 
         void render() const;
 

@@ -22,12 +22,24 @@
 World3D::Entity::Entity(Sickle::Editor::Entity &src)
 {
     for (auto &brush : src.brushes())
-        brushes.emplace_back(brush);
+    {
+        auto b = std::make_shared<Brush>(brush);
+        b->signal_deleted().connect(
+            sigc::bind(sigc::mem_fun(*this, &Entity::_on_brush_deleted), b));
+        brushes.push_back(b);
+    }
 }
 
 
 void World3D::Entity::render() const
 {
     for (auto const &brush : brushes)
-        brush.render();
+        brush->render();
+}
+
+
+
+void World3D::Entity::_on_brush_deleted(std::shared_ptr<Brush> const &brush)
+{
+    brushes.erase(std::find(brushes.cbegin(), brushes.cend(), brush));
 }
