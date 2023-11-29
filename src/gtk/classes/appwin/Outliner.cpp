@@ -17,6 +17,7 @@
  */
 
 #include "Outliner.hpp"
+#include <appid.hpp>
 
 #include <sstream>
 
@@ -29,7 +30,9 @@ Outliner::Outliner()
 ,   _prop_world{*this, "world", Glib::RefPtr<Editor::World>{nullptr}}
 {
     _tree_view.set_model(_tree_store);
-    _tree_view.append_column("Text", _tree_columns.text);
+    _tree_view.append_column("Icon", _tree_columns.icon);
+    _tree_view.append_column("Label", _tree_columns.text);
+    _tree_view.set_headers_visible(false);
 
     _scrolled.add(_tree_view);
 
@@ -40,35 +43,31 @@ Outliner::Outliner()
 }
 
 
-static Glib::ustring entity_name(Sickle::Editor::Entity const &e)
-{
-    return e.properties.at("classname");
-}
-
-static Glib::ustring brush_name(Sickle::Editor::BrushRef const &b)
-{
-    std::stringstream ss{};
-    ss << "brush " << b.get();
-    return ss.str();
-}
-
 void Outliner::on_world_changed()
 {
     _tree_store->clear();
 
-    auto &root = *_tree_store->append();
-    root[_tree_columns.text] = "root";
-
     auto const &w = property_world().get_value();
     for (auto const &e : w->entities())
     {
-        auto &ent_row = *_tree_store->append(root.children());
-        ent_row[_tree_columns.text] = entity_name(e);
+        auto &ent_row = *_tree_store->append();
+        ent_row[_tree_columns.text] = e.name();
+        ent_row[_tree_columns.icon] = e.icon();
 
-        for (auto const &b : e.brushes())
-        {
-            auto &brush_row = *_tree_store->append(ent_row.children());
-            brush_row[_tree_columns.text] = brush_name(b);
-        }
+        for (auto const &child : e.children())
+            _add_object(child, ent_row);
     }
+}
+
+
+void Outliner::_add_object(
+    Sickle::Editor::EditorObject *obj,
+    Gtk::TreeRow const &parent_row)
+{
+    auto &row = *_tree_store->append(parent_row.children());
+    row[_tree_columns.text] = obj->name();
+    row[_tree_columns.icon] = obj->icon();
+
+    for (auto const &child : obj->children())
+        _add_object(child, row);
 }

@@ -21,6 +21,7 @@
 
 #include "Brush.hpp"
 
+#include <interfaces/EditorObject.hpp>
 #include <map/map.hpp>
 #include <rmf/rmf.hpp>
 
@@ -34,7 +35,7 @@
 
 namespace Sickle::Editor
 {
-    class Entity : public Glib::Object
+    class Entity : public Glib::Object, public EditorObject
     {
     public:
         std::unordered_map<std::string, std::string> properties{};
@@ -53,6 +54,11 @@ namespace Sickle::Editor
 
         void add_brush(BrushRef const &brush);
         void remove_brush(BrushRef const &brush);
+
+        // EditorObject interface
+        virtual Glib::ustring name() const override;
+        virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
+        virtual std::vector<EditorObject *> children() const override;
 
     private:
         sigc::signal<void()> _signal_changed{};

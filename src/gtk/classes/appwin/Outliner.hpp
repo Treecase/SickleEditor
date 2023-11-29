@@ -50,8 +50,10 @@ namespace Sickle::AppWin
             :   Gtk::TreeModelColumnRecord{}
             {
                 add(text);
+                add(icon);
             }
             Gtk::TreeModelColumn<Glib::ustring> text;
+            Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
         };
 
         Glib::Property<Glib::RefPtr<Editor::World>> _prop_world;
@@ -61,6 +63,10 @@ namespace Sickle::AppWin
         Glib::RefPtr<Gtk::TreeStore> _tree_store{
             Gtk::TreeStore::create(_tree_columns)};
         Gtk::TreeView _tree_view{};
+
+        void _add_object(
+            Sickle::Editor::EditorObject *obj,
+            Gtk::TreeRow const &parent_row);
     };
 }
 

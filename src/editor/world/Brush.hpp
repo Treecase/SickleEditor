@@ -21,6 +21,7 @@
 
 #include "Face.hpp"
 
+#include <interfaces/EditorObject.hpp>
 #include <map/map.hpp>
 #include <rmf/rmf.hpp>
 #include <se-lua/utils/Referenceable.hpp>
@@ -38,7 +39,10 @@ namespace Sickle::Editor
     class Brush;
     using BrushRef = Glib::RefPtr<Brush>;
 
-    class Brush : public Glib::Object, public Lua::Referenceable
+    class Brush :
+        public Glib::Object,
+        public Lua::Referenceable,
+        public EditorObject
     {
     public:
         std::vector<FaceRef> faces{};
@@ -60,6 +64,11 @@ namespace Sickle::Editor
 
         void transform(glm::mat4 const &matrix);
         void translate(glm::vec3 const &translation);
+
+        // EditorObject interface
+        virtual Glib::ustring name() const override;
+        virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
+        virtual std::vector<EditorObject *> children() const override;
 
     private:
         Glib::Property<bool> _prop_selected;

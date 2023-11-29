@@ -14,5 +14,6 @@ target_link_libraries(editor-world
         se-lua
         glm::glm
         PkgConfig::glibmm
+        config # Brush, Entity (EditorObject)
 )
 target_compile_features(editor-world PUBLIC cxx_std_17)

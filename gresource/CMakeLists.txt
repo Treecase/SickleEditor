@@ -13,6 +13,8 @@ add_custom_command(
         gtk/menus.ui
         gtk/OperationSearch.glade
         gtk/TextureSelector.glade
+        icons/outliner/entity.png
+        icons/outliner/brush.png
         lua/gdkevents.lua
         lua/gdkkeysyms.lua
         lua/gdktypes.lua

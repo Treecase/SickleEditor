@@ -18,6 +18,8 @@
 
 #include "world/Entity.hpp"
 
+#include <appid.hpp>
+
 #include <algorithm>
 
 using namespace Sickle::Editor;
@@ -103,4 +105,29 @@ void Entity::remove_brush(BrushRef const &brush)
     (*it)->property_real() = false;
     _brushes.erase(it);
     signal_changed().emit();
+}
+
+
+/* ---[ EditorObject interface ]--- */
+Glib::ustring Entity::name() const
+{
+    std::stringstream ss{};
+    ss << properties.at("classname") << ' ' << this;
+    return Glib::ustring{ss.str()};
+}
+
+
+Glib::RefPtr<Gdk::Pixbuf> Entity::icon() const
+{
+    return Gdk::Pixbuf::create_from_resource(
+        SE_GRESOURCE_PREFIX "icons/outliner/entity.png");
+}
+
+
+std::vector<EditorObject *> Entity::children() const
+{
+    std::vector<EditorObject *> out{};
+    for (auto const &brush : brushes())
+        out.push_back(brush.get());
+    return out;
 }

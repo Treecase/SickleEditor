@@ -18,6 +18,10 @@
 
 #include "world/Brush.hpp"
 
+#include <appid.hpp>
+
+#include <sstream>
+
 using namespace Sickle::Editor;
 
 
@@ -94,4 +98,26 @@ void Brush::transform(glm::mat4 const &matrix)
 void Brush::translate(glm::vec3 const &translation)
 {
     transform(glm::translate(glm::mat4{1.0}, translation));
+}
+
+
+/* ---[ EditorObject interface ]--- */
+Glib::ustring Brush::name() const
+{
+    std::stringstream ss{};
+    ss << "Brush " << this;
+    return Glib::ustring{ss.str()};
+}
+
+
+Glib::RefPtr<Gdk::Pixbuf> Brush::icon() const
+{
+    return Gdk::Pixbuf::create_from_resource(
+        SE_GRESOURCE_PREFIX "icons/outliner/brush.png");
+}
+
+
+std::vector<EditorObject *> Brush::children() const
+{
+    return {};
 }
