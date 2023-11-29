@@ -26,6 +26,7 @@
 #include <sigc++/trackable.h>
 #include <world/Brush.hpp>
 
+#include <functional>
 #include <vector>
 #include <memory>
 
@@ -35,6 +36,10 @@ namespace World3D
     class Brush : public sigc::trackable
     {
     public:
+        using PreDrawFunc = std::function<void(Sickle::Editor::BrushRef const)>;
+
+        static PreDrawFunc predraw;
+
         Brush(Sickle::Editor::BrushRef const &src);
 
         auto &signal_deleted() {return _sig_deleted;}

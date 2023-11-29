@@ -38,13 +38,15 @@ namespace World3D
     class World
     {
     public:
-        std::vector<std::shared_ptr<Entity>> entities{};
-
         World(Glib::RefPtr<Sickle::Editor::World> src);
+
+        auto const &entities() const {return _entities;}
 
         void render() const;
 
     private:
+        std::vector<std::shared_ptr<Entity>> _entities{};
+
         World(World const &)=delete;
         World &operator=(World const &)=delete;
     };

@@ -55,43 +55,49 @@ namespace World3D
 
     class Vertex
     {
-        glm::vec3 position;
-        glm::vec2 uv;
-
     public:
         static size_t const ELEMENTS = 5;
         std::array<GLfloat, ELEMENTS> as_vbo() const;
 
         Vertex(glm::vec3 pos, glm::vec2 uv);
+
+    private:
+        glm::vec3 _position;
+        glm::vec2 _uv;
     };
 
 
     class Face : public sigc::trackable
     {
-        Sickle::Editor::FaceRef const _src{nullptr};
+    public:
+        static auto &signal_missing_texture() {return _signal_missing_texture;}
 
+        Face(
+            Sickle::Editor::FaceRef const &face,
+            GLint offset);
+
+        /** Length of span in _PARENT's VBO. */
+        GLsizei count() const {return _vertices.size();}
+
+        auto const &vertices() const {return _vertices;}
+        auto const &texture() const {return _texture;}
+        auto offset() const {return _offset;}
+
+    private:
         static sigc::signal<void(std::string)> _signal_missing_texture;
+
+        Sickle::Editor::FaceRef const _src{nullptr};
+        Texture _texture{};
+        std::vector<Vertex> _vertices{};
+        GLint _offset; // offset into _PARENT's VBO.
+
+        Face(Face const &)=delete;
+        Face &operator=(Face const &)=delete;
 
         void _sync_vertices();
 
         void _on_src_verts_changed();
         void _on_src_texture_changed();
-
-        Face(Face const &)=delete;
-
-    public:
-        Texture texture{};
-        std::vector<Vertex> vertices{};
-        GLint offset; // offset into _PARENT's VBO.
-
-        static auto &signal_missing_texture() {return _signal_missing_texture;}
-
-        /** Length of span in _PARENT's VBO. */
-        GLsizei count() const {return vertices.size();}
-
-        Face(
-            Sickle::Editor::FaceRef const &face,
-            GLint offset);
     };
 }
 

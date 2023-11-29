@@ -19,6 +19,9 @@
 #include "world3d/Brush.hpp"
 
 
+World3D::Brush::PreDrawFunc World3D::Brush::predraw = [](auto){};
+
+
 World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)
 :   sigc::trackable{}
 ,   _src{src}
@@ -31,7 +34,7 @@ World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)
         auto const offset = vbo_data.size() / Vertex::ELEMENTS;
         auto &face = _faces.emplace_back(
             std::make_shared<Face>(faceptr, offset));
-        for (auto const &vertex : face->vertices)
+        for (auto const &vertex : face->vertices())
         {
             auto v = vertex.as_vbo();
             vbo_data.insert(vbo_data.end(), v.cbegin(), v.cend());
@@ -74,8 +77,9 @@ void World3D::Brush::render() const
     _vao->bind();
     for (auto const &face : _faces)
     {
-        face->texture.texture->bind();
-        glDrawArrays(GL_TRIANGLE_FAN, face->offset, face->count());
+        face->texture().texture->bind();
+        predraw(_src);
+        glDrawArrays(GL_TRIANGLE_FAN, face->offset(), face->count());
     }
 }
 
@@ -83,7 +87,7 @@ void World3D::Brush::render() const
 void World3D::Brush::_on_face_changed(std::shared_ptr<Face> const &face)
 {
     std::vector<GLfloat> vbo_data{};
-    for (auto const &vertex : face->vertices)
+    for (auto const &vertex : face->vertices())
     {
         auto v = vertex.as_vbo();
         vbo_data.insert(vbo_data.end(), v.cbegin(), v.cend());
@@ -91,7 +95,7 @@ void World3D::Brush::_on_face_changed(std::shared_ptr<Face> const &face)
     _vbo->bind();
     _vbo->update(
         vbo_data,
-        face->offset * Vertex::ELEMENTS,
+        face->offset() * Vertex::ELEMENTS,
         face->count() * Vertex::ELEMENTS);
     _vbo->unbind();
 }

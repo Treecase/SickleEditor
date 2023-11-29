@@ -140,6 +140,15 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
         | Gdk::ENTER_NOTIFY_MASK);
 
     add_tick_callback(sigc::mem_fun(*this, &MapArea3D::tick_callback));
+
+
+    // Set global Brush 3D render callback.
+    World3D::Brush::predraw = [this](auto brush){
+        glm::vec3 modulate{1, 1, 1};
+        if (brush->is_selected())
+            modulate = glm::vec3{1, 0, 0};
+        _shader->setUniformS("modulate", modulate);
+    };
 }
 
 
@@ -263,18 +272,8 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     _shader->setUniformS("projection", projectionMatrix);
     _shader->setUniformS("tex", 0);
     _shader->setUniformS("model", modelMatrix);
-    // TODO: Do this properly, very brittle right now
-    for (auto const &entity : _mapview->entities)
-    {
-        for (auto const &brush : entity->brushes)
-        {
-            if (brush->is_selected())
-                _shader->setUniformS("modulate", glm::vec3{1, 0, 0});
-            else
-                _shader->setUniformS("modulate", glm::vec3{1, 1, 1});
-            brush->render();
-        }
-    }
+
+    _mapview->render();
 
     debug.drawRay(_camera.getViewMatrix(), projectionMatrix);
 

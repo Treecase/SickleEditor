@@ -20,13 +20,13 @@
 
 
 World3D::Vertex::Vertex(glm::vec3 pos, glm::vec2 uv)
-:   position{pos}
-,   uv{uv}
+:   _position{pos}
+,   _uv{uv}
 {
 }
 
 
 std::array<GLfloat, World3D::Vertex::ELEMENTS> World3D::Vertex::as_vbo() const
 {
-    return {position.x, position.y, position.z, uv.x, uv.y};
+    return {_position.x, _position.y, _position.z, _uv.x, _uv.y};
 }

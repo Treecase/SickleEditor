@@ -37,13 +37,15 @@ namespace World3D
     class Entity
     {
     public:
-        std::vector<std::shared_ptr<Brush>> brushes{};
-
         Entity(Sickle::Editor::Entity &src);
+
+        auto const &brushes() const {return _brushes;}
 
         void render() const;
 
     private:
+        std::vector<std::shared_ptr<Brush>> _brushes{};
+
         Entity(Entity const &)=delete;
         Entity &operator=(Entity const &)=delete;
 

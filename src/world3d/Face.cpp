@@ -27,7 +27,7 @@ sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};
 World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
 :   sigc::trackable{}
 ,   _src{face}
-,   offset{offset}
+,   _offset{offset}
 {
     _on_src_texture_changed();
 
@@ -42,7 +42,7 @@ World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
 
 void World3D::Face::_on_src_verts_changed()
 {
-    vertices.clear();
+    _vertices.clear();
     _sync_vertices();
 }
 
@@ -51,10 +51,10 @@ void World3D::Face::_on_src_texture_changed()
 {
     auto &texman = WAD::TextureManagerProxy<Texture>::create();
     try {
-        texture = texman.at(_src->get_texture());
+        _texture = texman.at(_src->get_texture());
     }
     catch (std::out_of_range const &e) {
-        texture = Texture::make_missing_texture();
+        _texture = Texture::make_missing_texture();
         signal_missing_texture().emit(_src->get_texture());
     }
 }
@@ -64,11 +64,11 @@ void World3D::Face::_sync_vertices()
 {
     auto const &u_axis = glm::normalize(_src->get_u());
     auto const &v_axis = glm::normalize(_src->get_v());
-    glm::vec2 const texture_size{texture.width, texture.height};
+    glm::vec2 const texture_size{_texture.width, _texture.height};
 
     for (auto const &vertex : _src->get_vertices())
     {
-        vertices.emplace_back(
+        _vertices.emplace_back(
             vertex,
             (   (   glm::vec2{
                         glm::dot(vertex, u_axis),
