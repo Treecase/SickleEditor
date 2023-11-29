@@ -1,5 +1,5 @@
 /**
- * world3d.cpp - OpenGL Editor::World view.
+ * World.hpp - OpenGL Editor::World view.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,24 +16,38 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/world3d.hpp"
+#ifndef SE_WORLD3D_WORLD_HPP
+#define SE_WORLD3D_WORLD_HPP
+
+#include "Entity.hpp"
+
+#include <glibmm/refptr.h>
+#include <world/World.hpp>
+
+#include <memory>
+#include <vector>
 
 
-World3D::World3D::World3D(Glib::RefPtr<Sickle::Editor::World> src)
+namespace World3D
 {
-    Sickle::Editor::Entity const *worldspawn{nullptr};
-    for (auto const &entity : src->entities())
-        if (entity.properties.at("classname") == "worldspawn")
-            worldspawn = &entity;
-    if (!worldspawn)
-        return;
-    for (auto &entity : src->entities())
-        entities.push_back(std::make_shared<Entity>(entity));
+    /**
+     * Top-level World view object.
+     *
+     * Manages Entity object views, sychronized with an Editor::World object.
+     */
+    class World
+    {
+    public:
+        std::vector<std::shared_ptr<Entity>> entities{};
+
+        World(Glib::RefPtr<Sickle::Editor::World> src);
+
+        void render() const;
+
+    private:
+        World(World const &)=delete;
+        World &operator=(World const &)=delete;
+    };
 }
 
-
-void World3D::World3D::render() const
-{
-    for (auto const &entity : entities)
-        entity->render();
-}
+#endif

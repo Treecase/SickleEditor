@@ -1,5 +1,5 @@
 /**
- * brush.cpp - World3D::Brush class.
+ * Brush.cpp - World3D::Brush class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/world3d.hpp"
+#include "world3d/Brush.hpp"
 
 
 World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)

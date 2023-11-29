@@ -1,5 +1,5 @@
 /**
- * vertex.cpp - World3D::Vertex class.
+ * World.cpp - OpenGL Editor::World view.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,24 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/world3d.hpp"
+#include "world3d/World.hpp"
 
 
-World3D::Vertex::Vertex(glm::vec3 pos, glm::vec2 uv)
-:   position{pos}
-,   uv{uv}
+World3D::World::World(Glib::RefPtr<Sickle::Editor::World> src)
 {
+    Sickle::Editor::Entity const *worldspawn{nullptr};
+    for (auto const &entity : src->entities())
+        if (entity.properties.at("classname") == "worldspawn")
+            worldspawn = &entity;
+    if (!worldspawn)
+        return;
+    for (auto &entity : src->entities())
+        entities.push_back(std::make_shared<Entity>(entity));
 }
 
 
-std::array<GLfloat, World3D::Vertex::ELEMENTS> World3D::Vertex::as_vbo() const
+void World3D::World::render() const
 {
-    return {position.x, position.y, position.z, uv.x, uv.y};
+    for (auto const &entity : entities)
+        entity->render();
 }

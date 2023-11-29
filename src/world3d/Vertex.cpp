@@ -1,5 +1,5 @@
 /**
- * entity.cpp - World3D::Entity class.
+ * Vertex.cpp - World3D::Vertex class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,30 +16,17 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/world3d.hpp"
+#include "world3d/Face.hpp"
 
 
-World3D::Entity::Entity(Sickle::Editor::Entity &src)
+World3D::Vertex::Vertex(glm::vec3 pos, glm::vec2 uv)
+:   position{pos}
+,   uv{uv}
 {
-    for (auto &brush : src.brushes())
-    {
-        auto b = std::make_shared<Brush>(brush);
-        b->signal_deleted().connect(
-            sigc::bind(sigc::mem_fun(*this, &Entity::_on_brush_deleted), b));
-        brushes.push_back(b);
-    }
 }
 
 
-void World3D::Entity::render() const
+std::array<GLfloat, World3D::Vertex::ELEMENTS> World3D::Vertex::as_vbo() const
 {
-    for (auto const &brush : brushes)
-        brush->render();
-}
-
-
-
-void World3D::Entity::_on_brush_deleted(std::shared_ptr<Brush> const &brush)
-{
-    brushes.erase(std::find(brushes.cbegin(), brushes.cend(), brush));
+    return {position.x, position.y, position.z, uv.x, uv.y};
 }

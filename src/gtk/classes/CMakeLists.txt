@@ -14,6 +14,7 @@ target_link_libraries(sickle PRIVATE
     maparea2d
     rmf
     world3d
+    SickleGL
 )
 add_subdirectory(appwin)
 add_subdirectory(maparea2d)

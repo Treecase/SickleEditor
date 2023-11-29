@@ -1,5 +1,5 @@
 /**
- * face.cpp - World3D::Face class.
+ * Face.cpp - World3D::Face class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/world3d.hpp"
+#include "world3d/Face.hpp"
+
+#include <wad/TextureManager.hpp>
 
 
 sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};

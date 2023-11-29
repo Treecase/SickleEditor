@@ -100,7 +100,7 @@ namespace Sickle
 
         Editor::EditorRef _editor;
         std::shared_ptr<GLUtil::Program> _shader{nullptr};
-        std::unique_ptr<World3D::World3D> _mapview{nullptr};
+        std::unique_ptr<World3D::World> _mapview{nullptr};
         ErrorTracker _error_tracker{};
 
         // Properties

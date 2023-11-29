@@ -1,5 +1,5 @@
 /**
- * texture.cpp - World3D::Texture class.
+ * Texture.cpp - World3D::Texture class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/world3d.hpp"
+#include "world3d/Face.hpp"
 
 
 /** Convert WAD lump mipmap to RGBA format. */

@@ -1,5 +1,5 @@
 /**
- * world3d.hpp - OpenGL views for Editor world objects.
+ * Entity.hpp - OpenGL Editor::Entity view.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,39 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef SE_WORLD3D_ENTITY_HPP
+#define SE_WORLD3D_ENTITY_HPP
+
 #include "Brush.hpp"
-#include "Entity.hpp"
-#include "Face.hpp"
-#include "World.hpp"
+
+#include <world/Entity.hpp>
+
+#include <memory>
+#include <vector>
+
+
+namespace World3D
+{
+    /**
+     * Entity view.
+     *
+     * Manages Brush object views, synchronized with an Editor::Entity object.
+     */
+    class Entity
+    {
+    public:
+        std::vector<std::shared_ptr<Brush>> brushes{};
+
+        Entity(Sickle::Editor::Entity &src);
+
+        void render() const;
+
+    private:
+        Entity(Entity const &)=delete;
+        Entity &operator=(Entity const &)=delete;
+
+        void _on_brush_deleted(std::shared_ptr<Brush> const &brush);
+    };
+}
+
+#endif
