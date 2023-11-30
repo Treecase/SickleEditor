@@ -44,7 +44,7 @@ static int add_brush(lua_State *L)
     }
 
     try {
-        ed->get_map()->worldspawn().add_brush(Brush::create(points));
+        ed->get_map()->worldspawn()->add_brush(Brush::create(points));
     }
     catch (std::runtime_error const &e) {
         // Brush construction degenerate case.

@@ -70,11 +70,12 @@ namespace Sickle::Editor
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
         virtual std::vector<EditorObject *> children() const override;
 
+    protected:
+        Brush();
+
     private:
         Glib::Property<bool> _prop_selected;
         Glib::Property<bool> _prop_real;
-
-        Brush();
         // TODO:
         // - visgroup id
         // - color

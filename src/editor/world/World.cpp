@@ -21,28 +21,28 @@
 using namespace Sickle::Editor;
 
 
-Glib::RefPtr<World> World::create()
+WorldRef World::create()
 {
     return Glib::RefPtr{new World{}};
 }
 
 
-Glib::RefPtr<World> World::create(MAP::Map const &map)
+WorldRef World::create(MAP::Map const &map)
 {
     auto world = World::create();
     for (auto const &entity : map.entities)
-        world->add_entity(entity);
+        world->add_entity(Entity::create(entity));
     return world;
 }
 
 
-Glib::RefPtr<World> World::create(RMF::RichMap const &map)
+WorldRef World::create(RMF::RichMap const &map)
 {
     auto world = World::create();
 
-    Entity worldspawn{};
-    worldspawn.properties = map.worldspawn_properties;
-    worldspawn.properties["classname"] = map.worldspawn_name;
+    auto worldspawn = Entity::create();
+    worldspawn->properties = map.worldspawn_properties;
+    worldspawn->properties["classname"] = map.worldspawn_name;
 
     std::stack<RMF::Group> groups{};
     groups.push(map.objects);
@@ -51,9 +51,9 @@ Glib::RefPtr<World> World::create(RMF::RichMap const &map)
         auto group = groups.top();
         groups.pop();
         for (auto const &brush : group.brushes)
-            worldspawn.add_brush(Brush::create(brush));
+            worldspawn->add_brush(Brush::create(brush));
         for (auto const &entity : group.entities)
-            world->add_entity(entity);
+            world->add_entity(Entity::create(entity));
         for (auto group2 : group.groups)
             groups.push(group2);
     }
@@ -63,43 +63,32 @@ Glib::RefPtr<World> World::create(RMF::RichMap const &map)
 }
 
 
-World &World::operator=(World const &other)
-{
-    if (this != &other)
-    {
-        _entities = other._entities;
-    }
-    return *this;
-}
-
-
 World::operator MAP::Map() const
 {
     MAP::Map out{};
     for (auto const &entity : _entities)
-        out.entities.push_back(entity);
+        out.entities.push_back(*entity.get());
     return out;
 }
 
 
-Entity &World::add_entity(Entity const &entity)
+void World::add_entity(EntityRef const &entity)
 {
-    auto &e = _entities.emplace_back(entity);
-    return e;
+    _entities.push_back(entity);
 }
 
 
 void World::remove_brush(BrushRef const &brush)
 {
     for (auto &entity : _entities)
-        entity.remove_brush(brush);
+        entity->remove_brush(brush);
 }
 
 
-Entity &World::worldspawn()
+EntityRef World::worldspawn()
 {
     for (auto &entity : _entities)
-        if (entity.properties.at("classname") == "worldspawn")
+        if (entity->properties.at("classname") == "worldspawn")
             return entity;
     throw std::logic_error{"missing worldspawn"};
 }
@@ -109,6 +98,6 @@ Entity &World::worldspawn()
 World::World()
 :   Glib::ObjectBase{typeid(World)}
 {
-    auto &worldspawn = add_entity({});
-    worldspawn.properties["classname"] = "worldspawn";
+    auto worldspawn = Entity::create();
+    worldspawn->properties["classname"] = "worldspawn";
 }

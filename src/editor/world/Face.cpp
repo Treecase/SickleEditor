@@ -18,10 +18,12 @@
 
 #include "world/Face.hpp"
 
+#include <appid.hpp>
 #include <glm/gtc/epsilon.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <algorithm>
+#include <sstream>
 
 using namespace Sickle::Editor;
 
@@ -219,4 +221,26 @@ void Face::set_vertex(size_t index, glm::vec3 vertex)
 glm::vec3 Face::get_vertex(size_t index) const
 {
     return _vertices.at(index);
+}
+
+
+/* ---[ EditorObject interface ]--- */
+Glib::ustring Face::name() const
+{
+    std::stringstream ss{};
+    ss << "Face " << this;
+    return Glib::ustring{ss.str()};
+}
+
+
+Glib::RefPtr<Gdk::Pixbuf> Face::icon() const
+{
+    return Gdk::Pixbuf::create_from_resource(
+        SE_GRESOURCE_PREFIX "icons/outliner/face.png");
+}
+
+
+std::vector<EditorObject *> Face::children() const
+{
+    return {};
 }

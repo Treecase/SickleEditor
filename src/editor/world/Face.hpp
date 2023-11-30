@@ -20,6 +20,7 @@
 #define SE_EDITOR_WORLD_FACE_HPP
 
 #include <convexhull/convexhull.hpp>
+#include <interfaces/EditorObject.hpp>
 #include <map/map.hpp>
 #include <rmf/rmf.hpp>
 #include <se-lua/utils/Referenceable.hpp>
@@ -39,15 +40,20 @@ namespace Sickle::Editor
     class Face;
     using FaceRef = Glib::RefPtr<Face>;
 
-    class Face : public Glib::Object, public Lua::Referenceable
+    class Face :
+        public Glib::Object,
+        public Lua::Referenceable,
+        public EditorObject
     {
     public:
         static FaceRef create(
             HalfPlane const &plane,
             std::vector<glm::vec3> const &brush_vertices);
+
         static FaceRef create(
             MAP::Plane const &plane,
             std::unordered_set<glm::vec3> const &brush_vertices);
+
         static FaceRef create(RMF::Face const &face);
 
         operator MAP::Plane() const;
@@ -97,6 +103,14 @@ namespace Sickle::Editor
         void set_vertex(size_t index, glm::vec3 vertex);
         glm::vec3 get_vertex(size_t index) const;
 
+        // EditorObject interface
+        virtual Glib::ustring name() const override;
+        virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
+        virtual std::vector<EditorObject *> children() const override;
+
+    protected:
+        Face();
+
     private:
         Glib::Property<std::string> _prop_texture;
         Glib::Property<glm::vec3> _prop_u, _prop_v;
@@ -107,8 +121,6 @@ namespace Sickle::Editor
         sigc::signal<void()> _vertices_changed{};
 
         std::vector<glm::vec3> _vertices{};
-
-        Face();
     };
 }
 

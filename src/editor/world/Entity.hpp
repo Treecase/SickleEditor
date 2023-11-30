@@ -35,15 +35,17 @@
 
 namespace Sickle::Editor
 {
+    class Entity;
+    using EntityRef = Glib::RefPtr<Entity>;
+
     class Entity : public Glib::Object, public EditorObject
     {
     public:
         std::unordered_map<std::string, std::string> properties{};
 
-        Entity();
-        Entity(Entity const &other);
-        Entity(MAP::Entity const &entity);
-        Entity(RMF::Entity const &entity);
+        static EntityRef create();
+        static EntityRef create(MAP::Entity const &entity);
+        static EntityRef create(RMF::Entity const &entity);
 
         operator MAP::Entity() const;
         Entity &operator=(Entity const &other);
@@ -59,6 +61,9 @@ namespace Sickle::Editor
         virtual Glib::ustring name() const override;
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
         virtual std::vector<EditorObject *> children() const override;
+
+    protected:
+        Entity();
 
     private:
         sigc::signal<void()> _signal_changed{};

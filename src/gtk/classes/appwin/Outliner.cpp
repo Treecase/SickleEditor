@@ -51,10 +51,10 @@ void Outliner::on_world_changed()
     for (auto const &e : w->entities())
     {
         auto &ent_row = *_tree_store->append();
-        ent_row[_tree_columns.text] = e.name();
-        ent_row[_tree_columns.icon] = e.icon();
+        ent_row[_tree_columns.text] = e->name();
+        ent_row[_tree_columns.icon] = e->icon();
 
-        for (auto const &child : e.children())
+        for (auto const &child : e->children())
             _add_object(child, ent_row);
     }
 }

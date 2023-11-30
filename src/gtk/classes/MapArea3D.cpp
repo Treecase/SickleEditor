@@ -169,7 +169,7 @@ Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
 
     for (auto const &entity : _editor->get_map()->entities())
     {
-        for (auto const &brush : entity.brushes())
+        for (auto const &brush : entity->brushes())
         {
             BBox3 bbox{};
             for (auto const &face : brush->faces)

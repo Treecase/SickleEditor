@@ -37,7 +37,7 @@ namespace World3D
     class Entity
     {
     public:
-        Entity(Sickle::Editor::Entity &src);
+        Entity(Sickle::Editor::EntityRef src);
 
         auto const &brushes() const {return _brushes;}
 

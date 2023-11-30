@@ -38,7 +38,7 @@ namespace World3D
     class World
     {
     public:
-        World(Glib::RefPtr<Sickle::Editor::World> src);
+        World(Sickle::Editor::WorldRef src);
 
         auto const &entities() const {return _entities;}
 

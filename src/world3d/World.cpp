@@ -21,10 +21,10 @@
 
 World3D::World::World(Glib::RefPtr<Sickle::Editor::World> src)
 {
-    Sickle::Editor::Entity const *worldspawn{nullptr};
+    Sickle::Editor::EntityRef worldspawn{nullptr};
     for (auto const &entity : src->entities())
-        if (entity.properties.at("classname") == "worldspawn")
-            worldspawn = &entity;
+        if (entity->properties.at("classname") == "worldspawn")
+            worldspawn = entity;
     if (!worldspawn)
         return;
     for (auto &entity : src->entities())

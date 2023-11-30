@@ -4,8 +4,9 @@
     <file>gtk/menus.ui</file>
     <file>gtk/OperationSearch.glade</file>
     <file>gtk/TextureSelector.glade</file>
-    <file>icons/outliner/entity.png</file>
     <file>icons/outliner/brush.png</file>
+    <file>icons/outliner/entity.png</file>
+    <file>icons/outliner/face.png</file>
     <file>lua/gdkevents.lua</file>
     <file>lua/gdkkeysyms.lua</file>
     <file>lua/gdktypes.lua</file>

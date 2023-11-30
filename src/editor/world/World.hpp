@@ -33,12 +33,15 @@
 
 namespace Sickle::Editor
 {
+    class World;
+    using WorldRef = Glib::RefPtr<World>;
+
     class World : public Glib::Object
     {
     public:
-        static Glib::RefPtr<World> create();
-        static Glib::RefPtr<World> create(MAP::Map const &map);
-        static Glib::RefPtr<World> create(RMF::RichMap const &map);
+        static WorldRef create();
+        static WorldRef create(MAP::Map const &map);
+        static WorldRef create(RMF::RichMap const &map);
 
         World &operator=(World const &other);
         /** Convert to .map format. */
@@ -48,15 +51,16 @@ namespace Sickle::Editor
         // contained items.
         auto &entities() {return _entities;}
 
-        Entity &add_entity(Entity const &entity);
+        void add_entity(EntityRef const &entity);
         void remove_brush(BrushRef const &brush);
-        Entity &worldspawn();
+        EntityRef worldspawn();
+
+    protected:
+        World();
 
     private:
         sigc::signal<void()> _signal_changed{};
-        std::vector<Entity> _entities{};
-
-        World();
+        std::vector<EntityRef> _entities{};
         // TODO:
         // - visgroups & groups
         // - paths (what are these?)

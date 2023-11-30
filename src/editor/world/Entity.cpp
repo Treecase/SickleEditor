@@ -25,37 +25,36 @@
 using namespace Sickle::Editor;
 
 
+EntityRef Entity::create()
+{
+    return EntityRef{new Entity{}};
+}
+
+
+EntityRef Entity::create(MAP::Entity const &entity)
+{
+    auto e = create();
+    e->properties = entity.properties;
+    for (auto const &brush : entity.brushes)
+        e->_brushes.push_back(Brush::create(brush));
+    return e;
+}
+
+
+EntityRef Entity::create(RMF::Entity const &entity)
+{
+    auto e = create();
+    e->properties = entity.kv_pairs;
+    e->properties["classname"] = entity.classname;
+    for (auto const &brush : entity.brushes)
+        e->_brushes.push_back(Brush::create(brush));
+    return e;
+}
+
 
 Entity::Entity()
 :   Glib::ObjectBase{typeid(Entity)}
 {
-}
-
-
-Entity::Entity(Entity const &other)
-:   Entity{}
-{
-    properties = other.properties;
-    _brushes = other._brushes;
-}
-
-
-Entity::Entity(MAP::Entity const &entity)
-:   Entity{}
-{
-    properties = entity.properties;
-    for (auto const &brush : entity.brushes)
-        _brushes.push_back(Brush::create(brush));
-}
-
-
-Entity::Entity(RMF::Entity const &entity)
-:   Entity{}
-{
-    properties = entity.kv_pairs;
-    properties["classname"] = entity.classname;
-    for (auto const &brush : entity.brushes)
-        _brushes.push_back(Brush::create(brush));
 }
 
 

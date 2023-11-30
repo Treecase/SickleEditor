@@ -19,9 +19,9 @@
 #include "world3d/Entity.hpp"
 
 
-World3D::Entity::Entity(Sickle::Editor::Entity &src)
+World3D::Entity::Entity(Sickle::Editor::EntityRef src)
 {
-    for (auto &brush : src.brushes())
+    for (auto &brush : src->brushes())
     {
         auto b = std::make_shared<Brush>(brush);
         b->signal_deleted().connect(
