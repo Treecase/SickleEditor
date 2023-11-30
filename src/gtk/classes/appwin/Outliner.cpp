@@ -49,29 +49,24 @@ Outliner::Outliner()
 
 
 void Outliner::on_object_is_selected_changed(
-    Glib::RefPtr<Sickle::Editor::EditorObject> const &obj)
+    Gtk::TreeModel::iterator const &iter)
 {
+    auto sel = _tree_view.get_selection();
+    auto obj = iter->get_value(_tree_columns.ptr);
+    if (obj->is_selected())
+        sel->select(iter);
+    else
+        sel->unselect(iter);
 }
 
 
 void Outliner::on_selection_changed()
 {
     auto sel = _tree_view.get_selection();
-    auto selected_paths = sel->get_selected_rows();
-    _tree_store->foreach_path([this, &selected_paths](
-        Gtk::TreeModel::Path const &path) -> bool
+    _tree_store->foreach_iter([this, &sel](
+        Gtk::TreeModel::iterator const &iter) -> bool
     {
-        bool selected = false;
-        auto it = _tree_store->get_iter(path);
-        for (auto const &p : selected_paths)
-        {
-            if (it.equal(_tree_store->get_iter(p)))
-            {
-                selected = true;
-                break;
-            }
-        }
-        it->get_value(_tree_columns.ptr)->select(selected);
+        iter->get_value(_tree_columns.ptr)->select(sel->is_selected(iter));
         return false;
     });
 }
@@ -99,12 +94,14 @@ void Outliner::_add_object(
     Glib::RefPtr<Sickle::Editor::EditorObject> obj,
     Gtk::TreeRow const &parent_row)
 {
+    auto iter = _tree_store->append(parent_row.children());
+
     obj->property_selected().signal_changed().connect(
         sigc::bind(
             sigc::mem_fun(*this, &Outliner::on_object_is_selected_changed),
-            obj));
+            iter));
 
-    auto &row = *_tree_store->append(parent_row.children());
+    auto &row = *iter;
     row[_tree_columns.text] = obj->name();
     row[_tree_columns.icon] = obj->icon();
     row[_tree_columns.ptr] = obj;

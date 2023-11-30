@@ -42,7 +42,7 @@ namespace Sickle::AppWin
 
     protected:
         void on_object_is_selected_changed(
-            Glib::RefPtr<Sickle::Editor::EditorObject> const &obj);
+            Gtk::TreeModel::iterator const &iter);
         void on_selection_changed();
         void on_world_changed();
 
