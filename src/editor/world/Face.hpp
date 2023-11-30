@@ -41,9 +41,8 @@ namespace Sickle::Editor
     using FaceRef = Glib::RefPtr<Face>;
 
     class Face :
-        public Glib::Object,
-        public Lua::Referenceable,
-        public EditorObject
+        public EditorObject,
+        public Lua::Referenceable
     {
     public:
         static FaceRef create(
@@ -106,7 +105,8 @@ namespace Sickle::Editor
         // EditorObject interface
         virtual Glib::ustring name() const override;
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
-        virtual std::vector<EditorObject *> children() const override;
+        virtual std::vector<Glib::RefPtr<EditorObject>>
+        children() const override;
 
     protected:
         Face();

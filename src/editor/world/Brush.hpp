@@ -40,9 +40,8 @@ namespace Sickle::Editor
     using BrushRef = Glib::RefPtr<Brush>;
 
     class Brush :
-        public Glib::Object,
-        public Lua::Referenceable,
-        public EditorObject
+        public EditorObject,
+        public Lua::Referenceable
     {
     public:
         std::vector<FaceRef> faces{};
@@ -54,12 +53,9 @@ namespace Sickle::Editor
 
         operator MAP::Brush() const;
 
-        auto property_selected() {return _prop_selected.get_proxy();}
-        auto property_selected() const {return _prop_selected.get_proxy();}
         auto property_real() {return _prop_real.get_proxy();}
         auto property_real() const {return _prop_real.get_proxy();}
 
-        auto is_selected() const {return property_selected().get_value();}
         auto is_real() const {return property_real().get_value();}
 
         void transform(glm::mat4 const &matrix);
@@ -68,13 +64,13 @@ namespace Sickle::Editor
         // EditorObject interface
         virtual Glib::ustring name() const override;
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
-        virtual std::vector<EditorObject *> children() const override;
+        virtual std::vector<Glib::RefPtr<EditorObject>>
+        children() const override;
 
     protected:
         Brush();
 
     private:
-        Glib::Property<bool> _prop_selected;
         Glib::Property<bool> _prop_real;
         // TODO:
         // - visgroup id

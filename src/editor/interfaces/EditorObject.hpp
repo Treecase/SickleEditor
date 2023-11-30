@@ -19,6 +19,8 @@
 #ifndef SE_EDITOR_INTERFACE_EDITOROBJECT_HPP
 #define SE_EDITOR_INTERFACE_EDITOROBJECT_HPP
 
+#include "Selectable.hpp"
+
 #include <gdkmm/pixbuf.h>
 #include <glibmm/refptr.h>
 #include <glibmm/ustring.h>
@@ -26,14 +28,14 @@
 
 namespace Sickle::Editor
 {
-    class EditorObject
+    class EditorObject : public Selectable
     {
     public:
         virtual ~EditorObject()=default;
 
         virtual Glib::ustring name() const=0;
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const=0;
-        virtual std::vector<EditorObject *> children() const=0;
+        virtual std::vector<Glib::RefPtr<EditorObject>> children() const=0;
     };
 }
 

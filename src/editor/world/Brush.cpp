@@ -71,7 +71,6 @@ BrushRef Brush::create(RMF::Solid const &solid)
 Brush::Brush()
 :   Glib::ObjectBase{typeid(Brush)}
 ,   Lua::Referenceable{}
-,   _prop_selected{*this, "selected", false}
 ,   _prop_real{*this, "real", false}
 {
 }
@@ -117,10 +116,10 @@ Glib::RefPtr<Gdk::Pixbuf> Brush::icon() const
 }
 
 
-std::vector<EditorObject *> Brush::children() const
+std::vector<Glib::RefPtr<EditorObject>> Brush::children() const
 {
-    std::vector<EditorObject *> out{};
+    std::vector<Glib::RefPtr<EditorObject>> out{};
     for (auto const &face : faces)
-        out.push_back(face.get());
+        out.push_back(face);
     return out;
 }

@@ -123,10 +123,10 @@ Glib::RefPtr<Gdk::Pixbuf> Entity::icon() const
 }
 
 
-std::vector<EditorObject *> Entity::children() const
+std::vector<Glib::RefPtr<EditorObject>> Entity::children() const
 {
-    std::vector<EditorObject *> out{};
+    std::vector<Glib::RefPtr<EditorObject>> out{};
     for (auto const &brush : brushes())
-        out.push_back(brush.get());
+        out.push_back(brush);
     return out;
 }

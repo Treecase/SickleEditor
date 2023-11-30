@@ -38,7 +38,7 @@ namespace Sickle::Editor
     class Entity;
     using EntityRef = Glib::RefPtr<Entity>;
 
-    class Entity : public Glib::Object, public EditorObject
+    class Entity : public EditorObject
     {
     public:
         std::unordered_map<std::string, std::string> properties{};
@@ -60,7 +60,8 @@ namespace Sickle::Editor
         // EditorObject interface
         virtual Glib::ustring name() const override;
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
-        virtual std::vector<EditorObject *> children() const override;
+        virtual std::vector<Glib::RefPtr<EditorObject>>
+        children() const override;
 
     protected:
         Entity();

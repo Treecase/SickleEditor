@@ -41,6 +41,9 @@ namespace Sickle::AppWin
         auto property_world() {return _prop_world.get_proxy();}
 
     protected:
+        void on_object_is_selected_changed(
+            Glib::RefPtr<Sickle::Editor::EditorObject> const &obj);
+        void on_selection_changed();
         void on_world_changed();
 
     private:
@@ -51,9 +54,12 @@ namespace Sickle::AppWin
             {
                 add(text);
                 add(icon);
+                add(ptr);
             }
             Gtk::TreeModelColumn<Glib::ustring> text;
             Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
+            Gtk::TreeModelColumn<
+                Glib::RefPtr<Sickle::Editor::EditorObject>> ptr;
         };
 
         Glib::Property<Glib::RefPtr<Editor::World>> _prop_world;
@@ -65,7 +71,7 @@ namespace Sickle::AppWin
         Gtk::TreeView _tree_view{};
 
         void _add_object(
-            Sickle::Editor::EditorObject *obj,
+            Glib::RefPtr<Sickle::Editor::EditorObject> obj,
             Gtk::TreeRow const &parent_row);
     };
 }

@@ -34,12 +34,46 @@ Outliner::Outliner()
     _tree_view.append_column("Label", _tree_columns.text);
     _tree_view.set_headers_visible(false);
 
+    auto sel = _tree_view.get_selection();
+
+    sel->signal_changed().connect(
+        sigc::mem_fun(*this, &Outliner::on_selection_changed));
+
     _scrolled.add(_tree_view);
 
     add(_scrolled);
 
     property_world().signal_changed().connect(
         sigc::mem_fun(*this, &Outliner::on_world_changed));
+}
+
+
+void Outliner::on_object_is_selected_changed(
+    Glib::RefPtr<Sickle::Editor::EditorObject> const &obj)
+{
+}
+
+
+void Outliner::on_selection_changed()
+{
+    auto sel = _tree_view.get_selection();
+    auto selected_paths = sel->get_selected_rows();
+    _tree_store->foreach_path([this, &selected_paths](
+        Gtk::TreeModel::Path const &path) -> bool
+    {
+        bool selected = false;
+        auto it = _tree_store->get_iter(path);
+        for (auto const &p : selected_paths)
+        {
+            if (it.equal(_tree_store->get_iter(p)))
+            {
+                selected = true;
+                break;
+            }
+        }
+        it->get_value(_tree_columns.ptr)->select(selected);
+        return false;
+    });
 }
 
 
@@ -53,6 +87,7 @@ void Outliner::on_world_changed()
         auto &ent_row = *_tree_store->append();
         ent_row[_tree_columns.text] = e->name();
         ent_row[_tree_columns.icon] = e->icon();
+        ent_row[_tree_columns.ptr] = e;
 
         for (auto const &child : e->children())
             _add_object(child, ent_row);
@@ -61,12 +96,18 @@ void Outliner::on_world_changed()
 
 
 void Outliner::_add_object(
-    Sickle::Editor::EditorObject *obj,
+    Glib::RefPtr<Sickle::Editor::EditorObject> obj,
     Gtk::TreeRow const &parent_row)
 {
+    obj->property_selected().signal_changed().connect(
+        sigc::bind(
+            sigc::mem_fun(*this, &Outliner::on_object_is_selected_changed),
+            obj));
+
     auto &row = *_tree_store->append(parent_row.children());
     row[_tree_columns.text] = obj->name();
     row[_tree_columns.icon] = obj->icon();
+    row[_tree_columns.ptr] = obj;
 
     for (auto const &child : obj->children())
         _add_object(child, row);
