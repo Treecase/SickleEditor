@@ -87,8 +87,12 @@ static int selection_iterate(lua_State *L)
     lua_Integer i = 1;
     for (auto it = s->begin(); it != s->end(); it++)
     {
-        Lua::push(L, *it);
-        lua_seti(L, -2, i++);
+        auto const brush = BrushRef::cast_dynamic(*it);
+        if (brush)
+        {
+            Lua::push(L, brush);
+            lua_seti(L, -2, i++);
+        }
     }
 
     lua_pushcclosure(L, &selection_iterate_iterator, 3);

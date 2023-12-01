@@ -401,10 +401,15 @@ void Sickle::MapArea2D::on_editor_maptools_changed()
 void Sickle::MapArea2D::on_editor_selection_changed()
 {
     BBox2 selection_bounds{};
-    for (auto const &brush : _editor->selected)
+    for (auto const &obj : _editor->selected)
+    {
+        auto const brush = Editor::BrushRef::cast_dynamic(obj);
+        if (!brush)
+            continue;
         for (auto const &face : brush->faces)
             for (auto const &vertex : face->get_vertices())
                 selection_bounds.add(worldspace_to_drawspace(vertex));
+    }
     _selected_box.set_box(selection_bounds);
     queue_draw();
 }

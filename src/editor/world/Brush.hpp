@@ -70,6 +70,8 @@ namespace Sickle::Editor
     protected:
         Brush();
 
+        void on_realness_changed();
+
     private:
         Glib::Property<bool> _prop_real;
         // TODO:

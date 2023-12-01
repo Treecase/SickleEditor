@@ -36,11 +36,7 @@ void Selection::add(Item item)
 {
     if (contains(item))
         return;
-    for (auto &face : item->faces)
-        face->signal_vertices_changed().connect(signal_updated().make_slot());
-    item->property_selected() = true;
-    item->property_real().signal_changed().connect(
-        [this, item](){remove(item);});
+    item->select(true);
     _selected.emplace(item);
     signal_updated().emit();
 }
@@ -48,8 +44,10 @@ void Selection::add(Item item)
 
 void Selection::remove(Item item)
 {
+    if (!contains(item))
+        return;
+    item->select(false);
     _selected.erase(item);
-    item->property_selected() = false;
     signal_updated().emit();
 }
 

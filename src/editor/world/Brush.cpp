@@ -73,6 +73,8 @@ Brush::Brush()
 ,   Lua::Referenceable{}
 ,   _prop_real{*this, "real", false}
 {
+    property_real().signal_changed().connect(
+        sigc::mem_fun(*this, &Brush::on_realness_changed));
 }
 
 
@@ -122,4 +124,12 @@ std::vector<Glib::RefPtr<EditorObject>> Brush::children() const
     for (auto const &face : faces)
         out.push_back(face);
     return out;
+}
+
+
+
+void Brush::on_realness_changed()
+{
+    if (!property_real().get_value())
+        select(false);
 }

@@ -27,7 +27,7 @@ using namespace Sickle::AppWin;
 Outliner::Outliner()
 :   Glib::ObjectBase{typeid(Outliner)}
 ,   Gtk::Bin{}
-,   _prop_world{*this, "world", Glib::RefPtr<Editor::World>{nullptr}}
+,   _prop_world{*this, "world", WorldRef{nullptr}}
 {
     _tree_view.set_model(_tree_store);
     _tree_view.append_column("Icon", _tree_columns.icon);
@@ -77,7 +77,7 @@ void Outliner::on_world_changed()
     _tree_store->clear();
 
     auto const &w = property_world().get_value();
-    for (auto const &e : w->entities())
+    for (auto const &e : w->children())
     {
         auto &ent_row = *_tree_store->append();
         ent_row[_tree_columns.text] = e->name();

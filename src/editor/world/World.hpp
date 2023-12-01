@@ -36,7 +36,7 @@ namespace Sickle::Editor
     class World;
     using WorldRef = Glib::RefPtr<World>;
 
-    class World : public Glib::Object
+    class World : public EditorObject
     {
     public:
         static WorldRef create();
@@ -50,10 +50,17 @@ namespace Sickle::Editor
         // WARNING: You are expected to not modify the collection itself, only
         // contained items.
         auto &entities() {return _entities;}
+        auto &entities() const {return _entities;}
 
         void add_entity(EntityRef const &entity);
         void remove_brush(BrushRef const &brush);
         EntityRef worldspawn();
+
+        // EditorObject interface
+        virtual Glib::ustring name() const override;
+        virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
+        virtual std::vector<Glib::RefPtr<EditorObject>>
+        children() const override;
 
     protected:
         World();

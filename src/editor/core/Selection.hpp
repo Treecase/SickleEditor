@@ -19,14 +19,11 @@
 #ifndef SE_EDITOR_SELECTION_HPP
 #define SE_EDITOR_SELECTION_HPP
 
+#include <interfaces/Selectable.hpp>
 #include <se-lua/utils/Referenceable.hpp>
-#include <world/EditorWorld.hpp>
 
 #include <sigc++/signal.h>
-#include <sigc++/connection.h>
 
-#include <functional>
-#include <memory>
 #include <unordered_set>
 
 
@@ -35,7 +32,7 @@ namespace Sickle::Editor
     class Selection : public Lua::Referenceable
     {
     public:
-        using Item = BrushRef;
+        using Item = Glib::RefPtr<Selectable>;
 
         void clear();
         void add(Item item);
@@ -55,7 +52,7 @@ namespace Sickle::Editor
         {
             std::size_t operator()(Selection::Item const &item) const
             {
-                return std::hash<Brush *>{}(item.get());
+                return std::hash<void *>{}(item.get());
             }
         };
 

@@ -234,8 +234,12 @@ void Operation::execute(EditorRef ed, ArgList const &passed_args) const
         // Push selected objects list.
         lua_newtable(L);
         lua_Integer i = 1;
-        for (auto const &brush : ed->selected)
+        for (auto const &obj : ed->selected)
         {
+            auto const brush = BrushRef::cast_dynamic(obj);
+            if (!brush)
+                continue;
+
             int const top = lua_gettop(L);
 
             Lua::push(L, brush);

@@ -24,8 +24,11 @@
 
 #include <se-lua/utils/Referenceable.hpp>
 #include <wad/TextureManager.hpp>
+#include <world/EditorWorld.hpp>
 
-#include <glibmm.h>
+#include <glibmm/refptr.h>
+#include <glibmm/property.h>
+#include <sigc++/signal.h>
 
 #include <memory>
 #include <string>

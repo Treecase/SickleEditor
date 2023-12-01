@@ -69,6 +69,18 @@ void Editor::_on_map_changed()
     brushbox.p1(glm::vec3{});
     brushbox.p2(glm::vec3{});
     selected.clear();
+
+    auto world = get_map();
+    world->foreach([this](Glib::RefPtr<EditorObject> obj){
+        obj->property_selected().signal_changed().connect(
+            [this, obj](){
+                if (obj->is_selected())
+                    selected.add(obj);
+                else
+                    selected.remove(obj);
+            }
+        );
+    });
 }
 
 

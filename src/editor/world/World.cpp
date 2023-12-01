@@ -63,6 +63,14 @@ WorldRef World::create(RMF::RichMap const &map)
 }
 
 
+World::World()
+:   Glib::ObjectBase{typeid(World)}
+{
+    auto worldspawn = Entity::create();
+    worldspawn->properties["classname"] = "worldspawn";
+}
+
+
 World::operator MAP::Map() const
 {
     MAP::Map out{};
@@ -94,10 +102,26 @@ EntityRef World::worldspawn()
 }
 
 
-
-World::World()
-:   Glib::ObjectBase{typeid(World)}
+/* ---[ EditorObject interface ]--- */
+Glib::ustring World::name() const
 {
-    auto worldspawn = Entity::create();
-    worldspawn->properties["classname"] = "worldspawn";
+    std::stringstream ss{};
+    ss << "World " << this;
+    return Glib::ustring{ss.str()};
+}
+
+
+Glib::RefPtr<Gdk::Pixbuf> World::icon() const
+{
+    return Gdk::Pixbuf::create_from_data(
+        NULL, Gdk::Colorspace::COLORSPACE_RGB, false, 8, 0, 0, 0);
+}
+
+
+std::vector<Glib::RefPtr<EditorObject>> World::children() const
+{
+    std::vector<Glib::RefPtr<EditorObject>> out{};
+    for (auto const &entity : entities())
+        out.push_back(entity);
+    return out;
 }
