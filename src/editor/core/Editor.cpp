@@ -31,7 +31,7 @@ Editor::Editor(lua_State *L)
 :   Glib::ObjectBase{typeid(Editor)}
 ,   Lua::Referenceable{}
 ,   oploader{std::make_shared<OperationLoader>(L)}
-,   _prop_map{*this, "map", World::create()}
+,   _prop_map{*this, "map", {}}
 ,   _prop_maptool{*this, "maptool", ""}
 ,   _prop_mode{*this, "mode", {}}
 ,   _prop_wads{*this, "wads", {}}
@@ -40,6 +40,8 @@ Editor::Editor(lua_State *L)
         sigc::mem_fun(*this, &Editor::_on_map_changed));
     property_wads().signal_changed().connect(
         sigc::mem_fun(*this, &Editor::_on_wads_changed));
+
+    set_map(World::create());
 }
 
 
@@ -64,6 +66,33 @@ void Editor::add_maptool(MapTool const &maptool)
 
 
 
+void Editor::on_object_selected_changed(Glib::RefPtr<EditorObject> const &obj)
+{
+    if (obj->is_selected())
+        selected.add(obj);
+    else
+        selected.remove(obj);
+}
+
+
+void Editor::on_object_added(Glib::RefPtr<EditorObject> const &obj)
+{
+    // obj will be automatically added/removed from Selection.
+    obj->property_selected().signal_changed().connect(
+        sigc::bind(
+            sigc::mem_fun(*this, &Editor::on_object_selected_changed),
+            obj));
+
+    // Existing children will act the same as obj.
+    obj->foreach([this](auto child){on_object_added(child);});
+
+    // New children will act the same as obj.
+    obj->signal_child_added().connect(
+        sigc::mem_fun(*this, &Editor::on_object_added));
+}
+
+
+
 void Editor::_on_map_changed()
 {
     brushbox.p1(glm::vec3{});
@@ -71,16 +100,7 @@ void Editor::_on_map_changed()
     selected.clear();
 
     auto world = get_map();
-    world->foreach([this](Glib::RefPtr<EditorObject> obj){
-        obj->property_selected().signal_changed().connect(
-            [this, obj](){
-                if (obj->is_selected())
-                    selected.add(obj);
-                else
-                    selected.remove(obj);
-            }
-        );
-    });
+    on_object_added(world);
 }
 
 

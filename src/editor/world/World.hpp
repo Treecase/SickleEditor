@@ -36,6 +36,15 @@ namespace Sickle::Editor
     class World;
     using WorldRef = Glib::RefPtr<World>;
 
+    /**
+     * World represents a toplevel 'Map'.
+     *
+     * Worlds consist of a tree-like structure, with the world acting as root.
+     * The next layer are the Entities, then the Brushes.
+     *
+     * All worlds have at least one entity, the worldspawn. This entity
+     * contains all the physical world geometry.
+     */
     class World : public EditorObject
     {
     public:
@@ -43,17 +52,42 @@ namespace Sickle::Editor
         static WorldRef create(MAP::Map const &map);
         static WorldRef create(RMF::RichMap const &map);
 
-        World &operator=(World const &other);
-        /** Convert to .map format. */
         operator MAP::Map() const;
 
-        // WARNING: You are expected to not modify the collection itself, only
-        // contained items.
-        auto &entities() {return _entities;}
+        /**
+         * Get a list of entities in the world.
+         *
+         * @return A list of entities in the World.
+         */
         auto &entities() const {return _entities;}
 
+        /**
+         * Add an entity to the world.
+         *
+         * @param entity The entity to add.
+         */
         void add_entity(EntityRef const &entity);
+
+        /**
+         * Remove an entity from the world.
+         *
+         * @param entity The entity to remove.
+         */
+        void remove_entity(EntityRef const &entity);
+
+        /**
+         * Remove a brush from the world.
+         *
+         * @param entity The entity to remove.
+         * @deprecated Will be removed
+         */
         void remove_brush(BrushRef const &brush);
+
+        /**
+         * Get the world's worldspawn entity.
+         *
+         * @return The worldspawn entity.
+         */
         EntityRef worldspawn();
 
         // EditorObject interface

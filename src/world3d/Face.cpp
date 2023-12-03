@@ -29,25 +29,17 @@ World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
 ,   _src{face}
 ,   _offset{offset}
 {
-    _on_src_texture_changed();
-
-    _sync_vertices();
-
     _src->signal_vertices_changed().connect(
         sigc::mem_fun(*this, &Face::_on_src_verts_changed));
     _src->property_texture().signal_changed().connect(
         sigc::mem_fun(*this, &Face::_on_src_texture_changed));
-}
 
-
-void World3D::Face::_on_src_verts_changed()
-{
-    _vertices.clear();
+    push_queue([this](){_sync_texture();});
     _sync_vertices();
 }
 
 
-void World3D::Face::_on_src_texture_changed()
+void World3D::Face::_sync_texture()
 {
     auto &texman = WAD::TextureManagerProxy<Texture>::create();
     try {
@@ -57,6 +49,7 @@ void World3D::Face::_on_src_texture_changed()
         _texture = Texture::make_missing_texture();
         signal_missing_texture().emit(_src->get_texture());
     }
+    _sync_vertices();
 }
 
 
@@ -66,6 +59,7 @@ void World3D::Face::_sync_vertices()
     auto const &v_axis = glm::normalize(_src->get_v());
     glm::vec2 const texture_size{_texture.width, _texture.height};
 
+    _vertices.clear();
     for (auto const &vertex : _src->get_vertices())
     {
         _vertices.emplace_back(
@@ -77,4 +71,17 @@ void World3D::Face::_sync_vertices()
                 + _src->get_shift())
             / texture_size);
     }
+    signal_vertices_changed().emit();
+}
+
+
+void World3D::Face::_on_src_verts_changed()
+{
+    _sync_vertices();
+}
+
+
+void World3D::Face::_on_src_texture_changed()
+{
+    push_queue([this](){_sync_texture();});
 }

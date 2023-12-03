@@ -72,7 +72,7 @@ namespace Sickle::AppWin
 
         void _add_object(
             Glib::RefPtr<Sickle::Editor::EditorObject> obj,
-            Gtk::TreeRow const &parent_row);
+            Gtk::TreeModel::iterator const &iter);
     };
 }
 

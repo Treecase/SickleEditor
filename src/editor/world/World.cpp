@@ -41,8 +41,9 @@ WorldRef World::create(RMF::RichMap const &map)
     auto world = World::create();
 
     auto worldspawn = Entity::create();
-    worldspawn->properties = map.worldspawn_properties;
-    worldspawn->properties["classname"] = map.worldspawn_name;
+    for (auto const &kv : map.worldspawn_properties)
+        worldspawn->set_property(kv.first, kv.second);
+    worldspawn->set_property("classname", map.worldspawn_name);
 
     std::stack<RMF::Group> groups{};
     groups.push(map.objects);
@@ -67,7 +68,8 @@ World::World()
 :   Glib::ObjectBase{typeid(World)}
 {
     auto worldspawn = Entity::create();
-    worldspawn->properties["classname"] = "worldspawn";
+    worldspawn->set_property("classname", "worldspawn");
+    add_entity(worldspawn);
 }
 
 
@@ -83,6 +85,17 @@ World::operator MAP::Map() const
 void World::add_entity(EntityRef const &entity)
 {
     _entities.push_back(entity);
+    signal_child_added().emit(entity);
+}
+
+
+void World::remove_entity(EntityRef const &entity)
+{
+    auto const it = std::find(_entities.cbegin(), _entities.cend(), entity);
+    if (it == _entities.cend())
+        return;
+    _entities.erase(it);
+    signal_child_removed().emit(entity);
 }
 
 
@@ -96,7 +109,7 @@ void World::remove_brush(BrushRef const &brush)
 EntityRef World::worldspawn()
 {
     for (auto &entity : _entities)
-        if (entity->properties.at("classname") == "worldspawn")
+        if (entity->get_property("classname") == "worldspawn")
             return entity;
     throw std::logic_error{"missing worldspawn"};
 }

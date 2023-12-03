@@ -40,6 +40,12 @@ namespace Sickle::Editor
     class Face;
     using FaceRef = Glib::RefPtr<Face>;
 
+    /**
+     * A Face is a flat 3D plane.
+     *
+     * Brushes are made up of several faces. Each face has texture information
+     * associated with it, used for rendering the face in-game.
+     */
     class Face :
         public EditorObject,
         public Lua::Referenceable

@@ -1,5 +1,6 @@
 add_library(world3d STATIC
     Brush.cpp
+    DeferredExec.cpp
     Entity.cpp
     Face.cpp
     Texture.cpp

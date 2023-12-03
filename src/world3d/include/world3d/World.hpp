@@ -19,11 +19,13 @@
 #ifndef SE_WORLD3D_WORLD_HPP
 #define SE_WORLD3D_WORLD_HPP
 
+#include "DeferredExec.hpp"
 #include "Entity.hpp"
 
 #include <glibmm/refptr.h>
 #include <world/World.hpp>
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -35,7 +37,7 @@ namespace World3D
      *
      * Manages Entity object views, sychronized with an Editor::World object.
      */
-    class World
+    class World : public DeferredExec
     {
     public:
         World(Sickle::Editor::WorldRef src);
@@ -44,8 +46,12 @@ namespace World3D
 
         void render() const;
 
+    protected:
+        void add_entity(Sickle::Editor::EntityRef const &entity);
+
     private:
         std::vector<std::shared_ptr<Entity>> _entities{};
+        std::vector<std::function<void()>> _queue{};
 
         World(World const &)=delete;
         World &operator=(World const &)=delete;

@@ -1,5 +1,6 @@
 /**
- * World.cpp - OpenGL Editor::World view.
+ * DeferredExec.cpp - Object that holds a queue of commands to execute at a
+ *                    later time.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,32 +17,37 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/World.hpp"
+#include "world3d/DeferredExec.hpp"
 
 
-World3D::World::World(Sickle::Editor::WorldRef src)
+sigc::signal<void()> DeferredExec::_sig_glcontext_ready{};
+
+
+void DeferredExec::context_ready()
 {
-    src->signal_child_added().connect(
-        [this](auto child){
-            auto entity = Sickle::Editor::EntityRef::cast_dynamic(child);
-            if (entity)
-                add_entity(entity);
-        });
-
-    for (auto &entity : src->entities())
-        add_entity(entity);
+    _sig_glcontext_ready.emit();
 }
 
 
-void World3D::World::render() const
+DeferredExec::DeferredExec()
 {
-    for (auto const &entity : entities())
-        entity->render();
+    _sig_glcontext_ready.connect(
+        sigc::mem_fun(*this, &DeferredExec::flush_queue));
 }
 
 
-
-void World3D::World::add_entity(Sickle::Editor::EntityRef const &entity)
+void DeferredExec::flush_queue()
 {
-    _entities.push_back(std::make_shared<Entity>(entity));
+    while (!_queue.empty())
+    {
+        auto const func = _queue.front();
+        _queue.pop();
+        std::invoke(func);
+    }
+}
+
+
+void DeferredExec::push_queue(QueuedFunc func)
+{
+    _queue.push(func);
 }

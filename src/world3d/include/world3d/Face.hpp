@@ -19,11 +19,13 @@
 #ifndef SE_WORLD3D_FACE_HPP
 #define SE_WORLD3D_FACE_HPP
 
-#include <world/Face.hpp>
+#include "DeferredExec.hpp"
+#include "Texture.hpp"
 
 #include <glutils/glutils.hpp>
 #include <sigc++/signal.h>
 #include <wad/lumps.hpp>
+#include <world/Face.hpp>
 
 #include <array>
 #include <memory>
@@ -32,27 +34,6 @@
 
 namespace World3D
 {
-    struct Texture
-    {
-        std::shared_ptr<GLUtil::Texture> texture{nullptr};
-        int width, height;
-
-        /**
-         * Get the "Missing Texture" texture. It will only be generated once,
-         * and will be reused on subsequent calls.
-         */
-        static Texture make_missing_texture();
-
-        Texture()=default;
-        Texture(WAD::TexLump const &texlump);
-    };
-
-
-    class Brush;
-    class Entity;
-    class World3D;
-
-
     class Vertex
     {
     public:
@@ -67,7 +48,7 @@ namespace World3D
     };
 
 
-    class Face : public sigc::trackable
+    class Face : public sigc::trackable, public DeferredExec
     {
     public:
         static auto &signal_missing_texture() {return _signal_missing_texture;}
@@ -75,6 +56,9 @@ namespace World3D
         Face(
             Sickle::Editor::FaceRef const &face,
             GLint offset);
+
+        /** Emitted when the vertices change. */
+        auto &signal_vertices_changed() {return _signal_vertices_changed;}
 
         /** Length of span in _PARENT's VBO. */
         GLsizei count() const {return _vertices.size();}
@@ -86,6 +70,8 @@ namespace World3D
     private:
         static sigc::signal<void(std::string)> _signal_missing_texture;
 
+        sigc::signal<void()> _signal_vertices_changed{};
+
         Sickle::Editor::FaceRef const _src{nullptr};
         Texture _texture{};
         std::vector<Vertex> _vertices{};
@@ -95,6 +81,7 @@ namespace World3D
         Face &operator=(Face const &)=delete;
 
         void _sync_vertices();
+        void _sync_texture();
 
         void _on_src_verts_changed();
         void _on_src_texture_changed();

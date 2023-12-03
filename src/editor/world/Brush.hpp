@@ -39,16 +39,38 @@ namespace Sickle::Editor
     class Brush;
     using BrushRef = Glib::RefPtr<Brush>;
 
+    /**
+     * Brushes describe the shape of an entity in the world.
+     *
+     * Each brush is a convex 3D polygon. Brushes are associated with an
+     * Entity, which determines how the child brush(es) are interpreted. For
+     * example, the worldspawn entity treats them as solid world geometry,
+     * whereas a func_trigger treats it as a hitbox.
+     */
     class Brush :
         public EditorObject,
         public Lua::Referenceable
     {
     public:
-        std::vector<FaceRef> faces{};
-
+        /**
+         * Create a new empty brush. You probably don't want to do this.
+         */
         static BrushRef create();
+
+        /**
+         * Create a new brush from a set of 3D points. Throws if these points
+         * do not make up a valid convex 3D polygon.
+         */
         static BrushRef create(std::vector<glm::vec3> const &points);
+
+        /**
+         * Create a new brush from MAP format brush data.
+         */
         static BrushRef create(MAP::Brush const &brush);
+
+        /**
+         * Create a new brush from RMF format brush data.
+         */
         static BrushRef create(RMF::Solid const &solid);
 
         operator MAP::Brush() const;
@@ -58,7 +80,25 @@ namespace Sickle::Editor
 
         auto is_real() const {return property_real().get_value();}
 
+        /**
+         * Get a list of faces associated with this brush.
+         *
+         * @return A list of the brush's faces.
+         */
+        std::vector<FaceRef> faces() const;
+
+        /**
+         * Transform the brush by `matrix`.
+         *
+         * @param matrix Transformation matrix to apply.
+         */
         void transform(glm::mat4 const &matrix);
+
+        /**
+         * Translate the brush by `translation`.
+         *
+         * @param translation Vector to translate by.
+         */
         void translate(glm::vec3 const &translation);
 
         // EditorObject interface
@@ -74,6 +114,8 @@ namespace Sickle::Editor
 
     private:
         Glib::Property<bool> _prop_real;
+
+        std::vector<FaceRef> _faces{};
         // TODO:
         // - visgroup id
         // - color

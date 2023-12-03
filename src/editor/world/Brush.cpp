@@ -39,7 +39,7 @@ BrushRef Brush::create(std::vector<glm::vec3> const &vertices)
 
     auto result = Brush::create();
     for (auto const &facet : facets)
-        result->faces.emplace_back(Face::create(facet, vertices2));
+        result->_faces.push_back(Face::create(facet, vertices2));
     return result;
 }
 
@@ -54,7 +54,7 @@ BrushRef Brush::create(MAP::Brush const &brush)
 
     auto result = Brush::create();
     for (auto const &plane : brush.planes)
-        result->faces.emplace_back(Face::create(plane, vertices));
+        result->_faces.push_back(Face::create(plane, vertices));
     return result;
 }
 
@@ -63,7 +63,7 @@ BrushRef Brush::create(RMF::Solid const &solid)
 {
     auto result = Brush::create();
     for (auto const &face : solid.faces)
-        result->faces.emplace_back(Face::create(face));
+        result->_faces.push_back(Face::create(face));
     return result;
 }
 
@@ -81,15 +81,21 @@ Brush::Brush()
 Brush::operator MAP::Brush() const
 {
     MAP::Brush out{};
-    for (auto const &face : faces)
+    for (auto const &face : _faces)
         out.planes.push_back(*face.get());
     return out;
 }
 
 
+std::vector<FaceRef> Brush::faces() const
+{
+    return _faces;
+}
+
+
 void Brush::transform(glm::mat4 const &matrix)
 {
-    for (auto &face : faces)
+    for (auto &face : _faces)
         for (size_t i = 0; i < face->get_vertices().size(); ++i)
             face->set_vertex(
                 i, glm::vec3{matrix * glm::vec4{face->get_vertex(i), 1.0}});
@@ -121,7 +127,7 @@ Glib::RefPtr<Gdk::Pixbuf> Brush::icon() const
 std::vector<Glib::RefPtr<EditorObject>> Brush::children() const
 {
     std::vector<Glib::RefPtr<EditorObject>> out{};
-    for (auto const &face : faces)
+    for (auto const &face : _faces)
         out.push_back(face);
     return out;
 }

@@ -126,10 +126,6 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
         sigc::mem_fun(*this, &MapArea3D::queue_render));
     property_wireframe().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea3D::on_wireframe_changed));
-    property_wireframe().signal_changed().connect(
-        sigc::mem_fun(*this, &MapArea3D::on_wireframe_changed));
-    property_wireframe().signal_changed().connect(
-        sigc::mem_fun(*this, &MapArea3D::on_wireframe_changed));
 
     add_events(
         Gdk::POINTER_MOTION_MASK
@@ -172,7 +168,7 @@ Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
         for (auto const &brush : entity->brushes())
         {
             BBox3 bbox{};
-            for (auto const &face : brush->faces)
+            for (auto const &face : brush->faces())
                 for (auto const &vertex : face->get_vertices())
                     bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
 
@@ -262,18 +258,21 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 
     auto const modelMatrix = property_transform().get_value().getMatrix();
 
-    if (!_mapview)
-        return false;
+    // Let deferred functions run.
+    DeferredExec::context_ready();
 
-    // Draw models.
-    _shader->use();
-    glActiveTexture(GL_TEXTURE0);
-    _shader->setUniformS("view", _camera.getViewMatrix());
-    _shader->setUniformS("projection", projectionMatrix);
-    _shader->setUniformS("tex", 0);
-    _shader->setUniformS("model", modelMatrix);
+    // Draw the world.
+    if (_mapview)
+    {
+        _shader->use();
+        glActiveTexture(GL_TEXTURE0);
+        _shader->setUniformS("view", _camera.getViewMatrix());
+        _shader->setUniformS("projection", projectionMatrix);
+        _shader->setUniformS("tex", 0);
+        _shader->setUniformS("model", modelMatrix);
 
-    _mapview->render();
+        _mapview->render();
+    }
 
     debug.drawRay(_camera.getViewMatrix(), projectionMatrix);
 
@@ -282,7 +281,8 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 
 
 
-bool Sickle::MapArea3D::tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock)
+bool Sickle::MapArea3D::tick_callback(
+    Glib::RefPtr<Gdk::FrameClock> const &clock)
 {
     static constexpr float const USEC_TO_SECONDS = 0.000001f;
 

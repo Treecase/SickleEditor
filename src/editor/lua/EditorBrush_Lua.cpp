@@ -84,7 +84,7 @@ static int get_faces(lua_State *L)
     auto const brush = leditorbrush_check(L, 1);
     lua_newtable(L);
     lua_Integer idx = 1;
-    for (auto const &face : brush->faces)
+    for (auto const &face : brush->faces())
     {
         Lua::push(L, face);
         lua_seti(L, -2, idx++);
@@ -98,7 +98,7 @@ static int get_vertices(lua_State *L)
     auto brush = leditorbrush_check(L, 1);
     lua_newtable(L);
     lua_Integer idx = 1;
-    for (auto const &face : brush->faces)
+    for (auto const &face : brush->faces())
     {
         for (auto const &vertex : face->get_vertices())
         {

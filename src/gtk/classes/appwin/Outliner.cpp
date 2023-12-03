@@ -27,7 +27,7 @@ using namespace Sickle::AppWin;
 Outliner::Outliner()
 :   Glib::ObjectBase{typeid(Outliner)}
 ,   Gtk::Bin{}
-,   _prop_world{*this, "world", WorldRef{nullptr}}
+,   _prop_world{*this, "world", Sickle::Editor::WorldRef{nullptr}}
 {
     _tree_view.set_model(_tree_store);
     _tree_view.append_column("Icon", _tree_columns.icon);
@@ -79,27 +79,26 @@ void Outliner::on_world_changed()
     auto const &w = property_world().get_value();
     for (auto const &e : w->children())
     {
-        auto &ent_row = *_tree_store->append();
-        ent_row[_tree_columns.text] = e->name();
-        ent_row[_tree_columns.icon] = e->icon();
-        ent_row[_tree_columns.ptr] = e;
-
-        for (auto const &child : e->children())
-            _add_object(child, ent_row);
+        auto iter = _tree_store->append();
+        _add_object(e, iter);
     }
 }
 
 
 void Outliner::_add_object(
     Glib::RefPtr<Sickle::Editor::EditorObject> obj,
-    Gtk::TreeRow const &parent_row)
+    Gtk::TreeModel::iterator const &iter)
 {
-    auto iter = _tree_store->append(parent_row.children());
-
     obj->property_selected().signal_changed().connect(
         sigc::bind(
             sigc::mem_fun(*this, &Outliner::on_object_is_selected_changed),
             iter));
+
+    obj->signal_child_added().connect(
+        [this, iter](auto child){
+            auto child_iter = _tree_store->append(iter->children());
+            _add_object(child, child_iter);
+        });
 
     auto &row = *iter;
     row[_tree_columns.text] = obj->name();
@@ -107,5 +106,8 @@ void Outliner::_add_object(
     row[_tree_columns.ptr] = obj;
 
     for (auto const &child : obj->children())
-        _add_object(child, row);
+    {
+        auto child_iter = _tree_store->append(iter->children());
+        _add_object(child, child_iter);
+    }
 }

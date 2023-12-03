@@ -34,9 +34,9 @@ EntityRef Entity::create()
 EntityRef Entity::create(MAP::Entity const &entity)
 {
     auto e = create();
-    e->properties = entity.properties;
+    e->_properties = entity.properties;
     for (auto const &brush : entity.brushes)
-        e->_brushes.push_back(Brush::create(brush));
+        e->add_brush(Brush::create(brush));
     return e;
 }
 
@@ -44,10 +44,10 @@ EntityRef Entity::create(MAP::Entity const &entity)
 EntityRef Entity::create(RMF::Entity const &entity)
 {
     auto e = create();
-    e->properties = entity.kv_pairs;
-    e->properties["classname"] = entity.classname;
+    e->_properties = entity.kv_pairs;
+    e->_properties["classname"] = entity.classname;
     for (auto const &brush : entity.brushes)
-        e->_brushes.push_back(Brush::create(brush));
+        e->add_brush(Brush::create(brush));
     return e;
 }
 
@@ -61,30 +61,34 @@ Entity::Entity()
 Entity::operator MAP::Entity() const
 {
     MAP::Entity out{};
-    out.properties = properties;
+    out.properties = _properties;
     for (auto const &brush : _brushes)
         out.brushes.push_back(*brush.get());
     return out;
 }
 
 
-Entity &Entity::operator=(Entity const &other)
+std::unordered_map<std::string, std::string> Entity::properties() const
 {
-    if (this != &other)
-    {
-        properties = other.properties;
-        _brushes = other._brushes;
-    }
-    return *this;
+    return _properties;
+}
+
+
+std::string Entity::get_property(std::string const &key) const
+{
+    return _properties.at(key);
+}
+
+
+void Entity::set_property(std::string const &key, std::string const &value)
+{
+    _properties[key] = value;
 }
 
 
 std::vector<BrushRef> Entity::brushes() const
 {
-    std::vector<BrushRef> the_brushes{};
-    for (auto const brush : _brushes)
-        the_brushes.emplace_back(brush);
-    return the_brushes;
+    return _brushes;
 }
 
 
@@ -93,6 +97,7 @@ void Entity::add_brush(BrushRef const &brush)
     _brushes.push_back(brush);
     brush->property_real() = true;
     signal_changed().emit();
+    signal_child_added().emit(brush);
 }
 
 
@@ -104,6 +109,7 @@ void Entity::remove_brush(BrushRef const &brush)
     (*it)->property_real() = false;
     _brushes.erase(it);
     signal_changed().emit();
+    signal_child_removed().emit(brush);
 }
 
 
@@ -111,7 +117,7 @@ void Entity::remove_brush(BrushRef const &brush)
 Glib::ustring Entity::name() const
 {
     std::stringstream ss{};
-    ss << properties.at("classname") << ' ' << this;
+    ss << _properties.at("classname") << ' ' << this;
     return Glib::ustring{ss.str()};
 }
 

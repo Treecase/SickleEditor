@@ -19,6 +19,7 @@
 #ifndef SE_WORLD3D_BRUSH_HPP
 #define SE_WORLD3D_BRUSH_HPP
 
+#include "DeferredExec.hpp"
 #include "Face.hpp"
 
 #include <glutils/glutils.hpp>
@@ -33,7 +34,7 @@
 
 namespace World3D
 {
-    class Brush : public sigc::trackable
+    class Brush : public sigc::trackable, public DeferredExec
     {
     public:
         using PreDrawFunc = std::function<void(Sickle::Editor::BrushRef const)>;
@@ -45,6 +46,8 @@ namespace World3D
         auto &signal_deleted() {return _sig_deleted;}
 
         bool is_selected() const;
+
+        /** @warning Requires an active OpenGL context. */
         void render() const;
 
     private:
@@ -58,6 +61,11 @@ namespace World3D
 
         Brush(Brush const &)=delete;
         Brush &operator=(Brush const &)=delete;
+
+        /** @warning Requires an active OpenGL context. */
+        void _init();
+        /** @warning Requires an active OpenGL context. */
+        void _sync_face(std::shared_ptr<Face> const &face);
 
         void _on_face_changed(std::shared_ptr<Face> const &face);
         void _on_real_changed();

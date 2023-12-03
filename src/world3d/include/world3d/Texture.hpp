@@ -1,5 +1,5 @@
 /**
- * Entity.hpp - OpenGL Editor::Entity view.
+ * Texture.hpp - World3D::Texture class.
  * Copyright (C) 2023 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,44 +16,36 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_WORLD3D_ENTITY_HPP
-#define SE_WORLD3D_ENTITY_HPP
+#ifndef SE_WORLD3D_TEXTURE_HPP
+#define SE_WORLD3D_TEXTURE_HPP
 
-#include "Brush.hpp"
 #include "DeferredExec.hpp"
 
-#include <world/Entity.hpp>
+#include <glutils/glutils.hpp>
+#include <wad/lumps.hpp>
 
 #include <memory>
-#include <vector>
 
 
 namespace World3D
 {
-    /**
-     * Entity view.
-     *
-     * Manages Brush object views, synchronized with an Editor::Entity object.
-     */
-    class Entity
+    struct Texture
     {
-    public:
-        Entity(Sickle::Editor::EntityRef src);
+        std::shared_ptr<GLUtil::Texture> texture{nullptr};
+        int width, height;
 
-        auto const &brushes() const {return _brushes;}
+        /**
+         * Get the "Missing Texture" texture. It will only be generated once,
+         * and will be reused on subsequent calls.
+         *
+         * @warning Requires an active OpenGL context.
+         */
+        static Texture make_missing_texture();
 
-        void render() const;
+        Texture()=default;
 
-    protected:
-        void add_brush(Sickle::Editor::BrushRef const &brush);
-
-    private:
-        std::vector<std::shared_ptr<Brush>> _brushes{};
-
-        Entity(Entity const &)=delete;
-        Entity &operator=(Entity const &)=delete;
-
-        void _on_brush_deleted(std::shared_ptr<Brush> const &brush);
+        /** @warning Requires an active OpenGL context. */
+        Texture(WAD::TexLump const &texlump);
     };
 }
 

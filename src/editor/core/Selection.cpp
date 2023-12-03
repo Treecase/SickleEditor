@@ -36,7 +36,8 @@ void Selection::add(Item item)
 {
     if (contains(item))
         return;
-    item->select(true);
+    if (!item->is_selected())
+        item->select(true);
     _selected.emplace(item);
     signal_updated().emit();
 }
@@ -46,7 +47,8 @@ void Selection::remove(Item item)
 {
     if (!contains(item))
         return;
-    item->select(false);
+    if (item->is_selected())
+        item->select(false);
     _selected.erase(item);
     signal_updated().emit();
 }

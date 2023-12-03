@@ -25,44 +25,25 @@ World3D::Brush::PreDrawFunc World3D::Brush::predraw = [](auto){};
 World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)
 :   sigc::trackable{}
 ,   _src{src}
-,   _vao{std::make_shared<GLUtil::VertexArray>()}
-,   _vbo{std::make_shared<GLUtil::Buffer>(GL_ARRAY_BUFFER)}
 {
-    std::vector<GLfloat> vbo_data{};
-    for (auto const &faceptr : _src->faces)
-    {
-        auto const offset = vbo_data.size() / Vertex::ELEMENTS;
-        auto &face = _faces.emplace_back(
-            std::make_shared<Face>(faceptr, offset));
-        for (auto const &vertex : face->vertices())
-        {
-            auto v = vertex.as_vbo();
-            vbo_data.insert(vbo_data.end(), v.cbegin(), v.cend());
-        }
-        faceptr->signal_vertices_changed().connect(
-            sigc::bind(
-                sigc::mem_fun(*this, &Brush::_on_face_changed), face));
-    }
-
     _src->property_real().signal_changed().connect(
         sigc::mem_fun(*this, &Brush::_on_real_changed));
 
-    _vao->bind();
+    auto offset = 0;
+    for (auto const &faceptr : _src->faces())
+    {
+        auto face = std::make_shared<Face>(faceptr, offset);
+        _faces.push_back(face);
 
-    _vbo->bind();
-    _vbo->buffer(GL_STATIC_DRAW, vbo_data);
+        offset += face->vertices().size();
 
-    // NOTE: These MUST match Vertex::as_vbo() format!
-    // Attrib 0: Vertex positions
-    _vao->enableVertexAttribArray(0, 3, GL_FLOAT,
-        Vertex::ELEMENTS * sizeof(GLfloat), 0);
-    // Attrib 1: UVs
-    _vao->enableVertexAttribArray(
-        1, 2, GL_FLOAT,
-        Vertex::ELEMENTS * sizeof(GLfloat), 3 * sizeof(GLfloat));
+        face->signal_vertices_changed().connect(
+            sigc::bind(
+                sigc::mem_fun(*this, &Brush::_on_face_changed),
+                face));
+    }
 
-    _vbo->unbind();
-    _vao->unbind();
+    push_queue([this](){_init();});
 }
 
 
@@ -84,7 +65,42 @@ void World3D::Brush::render() const
 }
 
 
-void World3D::Brush::_on_face_changed(std::shared_ptr<Face> const &face)
+
+void World3D::Brush::_init()
+{
+    std::vector<GLfloat> vbo_data{};
+    for (auto const &face : _faces)
+    {
+        for (auto const &vertex : face->vertices())
+        {
+            auto v = vertex.as_vbo();
+            vbo_data.insert(vbo_data.end(), v.cbegin(), v.cend());
+        }
+    }
+
+    _vao = std::make_shared<GLUtil::VertexArray>();
+    _vbo = std::make_shared<GLUtil::Buffer>(GL_ARRAY_BUFFER);
+
+    _vao->bind();
+
+    _vbo->bind();
+    _vbo->buffer(GL_STATIC_DRAW, vbo_data);
+
+    // NOTE: These MUST match Vertex::as_vbo() format!
+    // Attrib 0: Vertex positions
+    _vao->enableVertexAttribArray(0, 3, GL_FLOAT,
+        Vertex::ELEMENTS * sizeof(GLfloat), 0);
+    // Attrib 1: UVs
+    _vao->enableVertexAttribArray(
+        1, 2, GL_FLOAT,
+        Vertex::ELEMENTS * sizeof(GLfloat), 3 * sizeof(GLfloat));
+
+    _vbo->unbind();
+    _vao->unbind();
+}
+
+
+void World3D::Brush::_sync_face(std::shared_ptr<Face> const &face)
 {
     std::vector<GLfloat> vbo_data{};
     for (auto const &vertex : face->vertices())
@@ -98,6 +114,12 @@ void World3D::Brush::_on_face_changed(std::shared_ptr<Face> const &face)
         face->offset() * Vertex::ELEMENTS,
         face->count() * Vertex::ELEMENTS);
     _vbo->unbind();
+}
+
+
+void World3D::Brush::_on_face_changed(std::shared_ptr<Face> const &face)
+{
+    push_queue([this, face](){_sync_face(face);});
 }
 
 

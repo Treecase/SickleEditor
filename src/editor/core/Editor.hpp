@@ -80,7 +80,7 @@ namespace Sickle::Editor
         auto get_mode() const {return property_mode().get_value();}
         auto get_wads() {return property_wads().get_value();}
 
-        void set_map(Glib::RefPtr<World> const &value) {
+        void set_map(WorldRef const &value) {
             property_map() = value;}
         void set_maptool(std::string const &value) {
             property_maptool() = value;}
@@ -90,8 +90,12 @@ namespace Sickle::Editor
 
         void add_maptool(MapTool const &maptool);
 
+    protected:
+        void on_object_selected_changed(Glib::RefPtr<EditorObject> const &obj);
+        void on_object_added(Glib::RefPtr<EditorObject> const &obj);
+
     private:
-        Glib::Property<Glib::RefPtr<World>> _prop_map;
+        Glib::Property<WorldRef> _prop_map;
         Glib::Property<std::string> _prop_maptool;
         Glib::Property<Mode> _prop_mode;
         Glib::Property<std::vector<std::string>> _prop_wads;

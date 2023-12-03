@@ -116,7 +116,8 @@ AppWin::AppWin()
 ,   _binding_editor_outliner_world{
         Glib::Binding::bind_property(
             editor->property_map(),
-            _outliner.property_world())}
+            _outliner.property_world(),
+            Glib::BindingFlags::BINDING_SYNC_CREATE)}
 {
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));

@@ -38,23 +38,66 @@ namespace Sickle::Editor
     class Entity;
     using EntityRef = Glib::RefPtr<Entity>;
 
+    /**
+     * Entities represent game objects in the world.
+     *
+     * Entities have a list of properties, which modify the entity's behaviour
+     * in-game.
+     *
+     * All entities have at least one property, "classname". This property
+     * defines the overall in-game behaviour of the entity, for example
+     * 'func_door' or 'func_trigger'.
+     */
     class Entity : public EditorObject
     {
     public:
-        std::unordered_map<std::string, std::string> properties{};
-
         static EntityRef create();
         static EntityRef create(MAP::Entity const &entity);
         static EntityRef create(RMF::Entity const &entity);
 
         operator MAP::Entity() const;
-        Entity &operator=(Entity const &other);
 
+        /** Emitted when a brush is added or removed. */
         auto &signal_changed() {return _signal_changed;}
 
+        /** Get the entity's properties. */
+        std::unordered_map<std::string, std::string> properties() const;
+
+        /**
+         * Get the entity property named `key`.
+         *
+         * @param key Name of the property to access.
+         * @return The value of the property.
+         */
+        std::string get_property(std::string const &key) const;
+
+        /**
+         * Set the value of the entity property named `key`.
+         *
+         * @param key Name of the property to access.
+         * @param value Value to set the property to.
+         */
+        void set_property(std::string const &key, std::string const &value);
+
+        /**
+         * Get a list of brushes associated with the entity.
+         *
+         * @return List of the entity's brushes.
+         */
         std::vector<BrushRef> brushes() const;
 
+        /**
+         * Add a brush to the entity.
+         *
+         * @param brush The brush to add.
+         */
         void add_brush(BrushRef const &brush);
+
+        /**
+         * Remove a brush from the entity.
+         *
+         * @param brush The brush to remove.
+         */
         void remove_brush(BrushRef const &brush);
 
         // EditorObject interface
@@ -68,6 +111,8 @@ namespace Sickle::Editor
 
     private:
         sigc::signal<void()> _signal_changed{};
+
+        std::unordered_map<std::string, std::string> _properties{};
         std::vector<BrushRef> _brushes{};
         // TODO:
         // - visgroup id

@@ -37,6 +37,12 @@ namespace Sickle::Editor
 
         virtual ~EditorObject()=default;
 
+        /** Emitted when a child object is added. */
+        auto &signal_child_added() {return _sig_child_added;}
+
+        /** Emitted when a child object is removed. */
+        auto &signal_child_removed() {return _sig_child_removed;}
+
         /**
          * Get this object's unique name.
          *
@@ -88,6 +94,10 @@ namespace Sickle::Editor
             for (auto &obj : children_recursive())
                 std::invoke(func, obj);
         }
+
+    private:
+        sigc::signal<void(Glib::RefPtr<EditorObject>)> _sig_child_added{};
+        sigc::signal<void(Glib::RefPtr<EditorObject>)> _sig_child_removed{};
     };
 }
 

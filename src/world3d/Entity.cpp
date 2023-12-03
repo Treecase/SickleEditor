@@ -21,13 +21,15 @@
 
 World3D::Entity::Entity(Sickle::Editor::EntityRef src)
 {
+    src->signal_child_added().connect(
+        [this](auto child){
+            auto brush = Sickle::Editor::BrushRef::cast_dynamic(child);
+            if (brush)
+                add_brush(brush);
+        });
+
     for (auto &brush : src->brushes())
-    {
-        auto b = std::make_shared<Brush>(brush);
-        b->signal_deleted().connect(
-            sigc::bind(sigc::mem_fun(*this, &Entity::_on_brush_deleted), b));
-        _brushes.push_back(b);
-    }
+        add_brush(brush);
 }
 
 
@@ -35,6 +37,16 @@ void World3D::Entity::render() const
 {
     for (auto const &brush : brushes())
         brush->render();
+}
+
+
+
+void World3D::Entity::add_brush(Sickle::Editor::BrushRef const &brush)
+{
+    auto b = std::make_shared<Brush>(brush);
+    b->signal_deleted().connect(
+        sigc::bind(sigc::mem_fun(*this, &Entity::_on_brush_deleted), b));
+    _brushes.push_back(b);
 }
 
 
