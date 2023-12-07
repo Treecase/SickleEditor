@@ -44,9 +44,9 @@ void World3D::Entity::render() const
 void World3D::Entity::add_brush(Sickle::Editor::BrushRef const &brush)
 {
     auto b = std::make_shared<Brush>(brush);
-    b->signal_deleted().connect(
-        sigc::bind(sigc::mem_fun(*this, &Entity::_on_brush_deleted), b));
     _brushes.push_back(b);
+    brush->signal_removed().connect(
+        sigc::bind(sigc::mem_fun(*this, &Entity::_on_brush_deleted), b));
 }
 
 

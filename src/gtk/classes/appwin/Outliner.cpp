@@ -100,6 +100,8 @@ void Outliner::_add_object(
             _add_object(child, child_iter);
         });
 
+    obj->signal_removed().connect([this, iter](){_remove_object(iter);});
+
     auto &row = *iter;
     row[_tree_columns.text] = obj->name();
     row[_tree_columns.icon] = obj->icon();
@@ -110,4 +112,10 @@ void Outliner::_add_object(
         auto child_iter = _tree_store->append(iter->children());
         _add_object(child, child_iter);
     }
+}
+
+
+void Outliner::_remove_object(Gtk::TreeModel::iterator const &iter)
+{
+    _tree_store->erase(iter);
 }

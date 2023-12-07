@@ -55,6 +55,7 @@ EntityRef Entity::create(RMF::Entity const &entity)
 Entity::Entity()
 :   Glib::ObjectBase{typeid(Entity)}
 {
+    _properties["classname"] = "";
 }
 
 
@@ -65,6 +66,12 @@ Entity::operator MAP::Entity() const
     for (auto const &brush : _brushes)
         out.brushes.push_back(*brush.get());
     return out;
+}
+
+
+std::string Entity::classname() const
+{
+    return _properties.at("classname");
 }
 
 
@@ -95,8 +102,6 @@ std::vector<BrushRef> Entity::brushes() const
 void Entity::add_brush(BrushRef const &brush)
 {
     _brushes.push_back(brush);
-    brush->property_real() = true;
-    signal_changed().emit();
     signal_child_added().emit(brush);
 }
 
@@ -106,9 +111,7 @@ void Entity::remove_brush(BrushRef const &brush)
     auto const it = std::find(_brushes.begin(), _brushes.end(), brush);
     if (it == _brushes.end())
         return;
-    (*it)->property_real() = false;
     _brushes.erase(it);
-    signal_changed().emit();
     signal_child_removed().emit(brush);
 }
 

@@ -75,11 +75,6 @@ namespace Sickle::Editor
 
         operator MAP::Brush() const;
 
-        auto property_real() {return _prop_real.get_proxy();}
-        auto property_real() const {return _prop_real.get_proxy();}
-
-        auto is_real() const {return property_real().get_value();}
-
         /**
          * Get a list of faces associated with this brush.
          *
@@ -110,11 +105,9 @@ namespace Sickle::Editor
     protected:
         Brush();
 
-        void on_realness_changed();
+        void on_removed();
 
     private:
-        Glib::Property<bool> _prop_real;
-
         std::vector<FaceRef> _faces{};
         // TODO:
         // - visgroup id

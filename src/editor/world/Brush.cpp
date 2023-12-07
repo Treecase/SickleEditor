@@ -71,10 +71,8 @@ BrushRef Brush::create(RMF::Solid const &solid)
 Brush::Brush()
 :   Glib::ObjectBase{typeid(Brush)}
 ,   Lua::Referenceable{}
-,   _prop_real{*this, "real", false}
 {
-    property_real().signal_changed().connect(
-        sigc::mem_fun(*this, &Brush::on_realness_changed));
+    signal_removed().connect(sigc::mem_fun(*this, &Brush::on_removed));
 }
 
 
@@ -134,8 +132,7 @@ std::vector<Glib::RefPtr<EditorObject>> Brush::children() const
 
 
 
-void Brush::on_realness_changed()
+void Brush::on_removed()
 {
-    if (!property_real().get_value())
-        select(false);
+    select(false);
 }

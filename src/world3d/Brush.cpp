@@ -26,9 +26,6 @@ World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)
 :   sigc::trackable{}
 ,   _src{src}
 {
-    _src->property_real().signal_changed().connect(
-        sigc::mem_fun(*this, &Brush::_on_real_changed));
-
     auto offset = 0;
     for (auto const &faceptr : _src->faces())
     {
@@ -120,11 +117,4 @@ void World3D::Brush::_sync_face(std::shared_ptr<Face> const &face)
 void World3D::Brush::_on_face_changed(std::shared_ptr<Face> const &face)
 {
     push_queue([this, face](){_sync_face(face);});
-}
-
-
-void World3D::Brush::_on_real_changed()
-{
-    if (!_src->property_real().get_value())
-        signal_deleted().emit();
 }

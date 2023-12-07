@@ -43,8 +43,6 @@ namespace World3D
 
         Brush(Sickle::Editor::BrushRef const &src);
 
-        auto &signal_deleted() {return _sig_deleted;}
-
         bool is_selected() const;
 
         /** @warning Requires an active OpenGL context. */
@@ -57,8 +55,6 @@ namespace World3D
         std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
         std::shared_ptr<GLUtil::Buffer> _vbo{nullptr};
 
-        sigc::signal<void()> _sig_deleted{};
-
         Brush(Brush const &)=delete;
         Brush &operator=(Brush const &)=delete;
 
@@ -68,7 +64,6 @@ namespace World3D
         void _sync_face(std::shared_ptr<Face> const &face);
 
         void _on_face_changed(std::shared_ptr<Face> const &face);
-        void _on_real_changed();
     };
 }
 

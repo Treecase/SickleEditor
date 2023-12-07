@@ -57,8 +57,12 @@ namespace Sickle::Editor
 
         operator MAP::Entity() const;
 
-        /** Emitted when a brush is added or removed. */
-        auto &signal_changed() {return _signal_changed;}
+        /**
+         * Get the entity's classname property.
+         *
+         * @return Class name of the entity.
+         */
+        std::string classname() const;
 
         /** Get the entity's properties. */
         std::unordered_map<std::string, std::string> properties() const;

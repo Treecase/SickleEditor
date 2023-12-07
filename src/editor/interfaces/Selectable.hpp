@@ -28,12 +28,7 @@ namespace Sickle::Editor
     class Selectable : public Glib::Object
     {
     public:
-        Selectable()
-        :   Glib::ObjectBase{typeid(Selectable)}
-        ,   _prop_selected{*this, "selected", false}
-        {
-        }
-
+        Selectable();
         virtual ~Selectable()=default;
 
         auto property_selected() {return _prop_selected.get_proxy();}

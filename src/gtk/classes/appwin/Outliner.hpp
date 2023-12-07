@@ -73,6 +73,8 @@ namespace Sickle::AppWin
         void _add_object(
             Glib::RefPtr<Sickle::Editor::EditorObject> obj,
             Gtk::TreeModel::iterator const &iter);
+
+        void _remove_object(Gtk::TreeModel::iterator const &iter);
     };
 }
 

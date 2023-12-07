@@ -8,12 +8,13 @@ add_library(editor-world STATIC
 target_include_directories(editor-world PUBLIC ..)
 target_link_libraries(editor-world
     PUBLIC
+        config
         convexhull
+        editor-interfaces
         map
         rmf
         se-lua
         glm::glm
         PkgConfig::glibmm
-        config # Brush, Entity (EditorObject)
 )
 target_compile_features(editor-world PUBLIC cxx_std_17)

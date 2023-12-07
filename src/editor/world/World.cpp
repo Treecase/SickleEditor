@@ -30,6 +30,7 @@ WorldRef World::create()
 WorldRef World::create(MAP::Map const &map)
 {
     auto world = World::create();
+    world->remove_entity(world->worldspawn());
     for (auto const &entity : map.entities)
         world->add_entity(Entity::create(entity));
     return world;
@@ -40,7 +41,7 @@ WorldRef World::create(RMF::RichMap const &map)
 {
     auto world = World::create();
 
-    auto worldspawn = Entity::create();
+    auto worldspawn = world->worldspawn();
     for (auto const &kv : map.worldspawn_properties)
         worldspawn->set_property(kv.first, kv.second);
     worldspawn->set_property("classname", map.worldspawn_name);
@@ -58,7 +59,6 @@ WorldRef World::create(RMF::RichMap const &map)
         for (auto group2 : group.groups)
             groups.push(group2);
     }
-    world->add_entity(worldspawn);
 
     return world;
 }
