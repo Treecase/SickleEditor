@@ -118,7 +118,8 @@ static void default_error_handler(lua_State *L)
 {
     auto err = lua_tostring(L, -1);
     lua_pop(L, 1);
-    throw Lua::Error{err};
+    throw Lua::Error{
+        err? err : "An error ocurred, but the error message was null"};
 }
 
 

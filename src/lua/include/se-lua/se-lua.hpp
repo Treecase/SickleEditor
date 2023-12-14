@@ -71,6 +71,20 @@ namespace Lua
     /** Check a Lua status error. */
     void checkerror(lua_State *L, int status);
 
+    /**
+     * Call the function at the top of the stack in protected mode.
+     *
+     * @param L The Lua context
+     * @param nresults Number of results pushed by the function
+     * @param args Function arguments
+     */
+    template<typename... Args>
+    void pcall(lua_State *L, int nresults, Args... args)
+    {
+        auto count = foreach(Pusher{L}, args...);
+        checkerror(L, lua_pcall(L, count, nresults, 0));
+    }
+
 
     /**
      * Gets METHOD from object on top of stack and rotates to prepare for a

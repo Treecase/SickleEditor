@@ -12,6 +12,7 @@ target_link_libraries(appwin
         editor-core
         editor-operations
         sickle-gtk-lua
+        se-lua
         textureselector
         PkgConfig::GTKMM
         # vvv temp vvv

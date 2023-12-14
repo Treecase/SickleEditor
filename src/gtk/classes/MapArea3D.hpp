@@ -81,7 +81,8 @@ namespace Sickle
     protected:
         bool tick_callback(Glib::RefPtr<Gdk::FrameClock> const &clock);
 
-        bool on_enter_notify_event(GdkEventCrossing *event);
+        bool on_enter_notify_event(GdkEventCrossing *event) override;
+        bool on_leave_notify_event(GdkEventCrossing *event) override;
 
         void on_editor_map_changed();
         void on_wireframe_changed();

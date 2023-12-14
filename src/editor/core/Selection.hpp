@@ -34,18 +34,50 @@ namespace Sickle::Editor
     public:
         using Item = Glib::RefPtr<Selectable>;
 
+        Selection()=default;
+
+        /** Emitted when an object is selected or deselected. */
+        auto &signal_updated() {return _signal_updated;}
+
+        /**
+         * Deselect all selected objects. Sets the object's "selected" property
+         * to false if it isn't already.
+         */
         void clear();
+
+        /**
+         * Add an object to the selection. Sets the object's "selected"
+         * property to true if it isn't already.
+         *
+         * @param item The item to select.
+         */
         void add(Item item);
+
+        /**
+         * Remove an object from the selection. Sets the object's "selected"
+         * property to false if it isn't already.
+         *
+         * @param item The item to deselect.
+         */
         void remove(Item item);
+
+        /**
+         * Check if an object is in the selection.
+         *
+         * @param item Item to check status of.
+         * @return True if object is selected, else false.
+        */
         bool contains(Item item) const;
+
+        /**
+         * Check if the selection is empty.
+         *
+         * @return True if the selection is empty, else false.
+         */
         bool empty() const;
 
         auto begin() const {return _selected.begin();}
         auto end() const {return _selected.end();}
-
-        auto &signal_updated() {return _signal_updated;}
-
-        Selection()=default;
 
     private:
         struct ItemHasher

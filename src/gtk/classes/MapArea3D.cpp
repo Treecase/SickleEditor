@@ -133,7 +133,7 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
         | Gdk::BUTTON_MOTION_MASK
         | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK
         | Gdk::SCROLL_MASK
-        | Gdk::ENTER_NOTIFY_MASK);
+        | Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
 
     add_tick_callback(sigc::mem_fun(*this, &MapArea3D::tick_callback));
 
@@ -321,6 +321,16 @@ bool Sickle::MapArea3D::tick_callback(
 bool Sickle::MapArea3D::on_enter_notify_event(GdkEventCrossing *event)
 {
     grab_focus();
+    return true;
+
+}
+
+
+bool Sickle::MapArea3D::on_leave_notify_event(GdkEventCrossing *crossing_event)
+{
+    auto state = property_state().get_value();
+    state.move_direction = glm::vec3{0, 0, 0};
+    property_state().set_value(state);
     return true;
 }
 

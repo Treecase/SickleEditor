@@ -25,6 +25,8 @@
 #include <LuaGeo.hpp>
 #include <map/mapsaver.hpp>
 #include <rmf/rmf.hpp>
+#include <se-lua/se-lua.hpp>
+#include <se-lua/function.hpp>
 
 #include <giomm/resource.h>
 #include <glibmm/fileutils.h>
@@ -344,9 +346,10 @@ guint AppWin::get_grid_size()
 
 void AppWin::setup_lua_state()
 {
+    luaL_requiref(L, "function", Lua::luaopen_function, 1);
     luaL_requiref(L, "appwin", luaopen_appwin, 1);
     luaL_requiref(L, "geo", luaopen_geo, 1);
-    lua_pop(L, 2);
+    lua_pop(L, 3);
 
     Lua::push(L, this);
     lua_setglobal(L, "gAppWin");
