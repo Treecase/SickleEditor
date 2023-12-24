@@ -40,32 +40,23 @@ namespace Lua
      * function.
      */
     Function *checkfunction(lua_State *L, int arg);
+
+
+    /**
+     * Set the default message handler function used by Lua::pcall. This
+     * function is called whenever an error occurs, but before the stack
+     * unwinds. This allows the user to collect more information about the
+     * error. The function is called with 1 argument, the error object, and
+     * returns 1 value, the (possibly new/modified) error object.
+     *
+     * @param L The Lua state.
+     * @param msgh The new message handler.
+     */
+    void set_msgh(lua_State *L, Function msgh);
 }
 
 /** Push a function to the stack. */
 template<>
 void Lua::push(lua_State *L, Function fn);
-
-namespace Lua
-{
-    /**
-     * Call the function at the top of the stack in protected mode, with an
-     * error handler.
-     *
-     * @param L The Lua context.
-     * @param nresults Number of results pushed by the function.
-     * @param msgh Error handler.
-     * @param args Function arguments.
-     */
-    template<typename... Args>
-    void pcall(lua_State *L, int nresults, Function msgh, Args... args)
-    {
-        Lua::push<Function>(L, msgh);
-        lua_rotate(L, -2, 1);
-        auto const msgh_idx = lua_absindex(L, -2);
-        auto const count = foreach(Pusher{L}, args...);
-        checkerror(L, lua_pcall(L, count, nresults, msgh_idx));
-    }
-}
 
 #endif

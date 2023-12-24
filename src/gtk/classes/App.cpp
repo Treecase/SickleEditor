@@ -74,6 +74,7 @@ void Sickle::App::on_startup()
     set_accel_for_action("app.save", "<Ctrl>S");
     set_accel_for_action("app.exit", "<Ctrl>Q");
     set_accel_for_action("win.openLuaConsole", "<Ctrl><Shift>C");
+    set_accel_for_action("win.openLuaDebugger", "<Ctrl><Shift>D");
     set_accel_for_action("win.reloadLua", "<Ctrl><Shift>R");
 
     // Add keyboard accelerators for MapTools.

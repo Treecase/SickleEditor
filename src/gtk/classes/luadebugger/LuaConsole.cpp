@@ -17,8 +17,8 @@
  */
 
 #include "LuaConsole.hpp"
-#include "AppWin.hpp"
 
+#include <appid.hpp>
 #include <gtkmm/cssprovider.h>
 
 #include <iostream>

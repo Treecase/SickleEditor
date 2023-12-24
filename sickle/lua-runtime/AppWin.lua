@@ -16,6 +16,14 @@ function appwin.metatable:on_key_press_event(keyval)
         self:set_grid_size(self:get_grid_size() / 2)
     elseif keyval == LuaGDK.GDK_KEY_bracketright then
         self:set_grid_size(self:get_grid_size() * 2)
+    elseif keyval == LuaGDK.GDK_KEY_e then
+        function test()
+            x = 5
+            error("intentional error")
+            return x
+        end
+        print("triggering error")
+        print('x=', test())
     else
         return false
     end
@@ -35,7 +43,7 @@ gAppWin:add_maptool(
     {
         {"Delete", "Brush.DeleteSelected"},
     },
-    function(editor) return not ed:get_selection():is_empty() end
+    function(editor) return not editor:get_selection():is_empty() end
 )
 gAppWin:add_maptool(
     "Create Brush",

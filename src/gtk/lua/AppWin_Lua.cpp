@@ -24,6 +24,7 @@
 
 #include <se-lua/utils/RefBuilder.hpp>
 #include <core/MapTools.hpp>
+#include <lua/Editor_Lua.hpp>
 
 #define METATABLE "Sickle.gtk.appwin"
 
@@ -55,6 +56,15 @@ static int get_maptool(lua_State *L)
     return 1;
 }
 
+/**
+ * appwin:add_maptool(name: string, opdefs: array, func: function) -> nil
+ *
+ * Adds a MapTool to the AppWin instance.
+ *
+ * @param name The name of the new tool.
+ * @param opdefs A list of operation definitions.
+ * @param func A context function, returns true if the tool can be used.
+ */
 static int add_maptool(lua_State *L)
 {
     auto aw = lappwin_check(L, 1);
@@ -81,7 +91,7 @@ static int add_maptool(lua_State *L)
         {
             lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
             Lua::push(L, editor);
-            Lua::checkerror(L, lua_pcall(L, 1, 1, 0));
+            Lua::checkerror(L, Lua::pcall(L, 1, 1));
             bool const result = lua_toboolean(L, -1);
             return result;
         };

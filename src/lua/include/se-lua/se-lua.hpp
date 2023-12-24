@@ -36,9 +36,14 @@ namespace Lua
         Error(std::string const &what);
     };
 
+    struct StackOverflow : public Error
+    {
+        StackOverflow(std::string const &what);
+    };
+
 
     /** Push a value onto the stack. */
-    template<typename T> void push(lua_State *L, T value);
+    template<typename T> void push(lua_State *L, T value)=delete;
     void push(lua_State *L, bool value);
     void push(lua_State *L, lua_Integer value);
     void push(lua_State *L, lua_Number value);
@@ -71,18 +76,34 @@ namespace Lua
     /** Check a Lua status error. */
     void checkerror(lua_State *L, int status);
 
+
     /**
-     * Call the function at the top of the stack in protected mode.
+     * Call the function at the top of the stack in protected mode. Uses the
+     * defined __msgh function for the state if it exists.
      *
-     * @param L The Lua context
-     * @param nresults Number of results pushed by the function
-     * @param args Function arguments
+     * @param L The Lua context.
+     * @param nargs Number of arguments to the function (same as lua_pcall).
+     * @param nresults Number of results pushed by the function (same as
+     * lua_pcall).
+     * @return Lua status code (same as lua_pcall).
+     */
+    int pcall(lua_State *L, int nargs, int nresults);
+
+    /**
+     * Call the function at the top of the stack in protected mode. Uses the
+     * defined __msgh function for the state if it exists.
+     *
+     * @param L The Lua context.
+     * @param nresults Number of results pushed by the function (same as
+     * lua_pcall).
+     * @param args Function arguments.
+     * @return Lua status code (same as lua_pcall).
      */
     template<typename... Args>
-    void pcall(lua_State *L, int nresults, Args... args)
+    int pcallT(lua_State *L, int nresults, Args... args)
     {
         auto count = foreach(Pusher{L}, args...);
-        checkerror(L, lua_pcall(L, count, nresults, 0));
+        return pcall(L, count, nresults);
     }
 
 
@@ -98,7 +119,7 @@ namespace Lua
     {
         get_method(L, method);
         auto count = foreach(Pusher{L}, args...);
-        checkerror(L, lua_pcall(L, 1 + count, 0, 0));
+        checkerror(L, pcall(L, 1 + count, 0));
     }
 
     /**
@@ -110,7 +131,7 @@ namespace Lua
     {
         get_method(L, method);
         auto count = foreach(Pusher{L}, args...);
-        checkerror(L, lua_pcall(L, 1 + count, r, 0));
+        checkerror(L, pcall(L, 1 + count, r));
     }
 
 

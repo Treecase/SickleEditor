@@ -49,6 +49,10 @@
           <attribute name="action">win.openLuaConsole</attribute>
         </item>
         <item>
+          <attribute name="label" translatable="yes">_Lua Debugger</attribute>
+          <attribute name="action">win.openLuaDebugger</attribute>
+        </item>
+        <item>
           <attribute name="label" translatable="yes">_Reload Lua Scripts</attribute>
           <attribute name="action">win.reloadLua</attribute>
         </item>

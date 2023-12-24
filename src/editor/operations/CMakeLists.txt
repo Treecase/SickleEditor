@@ -9,5 +9,6 @@ target_link_libraries(editor-operations
         PkgConfig::GTKMM
     PRIVATE
         editor-core
+        editor-lua
         luageo
 )
