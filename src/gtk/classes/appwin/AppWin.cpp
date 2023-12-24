@@ -32,6 +32,7 @@
 #include <glibmm/fileutils.h>
 #include <gtkmm/builder.h>
 #include <gtkmm/messagedialog.h>
+#include <gtkmm/settings.h>
 
 #include <algorithm>
 #include <fstream>
@@ -125,9 +126,15 @@ AppWin::AppWin()
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
     set_title(SE_CANON_NAME);
 
+    auto settings = Gtk::Settings::get_default();
+    settings->property_gtk_application_prefer_dark_theme() = true;
+
     add_action(
         "openLuaConsole",
         sigc::mem_fun(*this, &AppWin::on_action_openLuaConsole));
+    add_action(
+        "openLuaDebugger",
+        sigc::mem_fun(*this, &AppWin::on_action_openLuaDebugger));
     add_action(
         "reloadLua",
         sigc::mem_fun(*this, &AppWin::on_action_reloadLua));
@@ -197,16 +204,20 @@ AppWin::AppWin()
     _basegrid.attach(_inforegion, 0, 1, 2);
     add(_basegrid);
 
-    _luaconsole.set_size_request(320, 240);
-    _luaconsolewindow.add(_luaconsole);
-    _luaconsolewindow.show_all_children();
-    _luaconsolewindow.set_title(SE_CANON_NAME " - Lua Console");
+    _lua_console_window.add(_lua_console);
+    _lua_console_window.set_title(SE_CANON_NAME " - Lua Console");
+    _lua_console_window.show_all_children();
+
+    _lua_debugger_window.set_title(SE_CANON_NAME " - Lua Debugger");
 
     _luainfobar.signal_response().connect([this](int){_luainfobar.hide();});
     signal_lua_reloaded().connect(
         sigc::mem_fun(_luainfobar, &Gtk::InfoBar::show));
     signal_lua_reloaded().connect(
-        [this](){_luaconsole.writeline("---Lua Reloaded---");});
+        [this](){
+            lua_getglobal(L, "print");
+            Lua::pcallT(L, 0, "---Lua Reloaded---");
+        });
     property_grid_size().signal_changed().connect(
         sigc::mem_fun(*this, &AppWin::_on_grid_size_changed));
 
@@ -219,14 +230,9 @@ AppWin::AppWin()
     if (!L)
         throw Lua::Error{"Failed to allocate new lua_State"};
     luaL_checkversion(L);
-    luaL_openlibs(L);
-
-    lua_atpanic(L, panic_handler);
 
     setup_lua_state();
     reload_scripts();
-
-    _luaconsole.property_lua_state().set_value(L);
 
     show_all_children();
     _luainfobar.hide();
@@ -300,7 +306,13 @@ void AppWin::save(std::string const &filename)
 
 void AppWin::show_console_window()
 {
-    _luaconsolewindow.present();
+    _lua_console_window.present();
+}
+
+
+void AppWin::show_debugger_window()
+{
+    _lua_debugger_window.present();
 }
 
 
@@ -346,10 +358,25 @@ guint AppWin::get_grid_size()
 
 void AppWin::setup_lua_state()
 {
-    luaL_requiref(L, "function", Lua::luaopen_function, 1);
+    luaL_openlibs(L);
+    lua_atpanic(L, panic_handler);
+
+    luaL_requiref(L, "function", Lua::luaopen_function, 0);
     luaL_requiref(L, "appwin", luaopen_appwin, 1);
     luaL_requiref(L, "geo", luaopen_geo, 1);
     lua_pop(L, 3);
+
+    Lua::set_msgh(L, [this](lua_State *L){
+        int const initial = lua_gettop(L);
+
+        _lua_debugger_window.on_error();
+
+        assert(initial == lua_gettop(L));
+        return 1;
+    });
+
+    _lua_console.property_lua_state().set_value(L);
+    _lua_debugger_window.property_lua_state().set_value(L);
 
     Lua::push(L, this);
     lua_setglobal(L, "gAppWin");
@@ -370,6 +397,12 @@ void AppWin::on_maptoolconfig_confirmed()
 void AppWin::on_action_openLuaConsole()
 {
     show_console_window();
+}
+
+
+void AppWin::on_action_openLuaDebugger()
+{
+    show_debugger_window();
 }
 
 
@@ -459,7 +492,7 @@ void AppWin::_run_runtime_scripts()
         {
         case LUA_OK:
             try {
-                Lua::checkerror(L, lua_pcall(L, 0, LUA_MULTRET, 0));
+                Lua::checkerror(L, Lua::pcall(L, 0, LUA_MULTRET));
             }
             catch (Lua::Error const &e) {
                 std::cout << e.what() << std::endl;

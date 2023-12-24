@@ -27,6 +27,12 @@ Lua::Error::Error(std::string const &what)
 }
 
 
+Lua::StackOverflow::StackOverflow(std::string const &what)
+:   Error{what}
+{
+}
+
+
 /* ===[ Push values to Lua ]=== */
 void Lua::push(lua_State *L, bool value)
 {
@@ -132,4 +138,29 @@ void Lua::checkerror(lua_State *L, int status)
         else
             default_error_handler(L);
     }
+}
+
+
+int Lua::pcall(lua_State *L, int nargs, int nresults)
+{
+    int const ti = lua_gettop(L);
+    if (!lua_checkstack(L, 1))
+        throw Lua::StackOverflow{"Not enough stack space"};
+
+    int const msgh_type = lua_getfield(L, LUA_REGISTRYINDEX, "__msgh");
+
+    // Rotate the message handler to be below the function and its arguments.
+    lua_rotate(L, -nargs - 2, 1);
+
+    // msgh value to be passed to lua_pcall. Uses 0 (ie. no handler) if the
+    // state's __msg value is nil.
+    int const msgh = (msgh_type == LUA_TNIL? 0 : -nargs - 2);
+
+    int const r = lua_pcall(L, nargs, nresults, msgh);
+
+    // Pop the message handler if no error occurred.
+    if (r == LUA_OK)
+        lua_pop(L, 1);
+
+    return r;
 }

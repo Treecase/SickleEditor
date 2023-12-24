@@ -56,6 +56,13 @@ Lua::Function *Lua::checkfunction(lua_State *L, int arg)
 }
 
 
+void Lua::set_msgh(lua_State *L, Function msgh)
+{
+    Lua::push(L, msgh);
+    lua_setfield(L, LUA_REGISTRYINDEX, "__msgh");
+}
+
+
 template<>
 void Lua::push(lua_State *L, Function msgh)
 {

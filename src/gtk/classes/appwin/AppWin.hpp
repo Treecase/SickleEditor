@@ -19,9 +19,10 @@
 #ifndef SE_APPWIN_HPP
 #define SE_APPWIN_HPP
 
-#include "../LuaConsole.hpp"
 #include "../maparea2d/MapArea2D.hpp"
 #include "../MapArea3D.hpp"
+#include "LuaWindow.hpp"
+#include "LuaConsole.hpp"
 #include "MapToolConfig.hpp"
 #include "MapTools.hpp"
 #include "ModeSelector.hpp"
@@ -64,6 +65,8 @@ namespace Sickle::AppWin
         void save(std::string const &filename);
         /** Open the Lua console window. */
         void show_console_window();
+        /** Open the Lua debugging window. */
+        void show_debugger_window();
         /** Reload Lua scripts. */
         void reload_scripts();
         /** Open the Operation Search dialog. */
@@ -87,6 +90,7 @@ namespace Sickle::AppWin
         void on_maptoolconfig_confirmed();
 
         void on_action_openLuaConsole();
+        void on_action_openLuaDebugger();
         void on_action_reloadLua();
 
         bool on_key_press_event(GdkEventKey *event) override;
@@ -101,8 +105,9 @@ namespace Sickle::AppWin
         MapTools _maptools;
         MapToolConfig _maptool_config;
         Gtk::Label _gridsizelabel{};
-        Gtk::Window _luaconsolewindow{};
-        LuaConsole _luaconsole{};
+        Gtk::Window _lua_console_window{};
+        LuaConsole _lua_console{};
+        LuaWindow _lua_debugger_window{};
         Gtk::InfoBar _luainfobar{};
         OperationSearch _opsearch;
         ModeSelector _mode_selector{};

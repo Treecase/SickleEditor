@@ -22,6 +22,7 @@
 #include "OperationLoader.hpp"
 
 #include <core/Editor.hpp>
+#include <lua/Editor_Lua.hpp>
 #include <LuaGeo.hpp>
 
 using namespace Sickle::Editor;
@@ -262,7 +263,7 @@ void Operation::execute(EditorRef ed, ArgList const &passed_args) const
             throw std::runtime_error{"mismatched Arg type"};
         std::visit([this](auto v){Lua::push(L, v);}, arg);
     }
-    Lua::checkerror(L, lua_pcall(L, 2+args.size(), 0, 0));
+    Lua::checkerror(L, Lua::pcall(L, 2+args.size(), 0));
 
     lua_pop(L, 1);
     assert(lua_gettop(L) == pre);
