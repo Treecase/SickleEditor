@@ -36,6 +36,9 @@ namespace Sickle
 
         auto property_lua_state() {return _prop_lua_state.get_proxy();}
         auto property_lua_state() const {return _prop_lua_state.get_proxy();}
+        void set_lua_state(lua_State *L) {property_lua_state().set_value(L);}
+        lua_State *get_lua_state() const {
+            return static_cast<lua_State *>(property_lua_state().get_value());}
 
         /** Whether the Lua state execution is paused or not. */
         auto property_paused() {return _prop_paused.get_proxy();}
@@ -52,10 +55,11 @@ namespace Sickle
          */
         void set_pause(bool pause) {property_paused().set_value(pause);}
 
-        /** Call to signal that an error occurred. */
-        void on_error();
+        /** Update. */
+        void update();
 
     protected:
+        void on_lua_state_changed();
         void on_pause_resume_clicked();
         void on_paused_changed();
 

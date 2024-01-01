@@ -27,6 +27,12 @@ Lua::Error::Error(std::string const &what)
 }
 
 
+Lua::StackOverflow::StackOverflow()
+:   StackOverflow{"Not enough stack space"}
+{
+}
+
+
 Lua::StackOverflow::StackOverflow(std::string const &what)
 :   Error{what}
 {
@@ -145,7 +151,7 @@ int Lua::pcall(lua_State *L, int nargs, int nresults)
 {
     int const ti = lua_gettop(L);
     if (!lua_checkstack(L, 1))
-        throw Lua::StackOverflow{"Not enough stack space"};
+        throw Lua::StackOverflow{};
 
     int const msgh_type = lua_getfield(L, LUA_REGISTRYINDEX, "__msgh");
 

@@ -38,6 +38,7 @@ namespace Lua
 
     struct StackOverflow : public Error
     {
+        StackOverflow();
         StackOverflow(std::string const &what);
     };
 

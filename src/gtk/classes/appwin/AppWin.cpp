@@ -368,9 +368,8 @@ void AppWin::setup_lua_state()
 
     Lua::set_msgh(L, [this](lua_State *L){
         int const initial = lua_gettop(L);
-
-        _lua_debugger_window.on_error();
-
+        _lua_debugger_window.set_pause(true);
+        _lua_debugger_window.update();
         assert(initial == lua_gettop(L));
         return 1;
     });

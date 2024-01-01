@@ -21,6 +21,18 @@
 using namespace Sickle;
 
 
+static void line_hook(lua_State *L, lua_Debug *dbg)
+{
+    if (!lua_checkstack(L, 1))
+        return;
+    lua_getfield(L, LUA_REGISTRYINDEX, "__debugger");
+    auto debugger = static_cast<LuaWindow *>(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    if (debugger->is_paused())
+        debugger->update();
+}
+
+
 LuaWindow::LuaWindow()
 :   Glib::ObjectBase{typeid(LuaWindow)}
 ,   Gtk::Window{}
@@ -45,16 +57,32 @@ LuaWindow::LuaWindow()
 
     show_all_children();
 
+    property_lua_state().signal_changed().connect(
+        sigc::mem_fun(*this, &LuaWindow::on_lua_state_changed));
     property_paused().signal_changed().connect(
         sigc::mem_fun(*this, &LuaWindow::on_paused_changed));
 }
 
 
-void LuaWindow::on_error()
+void LuaWindow::update()
 {
-    set_pause(true);
+    _debugger.on_error();
 }
 
+
+
+void LuaWindow::on_lua_state_changed()
+{
+    auto const L = get_lua_state();
+    if (L)
+    {
+        if (!lua_checkstack(L, 1))
+            throw Lua::StackOverflow{};
+        lua_pushlightuserdata(L, this);
+        lua_setfield(L, LUA_REGISTRYINDEX, "__debugger");
+        lua_sethook(L, line_hook, LUA_MASKLINE, 0);
+    }
+}
 
 
 void LuaWindow::on_pause_resume_clicked()
@@ -66,12 +94,7 @@ void LuaWindow::on_pause_resume_clicked()
 void LuaWindow::on_paused_changed()
 {
     if (is_paused())
-    {
-        _debugger.on_error();
         _pause_resume_button.set_icon_name("media-playback-start");
-    }
     else
-    {
         _pause_resume_button.set_icon_name("media-playback-pause");
-    }
 }
