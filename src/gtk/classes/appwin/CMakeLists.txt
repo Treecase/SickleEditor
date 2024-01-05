@@ -19,6 +19,7 @@ target_link_libraries(appwin
         # vvv temp vvv
         glutils::glutils # maparea3d
         world3d # maparea3d
+        LuaConsole
         LuaWindow
     PRIVATE
         map

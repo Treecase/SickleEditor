@@ -64,7 +64,7 @@ Sickle::LuaConsole::LuaConsole()
 
     set_hexpand(true);
     set_orientation(Gtk::Orientation::ORIENTATION_VERTICAL);
-    set_size_request(80, 80);
+    set_size_request(640, 480);
     pack_start(_scrollwin);
     add(_input);
 

@@ -16,6 +16,7 @@ target_link_libraries(sickle PRIVATE
     SickleGL
 )
 add_subdirectory(appwin)
+add_subdirectory(luaconsole)
 add_subdirectory(luadebugger)
 add_subdirectory(maparea2d)
 add_subdirectory(textureselector)
