@@ -1,6 +1,6 @@
 /**
  * Entity.hpp - Editor::Entity.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -82,6 +82,13 @@ namespace Sickle::Editor
          * @param value Value to set the property to.
          */
         void set_property(std::string const &key, std::string const &value);
+
+        /**
+         * Remove the entity property named `key`.
+         *
+         * @param key Name of the property to remove.
+         */
+        void remove_property(std::string const &key);
 
         /**
          * Get a list of brushes associated with the entity.

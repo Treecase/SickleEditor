@@ -5,6 +5,7 @@ add_library(appwin STATIC
     ModeSelector.cpp
     OperationSearch.cpp
     Outliner.cpp
+    PropertyEditor.cpp
 )
 target_link_libraries(appwin
     PUBLIC

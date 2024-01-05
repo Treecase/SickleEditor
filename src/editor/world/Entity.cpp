@@ -1,6 +1,6 @@
 /**
  * Entity.cpp - Editor::Entity.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -90,6 +90,12 @@ std::string Entity::get_property(std::string const &key) const
 void Entity::set_property(std::string const &key, std::string const &value)
 {
     _properties[key] = value;
+}
+
+
+void Entity::remove_property(std::string const &key)
+{
+    _properties.erase(key);
 }
 
 

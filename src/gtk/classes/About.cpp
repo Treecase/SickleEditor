@@ -1,6 +1,6 @@
 /**
  * About.cpp - Sickle "About" dialog.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ Sickle::About::About()
 {
     set_program_name(SE_CANON_NAME);
     set_version(SE_VERSION);
-    set_copyright("Copyright © 2022-2023\nTrevor Last");
+    set_copyright("Copyright © 2022-2024\nTrevor Last");
     set_website("https://github.com/Treecase/SickleEditor");
     set_website_label("Github");
     set_logo(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.svg"));

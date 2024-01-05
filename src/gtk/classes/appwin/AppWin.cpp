@@ -1,6 +1,6 @@
 /**
  * AppWin.cpp - Sickle ApplicationWindow.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <typeinfo>
 
 
 using namespace Sickle::AppWin;
@@ -172,19 +173,23 @@ AppWin::AppWin()
     _mode_selector.add_mode("face", "Face");
     _mode_selector.add_mode("vertex", "Vertex");
     _mode_selector.property_mode() = "brush";
-    _mode_selector.add_mode("extra", "JDKASj");
-    _mode_selector.remove_mode("extra");
+
+    editor->selected.signal_updated().connect(
+        sigc::mem_fun(*this, &AppWin::_sync_property_editor));
 
     _overlay.add(_views);
     _overlay.add_overlay(_mode_selector);
 
-    _sidebar_vsplitter_R.pack1(_outliner, Gtk::AttachOptions::SHRINK);
-    _sidebar_vsplitter_R.pack2(_maptool_config, Gtk::AttachOptions::EXPAND);
+    _sidebar_vsplitter_L.pack1(_maptools, Gtk::AttachOptions::EXPAND);
+    _sidebar_vsplitter_L.pack2(_maptool_config, Gtk::AttachOptions::EXPAND);
+
+    _sidebar_vsplitter_R.pack1(_outliner, Gtk::AttachOptions::EXPAND);
+    _sidebar_vsplitter_R.pack2(_property_editor, Gtk::AttachOptions::EXPAND);
 
     _sidebar_splitter_R.pack1(_overlay, Gtk::AttachOptions::EXPAND);
     _sidebar_splitter_R.pack2(_sidebar_vsplitter_R, Gtk::AttachOptions::SHRINK);
 
-    _sidebar_splitter_L.pack1(_maptools, Gtk::AttachOptions::SHRINK);
+    _sidebar_splitter_L.pack1(_sidebar_vsplitter_L, Gtk::AttachOptions::SHRINK);
     _sidebar_splitter_L.pack2(_sidebar_splitter_R, Gtk::AttachOptions::EXPAND);
 
     _luainfobar.set_show_close_button(true);
@@ -415,9 +420,18 @@ bool AppWin::on_key_press_event(GdkEventKey *event)
 {
     switch (event->keyval)
     {
-    case GDK_KEY_space:
-        search_operations();
-        return true;
+    // TODO: Use a proper keybind mechanism.
+    case GDK_KEY_space:{
+        auto const focus = get_focus();
+        if (focus == &_view2d_front
+            || focus == &_view2d_right
+            || focus == &_view2d_top
+            || focus == &_view3d)
+        {
+            search_operations();
+            return true;
+        }
+        }/* fallthrough */
 
     default:
         return Gtk::ApplicationWindow::on_key_press_event(event);
@@ -442,6 +456,21 @@ void AppWin::_on_grid_size_changed()
 void AppWin::_on_opsearch_op_chosen(Editor::Operation const &op)
 {
     _maptool_config.set_operation(op);
+}
+
+
+void AppWin::_sync_property_editor()
+{
+    Editor::EntityRef entity{};
+    for (auto const &obj : editor->selected)
+    {
+        if (typeid(*obj.get()) == typeid(Editor::Entity))
+        {
+            entity = Editor::EntityRef::cast_dynamic(obj);
+            break;
+        }
+    }
+    _property_editor.set_entity(entity);
 }
 
 

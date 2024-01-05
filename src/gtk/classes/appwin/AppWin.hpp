@@ -1,6 +1,6 @@
 /**
  * AppWin.hpp - Sickle ApplicationWindow.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include "ModeSelector.hpp"
 #include "OperationSearch.hpp"
 #include "Outliner.hpp"
+#include "PropertyEditor.hpp"
 
 #include <core/Editor.hpp>
 #include <operations/Operation.hpp>
@@ -112,20 +113,30 @@ namespace Sickle::AppWin
         OperationSearch _opsearch;
         ModeSelector _mode_selector{};
         Outliner _outliner{};
+        PropertyEditor _property_editor{};
 
         // Structural widgets
         Gtk::Grid _basegrid{};
         Gtk::HBox _inforegion{};
         Gtk::Label _luainfobarlabel{};
+
+        // 3D View, 2D View (Front)
         Gtk::Paned _left_views{Gtk::Orientation::ORIENTATION_VERTICAL};
+        // 2D View (Top), 2D View (right)
         Gtk::Paned _right_views{Gtk::Orientation::ORIENTATION_VERTICAL};
         Gtk::Paned _views{Gtk::Orientation::ORIENTATION_HORIZONTAL};
+
+        // Mode Selector overlay
+        Gtk::Overlay _overlay{};
+
+        // MapTools, Tool config
+        Gtk::Paned _sidebar_vsplitter_L{Gtk::Orientation::ORIENTATION_VERTICAL};
+        // Outliner, Property Editor
+        Gtk::Paned _sidebar_vsplitter_R{Gtk::Orientation::ORIENTATION_VERTICAL};
         Gtk::Paned _sidebar_splitter_L{
             Gtk::Orientation::ORIENTATION_HORIZONTAL};
         Gtk::Paned _sidebar_splitter_R{
             Gtk::Orientation::ORIENTATION_HORIZONTAL};
-        Gtk::Paned _sidebar_vsplitter_R{Gtk::Orientation::ORIENTATION_VERTICAL};
-        Gtk::Overlay _overlay{};
 
         Glib::Property<guint> _prop_grid_size;
         Glib::RefPtr<Glib::Binding> _binding_grid_size_top,
@@ -154,6 +165,8 @@ namespace Sickle::AppWin
 
         void _on_grid_size_changed();
         void _on_opsearch_op_chosen(Editor::Operation const &op);
+
+        void _sync_property_editor();
 
         void _run_internal_scripts();
         void _run_runtime_scripts();
