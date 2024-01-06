@@ -122,6 +122,17 @@ AppWin::AppWin()
             editor->property_map(),
             _outliner.property_world(),
             Glib::BindingFlags::BINDING_SYNC_CREATE)}
+,   _binding_views_horizontal_half_position{
+        Glib::Binding::bind_property(
+            _sidebar_splitter_R.property_position(),
+            _views.property_position(),
+            Glib::BindingFlags::BINDING_DEFAULT,
+            Glib::Binding::SlotTypedTransform<int, int>{
+                [](int const &from, int &to) -> bool {
+                    to = from / 2;
+                    return true;
+                }
+            })}
 {
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
@@ -168,6 +179,15 @@ AppWin::AppWin()
     _views.add1(_left_views);
     _views.add2(_right_views);
     _views.set_wide_handle(true);
+
+    // Top and bottom views should be 1/2 the height of the main view area.
+    // FIXME: Known bugs
+    // - Doesn't work properly on startup or maximize/unmaximize events.
+    _views.signal_size_allocate().connect(
+        [this](Gtk::Allocation const &a){
+            _left_views.set_position(a.get_height() / 2);
+            _right_views.set_position(a.get_height() / 2);
+        });
 
     _mode_selector.add_mode("brush", "Brush");
     _mode_selector.add_mode("face", "Face");

@@ -145,6 +145,8 @@ namespace Sickle::AppWin
         Glib::RefPtr<Glib::Binding> _binding_left_right_views_position;
         Glib::RefPtr<Glib::Binding> _binding_editor_modeselector_mode;
         Glib::RefPtr<Glib::Binding> _binding_editor_outliner_world;
+        Glib::RefPtr<Glib::Binding> _binding_views_horizontal_half_position;
+        Glib::RefPtr<Glib::Binding> _binding_views_vertical_half_position;
         sigc::signal<void()> _sig_lua_reloaded{};
 
         std::vector<std::string> _lua_script_dirs{
