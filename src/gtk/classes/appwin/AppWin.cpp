@@ -200,6 +200,8 @@ AppWin::AppWin()
     _overlay.add(_views);
     _overlay.add_overlay(_mode_selector);
 
+    _outliner.property_editor().set_value(editor);
+
     _sidebar_vsplitter_L.pack1(_maptools, Gtk::AttachOptions::EXPAND);
     _sidebar_vsplitter_L.pack2(_maptool_config, Gtk::AttachOptions::EXPAND);
 

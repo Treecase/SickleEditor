@@ -1,6 +1,6 @@
 /**
  * Outliner.hpp - The Sickle object outliner.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,13 +19,15 @@
 #ifndef SE_APPWIN_OUTLINER_HPP
 #define SE_APPWIN_OUTLINER_HPP
 
+#include <core/Editor.hpp>
 #include <world/World.hpp>
 
 #include <glibmm/property.h>
 #include <gtkmm/bin.h>
-#include <gtkmm/treeview.h>
-#include <gtkmm/treestore.h>
+#include <gtkmm/menu.h>
 #include <gtkmm/scrolledwindow.h>
+#include <gtkmm/treestore.h>
+#include <gtkmm/treeview.h>
 
 
 namespace Sickle::AppWin
@@ -39,8 +41,13 @@ namespace Sickle::AppWin
         Outliner();
 
         auto property_world() {return _prop_world.get_proxy();}
+        auto property_world() const {return _prop_world.get_proxy();}
+        auto property_editor() {return _prop_editor.get_proxy();}
+        auto property_editor() const {return _prop_editor.get_proxy();}
 
     protected:
+        void on_button_press_event_notify(GdkEventButton *event);
+
         void on_object_is_selected_changed(
             Gtk::TreeModel::iterator const &iter);
         void on_selection_changed();
@@ -62,6 +69,7 @@ namespace Sickle::AppWin
                 Glib::RefPtr<Sickle::Editor::EditorObject>> ptr;
         };
 
+        Glib::Property<Editor::EditorRef> _prop_editor;
         Glib::Property<Glib::RefPtr<Editor::World>> _prop_world;
 
         Gtk::ScrolledWindow _scrolled{};
@@ -69,12 +77,15 @@ namespace Sickle::AppWin
         Glib::RefPtr<Gtk::TreeStore> _tree_store{
             Gtk::TreeStore::create(_tree_columns)};
         Gtk::TreeView _tree_view{};
+        Gtk::Menu _popup{};
 
         void _add_object(
             Glib::RefPtr<Sickle::Editor::EditorObject> obj,
             Gtk::TreeModel::iterator const &iter);
 
         void _remove_object(Gtk::TreeModel::iterator const &iter);
+
+        void _run_operation(std::string const &operation_name);
     };
 }
 
