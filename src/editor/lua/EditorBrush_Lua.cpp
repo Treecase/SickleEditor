@@ -146,6 +146,11 @@ void Lua::push(lua_State *L, BrushRef brush)
     }
     builder.addSignalHandler(
         brush->property_selected().signal_changed(), "on_selected");
+    brush->signal_removed().connect(
+        [L, brush](){
+            ReferenceManager refman{};
+            refman.erase(L, brush);
+        });
     builder.finish();
     int const t3 = lua_gettop(L);
     assert(t3 == t1 + 1);

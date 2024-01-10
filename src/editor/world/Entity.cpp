@@ -59,6 +59,13 @@ Entity::Entity()
 }
 
 
+Entity::~Entity()
+{
+    for (auto const &child : brushes())
+        remove_brush(child);
+}
+
+
 Entity::operator MAP::Entity() const
 {
     MAP::Entity out{};
@@ -138,9 +145,9 @@ Glib::RefPtr<Gdk::Pixbuf> Entity::icon() const
 }
 
 
-std::vector<Glib::RefPtr<EditorObject>> Entity::children() const
+std::vector<EditorObjectRef> Entity::children() const
 {
-    std::vector<Glib::RefPtr<EditorObject>> out{};
+    std::vector<EditorObjectRef> out{};
     for (auto const &brush : brushes())
         out.push_back(brush);
     return out;

@@ -91,8 +91,8 @@ namespace Sickle::Editor
         void add_maptool(MapTool const &maptool);
 
     protected:
-        void on_object_selected_changed(Glib::RefPtr<EditorObject> const &obj);
-        void on_object_added(Glib::RefPtr<EditorObject> const &obj);
+        void on_object_selected_changed(EditorObjectRef const &obj);
+        void on_object_added(EditorObjectRef const &obj);
 
     private:
         Glib::Property<WorldRef> _prop_map;

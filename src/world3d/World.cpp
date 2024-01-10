@@ -43,5 +43,14 @@ void World3D::World::render() const
 
 void World3D::World::add_entity(Sickle::Editor::EntityRef const &entity)
 {
-    _entities.push_back(std::make_shared<Entity>(entity));
+    auto e = std::make_shared<Entity>(entity);
+    _entities.push_back(e);
+    entity->signal_removed().connect([this, e](){remove_entity(e);});
+}
+
+
+void World3D::World::remove_entity(std::shared_ptr<Entity> const &entity)
+{
+    auto it = std::find(_entities.cbegin(), _entities.cend(), entity);
+    _entities.erase(it);
 }

@@ -30,13 +30,16 @@
 
 namespace Sickle::Editor
 {
+    class EditorObject;
+    using EditorObjectRef = Glib::RefPtr<EditorObject>;
+
     class EditorObject : public Selectable
     {
     public:
-        using SlotForEach = std::function<void(Glib::RefPtr<EditorObject>)>;
+        using SlotForEach = std::function<void(EditorObjectRef)>;
 
         EditorObject();
-        virtual ~EditorObject()=default;
+        virtual ~EditorObject();
 
         /**
          * Emitted when a child object is added. Implementing classes must
@@ -76,14 +79,14 @@ namespace Sickle::Editor
          *
          * @return A list of this object's direct children.
          */
-        virtual std::vector<Glib::RefPtr<EditorObject>> children() const=0;
+        virtual std::vector<EditorObjectRef> children() const=0;
 
         /**
          * Get all child objects recursively.
          *
          * @return A list of all the object's children.
          */
-        std::vector<Glib::RefPtr<EditorObject>> children_recursive() const;
+        std::vector<EditorObjectRef> children_recursive() const;
 
         /**
          * Call `func` on each of the object's children recursively.
@@ -92,9 +95,15 @@ namespace Sickle::Editor
          */
         void foreach(SlotForEach func);
 
+    protected:
+        virtual void on_child_added(EditorObjectRef const &child);
+        virtual void on_child_removed(EditorObjectRef const &child);
+        virtual void on_added();
+        virtual void on_removed();
+
     private:
-        sigc::signal<void(Glib::RefPtr<EditorObject>)> _sig_child_added{};
-        sigc::signal<void(Glib::RefPtr<EditorObject>)> _sig_child_removed{};
+        sigc::signal<void(EditorObjectRef)> _sig_child_added{};
+        sigc::signal<void(EditorObjectRef)> _sig_child_removed{};
         sigc::signal<void()> _sig_added{};
         sigc::signal<void()> _sig_removed{};
     };

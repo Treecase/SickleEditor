@@ -48,6 +48,7 @@ namespace World3D
 
     protected:
         void add_entity(Sickle::Editor::EntityRef const &entity);
+        void remove_entity(std::shared_ptr<Entity> const &entity);
 
     private:
         std::vector<std::shared_ptr<Entity>> _entities{};

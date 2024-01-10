@@ -240,7 +240,7 @@ Glib::RefPtr<Gdk::Pixbuf> Face::icon() const
 }
 
 
-std::vector<Glib::RefPtr<EditorObject>> Face::children() const
+std::vector<EditorObjectRef> Face::children() const
 {
     return {};
 }

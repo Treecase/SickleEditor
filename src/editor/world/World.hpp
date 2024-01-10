@@ -52,6 +52,8 @@ namespace Sickle::Editor
         static WorldRef create(MAP::Map const &map);
         static WorldRef create(RMF::RichMap const &map);
 
+        virtual ~World()=default;
+
         operator MAP::Map() const;
 
         /**
@@ -93,8 +95,7 @@ namespace Sickle::Editor
         // EditorObject interface
         virtual Glib::ustring name() const override;
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
-        virtual std::vector<Glib::RefPtr<EditorObject>>
-        children() const override;
+        virtual std::vector<EditorObjectRef> children() const override;
 
     protected:
         World();
@@ -106,6 +107,8 @@ namespace Sickle::Editor
         // - visgroups & groups
         // - paths (what are these?)
         // - cameras
+
+        void _add_worldspawn();
     };
 }
 

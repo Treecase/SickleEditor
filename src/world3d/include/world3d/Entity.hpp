@@ -46,6 +46,7 @@ namespace World3D
 
     protected:
         void add_brush(Sickle::Editor::BrushRef const &brush);
+        void remove_brush(std::shared_ptr<Brush> const &brush);
 
     private:
         std::vector<std::shared_ptr<Brush>> _brushes{};

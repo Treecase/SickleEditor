@@ -33,15 +33,18 @@
 namespace Sickle::AppWin
 {
     /**
-     * A tree view of all objects in the map.
+     * A tree view of all objects in the world.
      */
     class Outliner : public Gtk::Bin
     {
     public:
         Outliner();
 
+        /** The current World to view children of. */
         auto property_world() {return _prop_world.get_proxy();}
+        /** The current World to view children of. */
         auto property_world() const {return _prop_world.get_proxy();}
+
         auto property_editor() {return _prop_editor.get_proxy();}
         auto property_editor() const {return _prop_editor.get_proxy();}
 

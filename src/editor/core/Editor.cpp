@@ -66,7 +66,7 @@ void Editor::add_maptool(MapTool const &maptool)
 
 
 
-void Editor::on_object_selected_changed(Glib::RefPtr<EditorObject> const &obj)
+void Editor::on_object_selected_changed(EditorObjectRef const &obj)
 {
     if (obj->is_selected())
         selected.add(obj);
@@ -75,7 +75,7 @@ void Editor::on_object_selected_changed(Glib::RefPtr<EditorObject> const &obj)
 }
 
 
-void Editor::on_object_added(Glib::RefPtr<EditorObject> const &obj)
+void Editor::on_object_added(EditorObjectRef const &obj)
 {
     // obj will be automatically added/removed from Selection.
     obj->property_selected().signal_changed().connect(

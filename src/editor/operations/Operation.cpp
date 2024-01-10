@@ -25,6 +25,8 @@
 #include <lua/Editor_Lua.hpp>
 #include <LuaGeo.hpp>
 
+#include <cstring>
+
 using namespace Sickle::Editor;
 
 
@@ -93,7 +95,8 @@ std::unordered_set<std::string> const Operation::VALID_TYPES{
 
 
 std::unordered_set<std::string> const Operation::VALID_MODES{
-    "brush"
+    "brush",
+    "object",
 };
 
 
@@ -241,15 +244,21 @@ void Operation::execute(EditorRef ed, ArgList const &passed_args) const
             if (!brush)
                 continue;
 
-            int const top = lua_gettop(L);
-
             Lua::push(L, brush);
-            int const top2 = lua_gettop(L);
-            assert(top2 == top + 1);
-
             lua_seti(L, -2, i++);
-            int const top3 = lua_gettop(L);
-            assert(top3 == top);
+        }
+    }
+    else if (mode == "object")
+    {
+        lua_newtable(L);
+        lua_Integer i = 1;
+        for (auto const &obj : ed->selected)
+        {
+            auto ptr = static_cast<Selection::Item *>(
+                lua_newuserdatauv(L, sizeof(Selection::Item), 0));
+            std::memset(ptr, 0, sizeof(*ptr));
+            *ptr = obj;
+            lua_seti(L, -2, i++);
         }
     }
     else

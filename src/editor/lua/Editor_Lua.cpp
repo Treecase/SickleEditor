@@ -60,6 +60,19 @@ static int remove_brush(lua_State *L)
     return 0;
 }
 
+static int remove_object(lua_State *L)
+{
+    auto ed = leditor_check(L, 1);
+    auto obj = static_cast<EditorObjectRef *>(lua_touserdata(L, 2));
+    if (typeid(*obj->get()) == typeid(Brush))
+        ed->get_map()->remove_brush(BrushRef::cast_dynamic(*obj));
+    else if (typeid(*obj->get()) == typeid(Entity))
+        ed->get_map()->remove_entity(EntityRef::cast_dynamic(*obj));
+    else
+        return luaL_error(L, "object could not be removed");
+    return 0;
+}
+
 static int do_operation(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
@@ -102,6 +115,7 @@ static int do_nothing(lua_State *L)
 static luaL_Reg methods[] = {
     {"add_brush", add_brush},
     {"remove_brush", remove_brush},
+    {"remove_object", remove_object},
     {"do_operation", do_operation},
 
     {"get_selection", get_selection},

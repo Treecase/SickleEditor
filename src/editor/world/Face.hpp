@@ -61,6 +61,8 @@ namespace Sickle::Editor
 
         static FaceRef create(RMF::Face const &face);
 
+        virtual ~Face()=default;
+
         operator MAP::Plane() const;
 
         auto property_texture() {return _prop_texture.get_proxy();};
@@ -111,8 +113,7 @@ namespace Sickle::Editor
         // EditorObject interface
         virtual Glib::ustring name() const override;
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
-        virtual std::vector<Glib::RefPtr<EditorObject>>
-        children() const override;
+        virtual std::vector<EditorObjectRef> children() const override;
 
     protected:
         Face();

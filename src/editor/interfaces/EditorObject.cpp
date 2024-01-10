@@ -23,14 +23,24 @@ using namespace Sickle::Editor;
 
 EditorObject::EditorObject()
 {
-    signal_child_removed().connect(
-        [](auto child){child->signal_removed().emit();});
     signal_child_added().connect(
-        [](auto child){child->signal_added().emit();});
+        sigc::mem_fun(*this, &EditorObject::on_child_added));
+    signal_child_removed().connect(
+        sigc::mem_fun(*this, &EditorObject::on_child_removed));
+    signal_added().connect(
+        sigc::mem_fun(*this, &EditorObject::on_added));
+    signal_removed().connect(
+        sigc::mem_fun(*this, &EditorObject::on_removed));
 }
 
 
-std::vector<Glib::RefPtr<EditorObject>> EditorObject::children_recursive() const
+EditorObject::~EditorObject()
+{
+    signal_removed().emit();
+}
+
+
+std::vector<EditorObjectRef> EditorObject::children_recursive() const
 {
     auto out = children();
     for (auto const &child : children())
@@ -49,4 +59,28 @@ void EditorObject::foreach(SlotForEach func)
 {
     for (auto &obj : children_recursive())
         std::invoke(func, obj);
+}
+
+
+
+void EditorObject::on_child_added(EditorObjectRef const &child)
+{
+    child->signal_added().emit();
+}
+
+
+void EditorObject::on_child_removed(EditorObjectRef const &child)
+{
+    child->signal_removed().emit();
+}
+
+
+void EditorObject::on_added()
+{
+}
+
+
+void EditorObject::on_removed()
+{
+    select(false);
 }

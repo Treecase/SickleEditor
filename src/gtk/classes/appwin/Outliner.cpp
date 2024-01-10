@@ -39,7 +39,7 @@ struct PopupItemDef {
 
 // List of items to install into the Outliner's popup menu.
 static std::vector<struct PopupItemDef> popup_items{
-    {"Delete", "brush.delete"},
+    {"Delete", "Object.Delete"},
 };
 
 
@@ -128,14 +128,16 @@ void Outliner::on_selection_changed()
 
 void Outliner::on_world_changed()
 {
+    auto const add_child = [this](Editor::EditorObjectRef const &child){
+        _add_object(child, _tree_store->append());
+    };
+
     _tree_store->clear();
 
     auto const &w = property_world().get_value();
+    w->signal_child_added().connect(add_child);
     for (auto const &e : w->children())
-    {
-        auto iter = _tree_store->append();
-        _add_object(e, iter);
-    }
+        add_child(e);
 }
 
 
@@ -144,16 +146,16 @@ void Outliner::_add_object(
     Glib::RefPtr<Sickle::Editor::EditorObject> obj,
     Gtk::TreeModel::iterator const &iter)
 {
+    auto const add_child = [this, iter](auto child){
+        _add_object(child, _tree_store->append(iter->children()));
+    };
+
     obj->property_selected().signal_changed().connect(
         sigc::bind(
             sigc::mem_fun(*this, &Outliner::on_object_is_selected_changed),
             iter));
 
-    obj->signal_child_added().connect(
-        [this, iter](auto child){
-            auto child_iter = _tree_store->append(iter->children());
-            _add_object(child, child_iter);
-        });
+    obj->signal_child_added().connect(add_child);
 
     obj->signal_removed().connect([this, iter](){_remove_object(iter);});
 
@@ -163,10 +165,7 @@ void Outliner::_add_object(
     row[_tree_columns.ptr] = obj;
 
     for (auto const &child : obj->children())
-    {
-        auto child_iter = _tree_store->append(iter->children());
-        _add_object(child, child_iter);
-    }
+        add_child(child);
 }
 
 

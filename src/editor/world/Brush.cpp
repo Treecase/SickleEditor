@@ -122,9 +122,9 @@ Glib::RefPtr<Gdk::Pixbuf> Brush::icon() const
 }
 
 
-std::vector<Glib::RefPtr<EditorObject>> Brush::children() const
+std::vector<EditorObjectRef> Brush::children() const
 {
-    std::vector<Glib::RefPtr<EditorObject>> out{};
+    std::vector<EditorObjectRef> out{};
     for (auto const &face : _faces)
         out.push_back(face);
     return out;

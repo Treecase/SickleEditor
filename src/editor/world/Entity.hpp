@@ -55,6 +55,8 @@ namespace Sickle::Editor
         static EntityRef create(MAP::Entity const &entity);
         static EntityRef create(RMF::Entity const &entity);
 
+        virtual ~Entity();
+
         operator MAP::Entity() const;
 
         /**
@@ -114,8 +116,7 @@ namespace Sickle::Editor
         // EditorObject interface
         virtual Glib::ustring name() const override;
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
-        virtual std::vector<Glib::RefPtr<EditorObject>>
-        children() const override;
+        virtual std::vector<EditorObjectRef> children() const override;
 
     protected:
         Entity();

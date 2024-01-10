@@ -73,6 +73,8 @@ namespace Sickle::Editor
          */
         static BrushRef create(RMF::Solid const &solid);
 
+        virtual ~Brush()=default;
+
         operator MAP::Brush() const;
 
         /**
@@ -99,8 +101,7 @@ namespace Sickle::Editor
         // EditorObject interface
         virtual Glib::ustring name() const override;
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const override;
-        virtual std::vector<Glib::RefPtr<EditorObject>>
-        children() const override;
+        virtual std::vector<EditorObjectRef> children() const override;
 
     protected:
         Brush();
