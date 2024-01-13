@@ -1,6 +1,6 @@
 /**
  * Selection.hpp - Editor Selection class.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,11 +24,24 @@
 
 #include <sigc++/signal.h>
 
+#include <algorithm>
+#include <typeinfo>
 #include <unordered_set>
 
 
 namespace Sickle::Editor
 {
+    /**
+     * The selection is a collection of all selected objects in the editor.
+     *
+     * Its main use is to tell operations which objects to operate on.
+     * Operators that can affect multiple objects use the full selection, and
+     * operators that only accept a single object use the most recently
+     * selected object.
+     *
+     * The selection can also be filtered to include only objects of a specific
+     * type, eg. only brushes.
+     */
     class Selection : public Lua::Referenceable
     {
     public:
@@ -75,6 +88,56 @@ namespace Sickle::Editor
          * @return True if the selection is empty, else false.
          */
         bool empty() const;
+
+        /**
+         * Get all selected items of a given type. (Get `type` using the
+         * `typeid` operator).
+         *
+         * @param type Type info for the type to get.
+         * @return A list of items in the selection matching type.
+         */
+        std::vector<Item> get_all_of_type(std::type_info const &type) const;
+
+        /**
+         * Get all selected items of a given type.
+         *
+         * @return A list of items in the selection matching type.
+         */
+        template<typename T>
+        std::vector<Glib::RefPtr<T>> get_all_of_type() const
+        {
+            auto const items = get_all_of_type(typeid(T));
+            std::vector<Glib::RefPtr<T>> cast_items{};
+            std::transform(
+                items.cbegin(), items.cend(),
+                std::back_inserter(cast_items),
+                [](Item const &item) -> Glib::RefPtr<T> {
+                    return Glib::RefPtr<T>::cast_dynamic(item);
+                });
+            return cast_items;
+        }
+
+        /**
+         * Get most recently selected item of a given type. (Get `type` using
+         * the `typeid` operator).
+         *
+         * @param type Type info for the type to get.
+         * @return The most recently selected item of type, or an empty item if
+         * none selected.
+         */
+        Item get_latest_of_type(std::type_info const &type) const;
+
+        /**
+         * Get most recently selected item of a given type.
+         *
+         * @return The most recently selected item of type, or an empty item if
+         * none selected.
+         */
+        template<typename T>
+        Glib::RefPtr<T> get_latest_of_type() const
+        {
+            return Glib::RefPtr<T>::cast_dynamic(get_latest_of_type(typeid(T)));
+        }
 
         auto begin() const {return _selected.begin();}
         auto end() const {return _selected.end();}

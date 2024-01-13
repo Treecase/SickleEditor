@@ -1,6 +1,6 @@
 /**
  * Selection.cpp - Editor::Selection.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -63,4 +63,27 @@ bool Selection::contains(Item item) const
 bool Selection::empty() const
 {
     return _selected.empty();
+}
+
+
+std::vector<Selection::Item>
+Selection::get_all_of_type(std::type_info const &type) const
+{
+    std::vector<Item> items{};
+    std::copy_if(
+        begin(), end(),
+        std::back_inserter(items),
+        [&type](Item const &item) -> bool {
+            return typeid(*item.get()) == type;
+        });
+    return items;
+}
+
+
+Selection::Item Selection::get_latest_of_type(std::type_info const &type) const
+{
+    auto const all = get_all_of_type(type);
+    if (!all.empty())
+        return all.back();
+    return Item{};
 }

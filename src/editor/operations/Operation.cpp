@@ -1,6 +1,6 @@
 /**
  * Operation.cpp - Sickle map operations class.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -238,12 +238,8 @@ void Operation::execute(EditorRef ed, ArgList const &passed_args) const
         // Push selected objects list.
         lua_newtable(L);
         lua_Integer i = 1;
-        for (auto const &obj : ed->selected)
+        for (auto const &brush : ed->selected.get_all_of_type<Brush>())
         {
-            auto const brush = BrushRef::cast_dynamic(obj);
-            if (!brush)
-                continue;
-
             Lua::push(L, brush);
             lua_seti(L, -2, i++);
         }

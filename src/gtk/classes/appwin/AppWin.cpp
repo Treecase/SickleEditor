@@ -483,15 +483,7 @@ void AppWin::_on_opsearch_op_chosen(Editor::Operation const &op)
 
 void AppWin::_sync_property_editor()
 {
-    Editor::EntityRef entity{};
-    for (auto const &obj : editor->selected)
-    {
-        if (typeid(*obj.get()) == typeid(Editor::Entity))
-        {
-            entity = Editor::EntityRef::cast_dynamic(obj);
-            break;
-        }
-    }
+    auto const entity = editor->selected.get_latest_of_type<Editor::Entity>();
     _property_editor.set_entity(entity);
 }
 

@@ -1,6 +1,6 @@
 /**
  * MapArea2D.cpp - Sickle editor main window DrawingArea.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -401,15 +401,11 @@ void Sickle::MapArea2D::on_editor_maptools_changed()
 void Sickle::MapArea2D::on_editor_selection_changed()
 {
     BBox2 selection_bounds{};
-    for (auto const &obj : _editor->selected)
-    {
-        auto const brush = Editor::BrushRef::cast_dynamic(obj);
-        if (!brush)
-            continue;
+    auto const brushes = _editor->selected.get_all_of_type<Editor::Brush>();
+    for (auto const &brush : brushes)
         for (auto const &face : brush->faces())
             for (auto const &vertex : face->get_vertices())
                 selection_bounds.add(worldspace_to_drawspace(vertex));
-    }
     _selected_box.set_box(selection_bounds);
     queue_draw();
 }
