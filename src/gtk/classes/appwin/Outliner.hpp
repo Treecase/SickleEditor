@@ -29,6 +29,8 @@
 #include <gtkmm/treestore.h>
 #include <gtkmm/treeview.h>
 
+#include <memory>
+
 
 namespace Sickle::AppWin
 {
@@ -57,6 +59,22 @@ namespace Sickle::AppWin
         void on_world_changed();
 
     private:
+        // Stored alongside an object in the TreeModel to automatically
+        // disconnect signals when the object is removed from the tree.
+        struct Signals
+        {
+            sigc::connection selected;
+            sigc::connection added;
+            sigc::connection removed;
+
+            virtual ~Signals()
+            {
+                selected.disconnect();
+                added.disconnect();
+                removed.disconnect();
+            }
+        };
+
         struct Columns : Gtk::TreeModelColumnRecord
         {
             Columns()
@@ -65,11 +83,13 @@ namespace Sickle::AppWin
                 add(text);
                 add(icon);
                 add(ptr);
+                add(signals);
             }
             Gtk::TreeModelColumn<Glib::ustring> text;
             Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
             Gtk::TreeModelColumn<
                 Glib::RefPtr<Sickle::Editor::EditorObject>> ptr;
+            Gtk::TreeModelColumn<std::shared_ptr<Signals>> signals;
         };
 
         Glib::Property<Editor::EditorRef> _prop_editor;

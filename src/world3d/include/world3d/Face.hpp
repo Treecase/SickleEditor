@@ -1,6 +1,6 @@
 /**
  * Face.hpp - OpenGL Editor::Face view.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,10 +34,21 @@
 
 namespace World3D
 {
+    /**
+     * Describes a vertex of a 3D face. Contains a 3D position and UV
+     * information.
+     */
     class Vertex
     {
     public:
-        static size_t const ELEMENTS = 5;
+        /** Number of float elements per vertex. */
+        static constexpr size_t ELEMENTS = 5;
+
+        /**
+         * Convert the vertex to the proper format to be sent to the shader.
+         * Format is `XYZST`. XYZ are the position, ST are the texture
+         * coordinates.
+         */
         std::array<GLfloat, ELEMENTS> as_vbo() const;
 
         Vertex(glm::vec3 pos, glm::vec2 uv);
@@ -48,43 +59,86 @@ namespace World3D
     };
 
 
+    /**
+     * A 3D view of an editor face object. Acts as a proxy for an editor face,
+     * translating that data into a format usable for OpenGL rendering.
+     * Basically it consists of some vertex data and a texture. These are
+     * updated automatically to track the referenced editor face.
+     *
+     * See Sickle::Editor::Face for more context.
+     */
     class Face : public sigc::trackable, public DeferredExec
     {
     public:
+        /**
+         * Emitted when a face's texture cannot be loaded. The signal parameter
+         * is the missing texture's name.
+         */
         static auto &signal_missing_texture() {return _signal_missing_texture;}
 
         Face(
             Sickle::Editor::FaceRef const &face,
             GLint offset);
 
-        /** Emitted when the vertices change. */
+        /**
+         * Emitted when the vertices change.
+         */
         auto &signal_vertices_changed() {return _signal_vertices_changed;}
 
-        /** Length of span in _PARENT's VBO. */
+        /**
+         * Length of span in parent brush's VBO. (ie. number of vertices in the
+         * face).
+         *
+         * TODO: Probably shouldn't be here, tight coupling.
+         */
         GLsizei count() const {return _vertices.size();}
 
-        auto const &vertices() const {return _vertices;}
-        auto const &texture() const {return _texture;}
+        /**
+         * Offset into parent brush's VBO marking the start of this face's
+         * vertex data.
+         *
+         * TODO: Probably shouldn't be here, tight coupling.
+         */
         auto offset() const {return _offset;}
+
+        /**
+         * Get the face's vertices.
+         *
+         * @return A `Container` containing the face's vertices.
+         */
+        auto const &vertices() const {return _vertices;}
+
+        /**
+         * Get the face's texture.
+         *
+         * @return The texture to be pasted onto the face.
+         */
+        auto const &texture() const {return _texture;}
+
+    protected:
+        void on_src_texture_changed();
+        void on_src_uv_changed();
+        void on_src_shift_changed();
+        void on_src_scale_changed();
+        void on_src_rotation_changed();
+
+        void on_src_verts_changed();
 
     private:
         static sigc::signal<void(std::string)> _signal_missing_texture;
 
         sigc::signal<void()> _signal_vertices_changed{};
 
-        Sickle::Editor::FaceRef const _src{nullptr};
+        Sickle::Editor::FaceRef const _src{};
         Texture _texture{};
         std::vector<Vertex> _vertices{};
-        GLint _offset; // offset into _PARENT's VBO.
+        GLint _offset;
 
         Face(Face const &)=delete;
         Face &operator=(Face const &)=delete;
 
         void _sync_vertices();
         void _sync_texture();
-
-        void _on_src_verts_changed();
-        void _on_src_texture_changed();
     };
 }
 

@@ -150,19 +150,22 @@ void Outliner::_add_object(
         _add_object(child, _tree_store->append(iter->children()));
     };
 
-    obj->property_selected().signal_changed().connect(
+    auto signals = std::make_shared<Signals>();
+    signals->selected = obj->property_selected().signal_changed().connect(
         sigc::bind(
             sigc::mem_fun(*this, &Outliner::on_object_is_selected_changed),
             iter));
-
-    obj->signal_child_added().connect(add_child);
-
-    obj->signal_removed().connect([this, iter](){_remove_object(iter);});
+    signals->added = obj->signal_child_added().connect(add_child);
+    signals->removed = obj->signal_removed().connect(
+        sigc::bind(
+            sigc::mem_fun(*this, &Outliner::_remove_object),
+            iter));
 
     auto &row = *iter;
     row[_tree_columns.text] = obj->name();
     row[_tree_columns.icon] = obj->icon();
     row[_tree_columns.ptr] = obj;
+    row[_tree_columns.signals] = signals;
 
     for (auto const &child : obj->children())
         add_child(child);

@@ -91,6 +91,7 @@ AppWin::AppWin()
 ,   _maptools{editor}
 ,   _maptool_config{editor}
 ,   _opsearch{editor}
+,   _face_editor{editor}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _binding_grid_size_top{
         Glib::Binding::bind_property(
@@ -202,11 +203,21 @@ AppWin::AppWin()
 
     _outliner.property_editor().set_value(editor);
 
+    _object_editor_stack.add(_property_editor, "entity_editor", "Entity");
+    _object_editor_stack.add(_face_editor, "face_editor", "Face");
+
+    _object_editor_switcher.set_stack(_object_editor_stack);
+
+    _stack_container.pack_start(
+        _object_editor_switcher,
+        Gtk::PackOptions::PACK_SHRINK);
+    _stack_container.pack_end(_object_editor_stack);
+
     _sidebar_vsplitter_L.pack1(_maptools, Gtk::AttachOptions::EXPAND);
     _sidebar_vsplitter_L.pack2(_maptool_config, Gtk::AttachOptions::EXPAND);
 
     _sidebar_vsplitter_R.pack1(_outliner, Gtk::AttachOptions::EXPAND);
-    _sidebar_vsplitter_R.pack2(_property_editor, Gtk::AttachOptions::EXPAND);
+    _sidebar_vsplitter_R.pack2(_stack_container, Gtk::AttachOptions::SHRINK);
 
     _sidebar_splitter_R.pack1(_overlay, Gtk::AttachOptions::EXPAND);
     _sidebar_splitter_R.pack2(_sidebar_vsplitter_R, Gtk::AttachOptions::SHRINK);
@@ -485,6 +496,18 @@ void AppWin::_sync_property_editor()
 {
     auto const entity = editor->selected.get_latest_of_type<Editor::Entity>();
     _property_editor.set_entity(entity);
+
+    // TODO: should add a Selection.get_all_of_type<T> method
+    Editor::FaceRef face{};
+    for (auto const &obj : editor->selected)
+    {
+        if (typeid(*obj.get()) == typeid(Editor::Face))
+        {
+            face = Editor::FaceRef::cast_dynamic(obj);
+            break;
+        }
+    }
+    _face_editor.set_face(face);
 }
 
 

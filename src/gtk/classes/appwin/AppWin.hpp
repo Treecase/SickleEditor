@@ -21,6 +21,7 @@
 
 #include "../maparea2d/MapArea2D.hpp"
 #include "../MapArea3D.hpp"
+#include "FaceEditor.hpp"
 #include "LuaWindow.hpp"
 #include "LuaConsole.hpp"
 #include "MapToolConfig.hpp"
@@ -46,6 +47,7 @@
 #include <gtkmm/overlay.h>
 #include <gtkmm/paned.h>
 #include <gtkmm/searchentry.h>
+#include <gtkmm/stackswitcher.h>
 
 #include <functional>
 
@@ -114,11 +116,15 @@ namespace Sickle::AppWin
         ModeSelector _mode_selector{};
         Outliner _outliner{};
         PropertyEditor _property_editor{};
+        FaceEditor _face_editor;
 
         // Structural widgets
         Gtk::Grid _basegrid{};
         Gtk::HBox _inforegion{};
         Gtk::Label _luainfobarlabel{};
+        Gtk::Box _stack_container{Gtk::Orientation::ORIENTATION_VERTICAL};
+        Gtk::Stack _object_editor_stack{};
+        Gtk::StackSwitcher _object_editor_switcher{};
 
         // 3D View, 2D View (Front)
         Gtk::Paned _left_views{Gtk::Orientation::ORIENTATION_VERTICAL};

@@ -1,5 +1,6 @@
 add_library(appwin STATIC
     AppWin.cpp
+    FaceEditor.cpp
     MapToolConfig.cpp
     MapTools.cpp
     ModeSelector.cpp
