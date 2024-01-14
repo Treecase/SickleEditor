@@ -21,6 +21,8 @@
 #include <wad/TextureManager.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
+#include <numeric>
+
 
 sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};
 
@@ -95,19 +97,19 @@ void World3D::Face::on_src_verts_changed()
 
 void World3D::Face::_sync_vertices()
 {
-    auto const u_base = glm::normalize(_src->get_u());
-    auto const v_base = glm::normalize(_src->get_v());
-    auto const normal = glm::normalize(glm::cross(u_base, v_base));
+    auto const u_axis = glm::normalize(_src->get_u());
+    auto const v_axis = glm::normalize(_src->get_v());
+    auto const normal = glm::normalize(glm::cross(u_axis, v_axis));
 
-    // TODO: This doesn't seem quite right? idk
-    auto const u_axis = glm::rotate(
-        u_base,
-        glm::radians(_src->get_rotation()),
-        normal);
-    auto const v_axis = glm::rotate(
-        v_base,
-        glm::radians(_src->get_rotation()),
-        normal);
+    // Find center of the face.
+    auto const vertices = _src->get_vertices();
+    auto const center = (
+        std::accumulate(vertices.cbegin(), vertices.cend(), glm::vec3{0.0})
+        / (float)vertices.size());
+    // Convert center to UV coordinates.
+    glm::vec2 const uv_origin{
+        glm::dot(center, u_axis),
+        glm::dot(center, v_axis)};
 
     glm::vec2 const texture_size{_texture.width, _texture.height};
 
@@ -118,7 +120,16 @@ void World3D::Face::_sync_vertices()
             glm::dot(vertex, u_axis),
             glm::dot(vertex, v_axis)};
 
-        uv = ((uv / _src->get_scale()) + _src->get_shift()) / texture_size;
+        // Rotate about center of face.
+        uv -= uv_origin;
+        uv = glm::rotate(uv, -glm::radians(_src->get_rotation()));
+        uv += uv_origin;
+        // Scale UV.
+        uv /= _src->get_scale();
+        // Shift UV.
+        uv += _src->get_shift();
+        // Normalize.
+        uv /= texture_size;
 
         _vertices.emplace_back(vertex, uv);
     }
