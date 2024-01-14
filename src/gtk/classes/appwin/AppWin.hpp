@@ -46,6 +46,7 @@
 #include <gtkmm/label.h>
 #include <gtkmm/overlay.h>
 #include <gtkmm/paned.h>
+#include <gtkmm/scrolledwindow.h>
 #include <gtkmm/searchentry.h>
 #include <gtkmm/stackswitcher.h>
 
@@ -125,6 +126,7 @@ namespace Sickle::AppWin
         Gtk::Box _stack_container{Gtk::Orientation::ORIENTATION_VERTICAL};
         Gtk::Stack _object_editor_stack{};
         Gtk::StackSwitcher _object_editor_switcher{};
+        Gtk::ScrolledWindow _face_edit_scroll{};
 
         // 3D View, 2D View (Front)
         Gtk::Paned _left_views{Gtk::Orientation::ORIENTATION_VERTICAL};

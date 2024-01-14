@@ -27,6 +27,7 @@ FaceEditor::FaceEditor(Editor::EditorRef const &editor)
 ,   _texture_selector{TextureSelector::TextureSelector::create(editor)}
 {
     set_column_spacing(16);
+    set_sensitive(false);
 
     _texture_entry.property_secondary_icon_name() = "folder";
     _texture_entry.property_secondary_icon_activatable() = true;
@@ -35,6 +36,8 @@ FaceEditor::FaceEditor(Editor::EditorRef const &editor)
     _rotation_value.set_increments(1.0, 15.0);
     _rotation_value.set_range(-360.0, 360.0);
     _rotation_value.set_wrap(true);
+    // Have to set this to get the grid to expand.
+    _rotation_value.set_hexpand(true);
 
     attach(_texture_label, 0, 0);
     attach(_texture_entry, 1, 0);
@@ -84,7 +87,15 @@ void FaceEditor::on_face_changed()
     _bind_scale.reset();
     _bind_rotation.reset();
 
+    _texture_entry.set_text("");
+    _u_value.set_vector(glm::vec3{});
+    _v_value.set_vector(glm::vec3{});
+    _shift_value.set_vector(glm::vec2{});
+    _scale_value.set_vector(glm::vec2{});
+    _rotation_value.set_value(0.0);
+
     auto const &face = get_face();
+    set_sensitive((bool)face);
     if (!face)
         return;
 

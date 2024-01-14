@@ -203,8 +203,9 @@ AppWin::AppWin()
 
     _outliner.property_editor().set_value(editor);
 
+    _face_edit_scroll.add(_face_editor);
     _object_editor_stack.add(_property_editor, "entity_editor", "Entity");
-    _object_editor_stack.add(_face_editor, "face_editor", "Face");
+    _object_editor_stack.add(_face_edit_scroll, "face_editor", "Face");
 
     _object_editor_switcher.set_stack(_object_editor_stack);
 
@@ -217,7 +218,7 @@ AppWin::AppWin()
     _sidebar_vsplitter_L.pack2(_maptool_config, Gtk::AttachOptions::EXPAND);
 
     _sidebar_vsplitter_R.pack1(_outliner, Gtk::AttachOptions::EXPAND);
-    _sidebar_vsplitter_R.pack2(_stack_container, Gtk::AttachOptions::SHRINK);
+    _sidebar_vsplitter_R.pack2(_stack_container, Gtk::AttachOptions::EXPAND);
 
     _sidebar_splitter_R.pack1(_overlay, Gtk::AttachOptions::EXPAND);
     _sidebar_splitter_R.pack2(_sidebar_vsplitter_R, Gtk::AttachOptions::SHRINK);
