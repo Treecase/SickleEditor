@@ -105,8 +105,8 @@ void PropertyEditor::on_name_edited(
     auto const old_name = it->get_value(_columns.name);
     auto const value = it->get_value(_columns.value);
     auto entity = get_entity();
-    entity->remove_property(old_name);
-    entity->set_property(new_name, value);
+    if (entity->remove_property(old_name))
+        entity->set_property(new_name, value);
 }
 
 
@@ -129,13 +129,23 @@ void PropertyEditor::_add_property()
     auto row = *_store->append();
     row[_columns.name] = "<name>";
     row[_columns.value] = "<value>";
+
+    auto entity = get_entity();
+    entity->set_property(
+        row.get_value(_columns.name),
+        row.get_value(_columns.value));
 }
 
 
 void PropertyEditor::_remove_property()
 {
     auto sel = _properties.get_selection();
-    auto it = sel->get_selected();
+    auto const it = sel->get_selected();
     if (it)
-        _store->erase(it);
+    {
+        auto const name = it->get_value(_columns.name);
+        auto entity = get_entity();
+        if (entity->remove_property(name))
+            _store->erase(it);
+    }
 }

@@ -59,6 +59,9 @@ namespace Sickle::Editor
 
         operator MAP::Entity() const;
 
+        /** Emitted when a property is added, deleted, or changes value. */
+        auto &signal_properties_changed() {return _signal_properties_changed;}
+
         /**
          * Get the entity's classname property.
          *
@@ -86,11 +89,12 @@ namespace Sickle::Editor
         void set_property(std::string const &key, std::string const &value);
 
         /**
-         * Remove the entity property named `key`.
+         * Remove the entity property named `key`. The "classname" key cannot be
+         * deleted.
          *
          * @param key Name of the property to remove.
          */
-        void remove_property(std::string const &key);
+        bool remove_property(std::string const &key);
 
         /**
          * Get a list of brushes associated with the entity.
@@ -122,7 +126,7 @@ namespace Sickle::Editor
         Entity();
 
     private:
-        sigc::signal<void()> _signal_changed{};
+        sigc::signal<void()> _signal_properties_changed{};
 
         std::unordered_map<std::string, std::string> _properties{};
         std::vector<BrushRef> _brushes{};

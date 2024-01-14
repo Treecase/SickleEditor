@@ -97,12 +97,18 @@ std::string Entity::get_property(std::string const &key) const
 void Entity::set_property(std::string const &key, std::string const &value)
 {
     _properties[key] = value;
+    signal_properties_changed().emit();
 }
 
 
-void Entity::remove_property(std::string const &key)
+bool Entity::remove_property(std::string const &key)
 {
-    _properties.erase(key);
+    if (key == "classname")
+        return false;
+    bool const v = _properties.erase(key);
+    if (v)
+        signal_properties_changed().emit();
+    return v;
 }
 
 
