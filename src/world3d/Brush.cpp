@@ -53,10 +53,10 @@ bool World3D::Brush::is_selected() const
 void World3D::Brush::render() const
 {
     _vao->bind();
+    predraw(_src);
     for (auto const &face : _faces)
     {
-        face->texture().texture->bind();
-        predraw(_src);
+        face->render();
         glDrawArrays(GL_TRIANGLE_FAN, face->offset(), face->count());
     }
 }

@@ -70,6 +70,11 @@ namespace World3D
     class Face : public sigc::trackable, public DeferredExec
     {
     public:
+        using SlotPreDraw = sigc::slot<void(Sickle::Editor::FaceRef const &)>;
+
+        /// Called just before a face is rendered.
+        static SlotPreDraw predraw;
+
         /**
          * Emitted when a face's texture cannot be loaded. The signal parameter
          * is the missing texture's name.
@@ -114,6 +119,14 @@ namespace World3D
          * @return The texture to be pasted onto the face.
          */
         auto const &texture() const {return _texture;}
+
+        /**
+         * Prepare face data for rendering.
+         *
+         * NOTE: The parent brush is the one actually making the render call,
+         * this just prepares for the render by eg. binding textures.
+         */
+        void render() const;
 
     protected:
         void on_src_texture_changed();

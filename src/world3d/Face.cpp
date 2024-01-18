@@ -24,6 +24,7 @@
 #include <numeric>
 
 
+World3D::Face::SlotPreDraw World3D::Face::predraw = [](auto){};
 sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};
 
 
@@ -54,6 +55,13 @@ World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
 
     push_queue([this](){_sync_texture();});
     _sync_vertices();
+}
+
+
+void World3D::Face::render() const
+{
+    texture().texture->bind();
+    predraw(_src);
 }
 
 
@@ -120,12 +128,12 @@ void World3D::Face::_sync_vertices()
             glm::dot(vertex, u_axis),
             glm::dot(vertex, v_axis)};
 
-        // Rotate about center of face.
         uv -= uv_origin;
+        // Rotate about center of face.
         uv = glm::rotate(uv, -glm::radians(_src->get_rotation()));
-        uv += uv_origin;
-        // Scale UV.
+        // Scale UV from center of face.
         uv /= _src->get_scale();
+        uv += uv_origin;
         // Shift UV.
         uv += _src->get_shift();
         // Normalize.

@@ -58,6 +58,19 @@ std::unordered_map<std::string, Operation::ModeData> const Operation::MODES
             },
         }
     },
+    {   "face",
+        {
+            [](lua_State *L, Selection const &sel) -> void {
+                lua_newtable(L);
+                lua_Integer i = 1;
+                for (auto const &face : sel.get_all_of_type<Face>())
+                {
+                    Lua::push(L, face);
+                    lua_seti(L, -2, i++);
+                }
+            }
+        }
+    },
     {   "object",
         {
             [](lua_State *L, Selection const &sel) -> void {

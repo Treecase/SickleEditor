@@ -140,8 +140,27 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
 
     // Set global Brush 3D render callback.
     World3D::Brush::predraw = [this](auto brush){
+        // temp
+        // (needed to reset modulate when mode is neither 'brush' nor 'face')
+        if (_editor->get_mode() == "face")
+            return;
+        else if (_editor->get_mode() != "brush")
+            _shader->setUniformS("modulate", glm::vec3{1, 1, 1});
+
+        if (_editor->get_mode() != "brush")
+            return;
         glm::vec3 modulate{1, 1, 1};
         if (brush->is_selected())
+            modulate = glm::vec3{1, 0, 0};
+        _shader->setUniformS("modulate", modulate);
+    };
+
+    // Set global Face 3D render callback.
+    World3D::Face::predraw = [this](Editor::FaceRef const &face) -> void {
+        if (_editor->get_mode() != "face")
+            return;
+        glm::vec3 modulate{1, 1, 1};
+        if (face->is_selected())
             modulate = glm::vec3{1, 0, 0};
         _shader->setUniformS("modulate", modulate);
     };
