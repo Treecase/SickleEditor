@@ -2,6 +2,7 @@ add_library(editor-lua STATIC
     BrushBox_Lua.cpp
     Editor_Lua.cpp
     EditorBrush_Lua.cpp
+    Entity_Lua.cpp
     Face_Lua.cpp
     Selection_Lua.cpp
 )

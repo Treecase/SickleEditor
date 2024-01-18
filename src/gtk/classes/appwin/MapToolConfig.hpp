@@ -1,6 +1,6 @@
 /**
  * MapToolConfig.hpp - Config box for MapTools.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,10 +21,10 @@
 
 #include <operations/Operation.hpp>
 
-#include <gtkmm/box.h>
 #include <gtkmm/button.h>
 #include <gtkmm/entry.h>
 #include <gtkmm/frame.h>
+#include <gtkmm/grid.h>
 #include <gtkmm/scrolledwindow.h>
 
 #include <vector>
@@ -56,7 +56,7 @@ namespace Sickle::AppWin
 
         sigc::signal<void()> _sig_confirmed{};
 
-        Gtk::Box _box{};
+        Gtk::Grid _grid{};
         Gtk::Button _confirm{"Confirm"};
         std::vector<Glib::RefPtr<Gtk::Widget>> _arg_configs{};
         Gtk::ScrolledWindow _scrolled_window{};

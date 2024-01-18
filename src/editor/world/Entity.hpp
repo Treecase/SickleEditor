@@ -48,7 +48,7 @@ namespace Sickle::Editor
      * defines the overall in-game behaviour of the entity, for example
      * 'func_door' or 'func_trigger'.
      */
-    class Entity : public EditorObject
+    class Entity : public EditorObject, public Lua::Referenceable
     {
     public:
         static EntityRef create();

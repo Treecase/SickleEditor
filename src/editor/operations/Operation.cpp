@@ -30,10 +30,110 @@
 using namespace Sickle::Editor;
 
 
+std::unordered_map<std::string, Operation::ModeData> const Operation::MODES
+{
+    {   "brush",
+        {
+            [](lua_State *L, Selection const &sel) -> void {
+                lua_newtable(L);
+                lua_Integer i = 1;
+                for (auto const &brush : sel.get_all_of_type<Brush>())
+                {
+                    Lua::push(L, brush);
+                    lua_seti(L, -2, i++);
+                }
+            },
+        }
+    },
+    {   "entity",
+        {
+            [](lua_State *L, Selection const &sel) -> void {
+                lua_newtable(L);
+                lua_Integer i = 1;
+                for (auto const &entity : sel.get_all_of_type<Entity>())
+                {
+                    Lua::push(L, entity);
+                    lua_seti(L, -2, i++);
+                }
+            },
+        }
+    },
+    {   "object",
+        {
+            [](lua_State *L, Selection const &sel) -> void {
+                lua_newtable(L);
+                lua_Integer i = 1;
+                for (auto const &obj : sel)
+                {
+                    auto ptr = static_cast<Selection::Item *>(
+                        lua_newuserdatauv(L, sizeof(Selection::Item), 0));
+                    std::memset(ptr, 0, sizeof(*ptr));
+                    *ptr = obj;
+                    lua_seti(L, -2, i++);
+                }
+            },
+        }
+    },
+};
+
+
+std::unordered_map<std::string, Operation::TypeData> const Operation::TYPES{
+    {   "f",
+        {
+            Lua::get_as<lua_Number>,
+            [](auto a){return std::holds_alternative<lua_Number>(a);},
+            static_cast<lua_Number>(0.0),
+        }
+    },
+    {   "string",
+        {
+            Lua::get_as<std::string>,
+            [](auto a){return std::holds_alternative<std::string>(a);},
+            "",
+        },
+    },
+    {   "texture",
+        {
+            Lua::get_as<std::string>,
+            [](auto a){return std::holds_alternative<std::string>(a);},
+            "",
+        },
+    },
+    {   "vec3",
+        {
+            Lua::get_as<glm::vec3>,
+            [](auto a){return std::holds_alternative<glm::vec3>(a);},
+            glm::vec3{},
+        },
+    },
+    {   "mat4",
+        {
+            Lua::get_as<glm::mat4>,
+            [](auto a){return std::holds_alternative<glm::mat4>(a);},
+            glm::identity<glm::mat4>(),
+        },
+    },
+};
+
+
+std::unordered_set<std::string> Operation::modes()
+{
+    std::unordered_set<std::string> the_modes{};
+    for (auto const kv : MODES)
+        the_modes.insert(kv.first);
+    return the_modes;
+}
+
+
+
 template<>
 Operation Lua::get_as<Operation>(lua_State *L, int idx)
 {
+    if (!lua_checkstack(L, 6))
+        throw Lua::StackOverflow{};
+
     int const I = lua_absindex(L, idx);
+    int const T = lua_gettop(L);
 
     int const module_type = lua_getfield(L, I, "module");
     int const name_type = lua_getfield(L, I, "name");
@@ -49,79 +149,62 @@ Operation Lua::get_as<Operation>(lua_State *L, int idx)
     if (has_defaults && defaults_type != LUA_TTABLE)
         throw Lua::Error{"args is not a table"};
 
-    auto const module = lua_tostring(L, I + 1);
-    auto const name = lua_tostring(L, I + 2);
-    auto const mode = lua_tostring(L, I + 3);
+    auto const module = lua_tostring(L, T + 1);
+    auto const name = lua_tostring(L, T + 2);
+    auto const mode = lua_tostring(L, T + 3);
+
+    // Get the argument names (first two are skipped since they are the editor
+    // and the selection).
+    lua_getfield(L, I, "function");
+    std::vector<std::string> arg_names{};
+    char const *arg_name = nullptr;
+    for (int i = 3; (arg_name = lua_getlocal(L, nullptr, i)) != nullptr; ++i)
+        arg_names.push_back(arg_name);
+    lua_pop(L, 1);
 
     std::vector<Operation::ArgDef> args{};
     for (lua_Integer i = 1; ; ++i)
     {
-        int const arg_type = lua_geti(L, I + 4, i);
+        int const arg_type = lua_geti(L, T + 4, i);
         if (arg_type == LUA_TNIL)
+        {
+            lua_pop(L, 1);
             break;
+        }
         else if (arg_type == LUA_TSTRING)
         {
             auto const type = lua_tostring(L, -1);
             Operation::Arg value{};
             if (has_defaults)
             {
-                lua_geti(L, I + 5, i);
+                lua_geti(L, T + 5, i);
                 value = Operation::arg_from_lua(type, L, -1);
                 lua_pop(L, 1);
             }
             else
                 value = Operation::arg_default_construct(type);
-            args.emplace_back(type, value);
 
+            args.emplace_back(
+                type,
+                i <= arg_names.size()? arg_names.at(i - 1) : "",
+                value);
+            lua_pop(L, 1);
         }
         else
+        {
+            // Clear the stack before throwing.
+            lua_pop(L, 6);
             throw Lua::Error{"arg is not a string"};
-        lua_pop(L, 1);
+        }
     }
 
-    lua_pop(L, 6);
+    // Pop fields pushed at top of function.
+    lua_pop(L, 5);
+    auto const t2 = lua_gettop(L);
+    assert(t2 == T);
     return Operation{L, module, name, mode, args};
 }
 
-
-
-std::unordered_set<std::string> const Operation::VALID_TYPES{
-    "f",
-    "string",
-    "texture",
-    "vec3",
-    "mat4",
-};
-
-
-std::unordered_set<std::string> const Operation::VALID_MODES{
-    "brush",
-    "object",
-};
-
-
-static std::unordered_map<
-    std::string,
-    std::function<Operation::Arg(lua_State *, int)>> const ARG_FROM_LUA_MAP
-{
-    {"f", Lua::get_as<lua_Number>},
-    {"string", Lua::get_as<std::string>},
-    {"texture", Lua::get_as<std::string>},
-    {"vec3", Lua::get_as<glm::vec3>},
-    {"mat4", Lua::get_as<glm::mat4>},
-};
-
-
-static std::unordered_map<
-    std::string,
-    Operation::Arg> const ARG_DEFAULT_CONSTRUCT
-{
-    {"f", static_cast<lua_Number>(0.0)},
-    {"string", std::string{}},
-    {"texture", std::string{}},
-    {"vec3", glm::vec3{}},
-    {"mat4", glm::identity<glm::mat4>()},
-};
 
 
 std::string Operation::id(
@@ -143,13 +226,10 @@ std::pair<std::string, std::string> Operation::unid(std::string const &id)
 }
 
 
-Operation::Arg Operation::arg_from_lua(
-    std::string const &type,
-    lua_State *l,
-    int idx)
+Operation::Arg Operation::arg_default_construct(std::string const &type)
 {
     try {
-        return ARG_FROM_LUA_MAP.at(type)(l, idx);
+        return TYPES.at(type).default_construct;
     }
     catch (std::out_of_range const &e) {
         throw std::logic_error{"bad argument type '" + type + "'"};
@@ -157,10 +237,13 @@ Operation::Arg Operation::arg_from_lua(
 }
 
 
-Operation::Arg Operation::arg_default_construct(std::string const &type)
+Operation::Arg Operation::arg_from_lua(
+    std::string const &type,
+    lua_State *l,
+    int idx)
 {
     try {
-        return ARG_DEFAULT_CONSTRUCT.at(type);
+        return TYPES.at(type).from_lua(l, idx);
     }
     catch (std::out_of_range const &e) {
         throw std::logic_error{"bad argument type '" + type + "'"};
@@ -180,11 +263,11 @@ Operation::Operation(
 ,   mode{mode}
 ,   args{args}
 {
-    for (auto const arg : args)
-        if (VALID_TYPES.count(arg.type) == 0)
-            throw std::runtime_error{"bad arg type '" + arg.type + "'"};
-    if (VALID_MODES.count(mode) == 0)
+    if (MODES.count(mode) == 0)
         throw std::runtime_error{"bad mode '" + mode + "'"};
+    for (auto const arg : args)
+        if (TYPES.count(arg.type) == 0)
+            throw std::runtime_error{"bad arg type '" + arg.type + "'"};
 }
 
 
@@ -206,18 +289,12 @@ Operation::Arg Operation::make_arg_from_lua(
 bool Operation::check_type(size_t argument, Arg const &arg) const
 {
     auto const &type = args.at(argument).type;
-    if (type == "f")
-        return std::holds_alternative<lua_Number>(arg);
-    else if (type == "string")
-        return std::holds_alternative<std::string>(arg);
-    else if (type == "texture")
-        return std::holds_alternative<std::string>(arg);
-    else if (type == "vec3")
-        return std::holds_alternative<glm::vec3>(arg);
-    else if (type == "mat4")
-        return std::holds_alternative<glm::mat4>(arg);
-    else
+    try {
+        return TYPES.at(type).holds_alternative(arg);
+    }
+    catch (std::out_of_range const &e) {
         throw std::logic_error{"bad argument type '" + type + "'"};
+    }
 }
 
 
@@ -229,38 +306,23 @@ void Operation::execute(EditorRef ed, ArgList const &passed_args) const
     int const pre = lua_gettop(L);
 
     OperationLoader::_push_operation(L, module_name, name);
+
     // Push function.
     lua_getfield(L, -1, "function");
 
+    // Remove the operation object.
+    lua_remove(L, -2);
+
+    // Arg 1 is the editor.
     Lua::push(L, ed);
-    if (mode == "brush")
-    {
-        // Push selected objects list.
-        lua_newtable(L);
-        lua_Integer i = 1;
-        for (auto const &brush : ed->selected.get_all_of_type<Brush>())
-        {
-            Lua::push(L, brush);
-            lua_seti(L, -2, i++);
-        }
-    }
-    else if (mode == "object")
-    {
-        lua_newtable(L);
-        lua_Integer i = 1;
-        for (auto const &obj : ed->selected)
-        {
-            auto ptr = static_cast<Selection::Item *>(
-                lua_newuserdatauv(L, sizeof(Selection::Item), 0));
-            std::memset(ptr, 0, sizeof(*ptr));
-            *ptr = obj;
-            lua_seti(L, -2, i++);
-        }
-    }
+
+    // Arg 2 is selection for this mode.
+    if (MODES.count(mode) != 0)
+        std::invoke(MODES.at(mode).push_selection, L, ed->selected);
     else
         throw std::logic_error{"invalid mode '" + mode + "'"};
 
-    // Push arguments.
+    // Push the rest of the arguments.
     for (size_t i = 0; i < args.size(); ++i)
     {
         auto const &arg = passed_args.at(i);
@@ -268,8 +330,9 @@ void Operation::execute(EditorRef ed, ArgList const &passed_args) const
             throw std::runtime_error{"mismatched Arg type"};
         std::visit([this](auto v){Lua::push(L, v);}, arg);
     }
+
+    // Call the function.
     Lua::checkerror(L, Lua::pcall(L, 2+args.size(), 0));
 
-    lua_pop(L, 1);
     assert(lua_gettop(L) == pre);
 }

@@ -1,6 +1,6 @@
 /**
  * Editor_Lua.cpp - Editor Lua binding.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@ static int add_brush(lua_State *L)
     return 0;
 }
 
+
 static int remove_brush(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
@@ -59,6 +60,27 @@ static int remove_brush(lua_State *L)
     ed->get_map()->remove_brush(brush);
     return 0;
 }
+
+
+static int add_entity(lua_State *L)
+{
+    auto ed = leditor_check(L, 1);
+    auto type = luaL_checkstring(L, 2);
+    auto entity = Entity::create();
+    entity->set_property("classname", type);
+    ed->get_map()->add_entity(entity);
+    return 0;
+}
+
+
+static int remove_entity(lua_State *L)
+{
+    auto ed = leditor_check(L, 1);
+    auto const entity = lentity_check(L, 2);
+    ed->get_map()->remove_entity(entity);
+    return 0;
+}
+
 
 static int remove_object(lua_State *L)
 {
@@ -72,6 +94,7 @@ static int remove_object(lua_State *L)
         return luaL_error(L, "object could not be removed");
     return 0;
 }
+
 
 static int do_operation(lua_State *L)
 {
@@ -93,12 +116,14 @@ static int do_operation(lua_State *L)
     return 0;
 }
 
+
 static int get_selection(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
     Lua::push(L, &ed->selected);
     return 1;
 }
+
 
 static int get_brushbox(lua_State *L)
 {
@@ -107,14 +132,18 @@ static int get_brushbox(lua_State *L)
     return 1;
 }
 
+
 static int do_nothing(lua_State *L)
 {
     return 0;
 }
 
+
 static luaL_Reg methods[] = {
     {"add_brush", add_brush},
     {"remove_brush", remove_brush},
+    {"add_entity", add_entity},
+    {"remove_entity", remove_entity},
     {"remove_object", remove_object},
     {"do_operation", do_operation},
 
@@ -124,6 +153,7 @@ static luaL_Reg methods[] = {
     {"on_map_changed", do_nothing},
     {NULL, NULL}
 };
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -140,12 +170,14 @@ void Lua::push(lua_State *L, EditorRef editor)
     builder.finish();
 }
 
+
 EditorRef leditor_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, METATABLE);
     luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
     return *static_cast<EditorRef *>(ud);
 }
+
 
 int luaopen_editor(lua_State *L)
 {

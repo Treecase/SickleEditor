@@ -24,6 +24,7 @@
 
 #include <LuaGeo.hpp>
 #include <map/mapsaver.hpp>
+#include <operations/Operation.hpp>
 #include <rmf/rmf.hpp>
 #include <se-lua/se-lua.hpp>
 #include <se-lua/function.hpp>
@@ -190,10 +191,13 @@ AppWin::AppWin()
             _right_views.set_position(a.get_height() / 2);
         });
 
-    _mode_selector.add_mode("brush", "Brush");
-    _mode_selector.add_mode("face", "Face");
-    _mode_selector.add_mode("vertex", "Vertex");
-    _mode_selector.property_mode() = "brush";
+    // Add all operation modes to the mode selector.
+    for (auto const &mode : Editor::Operation::modes())
+    {
+        Glib::ustring str{mode};
+        str = str.substr(0, 1).uppercase() + str.substr(1).lowercase();
+        _mode_selector.add_mode(mode, str);
+    }
 
     editor->selected.signal_updated().connect(
         sigc::mem_fun(*this, &AppWin::_sync_property_editor));

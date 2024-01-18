@@ -1,6 +1,6 @@
 /**
  * MapToolConfig.cpp - Config box for MapTools.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -230,19 +230,17 @@ MapToolConfig::MapToolConfig(Editor::EditorRef const &editor)
     set_label("Tool Options");
 
     _confirm.signal_clicked().connect(signal_confirmed().make_slot());
-    _confirm.signal_show().connect(
-        [this](){_confirm.set_visible(has_operation());});
-    _confirm.signal_hide().connect(
-        [this](){_confirm.set_visible(has_operation());});
 
-    _box.set_orientation(Gtk::Orientation::ORIENTATION_VERTICAL);
-    _box.set_spacing(8);
-    _box.set_margin_top(8);
-    _box.pack_end(_confirm, Gtk::PackOptions::PACK_SHRINK);
+    _grid.set_row_spacing(8);
+    _grid.set_column_spacing(8);
+    _grid.set_margin_top(8);
+    _grid.set_margin_left(8);
+    _grid.set_margin_right(8);
+    _grid.set_margin_bottom(8);
 
     _scrolled_window.property_hscrollbar_policy() =\
         Gtk::PolicyType::POLICY_NEVER;
-    _scrolled_window.add(_box);
+    _scrolled_window.add(_grid);
 
     add(_scrolled_window);
 }
@@ -258,18 +256,21 @@ void MapToolConfig::set_operation(Editor::Operation const &op)
 {
     _operation.reset(new Editor::Operation{op});
 
-    for (auto &config : _arg_configs)
-        _box.remove(*config.get());
+    _grid.foreach(sigc::mem_fun(_grid, &Gtk::Grid::remove));
     _arg_configs.clear();
 
     for (size_t i = 0; i < _operation->args.size(); ++i)
     {
+        auto const &arg = _operation->args.at(i);
+        auto label = Gtk::make_managed<Gtk::Label>(arg.name);
         auto widget = make_config_for(_editor, *_operation, i);
+
         _arg_configs.push_back(widget);
-        _box.add(*widget.get());
+        _grid.attach(*label, 0, i);
+        _grid.attach(*widget.get(), 1, i);
     }
-    _box.show_all_children();
-    _confirm.show();
+    _grid.attach(_confirm, 0, _operation->args.size(), 2);
+    show_all_children();
 }
 
 
@@ -284,10 +285,8 @@ Operation MapToolConfig::get_operation() const
 void MapToolConfig::clear_operation()
 {
     _operation.release();
-    for (auto &config : _arg_configs)
-        _box.remove(*config.get());
+    _grid.foreach(sigc::mem_fun(_grid, &Gtk::Grid::remove));
     _arg_configs.clear();
-    _confirm.hide();
 }
 
 
