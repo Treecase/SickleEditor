@@ -29,8 +29,7 @@ sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};
 
 
 World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
-:   sigc::trackable{}
-,   _src{face}
+:   _src{face}
 ,   _offset{offset}
 {
     _src->property_texture().signal_changed().connect(
@@ -53,6 +52,9 @@ World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
     _src->signal_vertices_changed().connect(
         sigc::mem_fun(*this, &Face::on_src_verts_changed));
 
+    _src->signal_removed().connect(
+        sigc::mem_fun(_src, &Sickle::Editor::FaceRef::reset));
+
     push_queue([this](){_sync_texture();});
     _sync_vertices();
 }
@@ -61,7 +63,8 @@ World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
 void World3D::Face::render() const
 {
     texture().texture->bind();
-    predraw(_src);
+    if (_src)
+        predraw(_src);
 }
 
 
@@ -105,6 +108,9 @@ void World3D::Face::on_src_verts_changed()
 
 void World3D::Face::_sync_vertices()
 {
+    if (!_src)
+        return;
+
     auto const u_axis = glm::normalize(_src->get_u());
     auto const v_axis = glm::normalize(_src->get_v());
     auto const normal = glm::normalize(glm::cross(u_axis, v_axis));
@@ -147,6 +153,8 @@ void World3D::Face::_sync_vertices()
 
 void World3D::Face::_sync_texture()
 {
+    if (!_src)
+        return;
     auto &texman = WAD::TextureManagerProxy<Texture>::create();
     try {
         _texture = texman.at(_src->get_texture());

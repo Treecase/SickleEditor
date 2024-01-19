@@ -31,8 +31,14 @@ void DeferredExec::context_ready()
 
 DeferredExec::DeferredExec()
 {
-    _sig_glcontext_ready.connect(
+    _conn = _sig_glcontext_ready.connect(
         sigc::mem_fun(*this, &DeferredExec::flush_queue));
+}
+
+
+DeferredExec::~DeferredExec()
+{
+    _conn.disconnect();
 }
 
 

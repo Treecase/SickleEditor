@@ -142,7 +142,7 @@ namespace World3D
 
         sigc::signal<void()> _signal_vertices_changed{};
 
-        Sickle::Editor::FaceRef const _src{};
+        Sickle::Editor::FaceRef _src{};
         Texture _texture{};
         std::vector<Vertex> _vertices{};
         GLint _offset;

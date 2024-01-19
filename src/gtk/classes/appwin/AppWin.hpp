@@ -62,6 +62,7 @@ namespace Sickle::AppWin
         Editor::EditorRef editor;
 
         AppWin();
+        virtual ~AppWin()=default;
 
         /** Open a file. */
         void open(Glib::RefPtr<Gio::File> const &file);

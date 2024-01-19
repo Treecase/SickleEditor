@@ -21,6 +21,7 @@
 #define SE_WORLD3D_DELAYEDEXEC_HPP
 
 #include <sigc++/signal.h>
+#include <sigc++/connection.h>
 
 #include <functional>
 #include <queue>
@@ -39,6 +40,7 @@ public:
     static void context_ready();
 
     DeferredExec();
+    virtual ~DeferredExec();
 
     /** Execute all operations in the queue. */
     void flush_queue();
@@ -49,6 +51,7 @@ protected:
 
 private:
     static sigc::signal<void()> _sig_glcontext_ready;
+    sigc::connection _conn{};
 
     std::queue<QueuedFunc> _queue{};
 };
