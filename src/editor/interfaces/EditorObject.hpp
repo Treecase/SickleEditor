@@ -1,6 +1,6 @@
 /**
  * EditorObject.hpp - Interface for any object visible in the Outliner view.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #ifndef SE_EDITOR_INTERFACE_EDITOROBJECT_HPP
 #define SE_EDITOR_INTERFACE_EDITOROBJECT_HPP
 
+#include "Component.hpp"
 #include "Selectable.hpp"
 
 #include <gdkmm/pixbuf.h>
@@ -33,7 +34,7 @@ namespace Sickle::Editor
     class EditorObject;
     using EditorObjectRef = Glib::RefPtr<EditorObject>;
 
-    class EditorObject : public Selectable
+    class EditorObject : public Componentable, public Selectable
     {
     public:
         using SlotForEach = std::function<void(EditorObjectRef)>;
@@ -94,6 +95,13 @@ namespace Sickle::Editor
          * @param func A callable object to apply to each child.
          */
         void foreach(SlotForEach func);
+
+        /**
+         * Call `func` on each of the object's direct children.
+         *
+         * @param func A callable object to apply to each child.
+         */
+        void foreach_direct(SlotForEach func);
 
     protected:
         virtual void on_child_added(EditorObjectRef const &child);

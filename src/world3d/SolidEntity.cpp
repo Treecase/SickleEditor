@@ -1,5 +1,5 @@
 /**
- * World.cpp - OpenGL Editor::World view.
+ * SolidEntity.cpp - World3D::SolidEntity class.
  * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,26 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/World.hpp"
+#include "world3d/Entity.hpp"
 
 
-// Nothing here for now.
+void World3D::SolidEntity::render() const
+{
+}
+
+
+void World3D::SolidEntity::execute()
+{
+    render();
+}
+
+
+
+void World3D::SolidEntity::on_attach(Sickle::Componentable &c)
+{
+}
+
+
+void World3D::SolidEntity::on_detach(Sickle::Componentable &c)
+{
+}

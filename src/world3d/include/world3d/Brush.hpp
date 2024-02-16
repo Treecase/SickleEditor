@@ -1,6 +1,6 @@
 /**
  * Brush.hpp - OpenGL Editor::Brush view.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 #include "DeferredExec.hpp"
 #include "Face.hpp"
+#include "RenderComponent.hpp"
 
 #include <glutils/glutils.hpp>
 #include <sigc++/signal.h>
@@ -34,23 +35,44 @@
 
 namespace World3D
 {
-    class Brush : public sigc::trackable, public DeferredExec
+    /**
+     * A component which can only be attached to a single Brush at a time.
+     *
+     * Renders a 3D view of the Brush using OpenGL.
+     */
+    class Brush : public DeferredExec, public RenderComponent
     {
     public:
-        using PreDrawFunc = std::function<void(Sickle::Editor::BrushRef const)>;
+        using PreDrawFunc = std::function<void(Sickle::Editor::Brush const *)>;
 
         static PreDrawFunc predraw;
 
-        Brush(Sickle::Editor::BrushRef const &src);
+        Brush()=default;
+        virtual ~Brush()=default;
 
-        bool is_selected() const;
-
-        /** @warning Requires an active OpenGL context. */
+        /**
+         * Render the view.
+         *
+         * @warning Requires an active OpenGL context.
+         */
         void render() const;
 
+        /**
+         * Queues a render() call.
+         */
+        virtual void execute() override;
+
+    protected:
+        // Component interface.
+        virtual void on_attach(Sickle::Componentable &) override;
+        // Component interface.
+        virtual void on_detach(Sickle::Componentable &) override;
+
     private:
-        Sickle::Editor::BrushRef const _src{nullptr};
+        Sickle::Editor::Brush const *_src{nullptr};
         std::vector<std::shared_ptr<Face>> _faces{};
+
+        std::vector<sigc::connection> _signals{};
 
         std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
         std::shared_ptr<GLUtil::Buffer> _vbo{nullptr};

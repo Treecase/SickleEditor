@@ -1,6 +1,6 @@
 /**
- * World.cpp - OpenGL Editor::World view.
- * Copyright (C) 2023-2024 Trevor Last
+ * RenderComponent.hpp - Abstract base class for World3D render components.
+ * Copyright (C) 2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,7 +16,19 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/World.hpp"
+#ifndef SE_WORLD3D_RENDERCOMPONENT_HPP
+#define SE_WORLD3D_RENDERCOMPONENT_HPP
+
+#include <interfaces/Component.hpp>
 
 
-// Nothing here for now.
+namespace World3D
+{
+    /**
+     * Render components draw a 3D representation of their attached object using
+     * OpenGL.
+     */
+    class RenderComponent : public Sickle::Component {};
+}
+
+#endif

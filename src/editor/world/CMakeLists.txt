@@ -10,6 +10,7 @@ target_link_libraries(editor-world
     PUBLIC
         config
         convexhull
+        editor-core
         editor-interfaces
         map
         rmf

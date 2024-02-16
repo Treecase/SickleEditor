@@ -1,6 +1,6 @@
 /**
  * World.hpp - OpenGL Editor::World view.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,44 +19,9 @@
 #ifndef SE_WORLD3D_WORLD_HPP
 #define SE_WORLD3D_WORLD_HPP
 
-#include "DeferredExec.hpp"
-#include "Entity.hpp"
-
-#include <glibmm/refptr.h>
 #include <world/World.hpp>
 
-#include <functional>
-#include <memory>
-#include <vector>
 
-
-namespace World3D
-{
-    /**
-     * Top-level World view object.
-     *
-     * Manages Entity object views, sychronized with an Editor::World object.
-     */
-    class World : public DeferredExec
-    {
-    public:
-        World(Sickle::Editor::WorldRef src);
-
-        auto const &entities() const {return _entities;}
-
-        void render() const;
-
-    protected:
-        void add_entity(Sickle::Editor::EntityRef const &entity);
-        void remove_entity(std::shared_ptr<Entity> const &entity);
-
-    private:
-        std::vector<std::shared_ptr<Entity>> _entities{};
-        std::vector<std::function<void()>> _queue{};
-
-        World(World const &)=delete;
-        World &operator=(World const &)=delete;
-    };
-}
+// Nothing here for now.
 
 #endif

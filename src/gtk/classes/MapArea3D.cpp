@@ -1,6 +1,6 @@
 /**
  * MapArea3D.cpp - Sickle editor main window GLArea.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,8 +19,10 @@
 #include "MapArea3D.hpp"
 
 #include <utils/BoundingBox.hpp>
-
+#include <world3d/RenderComponent.hpp>
 #include <gtkmm/messagedialog.h>
+
+#include <iostream>
 
 
 #define DEFAULT_MOUSE_SENSITIVITY   0.75f
@@ -138,8 +140,18 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
     add_tick_callback(sigc::mem_fun(*this, &MapArea3D::tick_callback));
 
 
+    // Set global Point Entity Box 3D render callback.
+    World3D::PointEntityBox::predraw =\
+        [this](Editor::Entity const *entity) -> void {
+            _white_texture->bind();
+            glm::vec3 modulate{1, 1, 0};
+            if (entity->is_selected())
+                modulate = glm::vec3{1, 0, 0};
+            _shader->setUniformS("modulate", modulate);
+        };
+
     // Set global Brush 3D render callback.
-    World3D::Brush::predraw = [this](auto brush){
+    World3D::Brush::predraw = [this](Editor::Brush const *brush) -> void {
         // temp
         // (needed to reset modulate when mode is neither 'brush' nor 'face')
         if (_editor->get_mode() == "face")
@@ -250,6 +262,18 @@ void Sickle::MapArea3D::on_realize()
         }
     );
 
+    // Create blank white default texture.
+    GLubyte const white_pixel[4] = {255, 255, 255, 255};
+    _white_texture = std::make_shared<GLUtil::Texture>(GL_TEXTURE_2D);
+    _white_texture->bind();
+    _white_texture->setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    _white_texture->setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(
+        _white_texture->type(), 0, GL_RGBA,
+        1, 1, 0,
+        GL_RGBA, GL_UNSIGNED_BYTE, white_pixel);
+    _white_texture->unbind();
+
     debug.init();
     _synchronize_glmap();
 }
@@ -281,17 +305,31 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     DeferredExec::context_ready();
 
     // Draw the world.
-    if (_mapview)
-    {
-        _shader->use();
-        glActiveTexture(GL_TEXTURE0);
-        _shader->setUniformS("view", _camera.getViewMatrix());
-        _shader->setUniformS("projection", projectionMatrix);
-        _shader->setUniformS("tex", 0);
-        _shader->setUniformS("model", modelMatrix);
+    _shader->use();
+    glActiveTexture(GL_TEXTURE0);
+    _shader->setUniformS("view", _camera.getViewMatrix());
+    _shader->setUniformS("projection", projectionMatrix);
+    _shader->setUniformS("tex", 0);
+    _shader->setUniformS("model", modelMatrix);
 
-        _mapview->render();
-    }
+    // Walk the world tree and execute any World3D render components.
+    static auto const is_render_component =\
+        [](std::shared_ptr<Component> const &c) -> bool {
+            if (std::dynamic_pointer_cast<World3D::RenderComponent>(c))
+                return true;
+            return false;
+        };
+    static auto const execute_render_components =\
+        [](Editor::EditorObjectRef const &obj) -> void {
+            auto const &components =\
+                obj->get_components_matching(is_render_component);
+            for (auto const &rc : components)
+                rc->execute();
+        };
+    _editor->get_map()->foreach(execute_render_components);
+
+    // Stop deferred functions from running.
+    DeferredExec::context_unready();
 
     debug.drawRay(_camera.getViewMatrix(), projectionMatrix);
 
@@ -404,9 +442,49 @@ void Sickle::MapArea3D::_check_errors()
 
 void Sickle::MapArea3D::_synchronize_glmap()
 {
+    static auto const add_brush = [](Editor::EditorObjectRef child) -> void {
+        auto const brush = Editor::BrushRef::cast_dynamic(child);
+        auto const renderer = std::make_shared<World3D::Brush>();
+        brush->add_component(renderer);
+    };
+
+    static auto const add_entity = [](Editor::EditorObjectRef child) -> void {
+        auto const entity = Editor::EntityRef::cast_dynamic(child);
+
+        auto renderer = std::shared_ptr<World3D::EntityView>{nullptr};
+        auto const entity_class = entity->classinfo();
+        if (entity_class.type == "PointClass")
+        {
+            renderer = std::make_shared<World3D::PointEntityBox>();
+        }
+        else if (entity_class.type == "SolidClass")
+        {
+            renderer = std::make_shared<World3D::SolidEntity>();
+        }
+        else
+        {
+            std::cout << "WARNING: entity has unknown class type '"
+                << entity_class.type << "'\n";
+        }
+        if (renderer)
+            entity->add_component(renderer);
+
+        sigc::connection conn = entity->signal_child_added().connect(add_brush);
+        entity->signal_removed().connect(
+            [conn]() mutable -> void {conn.disconnect();});
+        entity->foreach_direct(add_brush);
+    };
+
+
     make_current();
     _error_tracker = ErrorTracker{};
-    _mapview = std::make_unique<World3D::World>(_editor->get_map());
+
+    auto const world = _editor->get_map();
+    sigc::connection conn = world->signal_child_added().connect(add_entity);
+    world->signal_removed().connect(
+        [conn]() mutable -> void {conn.disconnect();});
+    world->foreach_direct(add_entity);
+
     _check_errors();
     queue_render();
 }

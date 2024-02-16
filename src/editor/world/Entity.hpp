@@ -21,6 +21,7 @@
 
 #include "Brush.hpp"
 
+#include <core/GameDefinition.hpp>
 #include <interfaces/EditorObject.hpp>
 #include <map/map.hpp>
 #include <rmf/rmf.hpp>
@@ -61,6 +62,13 @@ namespace Sickle::Editor
 
         /** Emitted when a property is added, deleted, or changes value. */
         auto &signal_properties_changed() {return _signal_properties_changed;}
+
+        /**
+         * Get the entity's class information.
+         *
+         * @return Class information for the entity.
+         */
+        EntityClass classinfo() const;
 
         /**
          * Get the entity's classname property.
@@ -128,6 +136,7 @@ namespace Sickle::Editor
     private:
         sigc::signal<void()> _signal_properties_changed{};
 
+        EntityClass _classinfo;
         std::unordered_map<std::string, std::string> _properties{};
         std::vector<BrushRef> _brushes{};
         // TODO:

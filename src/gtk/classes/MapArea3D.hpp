@@ -1,6 +1,6 @@
 /**
  * MapArea3D.hpp - Sickle editor main window GLArea.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -101,8 +101,9 @@ namespace Sickle
 
         Editor::EditorRef _editor{nullptr};
         std::shared_ptr<GLUtil::Program> _shader{nullptr};
-        std::unique_ptr<World3D::World> _mapview{nullptr};
         ErrorTracker _error_tracker{};
+
+        std::shared_ptr<GLUtil::Texture> _white_texture{nullptr};
 
         // Properties
         Glib::Property<FreeCam> _prop_camera;

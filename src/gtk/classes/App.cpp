@@ -1,6 +1,6 @@
 /**
  * App.cpp - Sickle app.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 #include "About.hpp"
 #include "appid.hpp"
 #include "WADDialog.hpp"
+
+#include <core/GameDefinition.hpp>
 
 #include <gtkmm/filechoosernative.h>
 #include <gtkmm/messagedialog.h>
@@ -265,5 +267,9 @@ void Sickle::App::_on_fgd_path_changed()
 {
     auto const path = property_fgd_path().get_value();
     if (!path.empty())
-        _game_definition = FGD::from_file(property_fgd_path().get_value());
+    {
+        _game_definition = FGD::from_file(path);
+        auto &games = Editor::GameDefinition::instance();
+        games.add_game(_game_definition);
+    }
 }

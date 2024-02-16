@@ -1,6 +1,6 @@
 /**
  * Brush.cpp - World3D::Brush class.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,14 +18,44 @@
 
 #include "world3d/Brush.hpp"
 
+#include <stdexcept>
+
 
 World3D::Brush::PreDrawFunc World3D::Brush::predraw = [](auto){};
 
 
-World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)
-:   sigc::trackable{}
-,   _src{src}
+
+void World3D::Brush::render() const
 {
+    if (!_src || !_vao)
+        return;
+
+    _vao->bind();
+    predraw(_src);
+    for (auto const &face : _faces)
+    {
+        face->render();
+        glDrawArrays(GL_TRIANGLE_FAN, face->offset(), face->count());
+    }
+}
+
+
+void World3D::Brush::execute()
+{
+    push_queue([this](){render();});
+}
+
+
+
+void World3D::Brush::on_attach(Sickle::Componentable &obj)
+{
+    if (_src)
+        throw std::logic_error{"already attached"};
+    if (typeid(obj) != typeid(Sickle::Editor::Brush &))
+        throw std::invalid_argument{"expected a Sickle::Editor::Brush"};
+
+    _src = dynamic_cast<Sickle::Editor::Brush const *>(&obj);
+
     auto offset = 0;
     for (auto const &faceptr : _src->faces())
     {
@@ -34,31 +64,27 @@ World3D::Brush::Brush(Sickle::Editor::BrushRef const &src)
 
         offset += face->vertices().size();
 
-        face->signal_vertices_changed().connect(
-            sigc::bind(
-                sigc::mem_fun(*this, &Brush::_on_face_changed),
-                face));
+        _signals.push_back(
+            face->signal_vertices_changed().connect(
+                sigc::bind(
+                    sigc::mem_fun(*this, &Brush::_on_face_changed),
+                    face)));
     }
 
     push_queue([this](){_init();});
 }
 
 
-bool World3D::Brush::is_selected() const
+void World3D::Brush::on_detach(Sickle::Componentable &obj)
 {
-    return _src->is_selected();
-}
-
-
-void World3D::Brush::render() const
-{
-    _vao->bind();
-    predraw(_src);
-    for (auto const &face : _faces)
-    {
-        face->render();
-        glDrawArrays(GL_TRIANGLE_FAN, face->offset(), face->count());
-    }
+    _src = nullptr;
+    _faces.clear();
+    for (auto conn : _signals)
+        conn.disconnect();
+    _signals.clear();
+    _vao = nullptr;
+    _vbo = nullptr;
+    clear_queue();
 }
 
 

@@ -1,7 +1,8 @@
 add_library(world3d STATIC
     Brush.cpp
     DeferredExec.cpp
-    Entity.cpp
+    PointEntityBox.cpp
+    SolidEntity.cpp
     Face.cpp
     Texture.cpp
     Vertex.cpp

@@ -1,7 +1,7 @@
 /**
  * DeferredExec.hpp - Object that holds a queue of commands to execute at a
  *                    later time.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,21 +39,38 @@ public:
     /** Signal to DeferredExec objects that the OpenGL context is ready. */
     static void context_ready();
 
+    /** Signal to DeferredExec objects that the OpenGL context is not ready. */
+    static void context_unready();
+
     DeferredExec();
     virtual ~DeferredExec();
 
     /** Execute all operations in the queue. */
     void flush_queue();
 
+    /** Erase all operations in the queue without executing. */
+    void clear_queue();
+
 protected:
-    /** Push a new operation to the queue. */
+    /**
+     * Push a new operation to the queue, or execute immediately if the context
+     * is ready.
+     *
+     * @param func The function to be executed.
+     */
     void push_queue(QueuedFunc func);
 
 private:
     static sigc::signal<void()> _sig_glcontext_ready;
-    sigc::connection _conn{};
+    static sigc::signal<void()> _sig_glcontext_unready;
+    sigc::connection _conn_ready{};
+    sigc::connection _conn_unready{};
 
+    bool _is_ready{false};
     std::queue<QueuedFunc> _queue{};
+
+    void _on_ready();
+    void _on_unready();
 };
 
 #endif

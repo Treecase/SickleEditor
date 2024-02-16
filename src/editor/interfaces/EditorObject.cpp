@@ -1,6 +1,6 @@
 /**
  * EditorObject.cpp - Interface for any object visible in the Outliner view.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,6 +58,13 @@ std::vector<EditorObjectRef> EditorObject::children_recursive() const
 void EditorObject::foreach(SlotForEach func)
 {
     for (auto &obj : children_recursive())
+        std::invoke(func, obj);
+}
+
+
+void EditorObject::foreach_direct(SlotForEach func)
+{
+    for (auto &obj : children())
         std::invoke(func, obj);
 }
 

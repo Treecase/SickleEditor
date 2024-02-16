@@ -21,6 +21,7 @@
 #include <appid.hpp>
 
 #include <algorithm>
+#include <iostream> // temp
 
 using namespace Sickle::Editor;
 
@@ -34,7 +35,8 @@ EntityRef Entity::create()
 EntityRef Entity::create(MAP::Entity const &entity)
 {
     auto e = create();
-    e->_properties = entity.properties;
+    for (auto const &kv : entity.properties)
+        e->set_property(kv.first, kv.second);
     for (auto const &brush : entity.brushes)
         e->add_brush(Brush::create(brush));
     return e;
@@ -44,8 +46,9 @@ EntityRef Entity::create(MAP::Entity const &entity)
 EntityRef Entity::create(RMF::Entity const &entity)
 {
     auto e = create();
-    e->_properties = entity.kv_pairs;
-    e->_properties["classname"] = entity.classname;
+    for (auto const &kv : entity.kv_pairs)
+        e->set_property(kv.first, kv.second);
+    e->set_property("classname", entity.classname);
     for (auto const &brush : entity.brushes)
         e->add_brush(Brush::create(brush));
     return e;
@@ -56,6 +59,7 @@ Entity::Entity()
 :   Glib::ObjectBase{typeid(Entity)}
 {
     _properties["classname"] = "";
+    _classinfo.type = "<undefined>";
 }
 
 
@@ -73,6 +77,12 @@ Entity::operator MAP::Entity() const
     for (auto const &brush : _brushes)
         out.brushes.push_back(*brush.get());
     return out;
+}
+
+
+EntityClass Entity::classinfo() const
+{
+    return _classinfo;
 }
 
 
@@ -97,6 +107,18 @@ std::string Entity::get_property(std::string const &key) const
 void Entity::set_property(std::string const &key, std::string const &value)
 {
     _properties[key] = value;
+    if (key == "classname")
+    {
+        auto &games = GameDefinition::instance();
+        try {
+            _classinfo = games.lookup(value);
+        }
+        catch (std::out_of_range const &) {
+            std::cout << "failed to find class '" << value << "'\n";
+            _classinfo.type = "<undefined>";
+            _classinfo.properties.clear();
+        }
+    }
     signal_properties_changed().emit();
 }
 
