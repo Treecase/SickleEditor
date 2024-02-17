@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "gtkglutils.hpp"
+#include "utils/gtkglutils.hpp"
 #include "appid.hpp"
 
 #include <gtkmm/glarea.h>

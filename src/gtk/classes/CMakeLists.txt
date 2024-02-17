@@ -1,7 +1,6 @@
 target_sources(sickle PRIVATE
     About.cpp
     App.cpp
-    gtkglutils.cpp
     MapArea3D.cpp
     WADDialog.cpp
 )
@@ -9,6 +8,7 @@ target_link_libraries(sickle PRIVATE
     appwin
     config
     fgd
+    gtkglutils
     luageo
     maparea2d
     rmf

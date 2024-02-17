@@ -18,10 +18,26 @@
 
 #include "world3d/Brush.hpp"
 
+#include <utils/gtkglutils.hpp>
+
 #include <stdexcept>
 
 
-World3D::Brush::PreDrawFunc World3D::Brush::predraw = [](auto){};
+World3D::Brush::PreDrawFunc World3D::Brush::predraw = [](auto, auto){};
+
+
+
+GLUtil::Program &World3D::Brush::shader()
+{
+    static GLUtil::Program the_shader{
+        std::vector{
+            GLUtil::shader_from_resource("shaders/map.vert", GL_VERTEX_SHADER),
+            GLUtil::shader_from_resource("shaders/map.frag", GL_FRAGMENT_SHADER),
+        },
+        "BrushShader"
+    };
+    return the_shader;
+}
 
 
 
@@ -30,8 +46,21 @@ void World3D::Brush::render() const
     if (!_src || !_vao)
         return;
 
+    shader().use();
+    shader().setUniformS("model", glm::identity<glm::mat4>());
+    shader().setUniformS("view", glm::identity<glm::mat4>());
+    shader().setUniformS("projection", glm::identity<glm::mat4>());
+    shader().setUniformS("tex", 0);
+    shader().setUniformS(
+        "modulate",
+        _src->is_selected()
+            ? glm::vec3{1.0f, 0.0f, 0.0f}
+            : glm::vec3{1.0f, 1.0f, 1.0f});
+
+    glActiveTexture(GL_TEXTURE0);
+
     _vao->bind();
-    predraw(_src);
+    predraw(shader(), _src);
     for (auto const &face : _faces)
     {
         face->render();

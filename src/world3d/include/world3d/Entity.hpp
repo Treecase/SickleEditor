@@ -114,8 +114,30 @@ namespace World3D
     class PointEntitySprite : public EntityView
     {
     public:
+        PointEntitySprite();
         virtual ~PointEntitySprite()=default;
-        void render() const override;
+
+        /**
+         * Render the sprite.
+         *
+         * @warning Requires an active OpenGL context.
+         */
+        virtual void render() const override;
+
+        /** Queues a render() call. */
+        virtual void execute() override;
+
+    protected:
+        virtual void on_attach(Sickle::Componentable &) override;
+        virtual void on_detach(Sickle::Componentable &) override;
+
+    private:
+        std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
+        std::shared_ptr<GLUtil::Buffer> _vbo{nullptr};
+        std::shared_ptr<GLUtil::Texture> _sprite{nullptr};
+
+        void _init_construct();
+        void _init();
     };
 
 

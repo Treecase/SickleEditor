@@ -2,6 +2,7 @@ add_library(world3d STATIC
     Brush.cpp
     DeferredExec.cpp
     PointEntityBox.cpp
+    PointEntitySprite.cpp
     SolidEntity.cpp
     Face.cpp
     Texture.cpp
@@ -14,6 +15,7 @@ target_link_libraries(world3d
         PkgConfig::GTKMM
         editor-world
         glutils::glutils
+        gtkglutils
         wad
 )
 target_compile_features(world3d PUBLIC cxx_std_17)

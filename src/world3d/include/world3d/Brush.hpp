@@ -43,7 +43,9 @@ namespace World3D
     class Brush : public DeferredExec, public RenderComponent
     {
     public:
-        using PreDrawFunc = std::function<void(Sickle::Editor::Brush const *)>;
+        using PreDrawFunc = std::function<void(
+            GLUtil::Program &,
+            Sickle::Editor::Brush const *)>;
 
         static PreDrawFunc predraw;
 
@@ -63,6 +65,9 @@ namespace World3D
         virtual void execute() override;
 
     protected:
+        // WARNING: The first call to this requires an active OpenGL context.
+        static GLUtil::Program &shader();
+
         // Component interface.
         virtual void on_attach(Sickle::Componentable &) override;
         // Component interface.

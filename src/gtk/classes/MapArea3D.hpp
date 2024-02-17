@@ -19,13 +19,12 @@
 #ifndef SE_MAPAREA3D_HPP
 #define SE_MAPAREA3D_HPP
 
-#include "gtkglutils.hpp"
-
 #include <core/Editor.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 #include <utils/Transform.hpp>
 #include <utils/FreeCam.hpp>
 #include <utils/DebugDrawer3D.hpp>
+#include <utils/gtkglutils.hpp>
 #include <world3d/world3d.hpp>
 
 #include <gdkmm/frameclock.h>

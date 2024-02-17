@@ -151,21 +151,21 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
         };
 
     // Set global Brush 3D render callback.
-    World3D::Brush::predraw = [this](Editor::Brush const *brush) -> void {
-        // temp
-        // (needed to reset modulate when mode is neither 'brush' nor 'face')
-        if (_editor->get_mode() == "face")
-            return;
-        else if (_editor->get_mode() != "brush")
-            _shader->setUniformS("modulate", glm::vec3{1, 1, 1});
-
-        if (_editor->get_mode() != "brush")
-            return;
-        glm::vec3 modulate{1, 1, 1};
-        if (brush->is_selected())
-            modulate = glm::vec3{1, 0, 0};
-        _shader->setUniformS("modulate", modulate);
-    };
+    World3D::Brush::predraw =\
+        [this](GLUtil::Program &shader, Editor::Brush const *brush) -> void {
+            auto const &camera = property_camera().get_value();
+            // Send the model-view-projection matrices to the brush shader.
+            shader.setUniformS(
+                "model",
+                property_transform().get_value().getMatrix());
+            shader.setUniformS("view", camera.getViewMatrix());
+            shader.setUniformS(
+                "projection",
+                glm::perspective(
+                    glm::radians(camera.fov),
+                    get_width() / (float)get_height(),
+                    NEAR_PLANE, FAR_PLANE));
+        };
 
     // Set global Face 3D render callback.
     World3D::Face::predraw = [this](Editor::FaceRef const &face) -> void {
@@ -286,7 +286,7 @@ void Sickle::MapArea3D::on_unrealize()
 
 bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 {
-    auto const &_camera = property_camera().get_value();
+    auto const &camera = property_camera().get_value();
 
     throw_if_error();
 
@@ -295,7 +295,7 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 
     // Setup projection matrix.
     auto const projectionMatrix = glm::perspective(
-        glm::radians(_camera.fov),
+        glm::radians(camera.fov),
         get_width() / (float)get_height(),
         NEAR_PLANE, FAR_PLANE);
 
@@ -307,7 +307,7 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     // Draw the world.
     _shader->use();
     glActiveTexture(GL_TEXTURE0);
-    _shader->setUniformS("view", _camera.getViewMatrix());
+    _shader->setUniformS("view", camera.getViewMatrix());
     _shader->setUniformS("projection", projectionMatrix);
     _shader->setUniformS("tex", 0);
     _shader->setUniformS("model", modelMatrix);
@@ -331,7 +331,7 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     // Stop deferred functions from running.
     DeferredExec::context_unready();
 
-    debug.drawRay(_camera.getViewMatrix(), projectionMatrix);
+    debug.drawRay(camera.getViewMatrix(), projectionMatrix);
 
     return true;
 }
@@ -455,7 +455,10 @@ void Sickle::MapArea3D::_synchronize_glmap()
         auto const entity_class = entity->classinfo();
         if (entity_class.type == "PointClass")
         {
-            renderer = std::make_shared<World3D::PointEntityBox>();
+            if (entity_class.properties.count("iconsprite"))
+                renderer = std::make_shared<World3D::PointEntitySprite>();
+            else
+                renderer = std::make_shared<World3D::PointEntityBox>();
         }
         else if (entity_class.type == "SolidClass")
         {
