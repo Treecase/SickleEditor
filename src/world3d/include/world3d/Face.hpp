@@ -70,7 +70,9 @@ namespace World3D
     class Face : public sigc::trackable, public DeferredExec
     {
     public:
-        using SlotPreDraw = sigc::slot<void(Sickle::Editor::FaceRef const &)>;
+        using SlotPreDraw = sigc::slot<void(
+            GLUtil::Program &,
+            Sickle::Editor::Face const *)>;
 
         /// Called just before a face is rendered.
         static SlotPreDraw predraw;
@@ -129,6 +131,8 @@ namespace World3D
         void render() const;
 
     protected:
+        static GLUtil::Program &shader();
+
         void on_src_texture_changed();
         void on_src_uv_changed();
         void on_src_shift_changed();

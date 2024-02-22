@@ -140,21 +140,42 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
     add_tick_callback(sigc::mem_fun(*this, &MapArea3D::tick_callback));
 
 
-    // Set global Point Entity Box 3D render callback.
+    // Set global PointEntityBox 3D render callback.
     World3D::PointEntityBox::predraw =\
-        [this](Editor::Entity const *entity) -> void {
-            _white_texture->bind();
-            glm::vec3 modulate{1, 1, 0};
-            if (entity->is_selected())
-                modulate = glm::vec3{1, 0, 0};
-            _shader->setUniformS("modulate", modulate);
+        [this](
+            World3D::PointEntityBox::ShaderParams &params,
+            Editor::Entity const *entity) -> void
+        {
+            auto const &camera = property_camera().get_value();
+            params.model =\
+                property_transform().get_value().getMatrix() * params.model;
+            params.view = camera.getViewMatrix();
+            params.projection = glm::perspective(
+                glm::radians(camera.fov),
+                get_width() / (float)get_height(),
+                NEAR_PLANE, FAR_PLANE);
+        };
+
+    // Set global PointEntitySprite 3D render callback.
+    World3D::PointEntitySprite::predraw =\
+        [this](
+            World3D::PointEntitySprite::ShaderParams &params,
+            Editor::Entity const *entity) -> void
+        {
+            auto const &camera = property_camera().get_value();
+            params.model =\
+                property_transform().get_value().getMatrix() * params.model;
+            params.view = camera.getViewMatrix();
+            params.projection = glm::perspective(
+                glm::radians(camera.fov),
+                get_width() / (float)get_height(),
+                NEAR_PLANE, FAR_PLANE);
         };
 
     // Set global Brush 3D render callback.
     World3D::Brush::predraw =\
         [this](GLUtil::Program &shader, Editor::Brush const *brush) -> void {
             auto const &camera = property_camera().get_value();
-            // Send the model-view-projection matrices to the brush shader.
             shader.setUniformS(
                 "model",
                 property_transform().get_value().getMatrix());
@@ -168,14 +189,9 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
         };
 
     // Set global Face 3D render callback.
-    World3D::Face::predraw = [this](Editor::FaceRef const &face) -> void {
-        if (_editor->get_mode() != "face")
-            return;
-        glm::vec3 modulate{1, 1, 1};
-        if (face->is_selected())
-            modulate = glm::vec3{1, 0, 0};
-        _shader->setUniformS("modulate", modulate);
-    };
+    World3D::Face::predraw =\
+        [this](GLUtil::Program &shader, Editor::Face const *face) -> void {
+        };
 }
 
 
@@ -250,30 +266,6 @@ void Sickle::MapArea3D::on_realize()
     glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
 
-    _shader.reset(
-        new GLUtil::Program{
-            {
-                GLUtil::shader_from_resource(
-                    "shaders/map.vert", GL_VERTEX_SHADER),
-                GLUtil::shader_from_resource(
-                    "shaders/map.frag", GL_FRAGMENT_SHADER),
-            },
-            "MapShader"
-        }
-    );
-
-    // Create blank white default texture.
-    GLubyte const white_pixel[4] = {255, 255, 255, 255};
-    _white_texture = std::make_shared<GLUtil::Texture>(GL_TEXTURE_2D);
-    _white_texture->bind();
-    _white_texture->setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    _white_texture->setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(
-        _white_texture->type(), 0, GL_RGBA,
-        1, 1, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, white_pixel);
-    _white_texture->unbind();
-
     debug.init();
     _synchronize_glmap();
 }
@@ -293,26 +285,13 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Setup projection matrix.
-    auto const projectionMatrix = glm::perspective(
-        glm::radians(camera.fov),
-        get_width() / (float)get_height(),
-        NEAR_PLANE, FAR_PLANE);
-
-    auto const modelMatrix = property_transform().get_value().getMatrix();
-
     // Let deferred functions run.
     DeferredExec::context_ready();
 
     // Draw the world.
-    _shader->use();
-    glActiveTexture(GL_TEXTURE0);
-    _shader->setUniformS("view", camera.getViewMatrix());
-    _shader->setUniformS("projection", projectionMatrix);
-    _shader->setUniformS("tex", 0);
-    _shader->setUniformS("model", modelMatrix);
-
     // Walk the world tree and execute any World3D render components.
+    // Note that the traversal must be done in depth-first ordering, to allow
+    // parents to set things up for their children.
     static auto const is_render_component =\
         [](std::shared_ptr<Component> const &c) -> bool {
             if (std::dynamic_pointer_cast<World3D::RenderComponent>(c))
@@ -331,6 +310,11 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     // Stop deferred functions from running.
     DeferredExec::context_unready();
 
+    // Draw debugging ray.
+    auto const projectionMatrix = glm::perspective(
+        glm::radians(camera.fov),
+        get_width() / (float)get_height(),
+        NEAR_PLANE, FAR_PLANE);
     debug.drawRay(camera.getViewMatrix(), projectionMatrix);
 
     return true;
@@ -412,6 +396,10 @@ void Sickle::MapArea3D::on_wireframe_changed()
     glPolygonMode(
         GL_FRONT_AND_BACK,
         property_wireframe().get_value()? GL_LINE : GL_FILL);
+    if (property_wireframe().get_value())
+        glDisable(GL_CULL_FACE);
+    else
+        glEnable(GL_CULL_FACE);
 }
 
 

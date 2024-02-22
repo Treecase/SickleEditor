@@ -1,6 +1,6 @@
 /**
  * Brush.cpp - Editor::Brush.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,11 @@ BrushRef Brush::create(std::vector<glm::vec3> const &vertices)
 
     auto result = Brush::create();
     for (auto const &facet : facets)
-        result->_faces.push_back(Face::create(facet, vertices2));
+    {
+        auto const face = Face::create(facet, vertices2);
+        result->_faces.push_back(face);
+        result->signal_child_added().emit(face);
+    }
     return result;
 }
 
@@ -54,7 +58,11 @@ BrushRef Brush::create(MAP::Brush const &brush)
 
     auto result = Brush::create();
     for (auto const &plane : brush.planes)
-        result->_faces.push_back(Face::create(plane, vertices));
+    {
+        auto const face = Face::create(plane, vertices);
+        result->_faces.push_back(face);
+        result->signal_child_added().emit(face);
+    }
     return result;
 }
 
@@ -62,8 +70,12 @@ BrushRef Brush::create(MAP::Brush const &brush)
 BrushRef Brush::create(RMF::Solid const &solid)
 {
     auto result = Brush::create();
-    for (auto const &face : solid.faces)
-        result->_faces.push_back(Face::create(face));
+    for (auto const &map_face : solid.faces)
+    {
+        auto face = Face::create(map_face);
+        result->_faces.push_back(face);
+        result->signal_child_added().emit(face);
+    }
     return result;
 }
 
@@ -73,6 +85,13 @@ Brush::Brush()
 ,   Lua::Referenceable{}
 {
     signal_removed().connect(sigc::mem_fun(*this, &Brush::on_removed));
+}
+
+
+Brush::~Brush()
+{
+    for (auto const face : _faces)
+        signal_child_removed().emit(face);
 }
 
 

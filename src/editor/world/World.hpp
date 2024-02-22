@@ -52,7 +52,7 @@ namespace Sickle::Editor
         static WorldRef create(MAP::Map const &map);
         static WorldRef create(RMF::RichMap const &map);
 
-        virtual ~World()=default;
+        virtual ~World();
 
         operator MAP::Map() const;
 
@@ -101,8 +101,8 @@ namespace Sickle::Editor
         World();
 
     private:
-        sigc::signal<void()> _signal_changed{};
         std::vector<EntityRef> _entities{};
+        sigc::connection _conn_worldspawn_removed{};
         // TODO:
         // - visgroups & groups
         // - paths (what are these?)

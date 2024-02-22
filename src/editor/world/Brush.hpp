@@ -73,7 +73,7 @@ namespace Sickle::Editor
          */
         static BrushRef create(RMF::Solid const &solid);
 
-        virtual ~Brush()=default;
+        virtual ~Brush();
 
         operator MAP::Brush() const;
 

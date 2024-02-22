@@ -99,10 +99,7 @@ namespace Sickle
         };
 
         Editor::EditorRef _editor{nullptr};
-        std::shared_ptr<GLUtil::Program> _shader{nullptr};
         ErrorTracker _error_tracker{};
-
-        std::shared_ptr<GLUtil::Texture> _white_texture{nullptr};
 
         // Properties
         Glib::Property<FreeCam> _prop_camera;

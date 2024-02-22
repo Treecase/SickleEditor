@@ -65,6 +65,9 @@ namespace World3D
         virtual void execute() override;
 
     protected:
+        // TODO: Temporary solution since Face needs access to the shader.
+        friend class Face;
+
         // WARNING: The first call to this requires an active OpenGL context.
         static GLUtil::Program &shader();
 

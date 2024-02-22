@@ -17,6 +17,7 @@
  */
 
 #include "world3d/Face.hpp"
+#include "world3d/Brush.hpp"
 
 #include <wad/TextureManager.hpp>
 #include <glm/gtx/rotate_vector.hpp>
@@ -24,8 +25,15 @@
 #include <numeric>
 
 
-World3D::Face::SlotPreDraw World3D::Face::predraw = [](auto){};
+World3D::Face::SlotPreDraw World3D::Face::predraw = [](auto, auto){};
 sigc::signal<void(std::string)> World3D::Face::_signal_missing_texture{};
+
+
+GLUtil::Program &World3D::Face::shader()
+{
+    return Brush::shader();
+}
+
 
 
 World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
@@ -62,9 +70,26 @@ World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
 
 void World3D::Face::render() const
 {
+    if (!_src)
+        return;
+
+    // Modulate to "selected" color if the face or any of its parents is
+    // selected.
+    // TODO: May want to do this better, since we'll be walking up and down the
+    // tree a bunch when we could just set a flag on the way down instead.
+    glm::vec3 modulate{1.0f, 1.0f, 1.0f};
+    for (
+        Sickle::Editor::EditorObject const *obj = _src.get();
+        obj;
+        obj = obj->parent())
+    {
+        if (obj->is_selected())
+            modulate = glm::vec3{1.0f, 0.0f, 0.0f};
+    }
+    shader().setUniformS("modulate", modulate);
+
     texture().texture->bind();
-    if (_src)
-        predraw(_src);
+    predraw(Brush::shader(), _src.get());
 }
 
 

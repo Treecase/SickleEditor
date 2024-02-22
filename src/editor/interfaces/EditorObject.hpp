@@ -76,6 +76,14 @@ namespace Sickle::Editor
         virtual Glib::RefPtr<Gdk::Pixbuf> icon() const=0;
 
         /**
+         * Get the parent object of this object.
+         *
+         * @return A pointer to this object's parent, or null if it doesn't
+         * have one.
+         */
+        EditorObject *parent() const;
+
+        /**
          * Get the direct children of this object.
          *
          * @return A list of this object's direct children.
@@ -83,18 +91,34 @@ namespace Sickle::Editor
         virtual std::vector<EditorObjectRef> children() const=0;
 
         /**
-         * Get all child objects recursively.
+         * Get all child objects recursively, in depth-first ordering.
          *
          * @return A list of all the object's children.
          */
         std::vector<EditorObjectRef> children_recursive() const;
 
         /**
-         * Call `func` on each of the object's children recursively.
+         * Get all child objects recursively, in breadth-first ordering.
+         *
+         * @return A list of all the object's children.
+         */
+        std::vector<EditorObjectRef> children_recursive_breadth_first() const;
+
+        /**
+         * Call `func` on all of the object's children recursively, in
+         * depth-first order.
          *
          * @param func A callable object to apply to each child.
          */
         void foreach(SlotForEach func);
+
+        /**
+         * Call `func` on all of the object's children recursively, in
+         * breadth-first order.
+         *
+         * @param func A callable object to apply to each child.
+         */
+        void foreach_breadth_first(SlotForEach func);
 
         /**
          * Call `func` on each of the object's direct children.
@@ -114,6 +138,9 @@ namespace Sickle::Editor
         sigc::signal<void(EditorObjectRef)> _sig_child_removed{};
         sigc::signal<void()> _sig_added{};
         sigc::signal<void()> _sig_removed{};
+
+        // Using a weak reference to avoid dependency cycles.
+        EditorObject *_parent{nullptr};
     };
 }
 

@@ -19,14 +19,40 @@
 #include "world3d/Entity.hpp"
 
 #include <glm/glm.hpp>
+#include <utils/gtkglutils.hpp>
 
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 
 using namespace World3D;
 
 
-PointEntityBox::PreDrawFunc PointEntityBox::predraw = [](auto){};
+PointEntityBox::PreDrawFunc PointEntityBox::predraw = [](auto, auto){};
+
+
+GLUtil::Program &PointEntityBox::shader()
+{
+    static GLUtil::Program the_shader{
+        std::vector{
+            GLUtil::shader_from_resource(
+                "shaders/map.vert",
+                GL_VERTEX_SHADER),
+            GLUtil::shader_from_resource(
+                "shaders/PointEntityBox.frag",
+                GL_FRAGMENT_SHADER),
+        },
+        "PointEntityBoxShader"
+    };
+    return the_shader;
+}
+
+
+
+PointEntityBox::PointEntityBox()
+{
+    push_queue([this](){_init_construct();});
+}
 
 
 void PointEntityBox::render() const
@@ -34,12 +60,34 @@ void PointEntityBox::render() const
     if (!_src || !_vao)
         return;
 
+    std::stringstream origin_str{_src->get_property("origin")};
+    glm::vec3 origin{};
+    origin_str >> origin.x >> origin.y >> origin.z;
+
+    ShaderParams params{};
+    params.model = glm::translate(glm::identity<glm::mat4>(), origin);
+    params.view = glm::identity<glm::mat4>();
+    params.projection = glm::identity<glm::mat4>();
+
+    predraw(params, _src);
+
+    shader().use();
+    shader().setUniformS("model", params.model);
+    shader().setUniformS("view", params.view);
+    shader().setUniformS("projection", params.projection);
+    shader().setUniformS("color", glm::vec3{1.0f, 1.0f, 0.0f});
+    shader().setUniformS("modulate",
+        _src->is_selected()
+            ? glm::vec3{1.0f, 0.0f, 0.0f}
+            : glm::vec3{1.0f, 1.0f, 1.0f});
+
     _vao->bind();
-    predraw(_src);
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(255);
+    // EBO data contains 20 indices.
     glDrawElements(GL_TRIANGLE_STRIP, 20, GL_UNSIGNED_BYTE, (void *)0);
     glDisable(GL_PRIMITIVE_RESTART);
+    _vao->unbind();
 }
 
 
@@ -54,10 +102,8 @@ void PointEntityBox::on_attach(Sickle::Componentable &obj)
 {
     if (_src)
         throw std::logic_error{"already attached"};
-    if (typeid(obj) != typeid(Sickle::Editor::Entity &))
-        throw std::invalid_argument{"expected Sickle::Editor::Entity"};
 
-    _src = dynamic_cast<Sickle::Editor::Entity const *>(&obj);
+    _src = &dynamic_cast<Sickle::Editor::Entity const &>(obj);
     if (_src->classinfo().type != "PointClass")
         throw std::invalid_argument{"must be PointClass"};
 
@@ -76,10 +122,15 @@ void PointEntityBox::on_detach(Sickle::Componentable &)
 
 
 
+void PointEntityBox::_init_construct()
+{
+}
+
+
 void PointEntityBox::_init()
 {
-    auto const A = DEFAULT_BOX_SIZE * glm::vec3{-0.5,-0.5,-0.5};
-    auto const B = DEFAULT_BOX_SIZE * glm::vec3{+0.5,+0.5,+0.5};
+    auto const A = DEFAULT_BOX_SIZE * glm::vec3{-0.5f, -0.5f, -0.5f};
+    auto const B = DEFAULT_BOX_SIZE * glm::vec3{+0.5f, +0.5f, +0.5f};
 
     std::vector<GLfloat> const vbo_data{
         A.x, A.y, A.z, // 0 left front bottom

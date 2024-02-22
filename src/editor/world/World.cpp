@@ -81,6 +81,16 @@ World::World()
 }
 
 
+World::~World()
+{
+    // Remove the worldspawn_removed connection so we don't try to add a
+    // replacement while destructing.
+    _conn_worldspawn_removed.disconnect();
+    for (auto const &entity : entities())
+        signal_child_removed().emit(entity);
+}
+
+
 World::operator MAP::Map() const
 {
     MAP::Map out{};
@@ -151,9 +161,11 @@ std::vector<EditorObjectRef> World::children() const
 
 void World::_add_worldspawn()
 {
+    _conn_worldspawn_removed.disconnect();
+
     auto worldspawn = Entity::create();
     worldspawn->set_property("classname", "worldspawn");
-    worldspawn->signal_removed().connect(
+    _conn_worldspawn_removed = worldspawn->signal_removed().connect(
         sigc::mem_fun(*this, &World::_add_worldspawn));
     add_entity(worldspawn);
 }

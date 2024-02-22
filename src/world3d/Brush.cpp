@@ -51,11 +51,7 @@ void World3D::Brush::render() const
     shader().setUniformS("view", glm::identity<glm::mat4>());
     shader().setUniformS("projection", glm::identity<glm::mat4>());
     shader().setUniformS("tex", 0);
-    shader().setUniformS(
-        "modulate",
-        _src->is_selected()
-            ? glm::vec3{1.0f, 0.0f, 0.0f}
-            : glm::vec3{1.0f, 1.0f, 1.0f});
+    shader().setUniformS("modulate", glm::vec3{1.0f, 1.0f, 1.0f});
 
     glActiveTexture(GL_TEXTURE0);
 

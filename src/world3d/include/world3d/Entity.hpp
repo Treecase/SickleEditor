@@ -65,17 +65,24 @@ namespace World3D
     /**
      * Entity view for PointClass entities.
      *
-     * Renders as a 3D box.
+     * Renders as a solid-colored 3D box.
      */
     class PointEntityBox : public EntityView
     {
     public:
+        struct ShaderParams
+        {
+            glm::mat4 model, view, projection;
+        };
+
         using PreDrawFunc =\
-            std::function<void(Sickle::Editor::Entity const *)>;
+            std::function<void(ShaderParams &, Sickle::Editor::Entity const *)>;
 
         static PreDrawFunc predraw;
 
-        PointEntityBox()=default;
+        static GLUtil::Program &shader();
+
+        PointEntityBox();
         virtual ~PointEntityBox()=default;
 
         /**
@@ -102,6 +109,8 @@ namespace World3D
         std::shared_ptr<GLUtil::Buffer> _ebo{nullptr};
 
         /** @warning Requires an active OpenGL context. */
+        void _init_construct();
+        /** @warning Requires an active OpenGL context. */
         void _init();
     };
 
@@ -114,6 +123,20 @@ namespace World3D
     class PointEntitySprite : public EntityView
     {
     public:
+        struct ShaderParams {
+            glm::mat4 model, view, projection;
+        };
+
+        using PreDrawFunc =\
+            std::function<void(
+                ShaderParams &,
+                Sickle::Editor::Entity const *)>;
+
+        static PreDrawFunc predraw;
+
+        /** @warning First call requires an active OpenGL context. */
+        static GLUtil::Program &shader();
+
         PointEntitySprite();
         virtual ~PointEntitySprite()=default;
 
@@ -132,11 +155,15 @@ namespace World3D
         virtual void on_detach(Sickle::Componentable &) override;
 
     private:
+        Sickle::Editor::Entity const *_src{nullptr};
+
         std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
         std::shared_ptr<GLUtil::Buffer> _vbo{nullptr};
         std::shared_ptr<GLUtil::Texture> _sprite{nullptr};
 
+        /** @warning Requires an active OpenGL context. */
         void _init_construct();
+        /** @warning Requires an active OpenGL context. */
         void _init();
     };
 
