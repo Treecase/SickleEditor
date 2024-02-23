@@ -133,6 +133,7 @@ namespace World3D
                 Sickle::Editor::Entity const *)>;
 
         static PreDrawFunc predraw;
+        static std::string sprite_root_path;
 
         /** @warning First call requires an active OpenGL context. */
         static GLUtil::Program &shader();

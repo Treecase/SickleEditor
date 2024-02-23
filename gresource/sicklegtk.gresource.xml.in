@@ -14,6 +14,7 @@
     <file>shaders/map.frag</file>
     <file>shaders/map.vert</file>
     <file>shaders/PointEntityBox.frag</file>
+    <file>shaders/transparent.frag</file>
     <file>logo.png</file>
     <file>logo.svg</file>
     <file>LuaConsole.css</file>

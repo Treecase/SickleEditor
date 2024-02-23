@@ -16,6 +16,7 @@ target_link_libraries(world3d
         editor-world
         glutils::glutils
         gtkglutils
+        spr
         wad
 )
 target_compile_features(world3d PUBLIC cxx_std_17)

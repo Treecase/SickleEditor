@@ -23,6 +23,7 @@ add_custom_command(
         shaders/map.frag
         shaders/map.vert
         shaders/PointEntityBox.frag
+        shaders/transparent.frag
         logo.png
         logo.svg
         LuaConsole.css

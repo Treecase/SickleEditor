@@ -34,6 +34,10 @@
           <attribute name="action">app.setGameDef</attribute>
         </item>
         <item>
+          <attribute name="label" translatable="yes">_Set Sprite Root Path</attribute>
+          <attribute name="action">app.setSpriteRootPath</attribute>
+        </item>
+        <item>
           <attribute name="label" translatable="yes">_WAD Paths</attribute>
           <attribute name="action">app.setWADPaths</attribute>
         </item>

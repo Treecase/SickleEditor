@@ -1,6 +1,6 @@
 /**
  * App.hpp - Sickle app.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@ namespace Sickle
     public:
         static Glib::RefPtr<App> create();
 
+        auto property_sprite_root_path()
+        {return _prop_sprite_root_path.get_proxy();}
         auto property_fgd_path() {return _prop_fgd_path.get_proxy();}
         auto property_wad_paths() {return _prop_wad_paths.get_proxy();}
 
@@ -56,6 +58,7 @@ namespace Sickle
         void on_action_exit();
         // Edit
         void on_action_setGameDef();
+        void on_action_setSpriteRootPath();
         void on_action_setWADPaths();
         // Help
         void on_action_about();
@@ -66,6 +69,7 @@ namespace Sickle
         Glib::RefPtr<Gio::Settings> _settings;
         FGD::GameDef _game_definition;
 
+        Glib::Property<Glib::ustring> _prop_sprite_root_path;
         Glib::Property<Glib::ustring> _prop_fgd_path;
         Glib::Property<std::vector<Glib::ustring>> _prop_wad_paths;
 
@@ -74,6 +78,7 @@ namespace Sickle
 
         // Signal Handlers
         void _on_hide_window(Gtk::Window *window);
+        void _on_sprite_root_path_changed();
         void _on_fgd_path_changed();
     };
 }

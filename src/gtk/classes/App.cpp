@@ -22,6 +22,7 @@
 #include "WADDialog.hpp"
 
 #include <core/GameDefinition.hpp>
+#include <world3d/Entity.hpp>
 
 #include <gtkmm/filechoosernative.h>
 #include <gtkmm/messagedialog.h>
@@ -39,11 +40,16 @@ Sickle::App::App()
 ,   Gtk::Application{
         SE_APPLICATION_ID, Gio::ApplicationFlags::APPLICATION_HANDLES_OPEN}
 ,   _settings{Gio::Settings::create(SE_APPLICATION_ID)}
+,   _prop_sprite_root_path{*this, "sprite-root-path", "."}
 ,   _prop_fgd_path{*this, "fgd-path", ""}
 ,   _prop_wad_paths{*this, "wad-paths", {}}
 {
+    property_sprite_root_path().signal_changed().connect(
+        sigc::mem_fun(*this, &App::_on_sprite_root_path_changed));
     property_fgd_path().signal_changed().connect(
         sigc::mem_fun(*this, &App::_on_fgd_path_changed));
+
+    _settings->bind("sprite-root-path", property_sprite_root_path());
     _settings->bind("fgd-path", property_fgd_path());
     _settings->bind("wad-paths", property_wad_paths());
 
@@ -64,6 +70,9 @@ void Sickle::App::on_startup()
     add_action("exit", sigc::mem_fun(*this, &App::on_action_exit));
     // Edit
     add_action("setGameDef", sigc::mem_fun(*this, &App::on_action_setGameDef));
+    add_action(
+        "setSpriteRootPath",
+        sigc::mem_fun(*this, &App::on_action_setSpriteRootPath));
     add_action(
         "setWADPaths",
         sigc::mem_fun(*this, &App::on_action_setWADPaths));
@@ -211,6 +220,20 @@ void Sickle::App::on_action_setGameDef()
 }
 
 
+void Sickle::App::on_action_setSpriteRootPath()
+{
+    auto chooser = Gtk::FileChooserNative::create(
+        "Open",
+        Gtk::FileChooserAction::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+    chooser->set_transient_for(*get_active_window());
+    chooser->set_current_folder(property_sprite_root_path().get_value());
+
+    int const response = chooser->run();
+    if (response == Gtk::ResponseType::RESPONSE_ACCEPT)
+        property_sprite_root_path().set_value(chooser->get_filename());
+}
+
+
 void Sickle::App::on_action_setWADPaths()
 {
     auto win = dynamic_cast<AppWin::AppWin *>(get_active_window());
@@ -260,6 +283,13 @@ void Sickle::App::_sync_wadpaths(AppWin::AppWin *appwin)
 void Sickle::App::_on_hide_window(Gtk::Window *window)
 {
     delete window;
+}
+
+
+void Sickle::App::_on_sprite_root_path_changed()
+{
+    auto const path = property_sprite_root_path().get_value();
+    World3D::PointEntitySprite::sprite_root_path = path;
 }
 
 

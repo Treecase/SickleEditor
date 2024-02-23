@@ -2,6 +2,12 @@
 <schemalist>
   <schema path="@GRESOURCE_PREFIX@" id="@APPLICATION_ID@">
 
+    <key name="sprite-root-path" type="s">
+      <default>"."</default>
+      <summary>"Base path for editor sprites"</summary>
+      <description>"Base path for editor to load icon sprites from."</description>
+    </key>
+
     <key name="fgd-path" type="s">
       <default>""</default>
       <summary>"Game .fgd path"</summary>

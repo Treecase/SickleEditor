@@ -19,12 +19,48 @@
 
 #include "world3d/Entity.hpp"
 
+#include <spr/spr.hpp>
 #include <utils/gtkglutils.hpp>
+
+#include <giomm/datainputstream.h>
+#include <giomm/file.h>
+
+#include <iostream>
+
 
 using namespace World3D;
 
 
+// Feeds data from a Gio::File to the sprite loader.
+class GioFileSpriteStream : public SPR::SpriteStream
+{
+public:
+    GioFileSpriteStream(Glib::RefPtr<Gio::File> const &file);
+
+    virtual uint8_t read_byte() override;
+    virtual uint16_t read_uint16() override;
+    virtual int32_t read_int32() override;
+    virtual uint32_t read_uint32() override;
+    virtual float read_float() override;
+    virtual uint8_t *read_bytes(size_t count) override;
+
+private:
+    Glib::RefPtr<Gio::DataInputStream> _stream{nullptr};
+};
+
+
+// Get the "missing texture" sprite.
+static std::shared_ptr<GLUtil::Texture> missing_texture();
+
+// Load sprite data into an OpenGL texture object.
+static std::shared_ptr<GLUtil::Texture> frame_to_texture(
+    SPR::Frame const &frame,
+    SPR::Palette const &palette);
+
+
+
 PointEntitySprite::PreDrawFunc PointEntitySprite::predraw = [](auto, auto){};
+std::string PointEntitySprite::sprite_root_path = ".";
 
 
 GLUtil::Program &PointEntitySprite::shader()
@@ -35,7 +71,7 @@ GLUtil::Program &PointEntitySprite::shader()
                 "shaders/billboard.vert",
                 GL_VERTEX_SHADER),
             GLUtil::shader_from_resource(
-                "shaders/map.frag",
+                "shaders/transparent.frag",
                 GL_FRAGMENT_SHADER),
         },
         "PointEntitySpriteShader"
@@ -147,27 +183,152 @@ void PointEntitySprite::_init_construct()
 
 void PointEntitySprite::_init()
 {
-    // TODO: Load the sprite to be displayed.
-    GLsizei const texture_width = 4;
-    GLsizei const texture_height = 4;
-    GLubyte const blank_texture[texture_width * texture_height * 4] = {
-        0xff,0x00,0xff,0xff, 0x00,0x00,0x00,0xff,
-        0xff,0x00,0xff,0xff, 0x00,0x00,0x00,0xff,
-        0x00,0x00,0x00,0xff, 0xff,0x00,0xff,0xff,
-        0x00,0x00,0x00,0xff, 0xff,0x00,0xff,0xff,
-        0xff,0x00,0xff,0xff, 0x00,0x00,0x00,0xff,
-        0xff,0x00,0xff,0xff, 0x00,0x00,0x00,0xff,
-        0x00,0x00,0x00,0xff, 0xff,0x00,0xff,0xff,
-        0x00,0x00,0x00,0xff, 0xff,0x00,0xff,0xff,
+    // TODO: Only load textures once and share the data.
+    auto const relpath = _src->classinfo().properties.at("iconsprite");
+    auto const path =\
+        sprite_root_path + "/" + relpath.substr(1, relpath.size() - 2);
+
+    std::unique_ptr<GioFileSpriteStream> sprite_stream{nullptr};
+    try {
+        sprite_stream = std::make_unique<GioFileSpriteStream>(
+            Gio::File::create_for_path(path));
+    }
+    catch (Gio::Error const &e) {
+        std::cerr << e.what() << std::endl;
+        _sprite = missing_texture();
+        return;
+    }
+
+    std::unique_ptr<SPR::Sprite> sprite{nullptr};
+    try {
+        sprite = std::make_unique<SPR::Sprite>(
+            SPR::load_sprite(*sprite_stream));
+    }
+    catch (SPR::LoadError const &e) {
+        std::cerr << "Error loading " << path << ": " << e.what() << std::endl;
+        _sprite = missing_texture();
+        return;
+    }
+
+    _sprite = frame_to_texture(sprite->frames.at(0), sprite->palette);
+}
+
+
+
+static std::shared_ptr<GLUtil::Texture> missing_texture()
+{
+    static std::shared_ptr<GLUtil::Texture> missing{nullptr};
+    if (missing)
+        return missing;
+
+    constexpr GLsizei WIDTH = 7;
+    constexpr GLsizei HEIGHT = 9;
+    static constexpr uint8_t data[WIDTH * HEIGHT * 4] = {
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
     };
 
-    _sprite = std::make_shared<GLUtil::Texture>(GL_TEXTURE_2D);
-    _sprite->bind();
-    _sprite->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    _sprite->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    missing = std::make_shared<GLUtil::Texture>(GL_TEXTURE_2D);
+    missing->bind();
+    missing->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    missing->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    missing->setParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    missing->setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(
-        _sprite->type(), 0, GL_RGBA,
-        texture_width, texture_height, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, blank_texture);
-    _sprite->unbind();
+        missing->type(), 0, GL_RGBA,
+        WIDTH, HEIGHT, 0,
+        GL_RGBA, GL_UNSIGNED_BYTE, data);
+    missing->unbind();
+    return missing;
+}
+
+
+static std::shared_ptr<GLUtil::Texture> frame_to_texture(
+    SPR::Frame const &frame,
+    SPR::Palette const &palette)
+{
+    uint64_t const frame_size = frame.w * frame.h;
+    auto rgba_data = std::make_unique<GLubyte[]>(frame_size * 4);
+    for (uint64_t i = 0, j = 0; i < frame_size; ++i, j += 4)
+    {
+        auto const idx = frame.data[i];
+        auto const &color = palette.colors.at(idx);
+        rgba_data[j+0] = color.r;
+        rgba_data[j+1] = color.g;
+        rgba_data[j+2] = color.b;
+        rgba_data[j+3] = color.a;
+    }
+
+    auto texture = std::make_shared<GLUtil::Texture>(GL_TEXTURE_2D);
+    texture->bind();
+    texture->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    texture->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    texture->setParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    texture->setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(
+        texture->type(), 0, GL_RGBA,
+        frame.w, frame.h, 0,
+        GL_RGBA, GL_UNSIGNED_BYTE, rgba_data.get());
+    texture->unbind();
+    return texture;
+}
+
+
+
+/* ===[ Gio::File SpriteStream ]=== */
+GioFileSpriteStream::GioFileSpriteStream(Glib::RefPtr<Gio::File> const &file)
+:   _stream{Gio::DataInputStream::create(file->read())}
+{
+    _stream->set_byte_order(
+        Gio::DataStreamByteOrder::DATA_STREAM_BYTE_ORDER_LITTLE_ENDIAN);
+}
+
+uint8_t GioFileSpriteStream::read_byte()
+{
+    return _stream->read_byte();
+}
+
+uint16_t GioFileSpriteStream::read_uint16()
+{
+    return _stream->read_uint16();
+}
+
+int32_t GioFileSpriteStream::read_int32()
+{
+    return _stream->read_int32();
+}
+
+uint32_t GioFileSpriteStream::read_uint32()
+{
+    return _stream->read_uint32();
+}
+
+float GioFileSpriteStream::read_float()
+{
+    uint8_t value_raw[4];
+    value_raw[0] = read_byte();
+    value_raw[1] = read_byte();
+    value_raw[2] = read_byte();
+    value_raw[3] = read_byte();
+    return *reinterpret_cast<float *>(value_raw);
+}
+
+uint8_t *GioFileSpriteStream::read_bytes(size_t count)
+{
+    uint8_t *bytes = new uint8_t[count];
+    gsize total_bytes_read = 0;
+    while (total_bytes_read < count)
+    {
+        gsize bytes_read;
+        _stream->read_all(bytes + total_bytes_read, 4, bytes_read);
+        total_bytes_read += bytes_read;
+    }
+    return bytes;
 }
