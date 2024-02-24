@@ -20,6 +20,7 @@
 #define SE_APP_HPP
 
 #include "AppWin.hpp"
+#include "preferences/PreferencesDialog.hpp"
 
 #include <fgd/fgd.hpp>
 
@@ -57,9 +58,7 @@ namespace Sickle
         void on_action_save();
         void on_action_exit();
         // Edit
-        void on_action_setGameDef();
-        void on_action_setSpriteRootPath();
-        void on_action_setWADPaths();
+        void on_action_preferences();
         // Help
         void on_action_about();
 
@@ -72,6 +71,8 @@ namespace Sickle
         Glib::Property<Glib::ustring> _prop_sprite_root_path;
         Glib::Property<Glib::ustring> _prop_fgd_path;
         Glib::Property<std::vector<Glib::ustring>> _prop_wad_paths;
+
+        PreferencesDialog *_open_preferences();
 
         AppWin::AppWin *_create_appwindow();
         void _sync_wadpaths(AppWin::AppWin *appwin);

@@ -30,16 +30,8 @@
       <attribute name="label" translatable="yes">_Edit</attribute>
       <section>
         <item>
-          <attribute name="label" translatable="yes">_Set Game Definition</attribute>
-          <attribute name="action">app.setGameDef</attribute>
-        </item>
-        <item>
-          <attribute name="label" translatable="yes">_Set Sprite Root Path</attribute>
-          <attribute name="action">app.setSpriteRootPath</attribute>
-        </item>
-        <item>
-          <attribute name="label" translatable="yes">_WAD Paths</attribute>
-          <attribute name="action">app.setWADPaths</attribute>
+          <attribute name="label" translatable="yes">_Preferences</attribute>
+          <attribute name="action">app.preferences</attribute>
         </item>
       </section>
     </submenu>

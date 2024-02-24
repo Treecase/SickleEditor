@@ -19,7 +19,6 @@
 #include "App.hpp"
 #include "About.hpp"
 #include "appid.hpp"
-#include "WADDialog.hpp"
 
 #include <core/GameDefinition.hpp>
 #include <world3d/Entity.hpp>
@@ -69,13 +68,9 @@ void Sickle::App::on_startup()
     add_action("save", sigc::mem_fun(*this, &App::on_action_save));
     add_action("exit", sigc::mem_fun(*this, &App::on_action_exit));
     // Edit
-    add_action("setGameDef", sigc::mem_fun(*this, &App::on_action_setGameDef));
     add_action(
-        "setSpriteRootPath",
-        sigc::mem_fun(*this, &App::on_action_setSpriteRootPath));
-    add_action(
-        "setWADPaths",
-        sigc::mem_fun(*this, &App::on_action_setWADPaths));
+        "preferences",
+        sigc::mem_fun(*this, &App::on_action_preferences));
     // About
     add_action("about", sigc::mem_fun(*this, &App::on_action_about));
 
@@ -197,50 +192,10 @@ void Sickle::App::on_action_exit()
 }
 
 
-void Sickle::App::on_action_setGameDef()
+void Sickle::App::on_action_preferences()
 {
-    auto chooser = Gtk::FileChooserNative::create(
-        "Open",
-        Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN);
-    chooser->set_transient_for(*get_active_window());
-
-    auto all_filter = Gtk::FileFilter::create();
-    all_filter->add_pattern("*.*");
-    all_filter->set_name("All Files");
-    chooser->add_filter(all_filter);
-
-    auto map_filter = Gtk::FileFilter::create();
-    map_filter->add_pattern("*.fgd");
-    map_filter->set_name("Game Data Files");
-    chooser->add_filter(map_filter);
-
-    int const response = chooser->run();
-    if (response == Gtk::ResponseType::RESPONSE_ACCEPT)
-        property_fgd_path().set_value(chooser->get_filename());
-}
-
-
-void Sickle::App::on_action_setSpriteRootPath()
-{
-    auto chooser = Gtk::FileChooserNative::create(
-        "Open",
-        Gtk::FileChooserAction::FILE_CHOOSER_ACTION_SELECT_FOLDER);
-    chooser->set_transient_for(*get_active_window());
-    chooser->set_current_folder(property_sprite_root_path().get_value());
-
-    int const response = chooser->run();
-    if (response == Gtk::ResponseType::RESPONSE_ACCEPT)
-        property_sprite_root_path().set_value(chooser->get_filename());
-}
-
-
-void Sickle::App::on_action_setWADPaths()
-{
-    auto win = dynamic_cast<AppWin::AppWin *>(get_active_window());
-    auto waddialog = WADDialog{*win};
-    waddialog.set_transient_for(*win);
-    int const response = waddialog.run();
-    _sync_wadpaths(win);
+    auto prefs = _open_preferences();
+    prefs->present();
 }
 
 
@@ -259,6 +214,20 @@ void Sickle::App::on_TextureManager_texlump_load_error(std::string const &msg)
     d.run();
 }
 
+
+
+Sickle::PreferencesDialog *Sickle::App::_open_preferences()
+{
+    auto const active = get_active_window();
+    if (!active)
+        return nullptr;
+    else
+    {
+        auto prefs = new PreferencesDialog{*active};
+        prefs->signal_hide().connect([prefs](){delete prefs;});
+        return prefs;
+    }
+}
 
 
 Sickle::AppWin::AppWin *Sickle::App::_create_appwindow()
