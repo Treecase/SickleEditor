@@ -19,7 +19,7 @@
 #ifndef SE_PREFERENCESDIALOG_HPP
 #define SE_PREFERENCESDIALOG_HPP
 
-#include "WADDialog.hpp"
+#include "WADList.hpp"
 
 #include <giomm/settings.h>
 #include <gtkmm/dialog.h>
@@ -52,7 +52,7 @@ namespace Sickle
         Gtk::Entry _gamedef_entry{};
         Gtk::Label _sprite_path_label{"Sprite Root Path"};
         Gtk::Entry _sprite_path_entry{};
-        WADDialog _wads{};
+        WADList _wads{};
 
         void _apply_preferences();
 
