@@ -127,6 +127,8 @@ namespace World3D
          *
          * NOTE: The parent brush is the one actually making the render call,
          * this just prepares for the render by eg. binding textures.
+         *
+         * @warning Requires an active OpenGL context.
          */
         void render() const;
 
@@ -147,14 +149,16 @@ namespace World3D
         sigc::signal<void()> _signal_vertices_changed{};
 
         Sickle::Editor::FaceRef _src{};
+        GLint _offset;
+        float const _starting_rotation;
         Texture _texture{};
         std::vector<Vertex> _vertices{};
-        GLint _offset;
 
         Face(Face const &)=delete;
         Face &operator=(Face const &)=delete;
 
         void _sync_vertices();
+        /** @warning Requires an active OpenGL context. */
         void _sync_texture();
     };
 }
