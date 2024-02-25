@@ -456,24 +456,42 @@ void AppWin::on_action_reloadLua()
 
 bool AppWin::on_key_press_event(GdkEventKey *event)
 {
-    switch (event->keyval)
+    auto const is_viewport =\
+        [this](Gtk::Widget const *focus) -> bool {
+            return (
+                focus == &_view2d_front
+                || focus == &_view2d_right
+                || focus == &_view2d_top
+                || focus == &_view3d);
+        };
+
+    auto const focus = get_focus();
+    if (is_viewport(focus))
     {
-    // TODO: Use a proper keybind mechanism.
-    case GDK_KEY_space:{
-        auto const focus = get_focus();
-        if (focus == &_view2d_front
-            || focus == &_view2d_right
-            || focus == &_view2d_top
-            || focus == &_view3d)
+        switch (event->keyval)
         {
+        case GDK_KEY_space:
             search_operations();
             return true;
-        }
-        }/* fallthrough */
 
-    default:
-        return Gtk::ApplicationWindow::on_key_press_event(event);
+        case GDK_KEY_bracketleft:
+            set_grid_size(get_grid_size() / 2);
+            return true;
+
+        case GDK_KEY_bracketright:
+            set_grid_size(get_grid_size() * 2);
+            return true;
+
+        case GDK_KEY_S:
+            activate_action("mapTools_Select");
+            return true;
+
+        case GDK_KEY_B:
+            activate_action("mapTools_CreateBrush");
+            return true;
+        }
     }
+    return Gtk::ApplicationWindow::on_key_press_event(event);
 }
 
 
@@ -502,16 +520,7 @@ void AppWin::_sync_property_editor()
     auto const entity = editor->selected.get_latest_of_type<Editor::Entity>();
     _property_editor.set_entity(entity);
 
-    // TODO: should add a Selection.get_all_of_type<T> method
-    Editor::FaceRef face{};
-    for (auto const &obj : editor->selected)
-    {
-        if (typeid(*obj.get()) == typeid(Editor::Face))
-        {
-            face = Editor::FaceRef::cast_dynamic(obj);
-            break;
-        }
-    }
+    auto face = editor->selected.get_latest_of_type<Editor::Face>();
     _face_editor.set_face(face);
 }
 
