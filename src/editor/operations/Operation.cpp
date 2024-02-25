@@ -25,7 +25,6 @@
 #include <lua/Editor_Lua.hpp>
 #include <LuaGeo.hpp>
 
-#include <cstring>
 
 using namespace Sickle::Editor;
 
@@ -78,10 +77,12 @@ std::unordered_map<std::string, Operation::ModeData> const Operation::MODES
                 lua_Integer i = 1;
                 for (auto const &obj : sel)
                 {
-                    auto ptr = static_cast<Selection::Item *>(
-                        lua_newuserdatauv(L, sizeof(Selection::Item), 0));
-                    std::memset(ptr, 0, sizeof(*ptr));
-                    *ptr = obj;
+                    auto const edobj = EditorObjectRef::cast_dynamic(obj);
+                    if (!edobj)
+                        throw std::bad_cast{};
+                    auto ptr = static_cast<EditorObjectRef *>(
+                        lua_newuserdatauv(L, sizeof(EditorObjectRef), 0));
+                    std::uninitialized_copy(&edobj, (&edobj) + 1, ptr);
                     lua_seti(L, -2, i++);
                 }
             },
