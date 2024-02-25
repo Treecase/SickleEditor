@@ -48,7 +48,16 @@ EntityRef Entity::create(RMF::Entity const &entity)
     auto e = create();
     for (auto const &kv : entity.kv_pairs)
         e->set_property(kv.first, kv.second);
+
     e->set_property("classname", entity.classname);
+
+    if (e->classinfo().type == "PointClass")
+    {
+        std::stringstream origin_str{};
+        origin_str << entity.position.x << ' ' << entity.position.y << ' ' << entity.position.z;
+        e->set_property("origin", origin_str.str());
+    }
+
     for (auto const &brush : entity.brushes)
         e->add_brush(Brush::create(brush));
     return e;
