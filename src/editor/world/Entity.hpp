@@ -85,6 +85,7 @@ namespace Sickle::Editor
          *
          * @param key Name of the property to access.
          * @return The value of the property.
+         * @throw std::out_of_range if key does not exist.
          */
         std::string get_property(std::string const &key) const;
 
@@ -139,9 +140,8 @@ namespace Sickle::Editor
         EntityClass _classinfo;
         std::unordered_map<std::string, std::string> _properties{};
         std::vector<BrushRef> _brushes{};
-        // TODO:
-        // - visgroup id
-        // - color
+
+        void _on_classname_changed();
     };
 }
 

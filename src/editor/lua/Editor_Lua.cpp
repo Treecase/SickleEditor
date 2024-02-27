@@ -68,7 +68,11 @@ static int add_entity(lua_State *L)
     auto type = luaL_checkstring(L, 2);
     auto entity = Entity::create();
     entity->set_property("classname", type);
-    ed->get_map()->add_entity(entity);
+    try {
+        ed->get_map()->add_entity(entity);
+    } catch (std::logic_error const &e) {
+        return luaL_error(L, "%s", e.what());
+    }
     return 0;
 }
 

@@ -117,17 +117,7 @@ void Entity::set_property(std::string const &key, std::string const &value)
 {
     _properties[key] = value;
     if (key == "classname")
-    {
-        auto &games = GameDefinition::instance();
-        try {
-            _classinfo = games.lookup(value);
-        }
-        catch (std::out_of_range const &) {
-            std::cout << "failed to find class '" << value << "'\n";
-            _classinfo.type = "<undefined>";
-            _classinfo.properties.clear();
-        }
-    }
+        _on_classname_changed();
     signal_properties_changed().emit();
 }
 
@@ -188,4 +178,26 @@ std::vector<EditorObjectRef> Entity::children() const
     for (auto const &brush : brushes())
         out.push_back(brush);
     return out;
+}
+
+
+
+void Entity::_on_classname_changed()
+{
+    auto &games = GameDefinition::instance();
+    try {
+        _classinfo = games.lookup(classname());
+    }
+    catch (std::out_of_range const &) {
+        std::cout << "failed to find class '" << classname() << "'\n";
+        _classinfo.type = "<undefined>";
+        _classinfo.properties.clear();
+        _classinfo.entity_properties.clear();
+    }
+
+    for (auto const &property : _classinfo.entity_properties)
+        _properties.insert({property.first, ""});
+
+    if (_classinfo.type == "PointClass")
+        _properties.insert({"origin", "0 0 0"});
 }

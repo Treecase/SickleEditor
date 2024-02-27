@@ -1,6 +1,6 @@
 /**
  * World.cpp - Editor::World.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -67,6 +67,7 @@ namespace Sickle::Editor
          * Add an entity to the world.
          *
          * @param entity The entity to add.
+         * @throw std::logic_error if entity->classname() is "worldspawn".
          */
         void add_entity(EntityRef const &entity);
 
@@ -101,14 +102,13 @@ namespace Sickle::Editor
         World();
 
     private:
+        EntityRef _worldspawn{nullptr};
         std::vector<EntityRef> _entities{};
         sigc::connection _conn_worldspawn_removed{};
-        // TODO:
-        // - visgroups & groups
-        // - paths (what are these?)
-        // - cameras
 
+        void _on_worldspawn_removed();
         void _add_worldspawn();
+        void _replace_worldspawn(EntityRef const &entity);
     };
 }
 

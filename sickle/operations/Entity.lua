@@ -4,5 +4,5 @@ add_operation(
     "entity",
     {"string"},
     function(editor, _, classname)
-        editor:add_entity(classname)
+        pcall(editor.add_entity, editor, classname)
     end)

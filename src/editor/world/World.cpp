@@ -1,6 +1,6 @@
 /**
  * World.cpp - Editor::World.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -86,6 +86,7 @@ World::~World()
     // Remove the worldspawn_removed connection so we don't try to add a
     // replacement while destructing.
     _conn_worldspawn_removed.disconnect();
+    _worldspawn.reset();
     for (auto const &entity : entities())
         signal_child_removed().emit(entity);
 }
@@ -102,6 +103,17 @@ World::operator MAP::Map() const
 
 void World::add_entity(EntityRef const &entity)
 {
+    if (entity->classname() == "worldspawn")
+    {
+        if (_worldspawn)
+            throw std::logic_error{"cannot add multiple worldspawns"};
+        else
+        {
+            _worldspawn = entity;
+            _conn_worldspawn_removed = _worldspawn->signal_removed().connect(
+                sigc::mem_fun(*this, &World::_on_worldspawn_removed));
+        }
+    }
     _entities.push_back(entity);
     signal_child_added().emit(entity);
 }
@@ -126,10 +138,7 @@ void World::remove_brush(BrushRef const &brush)
 
 EntityRef World::worldspawn()
 {
-    for (auto &entity : _entities)
-        if (entity->get_property("classname") == "worldspawn")
-            return entity;
-    throw std::logic_error{"missing worldspawn"};
+    return _worldspawn;
 }
 
 
@@ -159,13 +168,17 @@ std::vector<EditorObjectRef> World::children() const
 
 
 
-void World::_add_worldspawn()
+void World::_on_worldspawn_removed()
 {
     _conn_worldspawn_removed.disconnect();
+    _worldspawn.reset();
+    _add_worldspawn();
+}
 
+
+void World::_add_worldspawn()
+{
     auto worldspawn = Entity::create();
     worldspawn->set_property("classname", "worldspawn");
-    _conn_worldspawn_removed = worldspawn->signal_removed().connect(
-        sigc::mem_fun(*this, &World::_add_worldspawn));
     add_entity(worldspawn);
 }

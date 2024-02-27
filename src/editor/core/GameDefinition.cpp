@@ -44,6 +44,11 @@ void GameDefinition::add_game(FGD::GameDef const &game)
         {
             ec.properties[class_property->name()] = class_property->inner();
         }
+        for (auto const &entity_property : cls->properties)
+        {
+            ec.entity_properties[entity_property->name] =\
+                entity_property->type();
+        }
         _classes[cls->name] = ec;
     }
 }

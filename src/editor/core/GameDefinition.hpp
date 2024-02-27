@@ -35,6 +35,8 @@ namespace Sickle::Editor
         std::string type;
         /// Class properties [base(), iconsprite(), etc.]
         std::unordered_map<std::string, std::string> properties;
+        /// Entity properties. TODO
+        std::unordered_map<std::string, std::string> entity_properties;
     };
 
 
