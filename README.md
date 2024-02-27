@@ -6,7 +6,13 @@ An open-source editor for GoldSrc maps. Both `.MAP` and `.RMF` formats are suppo
 
 ## Getting Started
 
-GoldSrc maps use external data files called WADs to store texture data. Sickle doesn't know where these files are, so you'll have to point it to them. To do this, click `Edit` in the menu and select `WAD Paths`. This will open a dialog where you can add or remove WADs to Sickle. Add the WAD paths, then click `Done`.
+There are a few things that must be set up to get started. Firstly, click `Edit>Preferences` in the menu to open the preferences window. There are three areas here: Game Definition, Sprite Root Path, and Texture WADs.
+
+The Game Definition is a file that tells the editor which Entity types are available in the game. Sickle needs to be pointed to this file in order to properly edit maps; for Half-Life, this file is called 'halflife.fgd'.
+
+The sprite root path tells Sickle where to find the sprite files used for entity icons (eg. lights).
+
+GoldSrc maps use external data files called WADs to store texture data. Sickle doesn't know where these files are, so you'll have to point it to them.
 
 
 ## Building
