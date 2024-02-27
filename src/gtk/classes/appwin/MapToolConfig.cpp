@@ -238,8 +238,6 @@ MapToolConfig::MapToolConfig(Editor::EditorRef const &editor)
     _grid.set_margin_right(8);
     _grid.set_margin_bottom(8);
 
-    _scrolled_window.property_hscrollbar_policy() =\
-        Gtk::PolicyType::POLICY_NEVER;
     _scrolled_window.add(_grid);
 
     add(_scrolled_window);
