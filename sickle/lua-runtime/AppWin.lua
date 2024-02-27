@@ -25,7 +25,7 @@ EventListener.construct(gAppWin)
 gAppWin:add_maptool(
     "Select",
     {
-        {"Delete", "Brush.DeleteSelected"},
+        {"Delete", "Object.Delete"},
     },
     function(editor) return not editor:get_selection():is_empty() end
 )

@@ -64,15 +64,3 @@ add_operation(
             {b.x, b.y, b.z}
         )
     end)
-
-add_operation(
-    "Brush",
-    "DeleteSelected",
-    "brush",
-    {},
-    function(editor, _)
-        local sel = editor:get_selection()
-        for brush in sel:iterate() do
-            editor:remove_brush(brush)
-        end
-    end)
