@@ -17,9 +17,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/Entity.hpp"
+#include "Entity.hpp"
 
-#include <spr/spr.hpp>
+#include <files/spr/spr.hpp>
 #include <utils/gtkglutils.hpp>
 
 #include <giomm/datainputstream.h>

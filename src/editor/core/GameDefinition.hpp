@@ -19,7 +19,7 @@
 #ifndef SE_EDITOR_CORE_GAMEDEFINITION_HPP
 #define SE_EDITOR_CORE_GAMEDEFINITION_HPP
 
-#include <fgd/fgd.hpp>
+#include <files/fgd/fgd.hpp>
 
 #include <unordered_map>
 

@@ -16,9 +16,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "appid.hpp"
-#include "version.hpp"
 #include "gtk/classes/App.hpp"
+
+#include <config/appid.hpp>
+#include <config/version.hpp>
 
 #ifndef NDEBUG
 #include <glibmm/miscutils.h>

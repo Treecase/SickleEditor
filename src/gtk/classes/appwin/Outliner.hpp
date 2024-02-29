@@ -19,8 +19,8 @@
 #ifndef SE_APPWIN_OUTLINER_HPP
 #define SE_APPWIN_OUTLINER_HPP
 
-#include <core/Editor.hpp>
-#include <world/World.hpp>
+#include <editor/core/Editor.hpp>
+#include <editor/world/World.hpp>
 
 #include <glibmm/property.h>
 #include <gtkmm/bin.h>

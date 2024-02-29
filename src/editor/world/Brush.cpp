@@ -16,9 +16,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world/Brush.hpp"
+#include "Brush.hpp"
 
-#include <appid.hpp>
+#include <config/appid.hpp>
 
 #include <sstream>
 

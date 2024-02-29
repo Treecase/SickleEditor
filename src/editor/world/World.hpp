@@ -22,8 +22,8 @@
 #include "Brush.hpp"
 #include "Entity.hpp"
 
-#include <map/map.hpp>
-#include <rmf/rmf.hpp>
+#include <files/map/map.hpp>
+#include <files/rmf/rmf.hpp>
 
 #include <glibmm.h>
 

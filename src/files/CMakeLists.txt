@@ -1,0 +1,5 @@
+add_subdirectory(fgd)
+add_subdirectory(map)
+add_subdirectory(rmf)
+add_subdirectory(spr)
+add_subdirectory(wad)

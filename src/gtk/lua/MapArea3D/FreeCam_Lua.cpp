@@ -18,7 +18,7 @@
 
 #include "MapArea3D_Lua.hpp"
 
-#include <LuaGeo.hpp>
+#include <se-lua/lua-geo/LuaGeo.hpp>
 
 #define METATABLE "Sickle.gtk.freecam"
 

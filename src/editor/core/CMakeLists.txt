@@ -5,7 +5,7 @@ add_library(editor-core STATIC
     MapTools.cpp
     Selection.cpp
 )
-target_include_directories(editor-core PUBLIC ..)
+target_include_directories(editor-core PRIVATE .)
 target_link_libraries(editor-core
     PUBLIC
         editor-world

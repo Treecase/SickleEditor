@@ -67,6 +67,7 @@ configure_file(sicklegtk.desktop.in ${APPLICATION_ID}.desktop)
 # Settings schema
 configure_file(sicklegtk.gschema.xml.in sicklegtk.gschema.xml)
 
+include_directories(src)
 
 # Declare targets
 add_executable(sickle)

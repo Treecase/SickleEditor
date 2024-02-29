@@ -19,7 +19,7 @@
 #ifndef SE_APPWIN_MODESELECTOR_HPP
 #define SE_APPWIN_MODESELECTOR_HPP
 
-#include <core/Editor.hpp>
+#include <editor/core/Editor.hpp>
 
 #include <glibmm/property.h>
 #include <gtkmm/box.h>

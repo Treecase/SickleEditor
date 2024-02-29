@@ -18,7 +18,7 @@
 #ifndef SE_MAPAREA2D_TOOLPOPUPMENU_HPP
 #define SE_MAPAREA2D_TOOLPOPUPMENU_HPP
 
-#include <core/Editor.hpp>
+#include <editor/core/Editor.hpp>
 
 #include <gtkmm/menu.h>
 #include <giomm/simpleactiongroup.h>

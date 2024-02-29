@@ -22,9 +22,9 @@
 #include "BrushBox.hpp"
 #include "Selection.hpp"
 
+#include <editor/world/EditorWorld.hpp>
+#include <files/wad/TextureManager.hpp>
 #include <se-lua/utils/Referenceable.hpp>
-#include <wad/TextureManager.hpp>
-#include <world/EditorWorld.hpp>
 
 #include <glibmm/refptr.h>
 #include <glibmm/property.h>
@@ -113,6 +113,6 @@ namespace Sickle::Editor
 }
 
 #include "MapTools.hpp"
-#include <operations/OperationLoader.hpp>
+#include <editor/operations/OperationLoader.hpp>
 
 #endif

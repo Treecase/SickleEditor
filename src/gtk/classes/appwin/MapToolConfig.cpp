@@ -19,7 +19,7 @@
 #include "MapToolConfig.hpp"
 #include "TextureSelector.hpp"
 
-#include <core/Editor.hpp>
+#include <editor/core/Editor.hpp>
 
 #include <glibmm/binding.h>
 #include <gtkmm/grid.h>

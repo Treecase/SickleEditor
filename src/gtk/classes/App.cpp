@@ -18,9 +18,9 @@
 
 #include "App.hpp"
 #include "About.hpp"
-#include "appid.hpp"
 
-#include <core/GameDefinition.hpp>
+#include <config/appid.hpp>
+#include <editor/core/GameDefinition.hpp>
 #include <world3d/Entity.hpp>
 
 #include <gtkmm/filechoosernative.h>

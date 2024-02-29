@@ -17,7 +17,8 @@
  */
 
 #include "Outliner.hpp"
-#include <appid.hpp>
+
+#include <config/appid.hpp>
 
 #include <giomm/menu.h>
 #include <giomm/simpleactiongroup.h>

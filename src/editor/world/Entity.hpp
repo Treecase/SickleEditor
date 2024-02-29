@@ -21,10 +21,10 @@
 
 #include "Brush.hpp"
 
-#include <core/GameDefinition.hpp>
-#include <interfaces/EditorObject.hpp>
-#include <map/map.hpp>
-#include <rmf/rmf.hpp>
+#include <editor/core/GameDefinition.hpp>
+#include <editor/interfaces/EditorObject.hpp>
+#include <files/map/map.hpp>
+#include <files/rmf/rmf.hpp>
 
 #include <glibmm.h>
 

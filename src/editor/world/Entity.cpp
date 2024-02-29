@@ -16,9 +16,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world/Entity.hpp"
+#include "Entity.hpp"
 
-#include <appid.hpp>
+#include <config/appid.hpp>
 
 #include <algorithm>
 #include <iostream> // temp

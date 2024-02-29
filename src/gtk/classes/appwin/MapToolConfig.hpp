@@ -19,7 +19,7 @@
 #ifndef SE_APPWIN_MAPTOOLCONFIG_HPP
 #define SE_APPWIN_MAPTOOLCONFIG_HPP
 
-#include <operations/Operation.hpp>
+#include <editor/operations/Operation.hpp>
 
 #include <gtkmm/button.h>
 #include <gtkmm/entry.h>

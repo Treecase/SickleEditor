@@ -19,8 +19,8 @@
 #ifndef SE_TEXTURESELECTOR_TEXTUREIMAGE_HPP
 #define SE_TEXTURESELECTOR_TEXTUREIMAGE_HPP
 
-#include <wad/wad.hpp>
-#include <wad/lumps.hpp>
+#include <files/wad/wad.hpp>
+#include <files/wad/lumps.hpp>
 
 #include <glibmm/refptr.h>
 #include <gtkmm/box.h>

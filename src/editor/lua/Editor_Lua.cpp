@@ -18,10 +18,10 @@
 
 #include "Editor_Lua.hpp"
 
-#include <core/Editor.hpp>
-#include <operations/OperationLoader.hpp>
+#include <editor/core/Editor.hpp>
+#include <editor/operations/OperationLoader.hpp>
+#include <se-lua/lua-geo/LuaGeo.hpp>
 #include <se-lua/utils/RefBuilder.hpp>
-#include <LuaGeo.hpp>
 
 #define METATABLE "Sickle.editor"
 

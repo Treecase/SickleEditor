@@ -18,7 +18,7 @@
 
 #include "TextureSelector.hpp"
 
-#include <appid.hpp>
+#include <config/appid.hpp>
 
 #include <gtkmm/builder.h>
 

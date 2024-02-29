@@ -18,8 +18,8 @@
 
 #include "About.hpp"
 
-#include "appid.hpp"
-#include "version.hpp"
+#include <config/appid.hpp>
+#include <config/version.hpp>
 
 
 Sickle::About::About()

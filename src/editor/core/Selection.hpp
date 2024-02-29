@@ -19,7 +19,7 @@
 #ifndef SE_EDITOR_SELECTION_HPP
 #define SE_EDITOR_SELECTION_HPP
 
-#include <interfaces/Selectable.hpp>
+#include <editor/interfaces/Selectable.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
 #include <sigc++/signal.h>

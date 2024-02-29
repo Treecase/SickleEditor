@@ -23,7 +23,7 @@
 #include "gbox/GrabbableBoxView.hpp"
 #include "popup-menus/ToolPopupMenu.hpp"
 
-#include <core/Editor.hpp>
+#include <editor/core/Editor.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
 #include <cairomm/cairomm.h>

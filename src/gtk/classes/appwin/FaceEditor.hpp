@@ -21,8 +21,8 @@
 
 #include "TextureSelector.hpp"
 
-#include <core/Editor.hpp>
-#include <world/Face.hpp>
+#include <editor/core/Editor.hpp>
+#include <editor/world/Face.hpp>
 
 #include <glibmm/binding.h>
 #include <glm/glm.hpp>

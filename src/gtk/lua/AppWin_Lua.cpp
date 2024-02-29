@@ -22,9 +22,9 @@
 #include "MapArea2D_Lua.hpp"
 #include "MapArea3D_Lua.hpp"
 
+#include <editor/core/MapTools.hpp>
+#include <editor/lua/Editor_Lua.hpp>
 #include <se-lua/utils/RefBuilder.hpp>
-#include <core/MapTools.hpp>
-#include <lua/Editor_Lua.hpp>
 
 #define METATABLE "Sickle.gtk.appwin"
 

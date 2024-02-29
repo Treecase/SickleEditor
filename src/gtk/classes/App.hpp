@@ -22,7 +22,7 @@
 #include "AppWin.hpp"
 #include "preferences/PreferencesDialog.hpp"
 
-#include <fgd/fgd.hpp>
+#include <files/fgd/fgd.hpp>
 
 #include <gtkmm/application.h>
 #include <giomm/settings.h>

@@ -5,7 +5,7 @@ add_library(editor-world STATIC
     Face.cpp
     World.cpp
 )
-target_include_directories(editor-world PUBLIC ..)
+target_include_directories(editor-world PRIVATE .)
 target_link_libraries(editor-world
     PUBLIC
         config

@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/Entity.hpp"
+#include "Entity.hpp"
 
 #include <glm/glm.hpp>
 #include <utils/gtkglutils.hpp>

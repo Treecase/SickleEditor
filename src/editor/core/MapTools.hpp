@@ -19,7 +19,7 @@
 #ifndef SE_EDITOR_MAPTOOLS_HPP
 #define SE_EDITOR_MAPTOOLS_HPP
 
-#include <core/Editor.hpp>
+#include "Editor.hpp"
 
 #include <functional> // temp
 #include <string>

@@ -18,7 +18,7 @@
 
 #include "TextureImage.hpp"
 
-#include <appid.hpp>
+#include <config/appid.hpp>
 
 using namespace Sickle::TextureSelector;
 

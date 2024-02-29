@@ -9,7 +9,7 @@ add_library(world3d STATIC
     Vertex.cpp
     World.cpp
 )
-target_include_directories(world3d PUBLIC include)
+target_include_directories(world3d PRIVATE .)
 target_link_libraries(world3d
     PUBLIC
         PkgConfig::GTKMM

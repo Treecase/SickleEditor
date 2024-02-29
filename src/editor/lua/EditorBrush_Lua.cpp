@@ -18,9 +18,9 @@
 
 #include "Editor_Lua.hpp"
 
+#include <editor/core/Editor.hpp>
+#include <se-lua/lua-geo/LuaGeo.hpp>
 #include <se-lua/utils/RefBuilder.hpp>
-#include <core/Editor.hpp>
-#include <LuaGeo.hpp>
 
 #define METATABLE "Sickle.editorbrush"
 

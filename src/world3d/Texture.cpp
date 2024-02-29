@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/Texture.hpp"
+#include "Texture.hpp"
 
 
 /** Convert WAD lump mipmap to RGBA format. */

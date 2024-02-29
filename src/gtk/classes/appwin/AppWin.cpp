@@ -19,15 +19,15 @@
 #include "AppWin.hpp"
 #include "AppWin_Lua.hpp"
 #include "MapArea2D_Lua.hpp"
-#include "appid.hpp"
-#include "version.hpp"
 
-#include <LuaGeo.hpp>
-#include <map/mapsaver.hpp>
-#include <operations/Operation.hpp>
-#include <rmf/rmf.hpp>
-#include <se-lua/se-lua.hpp>
+#include <config/appid.hpp>
+#include <config/version.hpp>
+#include <editor/operations/Operation.hpp>
+#include <files/map/mapsaver.hpp>
+#include <files/rmf/rmf.hpp>
 #include <se-lua/function.hpp>
+#include <se-lua/lua-geo/LuaGeo.hpp>
+#include <se-lua/se-lua.hpp>
 
 #include <giomm/resource.h>
 #include <glibmm/fileutils.h>

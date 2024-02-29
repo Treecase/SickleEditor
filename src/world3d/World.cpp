@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/World.hpp"
+#include "World.hpp"
 
 
 // Nothing here for now.

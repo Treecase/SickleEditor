@@ -17,7 +17,8 @@
  */
 
 #include "PreferencesDialog.hpp"
-#include "appid.hpp"
+
+#include <config/appid.hpp>
 
 #include <glibmm/convert.h>
 #include <gtkmm/filechoosernative.h>

@@ -20,9 +20,9 @@
 #define SE_EDITOR_WORLD_FACE_HPP
 
 #include <convexhull/convexhull.hpp>
-#include <interfaces/EditorObject.hpp>
-#include <map/map.hpp>
-#include <rmf/rmf.hpp>
+#include <editor/interfaces/EditorObject.hpp>
+#include <files/map/map.hpp>
+#include <files/rmf/rmf.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
 #include <glibmm/property.h>

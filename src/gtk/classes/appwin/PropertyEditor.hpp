@@ -19,7 +19,7 @@
 #ifndef SE_APPWIN_PROPERTY_EDITOR_HPP
 #define SE_APPWIN_PROPERTY_EDITOR_HPP
 
-#include <world/Entity.hpp>
+#include <editor/world/Entity.hpp>
 
 #include <gtkmm/bin.h>
 #include <gtkmm/box.h>

@@ -16,9 +16,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world/Face.hpp"
+#include "Face.hpp"
 
-#include <appid.hpp>
+#include <config/appid.hpp>
+
 #include <glm/gtc/epsilon.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 

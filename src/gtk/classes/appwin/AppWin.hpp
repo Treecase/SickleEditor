@@ -31,11 +31,11 @@
 #include "Outliner.hpp"
 #include "PropertyEditor.hpp"
 
-#include <core/Editor.hpp>
-#include <operations/Operation.hpp>
-#include <se-lua/utils/Referenceable.hpp>
-#include <appid.hpp>
 #include <AppWin_Lua.hpp>
+#include <config/appid.hpp>
+#include <editor/core/Editor.hpp>
+#include <editor/operations/Operation.hpp>
+#include <se-lua/utils/Referenceable.hpp>
 
 #include <glibmm/property.h>
 #include <glibmm/binding.h>

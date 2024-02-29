@@ -18,8 +18,8 @@
 
 #include "Editor_Lua.hpp"
 
+#include <editor/core/Selection.hpp>
 #include <se-lua/utils/RefBuilder.hpp>
-#include <core/Selection.hpp>
 
 #include <memory>
 

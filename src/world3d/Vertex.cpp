@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/Face.hpp"
+#include "Face.hpp"
 
 
 World3D::Vertex::Vertex(glm::vec3 pos, glm::vec2 uv)

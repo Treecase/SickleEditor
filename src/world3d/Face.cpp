@@ -16,10 +16,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/Face.hpp"
-#include "world3d/Brush.hpp"
+#include "Brush.hpp"
+#include "Face.hpp"
 
-#include <wad/TextureManager.hpp>
+#include <files/wad/TextureManager.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
 #include <numeric>

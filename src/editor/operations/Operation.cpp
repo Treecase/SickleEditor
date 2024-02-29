@@ -21,9 +21,9 @@
 #include "Operation.hpp"
 #include "OperationLoader.hpp"
 
-#include <core/Editor.hpp>
-#include <lua/Editor_Lua.hpp>
-#include <LuaGeo.hpp>
+#include <editor/core/Editor.hpp>
+#include <editor/lua/Editor_Lua.hpp>
+#include <se-lua/lua-geo/LuaGeo.hpp>
 
 
 using namespace Sickle::Editor;

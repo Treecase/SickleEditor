@@ -19,7 +19,7 @@
 #ifndef SE_EDITOR_LUA_HPP
 #define SE_EDITOR_LUA_HPP
 
-#include <core/Editor.hpp>
+#include <editor/core/Editor.hpp>
 #include <se-lua/se-lua.hpp>
 
 

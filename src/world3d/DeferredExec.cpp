@@ -17,7 +17,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "world3d/DeferredExec.hpp"
+#include "DeferredExec.hpp"
 
 
 sigc::signal<void()> DeferredExec::_sig_glcontext_ready{};

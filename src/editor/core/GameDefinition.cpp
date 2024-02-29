@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/GameDefinition.hpp"
+#include "GameDefinition.hpp"
 
 
 using namespace Sickle::Editor;

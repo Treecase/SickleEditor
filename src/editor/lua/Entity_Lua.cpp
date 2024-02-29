@@ -18,9 +18,9 @@
 
 #include "Editor_Lua.hpp"
 
+#include <editor/world/Entity.hpp>
+#include <se-lua/lua-geo/LuaGeo.hpp>
 #include <se-lua/utils/RefBuilder.hpp>
-#include <world/Entity.hpp>
-#include <LuaGeo.hpp>
 
 #define METATABLE "Sickle.entity"
 

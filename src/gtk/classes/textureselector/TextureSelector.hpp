@@ -21,9 +21,9 @@
 
 #include "TextureImage.hpp"
 
-#include <core/Editor.hpp>
-#include <wad/TextureManager.hpp>
-#include <wad/wad.hpp>
+#include <editor/core/Editor.hpp>
+#include <files/wad/TextureManager.hpp>
+#include <files/wad/wad.hpp>
 
 #include <glibmm/property.h>
 #include <glibmm/refptr.h>

@@ -18,7 +18,7 @@
 
 #include "LuaConsole.hpp"
 
-#include <appid.hpp>
+#include <config/appid.hpp>
 #include <gtkmm/cssprovider.h>
 
 #include <iostream>

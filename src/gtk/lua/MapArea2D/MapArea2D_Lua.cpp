@@ -19,9 +19,9 @@
 #include "LuaGdkEvent.hpp"
 #include "MapArea2D_Lua.hpp"
 
+#include <editor/lua/Editor_Lua.hpp>
+#include <se-lua/lua-geo/LuaGeo.hpp>
 #include <se-lua/utils/RefBuilder.hpp>
-#include <Editor_Lua.hpp>
-#include <LuaGeo.hpp>
 
 #define METATABLE "Sickle.gtk.maparea2d"
 

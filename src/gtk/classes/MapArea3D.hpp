@@ -19,7 +19,7 @@
 #ifndef SE_MAPAREA3D_HPP
 #define SE_MAPAREA3D_HPP
 
-#include <core/Editor.hpp>
+#include <editor/core/Editor.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 #include <utils/Transform.hpp>
 #include <utils/FreeCam.hpp>

@@ -19,7 +19,7 @@
 #ifndef SE_APPWIN_OPERATIONSEARCH_HPP
 #define SE_APPWIN_OPERATIONSEARCH_HPP
 
-#include <operations/Operation.hpp>
+#include <editor/operations/Operation.hpp>
 
 #include <glibmm/property.h>
 #include <glibmm/refptr.h>
