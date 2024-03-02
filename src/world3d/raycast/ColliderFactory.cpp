@@ -29,10 +29,10 @@ using namespace World3D;
 using namespace Sickle::Editor;
 
 
-std::shared_ptr<BoxCollider>
+std::shared_ptr<Collider>
 ColliderFactory::construct(EditorObjectRef const &object)
 {
-    std::shared_ptr<BoxCollider> collider{nullptr};
+    std::shared_ptr<Collider> collider{nullptr};
     if (!object)
         ;
     else if (typeid(*object.get()) == typeid(Brush))

@@ -20,7 +20,7 @@
 
 #include <gtkmm/messagedialog.h>
 #include <utils/BoundingBox.hpp>
-#include <world3d/RenderComponent.hpp>
+#include <world3d/RenderComponentFactory.hpp>
 #include <world3d/raycast/Collider.hpp>
 #include <world3d/raycast/ColliderFactory.hpp>
 
@@ -447,34 +447,15 @@ void Sickle::MapArea3D::_synchronize_glmap()
 {
     static auto const add_brush = [](Editor::EditorObjectRef child) -> void {
         auto const brush = Editor::BrushRef::cast_dynamic(child);
-        auto const renderer = std::make_shared<World3D::Brush>();
-        brush->add_component(renderer);
+        brush->add_component(
+            World3D::RenderComponentFactory{}.construct(brush));
         brush->add_component(World3D::ColliderFactory{}.construct(brush));
     };
 
     static auto const add_entity = [](Editor::EditorObjectRef child) -> void {
         auto const entity = Editor::EntityRef::cast_dynamic(child);
-
-        auto renderer = std::shared_ptr<World3D::EntityView>{nullptr};
-        auto const entity_class = entity->classinfo();
-        if (entity_class.type == "PointClass")
-        {
-            if (entity_class.properties.count("iconsprite"))
-                renderer = std::make_shared<World3D::PointEntitySprite>();
-            else
-                renderer = std::make_shared<World3D::PointEntityBox>();
-        }
-        else if (entity_class.type == "SolidClass")
-        {
-            renderer = std::make_shared<World3D::SolidEntity>();
-        }
-        else
-        {
-            std::cout << "WARNING: entity has unknown class type '"
-                << entity_class.type << "'\n";
-        }
-        if (renderer)
-            entity->add_component(renderer);
+        entity->add_component(
+            World3D::RenderComponentFactory{}.construct(entity));
         entity->add_component(World3D::ColliderFactory{}.construct(entity));
 
         sigc::connection conn = entity->signal_child_added().connect(add_brush);

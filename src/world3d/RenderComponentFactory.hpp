@@ -1,5 +1,6 @@
 /**
- * ColliderFactory.hpp - Factory which constructs Colliders for world objects.
+ * RenderComponentFactory.hpp - Factory which constructs RenderComponents for
+ *                              world objects.
  * Copyright (C) 2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,10 +17,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_WORLD3D_RAYCAST_COLLIDERFACTORY_HPP
-#define SE_WORLD3D_RAYCAST_COLLIDERFACTORY_HPP
+#ifndef SE_WORLD3D_RENDERERFACTORY_HPP
+#define SE_WORLD3D_RENDERERFACTORY_HPP
 
-#include "Collider.hpp"
+#include "RenderComponent.hpp"
 
 #include <editor/interfaces/EditorObject.hpp>
 
@@ -29,22 +30,21 @@
 namespace World3D
 {
     /**
-     * Constructs the correct Collider component for different types of
-     * EditorObjects.
+     * Constructs the correct RenderComponents for different EditorObject types.
      */
-    class ColliderFactory final
+    class RenderComponentFactory final
     {
     public:
-        ColliderFactory()=default;
+        RenderComponentFactory()=default;
 
         /**
-         * Construct an appropriate Collider for an object. Note that the
-         * constructed component is not attached to the object.
+         * Construct an appropriate RenderComponent for an object. Note that
+         * the constructed component is not attached to the object.
          *
-         * @param object The object to construct a collider for.
+         * @param object The object to construct a RenderComponent for.
          * @return The new component, or nullptr if none are appropriate.
          */
-        std::shared_ptr<Collider> construct(
+        std::shared_ptr<RenderComponent> construct(
             Sickle::Editor::EditorObjectRef const &object);
     };
 }

@@ -5,6 +5,7 @@ add_library(world3d STATIC
     DeferredExec.cpp
     PointEntityBox.cpp
     PointEntitySprite.cpp
+    RenderComponentFactory.cpp
     SolidEntity.cpp
     Face.cpp
     Texture.cpp
