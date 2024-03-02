@@ -18,9 +18,11 @@
 
 #include "MapArea3D.hpp"
 
+#include <gtkmm/messagedialog.h>
 #include <utils/BoundingBox.hpp>
 #include <world3d/RenderComponent.hpp>
-#include <gtkmm/messagedialog.h>
+#include <world3d/raycast/Collider.hpp>
+#include <world3d/raycast/ColliderFactory.hpp>
 
 #include <iostream>
 
@@ -195,10 +197,17 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
 }
 
 
-Sickle::Editor::BrushRef
-Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
+Sickle::Editor::EditorObjectRef
+Sickle::MapArea3D::pick_object(glm::vec2 const &ssp)
 {
-    Sickle::Editor::BrushRef picked{};
+    static auto const is_collider =\
+        [](std::shared_ptr<Component> const &c) -> bool {
+            if (std::dynamic_pointer_cast<World3D::BoxCollider>(c))
+                return true;
+            return false;
+        };
+
+    Sickle::Editor::EditorObjectRef picked{nullptr};
     float pt = INFINITY;
 
     auto const &_camera = property_camera().get_value();
@@ -210,27 +219,33 @@ Sickle::MapArea3D::pick_brush(glm::vec2 const &ssp)
     // used to transform map vertices into GL space.
     auto const modelview = property_transform().get_value().getMatrix();
 
-    for (auto const &entity : _editor->get_map()->entities())
+    auto const objects = _editor->get_map()->children_recursive_breadth_first();
+    for (auto const &obj : objects)
     {
-        for (auto const &brush : entity->brushes())
+        auto const colliders = obj->get_components_matching(is_collider);
+        for (auto const &collider : colliders)
         {
-            BBox3 bbox{};
-            for (auto const &face : brush->faces())
-                for (auto const &vertex : face->get_vertices())
-                    bbox.add(glm::vec3{modelview * glm::vec4{vertex, 1.0f}});
+            auto const c = std::dynamic_pointer_cast<World3D::Collider>(
+                collider);
+            auto const bbox = c->get_box();
+
+            BBox3 const bbox_transformed{
+                modelview * glm::vec4{bbox.min, 1.0f},
+                modelview * glm::vec4{bbox.max, 1.0f}};
 
             float t;
-            if (raycast(_camera.pos, ray_delta, bbox, t))
+            if (raycast(_camera.pos, ray_delta, bbox_transformed, t))
             {
                 // We pick the first (ie. closest) brush our raycast hits.
                 if (t < pt)
                 {
-                    picked = brush;
+                    picked = obj;
                     pt = t;
                 }
             }
         }
     }
+
     debug.setRayPoints(_camera.pos, _camera.pos + ray_delta * pt);
     return picked;
 }
@@ -434,6 +449,7 @@ void Sickle::MapArea3D::_synchronize_glmap()
         auto const brush = Editor::BrushRef::cast_dynamic(child);
         auto const renderer = std::make_shared<World3D::Brush>();
         brush->add_component(renderer);
+        brush->add_component(World3D::ColliderFactory{}.construct(brush));
     };
 
     static auto const add_entity = [](Editor::EditorObjectRef child) -> void {
@@ -459,6 +475,7 @@ void Sickle::MapArea3D::_synchronize_glmap()
         }
         if (renderer)
             entity->add_component(renderer);
+        entity->add_component(World3D::ColliderFactory{}.construct(entity));
 
         sigc::connection conn = entity->signal_child_added().connect(add_brush);
         entity->signal_removed().connect(

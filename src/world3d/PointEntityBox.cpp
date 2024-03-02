@@ -28,6 +28,16 @@
 using namespace World3D;
 
 
+/**
+ * Extract a vector from a string.
+ *
+ * @param input Input stream to read from.
+ * @param output Vector to write the value to. Not written to if reading fails.
+ * @return True if the vector was read, false if an error occurred.
+ */
+static bool extract_vector(std::stringstream &input, glm::vec3 &output);
+
+
 PointEntityBox::PreDrawFunc PointEntityBox::predraw = [](auto, auto){};
 
 
@@ -61,8 +71,8 @@ void PointEntityBox::render() const
         return;
 
     std::stringstream origin_str{_src->get_property("origin")};
-    glm::vec3 origin{};
-    origin_str >> origin.x >> origin.y >> origin.z;
+    glm::vec3 origin{0.0f, 0.0f, 0.0f};
+    extract_vector(origin_str, origin);
 
     ShaderParams params{};
     params.model = glm::translate(glm::identity<glm::mat4>(), origin);
@@ -129,8 +139,25 @@ void PointEntityBox::_init_construct()
 
 void PointEntityBox::_init()
 {
-    auto const A = DEFAULT_BOX_SIZE * glm::vec3{-0.5f, -0.5f, -0.5f};
-    auto const B = DEFAULT_BOX_SIZE * glm::vec3{+0.5f, +0.5f, +0.5f};
+    auto A = DEFAULT_BOX_SIZE * glm::vec3{-0.5f, -0.5f, -0.5f};
+    auto B = DEFAULT_BOX_SIZE * glm::vec3{+0.5f, +0.5f, +0.5f};
+
+    auto const classinfo = _src->classinfo();
+    if (classinfo.properties.count("size"))
+    {
+        std::stringstream size_str{classinfo.properties.at("size")};
+        if (!extract_vector(size_str, A))
+            return;
+        char comma;
+        size_str >> comma;
+        // Second point is optional. If it's excluded, interpret A as the
+        // diameter of a centered cube.
+        if (!extract_vector(size_str, B))
+        {
+            B = A * glm::vec3{+0.5f, +0.5f, +0.5f};
+            A = A * glm::vec3{-0.5f, -0.5f, -0.5f};
+        }
+    }
 
     std::vector<GLfloat> const vbo_data{
         A.x, A.y, A.z, // 0 left front bottom
@@ -172,4 +199,19 @@ void PointEntityBox::_init()
 
     _vbo->unbind();
     _vao->unbind();
+}
+
+
+
+static bool extract_vector(std::stringstream &input, glm::vec3 &output)
+{
+    glm::vec3 v{};
+    input >> v.x >> v.y >> v.z;
+    if (input.fail())
+        return false;
+    else
+    {
+        output = v;
+        return true;
+    }
 }

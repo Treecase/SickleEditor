@@ -31,13 +31,22 @@ using namespace Sickle;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
-static int pick_brush(lua_State *L)
+static int pick_object(lua_State *L)
 {
     auto m3d = lmaparea3d_check(L, 1);
     auto const xy = lgeo_checkvector<glm::vec2>(L, 2);
-    auto brush = m3d->pick_brush(xy);
-    if (brush)
-        Lua::push(L, brush);
+    auto obj = m3d->pick_object(xy);
+    if (obj)
+    {
+        if (typeid(*obj.get()) == typeid(Editor::Brush))
+            Lua::push(L, Editor::BrushRef::cast_dynamic(obj));
+        else if (typeid(*obj.get()) == typeid(Editor::Entity))
+            Lua::push(L, Editor::EntityRef::cast_dynamic(obj));
+        else if (typeid(*obj.get()) == typeid(Editor::Face))
+            Lua::push(L, Editor::FaceRef::cast_dynamic(obj));
+        else
+            return luaL_error(L, "object could not be pushed");
+    }
     else
         lua_pushnil(L);
     return 1;
@@ -139,7 +148,7 @@ static int do_nothing(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
-    {"pick_brush", pick_brush},
+    {"pick_object", pick_object},
     {"screenspace_to_glspace", screenspace_to_glspace},
 
     {"get_camera", get_camera},

@@ -1,3 +1,5 @@
+add_subdirectory(raycast)
+
 add_library(world3d STATIC
     Brush.cpp
     DeferredExec.cpp

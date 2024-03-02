@@ -130,7 +130,7 @@ function maparea3d.metatable:on_button_release_event(event)
             editor:get_selection():clear()
         end
 
-        local picked = self:pick_brush(geo.vec2.new(event.x, event.y))
+        local picked = self:pick_object(geo.vec2.new(event.x, event.y))
         if picked then
             if picked:is_selected() then
                 editor:get_selection():remove(picked)

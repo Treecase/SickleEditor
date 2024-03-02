@@ -41,16 +41,16 @@ static int selection_clear(lua_State *L)
 static int selection_add(lua_State *L)
 {
     auto s = lselection_check(L, 1);
-    auto brush = leditorbrush_check(L, 2);
-    s->add(brush);
+    auto item = static_cast<EditorObjectRef *>(lua_touserdata(L, 2));
+    s->add(Selection::Item::cast_dynamic(*item));
     return 0;
 }
 
 static int selection_remove(lua_State *L)
 {
     auto s = lselection_check(L, 1);
-    auto brush = leditorbrush_check(L, 2);
-    s->remove(brush);
+    auto item = static_cast<EditorObjectRef *>(lua_touserdata(L, 2));
+    s->remove(Selection::Item::cast_dynamic(*item));
     return 0;
 }
 

@@ -43,6 +43,8 @@ std::vector<std::shared_ptr<Component>> Componentable::get_components_matching(
 
 void Componentable::add_component(std::shared_ptr<Component> const &component)
 {
+    if (!component)
+        return;
     component->on_attach(*this);
     components.push_back(component);
 }
