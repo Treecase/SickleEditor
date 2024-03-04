@@ -21,7 +21,7 @@
 
 #include "Brush.hpp"
 
-#include <editor/core/GameDefinition.hpp>
+#include <editor/core/gamedefinition/GameDefinition.hpp>
 #include <editor/interfaces/EditorObject.hpp>
 #include <files/map/map.hpp>
 #include <files/rmf/rmf.hpp>
@@ -77,7 +77,11 @@ namespace Sickle::Editor
          */
         std::string classname() const;
 
-        /** Get the entity's properties. */
+        /**
+         * Get the entity's properties.
+         *
+         * @return The entity's properties.
+         */
         std::unordered_map<std::string, std::string> properties() const;
 
         /**
@@ -137,7 +141,7 @@ namespace Sickle::Editor
     private:
         sigc::signal<void()> _signal_properties_changed{};
 
-        EntityClass _classinfo;
+        EntityClass _classinfo{};
         std::unordered_map<std::string, std::string> _properties{};
         std::vector<BrushRef> _brushes{};
 

@@ -51,7 +51,7 @@ EntityRef Entity::create(RMF::Entity const &entity)
 
     e->set_property("classname", entity.classname);
 
-    if (e->classinfo().type == "PointClass")
+    if (e->classinfo().type() == "PointClass")
     {
         std::stringstream origin_str{};
         origin_str << entity.position.x << ' ' << entity.position.y << ' ' << entity.position.z;
@@ -68,7 +68,7 @@ Entity::Entity()
 :   Glib::ObjectBase{typeid(Entity)}
 {
     _properties["classname"] = "";
-    _classinfo.type = "<undefined>";
+    _classinfo = EntityClass{};
 }
 
 
@@ -190,14 +190,12 @@ void Entity::_on_classname_changed()
     }
     catch (std::out_of_range const &) {
         std::cout << "failed to find class '" << classname() << "'\n";
-        _classinfo.type = "<undefined>";
-        _classinfo.properties.clear();
-        _classinfo.entity_properties.clear();
+        _classinfo = EntityClass{};
     }
 
-    for (auto const &property : _classinfo.entity_properties)
-        _properties.insert({property.first, ""});
+    for (auto const &property : _classinfo.get_entity_properties())
+        _properties.insert({property->name(), property->default_value()});
 
-    if (_classinfo.type == "PointClass")
+    if (_classinfo.type() == "PointClass")
         _properties.insert({"origin", "0 0 0"});
 }

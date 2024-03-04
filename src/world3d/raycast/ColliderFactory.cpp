@@ -43,7 +43,7 @@ ColliderFactory::construct(EditorObjectRef const &object)
     {
         auto const entity = EntityRef::cast_dynamic(object);
         auto const entity_class = entity->classinfo();
-        if (entity_class.type == "PointClass")
+        if (entity_class.type() == "PointClass")
         {
             collider = std::make_shared<BoxColliderPointEntity>();
         }
