@@ -1,5 +1,5 @@
 /**
- * EntityProperties.cpp - Defines the entity property types.
+ * EntityPropertyDefinition.cpp - Defines the entity property types.
  * Copyright (C) 2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,48 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "EntityProperties.hpp"
+#include "EntityPropertyDefinition.hpp"
 
 
 using namespace Sickle::Editor;
 
 
-EntityProperty::EntityProperty(
+EntityPropertyDefinition::EntityPropertyDefinition(
     std::string const &name,
-    std::string const &default_value)
+    std::string const &default_value,
+    PropertyType type)
 :   _name{name}
 ,   _default_value{default_value}
+,   _type{type}
 {
 }
 
 
-std::string EntityProperty::name() const
+std::string EntityPropertyDefinition::name() const
 {
     return _name;
 }
 
 
-std::string EntityProperty::default_value() const
+std::string EntityPropertyDefinition::default_value() const
 {
     return _default_value;
+}
+
+
+PropertyType EntityPropertyDefinition::type() const
+{
+    return _type;
+}
+
+
+
+/* EntityPropertyChoices ---------------------------------------------------- */
+EntityPropertyDefinitionChoices::EntityPropertyDefinitionChoices(
+    std::string const &name,
+    std::string const &default_value,
+    std::map<int, std::string> const &choices)
+:   EntityPropertyDefinition{name, default_value, PropertyType::CHOICES}
+,   _choices{choices}
+{
 }

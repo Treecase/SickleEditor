@@ -21,7 +21,7 @@
 
 #include "Brush.hpp"
 
-#include <editor/core/gamedefinition/GameDefinition.hpp>
+#include <editor/core/gamedefinition/EntityClass.hpp>
 #include <editor/interfaces/EditorObject.hpp>
 #include <files/map/map.hpp>
 #include <files/rmf/rmf.hpp>
@@ -139,10 +139,45 @@ namespace Sickle::Editor
         Entity();
 
     private:
+        struct Property
+        {
+            /// The type of the property.
+            std::shared_ptr<EntityPropertyDefinition> type;
+            /// The value of the property.
+            std::string value;
+            /**
+             * Default construct the value using type->default_value().
+             *
+             * @param type The property's type.
+             */
+            explicit Property(
+                std::shared_ptr<EntityPropertyDefinition> const &type)
+            :   type{type}
+            ,   value{type->default_value()}
+            {
+            }
+            /**
+             * Construct the value.
+             *
+             * @param type The property's type.
+             * @param value The value of the property.
+             */
+            explicit Property(
+                std::shared_ptr<EntityPropertyDefinition> const &type,
+                std::string const &value)
+            :   type{type}
+            ,   value{value}
+            {
+            }
+        };
+
+        static std::shared_ptr<EntityPropertyDefinition> classname_definition;
+        static std::shared_ptr<EntityPropertyDefinition> origin_definition;
+
         sigc::signal<void()> _signal_properties_changed{};
 
         EntityClass _classinfo{};
-        std::unordered_map<std::string, std::string> _properties{};
+        std::unordered_map<std::string, Property> _properties{};
         std::vector<BrushRef> _brushes{};
 
         void _on_classname_changed();

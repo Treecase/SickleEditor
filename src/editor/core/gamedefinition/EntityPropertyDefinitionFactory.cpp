@@ -1,5 +1,6 @@
 /**
- * EntityProperties.hpp - Defines the entity property types.
+ * EntityPropertyDefinitionFactory.hpp - Factory to construct
+ *                                       EntityPropertyDefinitions.
  * Copyright (C) 2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,20 +17,23 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "EntityProperties.hpp"
+#include "EntityPropertyDefinition.hpp"
 
 
 using namespace Sickle::Editor;
 
 
-std::shared_ptr<EntityProperty> EntityPropertyFactory::construct(
+std::shared_ptr<EntityPropertyDefinition>
+EntityPropertyDefinitionFactory::construct(
     std::shared_ptr<FGD::Property> const &prop)
 {
     std::string const &name = prop->name;
     std::string default_value = "";
+    PropertyType type = PropertyType::STRING;
 
     if (typeid(*prop.get()) == typeid(FGD::IntegerProperty))
     {
+        type = PropertyType::INTEGER;
         auto const intprop =\
             std::dynamic_pointer_cast<FGD::IntegerProperty>(prop);
         if (intprop->defaultvalue.has_value())
@@ -37,6 +41,7 @@ std::shared_ptr<EntityProperty> EntityPropertyFactory::construct(
     }
     else if (typeid(*prop.get()) == typeid(FGD::StringProperty))
     {
+        type = PropertyType::STRING;
         auto const strprop =\
             std::dynamic_pointer_cast<FGD::StringProperty>(prop);
         if (strprop->defaultvalue.has_value())
@@ -46,11 +51,16 @@ std::shared_ptr<EntityProperty> EntityPropertyFactory::construct(
     {
         auto const choiceprop =\
             std::dynamic_pointer_cast<FGD::ChoiceProperty>(prop);
-        if (choiceprop->defaultvalue.has_value())
-            default_value = std::to_string(choiceprop->defaultvalue.value());
+        std::string const default_value =\
+            std::to_string(choiceprop->defaultvalue.value_or(0));
+        return std::make_shared<EntityPropertyDefinitionChoices>(
+            prop->name,
+            default_value,
+            choiceprop->choices);
     }
     else if (typeid(*prop.get()) == typeid(FGD::FlagProperty))
     {
+        type = PropertyType::INTEGER;
         auto const flagprop =\
             std::dynamic_pointer_cast<FGD::FlagProperty>(prop);
         uint32_t flags = 0;
@@ -95,5 +105,8 @@ std::shared_ptr<EntityProperty> EntityPropertyFactory::construct(
             std::dynamic_pointer_cast<FGD::DecalProperty>(prop);
     }
 
-    return std::make_shared<EntityProperty>(name, default_value);
+    return std::make_shared<EntityPropertyDefinition>(
+        name,
+        default_value,
+        type);
 }

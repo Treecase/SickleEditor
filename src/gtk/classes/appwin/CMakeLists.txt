@@ -1,3 +1,5 @@
+add_subdirectory(propertyeditor)
+
 add_library(appwin STATIC
     AppWin.cpp
     FaceEditor.cpp
@@ -6,10 +8,10 @@ add_library(appwin STATIC
     ModeSelector.cpp
     OperationSearch.cpp
     Outliner.cpp
-    PropertyEditor.cpp
 )
 target_link_libraries(appwin
     PUBLIC
+        appwin-propertyeditor
         config
         editor-core
         editor-operations

@@ -20,7 +20,7 @@
 #define SE_EDITOR_CORE_GAMEDEFINITION_ENTITYCLASS_HPP
 
 #include "ClassProperties.hpp"
-#include "EntityProperties.hpp"
+#include "EntityPropertyDefinition.hpp"
 
 #include <memory>
 #include <string>
@@ -81,14 +81,16 @@ namespace Sickle::Editor
          * @param name Name of the property to get.
          * @return The property definition, or nullptr if not found.
          */
-        EntityProperty *get_property(std::string const &name);
+        std::shared_ptr<EntityPropertyDefinition>
+        get_property(std::string const &name);
 
         /**
          * Get the entity properties.
          *
          * @return A collection of the entity properties.
          */
-        std::vector<EntityProperty *> get_entity_properties() const;
+        std::vector<std::shared_ptr<EntityPropertyDefinition>>
+        get_entity_properties() const;
 
     protected:
         friend class GameDefinition;
@@ -97,7 +99,7 @@ namespace Sickle::Editor
 
         void add_class_property(std::shared_ptr<ClassProperty> const &property);
         void add_entity_property(
-            std::shared_ptr<EntityProperty> const &property);
+            std::shared_ptr<EntityPropertyDefinition> const &property);
 
     private:
         std::string _type{"<undefined>"};
@@ -106,7 +108,7 @@ namespace Sickle::Editor
             std::shared_ptr<ClassProperty>> _class_properties{};
         std::unordered_map<
             std::string,
-            std::shared_ptr<EntityProperty>> _entity_properties{};
+            std::shared_ptr<EntityPropertyDefinition>> _entity_properties{};
     };
 }
 

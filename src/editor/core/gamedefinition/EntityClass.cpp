@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "GameDefinition.hpp"
+#include "EntityClass.hpp"
 
 using namespace Sickle::Editor;
 
@@ -33,10 +33,11 @@ std::string EntityClass::type() const
 }
 
 
-EntityProperty *EntityClass::get_property(std::string const &name)
+std::shared_ptr<EntityPropertyDefinition> EntityClass::get_property(
+    std::string const &name)
 {
     try {
-        return _entity_properties.at(name).get();
+        return _entity_properties.at(name);
     }
     catch (std::out_of_range const &e) {
         return nullptr;
@@ -44,11 +45,12 @@ EntityProperty *EntityClass::get_property(std::string const &name)
 }
 
 
-std::vector<EntityProperty *> EntityClass::get_entity_properties() const
+std::vector<std::shared_ptr<EntityPropertyDefinition>>
+EntityClass::get_entity_properties() const
 {
-    std::vector<EntityProperty *> properties{};
+    std::vector<std::shared_ptr<EntityPropertyDefinition>> properties{};
     for (auto const &kv : _entity_properties)
-        properties.push_back(kv.second.get());
+        properties.push_back(kv.second);
     return properties;
 }
 
@@ -66,7 +68,7 @@ void EntityClass::add_class_property(
 
 
 void EntityClass::add_entity_property(
-    std::shared_ptr<EntityProperty> const &property)
+    std::shared_ptr<EntityPropertyDefinition> const &property)
 {
     if (!property)
         return;

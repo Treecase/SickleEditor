@@ -19,11 +19,26 @@
 #include "Entity.hpp"
 
 #include <config/appid.hpp>
+#include <editor/core/gamedefinition/GameDefinition.hpp>
 
 #include <algorithm>
 #include <iostream> // temp
 
+
 using namespace Sickle::Editor;
+
+
+std::shared_ptr<EntityPropertyDefinition> Entity::classname_definition{
+    std::make_shared<EntityPropertyDefinition>(
+        "classname",
+        "",
+        PropertyType::STRING)};
+std::shared_ptr<EntityPropertyDefinition> Entity::origin_definition{
+    std::make_shared<EntityPropertyDefinition>(
+        "origin",
+        "0 0 0",
+        PropertyType::STRING)};
+
 
 
 EntityRef Entity::create()
@@ -67,7 +82,7 @@ EntityRef Entity::create(RMF::Entity const &entity)
 Entity::Entity()
 :   Glib::ObjectBase{typeid(Entity)}
 {
-    _properties["classname"] = "";
+    _properties.insert({"classname", Property{classname_definition}});
     _classinfo = EntityClass{};
 }
 
@@ -82,7 +97,8 @@ Entity::~Entity()
 Entity::operator MAP::Entity() const
 {
     MAP::Entity out{};
-    out.properties = _properties;
+    for (auto const &kv : _properties)
+        out.properties.insert({kv.first, kv.second.value});
     for (auto const &brush : _brushes)
         out.brushes.push_back(*brush.get());
     return out;
@@ -97,25 +113,40 @@ EntityClass Entity::classinfo() const
 
 std::string Entity::classname() const
 {
-    return _properties.at("classname");
+    return _properties.at("classname").value;
 }
 
 
 std::unordered_map<std::string, std::string> Entity::properties() const
 {
-    return _properties;
+    std::unordered_map<std::string, std::string> out{};
+    for (auto const &kv : _properties)
+        out.insert({kv.first, kv.second.value});
+    return out;
 }
 
 
 std::string Entity::get_property(std::string const &key) const
 {
-    return _properties.at(key);
+    return _properties.at(key).value;
 }
 
 
 void Entity::set_property(std::string const &key, std::string const &value)
 {
-    _properties[key] = value;
+    // If the key exists, just change the value.
+    try {
+        _properties.at(key).value = value;
+    }
+    // If the key doesn't exist, we have to create it.
+    catch (std::out_of_range const &e) {
+        _properties.insert({
+            key,
+            Property{std::make_shared<EntityPropertyDefinition>(
+                key,
+                "",
+                PropertyType::STRING)}});
+    }
     if (key == "classname")
         _on_classname_changed();
     signal_properties_changed().emit();
@@ -160,7 +191,7 @@ void Entity::remove_brush(BrushRef const &brush)
 Glib::ustring Entity::name() const
 {
     std::stringstream ss{};
-    ss << _properties.at("classname") << ' ' << this;
+    ss << classname() << ' ' << this;
     return Glib::ustring{ss.str()};
 }
 
@@ -194,8 +225,12 @@ void Entity::_on_classname_changed()
     }
 
     for (auto const &property : _classinfo.get_entity_properties())
-        _properties.insert({property->name(), property->default_value()});
+        _properties.insert({property->name(), Property{property}});
 
     if (_classinfo.type() == "PointClass")
-        _properties.insert({"origin", "0 0 0"});
+    {
+        _properties.insert({
+            origin_definition->name(),
+            Property{origin_definition}});
+    }
 }

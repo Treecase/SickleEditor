@@ -81,7 +81,7 @@ void GameDefinition::_merge_class(
     for (auto const &entity_property : cls->properties)
     {
         ec.add_entity_property(
-            EntityPropertyFactory::construct(entity_property));
+            EntityPropertyDefinitionFactory::construct(entity_property));
     }
 
     auto const bases = get_bases(cls);
