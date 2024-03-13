@@ -1,8 +1,11 @@
+add_subdirectory(raycast)
+
 add_library(world3d STATIC
     Brush.cpp
     DeferredExec.cpp
     PointEntityBox.cpp
     PointEntitySprite.cpp
+    RenderComponentFactory.cpp
     SolidEntity.cpp
     Face.cpp
     Texture.cpp

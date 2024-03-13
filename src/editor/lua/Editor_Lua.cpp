@@ -189,8 +189,10 @@ int luaopen_editor(lua_State *L)
 
     luaL_requiref(L, "selection", luaopen_selection, 0);
     luaL_requiref(L, "brushbox", luaopen_brushbox, 0);
+    luaL_requiref(L, "entity", luaopen_entity, 0);
     luaL_requiref(L, "face", luaopen_face, 0);
-    lua_setfield(L, -4, "face");
+    lua_setfield(L, -5, "face");
+    lua_setfield(L, -4, "entity");
     lua_setfield(L, -3, "brushbox");
     lua_setfield(L, -2, "selection");
 

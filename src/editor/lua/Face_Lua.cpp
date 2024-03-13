@@ -29,6 +29,13 @@ using namespace Sickle::Editor;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
+static int is_selected(lua_State *L)
+{
+    auto face = lface_check(L, 1);
+    lua_pushboolean(L, face->is_selected());
+    return 1;
+}
+
 static int get_texture(lua_State *L)
 {
     auto const f = lface_check(L, 1);
@@ -152,6 +159,7 @@ static int do_nothing(lua_State *L)
 
 
 static luaL_Reg methods[] = {
+    {"is_selected", is_selected},
     {"get_texture", get_texture},
     {"get_u", get_u},
     {"get_v", get_v},
