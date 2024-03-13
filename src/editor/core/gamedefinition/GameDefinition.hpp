@@ -19,51 +19,54 @@
 #ifndef SE_EDITOR_CORE_GAMEDEFINITION_HPP
 #define SE_EDITOR_CORE_GAMEDEFINITION_HPP
 
+#include "EntityClass.hpp"
+
 #include <files/fgd/fgd.hpp>
 
+#include <string>
 #include <unordered_map>
 
 
 namespace Sickle::Editor
 {
     /**
-     * Holds entity class information.
-     */
-    struct EntityClass
-    {
-        /// Class type (PointClass, SolidClass, etc.)
-        std::string type;
-        /// Class properties [base(), iconsprite(), etc.]
-        std::unordered_map<std::string, std::string> properties;
-        /// Entity properties. TODO
-        std::unordered_map<std::string, std::string> entity_properties;
-    };
-
-
-    /**
-     * Manages entity classes.
+     * Singleton which manages entity class definitions.
      */
     class GameDefinition
     {
     public:
-        /** Get a reference to the GameDefinition singleton. */
+        /**
+         * Get a reference to the GameDefinition singleton.
+         *
+         * @return Reference to the GameDefintion singleton.
+         */
         static GameDefinition &instance();
 
-        GameDefinition();
-
-        /** Add a game definition to the manager. */
+        /**
+         * Add a game definition to the manager.
+         *
+         * @param game The game to add.
+         */
         void add_game(FGD::GameDef const &game);
 
         /**
          * Look up an entity class.
          *
-         * Throws KeyError if the class does not exist.
+         * @param classname Name of the class to look up.
+         * @return The class information.
+         * @throw std::out_of_range if the class does not exist.
          */
         EntityClass lookup(std::string const &classname) const;
 
     private:
         std::unordered_map<std::string, EntityClass> _classes{};
 
+        void _merge_class(
+            EntityClass &ec,
+            std::shared_ptr<FGD::Class> cls,
+            FGD::GameDef const &game);
+
+        GameDefinition();
         GameDefinition(GameDefinition const &)=delete;
         GameDefinition &operator=(GameDefinition const &)=delete;
     };

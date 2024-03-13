@@ -16,8 +16,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SE_APPWIN_PROPERTY_EDITOR_HPP
-#define SE_APPWIN_PROPERTY_EDITOR_HPP
+#ifndef SE_APPWIN_PROPERTYEDITOR_HPP
+#define SE_APPWIN_PROPERTYEDITOR_HPP
+
+#include "CellRendererProperty.hpp"
 
 #include <editor/world/Entity.hpp>
 
@@ -31,18 +33,39 @@
 
 namespace Sickle::AppWin
 {
+    /**
+     * Allows the user to modify Entity properties.
+     *
+     * Displays the entity's properties in an editable TreeView. The user can
+     * rename, change the value of, and add or remove properties. Properties of
+     * different types are displayed using an appropriate CellRenderer, so eg.
+     * a string uses a CellRendererText while a number uses a CellRendererSpin.
+     */
     class PropertyEditor : public Gtk::Bin
     {
     public:
         PropertyEditor();
 
+        /** The entity currently being modified. */
         auto property_entity() {return _prop_entity.get_proxy();}
+        /** The entity currently being modified. */
         auto property_entity() const {return _prop_entity.get_proxy();}
+        /**
+         * Change the entity to be edited.
+         *
+         * @param entity The entity to edit.
+         */
         void set_entity(Editor::EntityRef const &entity);
+        /**
+         * Get the entity being edited.
+         *
+         * @return The entity being edited.
+         */
         Editor::EntityRef get_entity() const;
 
     protected:
         void on_entity_changed();
+        void on_entity_properties_changed();
         void on_name_edited(
             Glib::ustring const &path,
             Glib::ustring const &new_name);
@@ -56,14 +79,15 @@ namespace Sickle::AppWin
             Columns()
             {
                 add(name);
-                add(value);
+                add(renderer_value);
             }
-
             Gtk::TreeModelColumn<Glib::ustring> name{};
-            Gtk::TreeModelColumn<Glib::ustring> value{};
+            Gtk::TreeModelColumn<
+                CellRendererProperty::ValueType> renderer_value{};
         };
 
         Glib::Property<Editor::EntityRef> _prop_entity;
+        sigc::connection _conn_entity_properties_changed{};
 
         Gtk::Frame _frame{};
         // scroll, buttons

@@ -17,6 +17,8 @@
  */
 
 #include "PropertyEditor.hpp"
+#include "CellRendererProperty.hpp"
+
 
 using namespace Sickle::AppWin;
 
@@ -27,24 +29,24 @@ PropertyEditor::PropertyEditor()
 ,   _store{Gtk::ListStore::create(_columns)}
 ,   _properties{_store}
 {
-    property_entity().signal_changed().connect(
-        sigc::mem_fun(*this, &PropertyEditor::on_entity_changed));
+    _store->set_sort_column(_columns.name, Gtk::SortType::SORT_ASCENDING);
 
-    _store->set_sort_column(0, Gtk::SortType::SORT_ASCENDING);
-
+    // Name column.
     _properties.append_column_editable("Name", _columns.name);
-    _properties.append_column_editable("Value", _columns.value);
-
     auto cr = dynamic_cast<Gtk::CellRendererText *>(
         _properties.get_column_cell_renderer(0));
     cr->signal_edited().connect(
         sigc::mem_fun(*this, &PropertyEditor::on_name_edited), false);
-    cr = dynamic_cast<Gtk::CellRendererText *>(
-        _properties.get_column_cell_renderer(1));
-    cr->signal_edited().connect(
-        sigc::mem_fun(*this, &PropertyEditor::on_value_edited));
 
-    _scroll.add(_properties);
+    // Value column.
+    auto ren = Gtk::make_managed<CellRendererProperty>();
+    ren->property_mode().set_value(
+        Gtk::CellRendererMode::CELL_RENDERER_MODE_EDITABLE);
+    ren->signal_changed().connect(
+        sigc::mem_fun(*this, &PropertyEditor::on_value_edited));
+    auto col = Gtk::make_managed<Gtk::TreeViewColumn>("Value", *ren);
+    col->add_attribute(*ren, "value", _columns.renderer_value);
+    _properties.append_column(*col);
 
     _add_property_button.set_image_from_icon_name("list-add");
     _add_property_button.set_tooltip_text("Add a new property");
@@ -56,6 +58,11 @@ PropertyEditor::PropertyEditor()
     _remove_property_button.signal_clicked().connect(
         sigc::mem_fun(*this, &PropertyEditor::_remove_property));
 
+    _frame.set_label("Properties");
+
+    // Add widgets.
+    _scroll.add(_properties);
+
     _buttons_box.add(_add_property_button);
     _buttons_box.add(_remove_property_button);
 
@@ -63,9 +70,12 @@ PropertyEditor::PropertyEditor()
     _main_box.pack_end(_buttons_box, Gtk::PackOptions::PACK_SHRINK);
 
     _frame.add(_main_box);
-    _frame.set_label("Properties");
 
     add(_frame);
+
+    // Connect signals.
+    property_entity().signal_changed().connect(
+        sigc::mem_fun(*this, &PropertyEditor::on_entity_changed));
 }
 
 
@@ -84,15 +94,34 @@ Sickle::Editor::EntityRef PropertyEditor::get_entity() const
 
 void PropertyEditor::on_entity_changed()
 {
-    _store->clear();
-    auto entity = get_entity();
-    if (!entity)
-        return;
-    for (auto kv : entity->properties())
+    _conn_entity_properties_changed.disconnect();
+    on_entity_properties_changed();
+    if (auto const entity = get_entity())
     {
-        auto row = *_store->append();
-        row[_columns.name] = kv.first;
-        row[_columns.value] = kv.second;
+        _conn_entity_properties_changed = entity->signal_properties_changed()
+            .connect(
+                sigc::mem_fun(
+                    *this,
+                    &PropertyEditor::on_entity_properties_changed));
+    }
+}
+
+
+void PropertyEditor::on_entity_properties_changed()
+{
+    _store->clear();
+    if (auto const entity = get_entity())
+    {
+        for (auto kv : entity->properties())
+        {
+            auto it = _store->append();
+            it->set_value<Glib::ustring>(_columns.name, kv.first);
+            it->set_value(
+                _columns.renderer_value,
+                CellRendererProperty::ValueType{
+                    kv.second,
+                    entity->classinfo().get_property(kv.first)});
+        }
     }
 }
 
@@ -101,51 +130,46 @@ void PropertyEditor::on_name_edited(
     Glib::ustring const &path,
     Glib::ustring const &new_name)
 {
-    auto it = _store->get_iter(path);
+    auto const it = _store->get_iter(path);
     auto const old_name = it->get_value(_columns.name);
-    auto const value = it->get_value(_columns.value);
-    auto entity = get_entity();
+    auto const value = it->get_value(_columns.renderer_value);
+
+    auto const entity = get_entity();
     if (entity->remove_property(old_name))
-        entity->set_property(new_name, value);
+        entity->set_property(new_name, value.value);
 }
 
 
 void PropertyEditor::on_value_edited(
     Glib::ustring const &path,
-    Glib::ustring const &new_value)
+    Glib::ustring const &value)
 {
     auto const it = _store->get_iter(path);
     auto const name = it->get_value(_columns.name);
-    get_entity()->set_property(name, new_value);
+    auto the_value = it->get_value(_columns.renderer_value);
+
+    the_value.value = value;
+
+    it->set_value(_columns.renderer_value, the_value);
+    get_entity()->set_property(name, value);
 }
 
 
 
 void PropertyEditor::_add_property()
 {
-    if (!get_entity())
-        return;
-
-    auto row = *_store->append();
-    row[_columns.name] = "<name>";
-    row[_columns.value] = "<value>";
-
-    auto entity = get_entity();
-    entity->set_property(
-        row.get_value(_columns.name),
-        row.get_value(_columns.value));
+    if (auto const entity = get_entity())
+        entity->set_property("<name>", "<value>");
 }
 
 
 void PropertyEditor::_remove_property()
 {
-    auto sel = _properties.get_selection();
-    auto const it = sel->get_selected();
-    if (it)
+    auto const sel = _properties.get_selection();
+    if (auto const it = sel->get_selected())
     {
         auto const name = it->get_value(_columns.name);
-        auto entity = get_entity();
-        if (entity->remove_property(name))
-            _store->erase(it);
+        if (auto const entity = get_entity())
+            entity->remove_property(name);
     }
 }

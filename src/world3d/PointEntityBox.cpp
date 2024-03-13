@@ -114,7 +114,7 @@ void PointEntityBox::on_attach(Sickle::Componentable &obj)
         throw std::logic_error{"already attached"};
 
     _src = &dynamic_cast<Sickle::Editor::Entity const &>(obj);
-    if (_src->classinfo().type != "PointClass")
+    if (_src->classinfo().type() != "PointClass")
         throw std::invalid_argument{"must be PointClass"};
 
     push_queue([this](){_init();});
@@ -143,20 +143,13 @@ void PointEntityBox::_init()
     auto B = DEFAULT_BOX_SIZE * glm::vec3{+0.5f, +0.5f, +0.5f};
 
     auto const classinfo = _src->classinfo();
-    if (classinfo.properties.count("size"))
+    auto const size =\
+        classinfo.get_class_property<Sickle::Editor::ClassPropertySize>();
+    if (size)
     {
-        std::stringstream size_str{classinfo.properties.at("size")};
-        if (!extract_vector(size_str, A))
-            return;
-        char comma;
-        size_str >> comma;
-        // Second point is optional. If it's excluded, interpret A as the
-        // diameter of a centered cube.
-        if (!extract_vector(size_str, B))
-        {
-            B = A * glm::vec3{+0.5f, +0.5f, +0.5f};
-            A = A * glm::vec3{-0.5f, -0.5f, -0.5f};
-        }
+        auto const points = size->get_points();
+        A = points.first;
+        B = points.second;
     }
 
     std::vector<GLfloat> const vbo_data{

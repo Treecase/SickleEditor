@@ -20,7 +20,7 @@
 #include "About.hpp"
 
 #include <config/appid.hpp>
-#include <editor/core/GameDefinition.hpp>
+#include <editor/core/gamedefinition/GameDefinition.hpp>
 #include <world3d/Entity.hpp>
 
 #include <gtkmm/filechoosernative.h>

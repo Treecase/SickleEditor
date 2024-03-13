@@ -202,7 +202,7 @@ Sickle::MapArea3D::pick_object(glm::vec2 const &ssp)
 {
     static auto const is_collider =\
         [](std::shared_ptr<Component> const &c) -> bool {
-            if (std::dynamic_pointer_cast<World3D::BoxCollider>(c))
+            if (std::dynamic_pointer_cast<World3D::Collider>(c))
                 return true;
             return false;
         };

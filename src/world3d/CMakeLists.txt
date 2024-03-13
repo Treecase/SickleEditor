@@ -16,6 +16,7 @@ target_include_directories(world3d PRIVATE .)
 target_link_libraries(world3d
     PUBLIC
         PkgConfig::GTKMM
+        editor-core-gamedefinition
         editor-world
         glutils::glutils
         gtkglutils

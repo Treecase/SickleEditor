@@ -43,19 +43,20 @@ RenderComponentFactory::construct(Sickle::Editor::EditorObjectRef const &object)
     {
         auto entity = Sickle::Editor::EntityRef::cast_dynamic(object);
         auto const entity_class = entity->classinfo();
-        if (entity_class.type == "PointClass")
+        if (entity_class.type() == "PointClass")
         {
-            if (entity_class.properties.count("iconsprite"))
+            if (entity_class
+                .has_class_property<Sickle::Editor::ClassPropertyIconsprite>())
                 renderer = std::make_shared<PointEntitySprite>();
             else
                 renderer = std::make_shared<PointEntityBox>();
         }
-        else if (entity_class.type == "SolidClass")
+        else if (entity_class.type() == "SolidClass")
             renderer = std::make_shared<SolidEntity>();
         else
         {
             std::cout << "WARNING: entity has unknown class type '"
-                << entity_class.type << "'\n";
+                << entity_class.type() << "'\n";
         }
     }
 

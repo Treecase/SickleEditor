@@ -137,8 +137,11 @@ void PointEntitySprite::on_attach(Sickle::Componentable &obj)
         throw std::logic_error{"already attached"};
 
     _src = &dynamic_cast<Sickle::Editor::Entity &>(obj);
-    if (_src->classinfo().type != "PointClass")
+    if (_src->classinfo().type() != "PointClass")
         throw std::invalid_argument{"must be PointClass"};
+    if (!_src->classinfo()
+        .has_class_property<Sickle::Editor::ClassPropertyIconsprite>())
+        throw std::invalid_argument{"must have an iconsprite() class property"};
 
     push_queue([this](){_init();});
 }
@@ -184,9 +187,11 @@ void PointEntitySprite::_init_construct()
 void PointEntitySprite::_init()
 {
     // TODO: Only load textures once and share the data.
-    auto const relpath = _src->classinfo().properties.at("iconsprite");
+    auto const iconsprite =\
+        _src->classinfo()
+            .get_class_property<Sickle::Editor::ClassPropertyIconsprite>();
     auto const path =\
-        sprite_root_path + "/" + relpath.substr(1, relpath.size() - 2);
+        sprite_root_path + "/" + iconsprite->get_path();
 
     std::unique_ptr<GioFileSpriteStream> sprite_stream{nullptr};
     try {

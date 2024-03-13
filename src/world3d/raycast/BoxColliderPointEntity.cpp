@@ -42,7 +42,7 @@ void BoxColliderPointEntity::on_attach(Sickle::Componentable &obj)
         throw std::logic_error{"already attached"};
     auto &entity = dynamic_cast<Sickle::Editor::Entity &>(obj);
     auto const entity_class = entity.classinfo();
-    if (entity_class.type != "PointClass")
+    if (entity_class.type() != "PointClass")
         throw std::invalid_argument{"must be PointClass"};
     _src = &entity;
 
@@ -80,20 +80,13 @@ void BoxColliderPointEntity::update_bbox()
     auto point2 = DEFAULT_SIZE * glm::vec3{+0.5f, +0.5f, +0.5f};
 
     auto const classinfo = _src->classinfo();
-    if (classinfo.properties.count("size"))
+    auto const size =\
+        classinfo.get_class_property<Sickle::Editor::ClassPropertySize>();
+    if (size)
     {
-        std::stringstream size_str{classinfo.properties.at("size")};
-        if (!extract_vector(size_str, point1))
-            return;
-        // Second point is optional. If it's excluded, interpret point1 as the
-        // diameter of a centered cube.
-        char comma;
-        size_str >> comma;
-        if (!extract_vector(size_str, point2))
-        {
-            point2 = point1 * glm::vec3{+0.5f, +0.5f, +0.5f};
-            point1 = point1 * glm::vec3{-0.5f, -0.5f, -0.5f};
-        }
+        auto const points = size->get_points();
+        point1 = points.first;
+        point2 = points.second;
     }
 
     BBox3 const bbox{origin + point1, origin + point2};

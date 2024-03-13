@@ -29,7 +29,7 @@
 #include "ModeSelector.hpp"
 #include "OperationSearch.hpp"
 #include "Outliner.hpp"
-#include "PropertyEditor.hpp"
+#include "propertyeditor/PropertyEditor.hpp"
 
 #include <AppWin_Lua.hpp>
 #include <config/appid.hpp>
