@@ -19,7 +19,6 @@
 #include "LuaConsole.hpp"
 
 #include <config/appid.hpp>
-#include <gtkmm/cssprovider.h>
 
 #include <iostream>
 #include <sstream>
@@ -56,7 +55,10 @@ Sickle::LuaConsole::LuaConsole()
 :   Glib::ObjectBase{typeid(LuaConsole)}
 ,   Gtk::Box{}
 ,   _prop_lua_state{*this, "lua-state", nullptr}
+,   _css{Gtk::CssProvider::create()}
 {
+    _css->load_from_resource(SE_GRESOURCE_PREFIX "LuaConsole.css");
+
     property_lua_state().signal_changed().connect(
         sigc::mem_fun(*this, &LuaConsole::_on_lua_state_changed));
     _input.signal_activate().connect(
@@ -68,15 +70,17 @@ Sickle::LuaConsole::LuaConsole()
     pack_start(_scrollwin);
     add(_input);
 
-    auto const css = Gtk::CssProvider::create();
-    css->load_from_resource(SE_GRESOURCE_PREFIX "LuaConsole.css");
-    _input.get_style_context()->add_provider_for_screen(
-        Gdk::Screen::get_default(),
-        css,
+    get_style_context()->add_provider(
+        _css,
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-    _output.get_style_context()->add_provider_for_screen(
-        Gdk::Screen::get_default(),
-        css,
+    get_style_context()->add_class("luaconsole");
+
+    _input.get_style_context()->add_provider(
+        _css,
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    _output.get_style_context()->add_provider(
+        _css,
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     _output.set_editable(false);

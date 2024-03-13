@@ -22,6 +22,7 @@
 #include <se-lua/se-lua.hpp>
 
 #include <gtkmm/box.h>
+#include <gtkmm/cssprovider.h>
 #include <gtkmm/entry.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/textview.h>
@@ -77,6 +78,7 @@ namespace Sickle
 
     private:
         Glib::Property<gpointer> _prop_lua_state;
+        Glib::RefPtr<Gtk::CssProvider> _css{nullptr};
         DebugInfo _debug{};
         FILE *_fp{nullptr};
 

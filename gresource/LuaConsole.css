@@ -1,5 +1,6 @@
 /* Stylesheet for LuaConsole window elements. */
-entry
+/* The user input line. */
+.luaconsole entry
 {
     color: white;
     caret-color: white;
@@ -7,7 +8,8 @@ entry
     border-color: black;
     border-top-color: white;
 }
-textview.view text
+/* The console output. */
+.luaconsole textview.view text
 {
     color: white;
     caret-color: white;
