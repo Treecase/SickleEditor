@@ -30,10 +30,12 @@ static bool is_bit_set(uint32_t flags, int bit)
     return (flags >> bit) & 1;
 }
 
+
 static uint32_t set_bit(uint32_t flags, int bit)
 {
     return flags | (1 << bit);
 }
+
 
 static uint32_t clear_bit(uint32_t flags, int bit)
 {
@@ -41,11 +43,12 @@ static uint32_t clear_bit(uint32_t flags, int bit)
 }
 
 
+
 CellRendererFlags::CellRendererFlags()
 :   Glib::ObjectBase{typeid(CellRendererFlags)}
 ,   _prop_activatable{*this, "activatable", false}
 ,   _prop_bit_size{*this, "bit-size", 16}
-,   _prop_bits_per_row{*this, "bits-per-row", 16}
+,   _prop_bits_per_row{*this, "bits-per-row", 8}
 ,   _prop_column_padding{*this, "column-padding", 1}
 ,   _prop_flags{*this, "flags", 0}
 ,   _prop_row_padding{*this, "row-padding", 1}
@@ -117,7 +120,18 @@ void CellRendererFlags::render_vfunc(
     context->add_class("cell");
     for (int bit = 0; bit < BITS_IN_INT; ++bit)
     {
-        auto const rect = _get_cell_rect(bit);
+        auto const rect = _get_cell_rect_for_size(
+            bit,
+            (   cell_area.get_width()
+                - x_offset
+                - 2 * xpad
+                - padding.get_left() - padding.get_right()
+                - border.get_left() - border.get_right()),
+            (   cell_area.get_height()
+                - y_offset
+                - 2 * ypad
+                - padding.get_top() - padding.get_bottom()
+                - border.get_top() - border.get_bottom()));
         context->set_state(
             (   state
                 & ( Gtk::StateFlags::STATE_FLAG_SELECTED
@@ -188,7 +202,10 @@ bool CellRendererFlags::activate_vfunc(
 
         for (int bit = 0; bit < BITS_IN_INT; ++bit)
         {
-            auto const rect = _get_cell_rect(bit);
+            auto const rect = _get_cell_rect_for_size(
+                bit,
+                cell_area.get_width(),
+                cell_area.get_height());
             if (rect.intersects(click_rect))
             {
                 auto flags = property_flags().get_value();
@@ -209,7 +226,6 @@ bool CellRendererFlags::activate_vfunc(
 Gtk::SizeRequestMode CellRendererFlags::get_request_mode_vfunc() const
 {
     return Gtk::SizeRequestMode::SIZE_REQUEST_CONSTANT_SIZE;
-    // return Gtk::SizeRequestMode::SIZE_REQUEST_HEIGHT_FOR_WIDTH;
 }
 
 
@@ -265,16 +281,43 @@ void CellRendererFlags::get_preferred_height_vfunc(
 
 
 
-Gdk::Rectangle CellRendererFlags::_get_cell_rect(int bit) const
+Gdk::Rectangle CellRendererFlags::_get_cell_rect_for_size(
+    int bit,
+    int width,
+    int height) const
 {
-    int const col = bit % property_bits_per_row();
-    int const row = bit / property_bits_per_row();
+    int const num_columns = property_bits_per_row();
+    int const num_rows = static_cast<int>(
+        std::ceil(
+            static_cast<float>(BITS_IN_INT)
+            / static_cast<float>(property_bits_per_row())));
+
+    int const num_column_spacers = std::max(0, num_columns - 1);
+    int const num_row_spacers = std::max(0, num_rows - 1);
+
+    // Calculate horizontal size.
+    int const used_by_column_spacers = (
+        property_column_padding()
+        * num_column_spacers);
+    int const usable_for_columns = width - used_by_column_spacers;
+    int const cell_width = usable_for_columns / num_columns;
+
+    // Calculate vertical size.
+    int const used_by_row_spacers = property_row_padding() * num_row_spacers;
+    int const usable_for_rows = height - used_by_row_spacers;
+    int const cell_height = usable_for_rows / num_rows;
+
+    int const cell_size = std::min(cell_width, cell_height);
+
+    int const bit_column_idx = bit % property_bits_per_row();
+    int const bit_row_idx = bit / property_bits_per_row();
     return {
-        col * property_column_padding() + col * property_bit_size(),
-        row * property_row_padding() + row * property_bit_size(),
-        property_bit_size(),
-        property_bit_size()
-    };
+        (   bit_column_idx * property_column_padding()
+            + bit_column_idx * cell_size),
+        (   bit_row_idx * property_row_padding()
+            + bit_row_idx * cell_size),
+        cell_size,
+        cell_size};
 }
 
 

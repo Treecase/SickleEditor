@@ -129,7 +129,10 @@ namespace Sickle::AppWin
 
         sigc::signal<void(Glib::ustring const &)> _sig_flag_changed{};
 
-        Gdk::Rectangle _get_cell_rect(int bit) const;
+        Gdk::Rectangle _get_cell_rect_for_size(
+            int bit,
+            int width,
+            int height) const;
         Gtk::StateFlags _get_cell_state(int bit) const;
         void _on_activatable_changed();
     };
