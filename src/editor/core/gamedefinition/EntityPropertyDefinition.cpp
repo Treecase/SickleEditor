@@ -52,12 +52,50 @@ PropertyType EntityPropertyDefinition::type() const
 
 
 
-/* EntityPropertyChoices ---------------------------------------------------- */
+/* --- EntityPropertyChoices ------------------------------------------------ */
 EntityPropertyDefinitionChoices::EntityPropertyDefinitionChoices(
     std::string const &name,
     std::string const &default_value,
     std::map<int, std::string> const &choices)
 :   EntityPropertyDefinition{name, default_value, PropertyType::CHOICES}
 ,   _choices{choices}
+{
+}
+
+
+/* --- EntityPropertyDefinitionFlags ---------------------------------------- */
+static std::string generate_default(
+    std::map<int, std::pair<std::string, bool>> const &flagdef)
+{
+    unsigned int value = 0;
+    for (auto const &kv : flagdef)
+        value |= (kv.second.second? kv.first : 0);
+    return std::to_string(value);
+}
+
+EntityPropertyDefinitionFlags::EntityPropertyDefinitionFlags(
+    std::string const &name,
+    std::map<int, std::pair<std::string, bool>> const &flags)
+:   EntityPropertyDefinition{name, generate_default(flags), PropertyType::FLAGS}
+,   _flags{flags.cbegin(), flags.cend()}
+{
+}
+
+
+std::string EntityPropertyDefinitionFlags::get_description(int bit) const
+{
+    try {
+        return _flags.at(bit).description;
+    }
+    catch (std::out_of_range const &) {
+        return "";
+    }
+}
+
+
+EntityPropertyDefinitionFlags::FlagDef::FlagDef(
+    std::pair<std::string, bool> const &flagdef)
+:   description{flagdef.first}
+,   enabled_by_default{flagdef.second}
 {
 }

@@ -19,6 +19,8 @@
 #ifndef SE_APPWIN_PROPERTYEDITOR_CELLRENDERERPROPERTY_HPP
 #define SE_APPWIN_PROPERTYEDITOR_CELLRENDERERPROPERTY_HPP
 
+#include "cellrenderers/CellRendererFlags.hpp"
+
 #include <editor/world/Entity.hpp>
 
 #include <glibmm/property.h>
@@ -120,21 +122,24 @@ namespace Sickle::AppWin
 
 
     private:
-        struct Renderer {
+        struct Renderer
+        {
             virtual ~Renderer()=default;
             virtual void set_value(ValueType const &value)=0;
             virtual Gtk::CellRenderer *renderer()=0;
+            virtual Gtk::CellRendererMode mode()=0;
             sigc::signal<void(
                 Glib::ustring const &,
                 Glib::ustring const &)> signal_changed{};
         };
 
-        struct ComboRenderer : public Renderer {
+        struct ComboRenderer : public Renderer
+        {
             ComboRenderer();
             virtual ~ComboRenderer()=default;
             virtual void set_value(ValueType const &value) override;
             virtual Gtk::CellRenderer *renderer() override;
-
+            virtual Gtk::CellRendererMode mode();
         private:
             struct ChoicesColumnDefs : public Gtk::TreeModelColumnRecord
             {
@@ -152,27 +157,44 @@ namespace Sickle::AppWin
             void on_edited(Glib::ustring const &, Glib::ustring const &);
         };
 
-        struct IntegerRenderer : public Renderer {
+        struct FlagsRenderer : public Renderer
+        {
+            FlagsRenderer();
+            virtual ~FlagsRenderer()=default;
+            virtual void set_value(ValueType const &value);
+            virtual Gtk::CellRenderer *renderer();
+            virtual Gtk::CellRendererMode mode();
+        private:
+            CellRendererFlags _renderer{};
+            void on_renderer_flag_changed(Glib::ustring const &);
+        };
+
+        struct IntegerRenderer : public Renderer
+        {
             IntegerRenderer();
             virtual ~IntegerRenderer()=default;
             virtual void set_value(ValueType const &value) override;
             virtual Gtk::CellRenderer *renderer() override;
-
+            virtual Gtk::CellRendererMode mode();
+        private:
             Gtk::CellRendererSpin _renderer{};
         };
 
-        struct StringRenderer : public Renderer {
+        struct StringRenderer : public Renderer
+        {
             StringRenderer();
             virtual ~StringRenderer()=default;
             virtual void set_value(ValueType const &value) override;
             virtual Gtk::CellRenderer *renderer() override;
-
+            virtual Gtk::CellRendererMode mode();
+        private:
             Gtk::CellRendererText _renderer{};
         };
 
-        std::unique_ptr<ComboRenderer> _choices_renderer{nullptr};
-        std::unique_ptr<IntegerRenderer> _integer_renderer{nullptr};
-        std::unique_ptr<StringRenderer> _text_renderer{nullptr};
+        ComboRenderer _choices_renderer{};
+        FlagsRenderer _flags_renderer{};
+        IntegerRenderer _integer_renderer{};
+        StringRenderer _text_renderer{};
         Renderer *renderer{nullptr};
 
         Glib::Property<ValueType> _prop_value;
@@ -186,7 +208,7 @@ namespace Sickle::AppWin
         void on_choices_edited(
             Glib::ustring const &path,
             Glib::ustring const &value);
-        void on_float_edited(
+        void on_flags_edited(
             Glib::ustring const &path,
             Glib::ustring const &value);
         void on_integer_edited(

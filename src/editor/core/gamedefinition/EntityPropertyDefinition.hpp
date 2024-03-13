@@ -31,6 +31,7 @@ namespace Sickle::Editor
     enum PropertyType
     {
         CHOICES,
+        FLAGS,
         INTEGER,
         STRING,
         NUM_PROPERTYTYPES
@@ -97,6 +98,36 @@ namespace Sickle::Editor
 
     private:
         std::map<int, std::string> _choices{};
+    };
+
+    /**
+     * Flag properties are stored as an integer, interpreted as bitwise OR'd
+     * flags.
+     */
+    struct EntityPropertyDefinitionFlags : public EntityPropertyDefinition
+    {
+        EntityPropertyDefinitionFlags(
+            std::string const &name,
+            std::map<int, std::pair<std::string, bool>> const &flags);
+        virtual ~EntityPropertyDefinitionFlags()=default;
+
+        /**
+         * Get the description for a bit. The description is the blank string
+         * for undefined bits.
+         *
+         * @param bit The bit number. Note that this starts at 1 and goes to 32.
+         * @return The description string.
+         */
+        std::string get_description(int bit) const;
+
+    private:
+        struct FlagDef
+        {
+            std::string description;
+            bool enabled_by_default;
+            FlagDef(std::pair<std::string, bool> const &flagdef);
+        };
+        std::map<int, FlagDef> _flags{};
     };
 
 

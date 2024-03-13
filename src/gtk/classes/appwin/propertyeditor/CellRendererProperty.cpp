@@ -28,20 +28,19 @@ using namespace Sickle::AppWin;
 CellRendererProperty::CellRendererProperty()
 :   Glib::ObjectBase{typeid(CellRendererProperty)}
 ,   Gtk::CellRenderer{}
-,   _choices_renderer{std::make_unique<ComboRenderer>()}
-,   _integer_renderer{std::make_unique<IntegerRenderer>()}
-,   _text_renderer{std::make_unique<StringRenderer>()}
-,   renderer{_text_renderer.get()}
+,   renderer{&_text_renderer}
 ,   _prop_value{*this, "value"}
 {
     property_value().signal_changed().connect(
         sigc::mem_fun(*this, &CellRendererProperty::on_value_changed));
 
-    _choices_renderer->signal_changed.connect(
+    _choices_renderer.signal_changed.connect(
         sigc::mem_fun(*this, &CellRendererProperty::on_choices_edited));
-    _integer_renderer->signal_changed.connect(
+    _flags_renderer.signal_changed.connect(
+        sigc::mem_fun(*this, &CellRendererProperty::on_flags_edited));
+    _integer_renderer.signal_changed.connect(
         sigc::mem_fun(*this, &CellRendererProperty::on_integer_edited));
-    _text_renderer->signal_changed.connect(
+    _text_renderer.signal_changed.connect(
         sigc::mem_fun(*this, &CellRendererProperty::on_text_edited));
 }
 
@@ -138,13 +137,12 @@ void CellRendererProperty::on_value_changed()
     static std::unordered_map<Sickle::Editor::PropertyType, Renderer *> const
     RENDERERS
     {
-        {Sickle::Editor::PropertyType::CHOICES, _choices_renderer.get()},
-        {Sickle::Editor::PropertyType::INTEGER, _integer_renderer.get()},
-        {Sickle::Editor::PropertyType::STRING, _text_renderer.get()},
+        {Sickle::Editor::PropertyType::CHOICES, &_choices_renderer},
+        {Sickle::Editor::PropertyType::FLAGS, &_flags_renderer},
+        {Sickle::Editor::PropertyType::INTEGER, &_integer_renderer},
+        {Sickle::Editor::PropertyType::STRING, &_text_renderer},
     };
-    static auto const DEFAULT_RENDERER = RENDERERS.at(
-        Sickle::Editor::PropertyType::STRING);
-    renderer = DEFAULT_RENDERER;
+    renderer = &_text_renderer;
 
     auto const value = property_value().get_value();
     if (auto const type = value.type)
@@ -158,7 +156,7 @@ void CellRendererProperty::on_value_changed()
     }
 
     renderer->set_value(value);
-    property_mode() = Gtk::CellRendererMode::CELL_RENDERER_MODE_EDITABLE;
+    property_mode() = renderer->mode();
 }
 
 
@@ -170,7 +168,7 @@ void CellRendererProperty::on_choices_edited(
 }
 
 
-void CellRendererProperty::on_float_edited(
+void CellRendererProperty::on_flags_edited(
     Glib::ustring const &path,
     Glib::ustring const &value)
 {
@@ -191,118 +189,4 @@ void CellRendererProperty::on_text_edited(
     Glib::ustring const &value)
 {
     signal_changed().emit(path, value);
-}
-
-
-
-
-/* === Renderers ============================================================ */
-/* --- ComboRenderer -------------------------------------------------------- */
-CellRendererProperty::ComboRenderer::ComboRenderer()
-:   _store{Gtk::ListStore::create(_columns)}
-{
-    _renderer.property_editable() = true;
-    _renderer.property_model() = _store;
-    _renderer.property_text_column() = 1;
-    _renderer.signal_edited().connect(
-        sigc::mem_fun(*this, &ComboRenderer::on_edited));
-}
-
-void CellRendererProperty::ComboRenderer::set_value(ValueType const &value)
-{
-    auto const type =\
-        std::dynamic_pointer_cast<Editor::EntityPropertyDefinitionChoices>(
-            value.type);
-
-    // TODO: Wrong descriptions sometimes show up when modifying. Not sure why?
-    _store->clear();
-    for (auto const &kv : type->choices())
-    {
-        auto it = _store->append();
-        it->set_value(_columns.idx, kv.first);
-        it->set_value(_columns.desc, Glib::ustring{kv.second});
-    }
-
-    std::stringstream ss{value.value};
-    int value_idx = 0;
-    ss >> value_idx;
-
-    Glib::ustring display = "";
-    try {
-        display = type->choices().at(value_idx);
-    }
-    catch (std::out_of_range const &) {
-        display = value.value;
-    }
-    _renderer.property_text() = display;
-}
-
-Gtk::CellRenderer *CellRendererProperty::ComboRenderer::renderer()
-{
-    return &_renderer;
-}
-
-void CellRendererProperty::ComboRenderer::on_edited(
-    Glib::ustring const &path,
-    Glib::ustring const &displayed)
-{
-    auto the_value = displayed;
-
-    _store->foreach_iter(
-        [this, displayed, &the_value](
-            Gtk::TreeModel::iterator const &it) -> bool
-        {
-            auto const desc = it->get_value(_columns.desc);
-            if (desc == displayed)
-            {
-                the_value = std::to_string(it->get_value(_columns.idx));
-                return true;
-            }
-            else
-                return false;
-        });
-
-    signal_changed.emit(path, the_value);
-}
-
-
-/* --- IntegerRenderer ------------------------------------------------------ */
-CellRendererProperty::IntegerRenderer::IntegerRenderer()
-{
-    _renderer.property_adjustment() = Gtk::Adjustment::create(
-        0.0,
-        std::numeric_limits<int>::lowest(),
-        std::numeric_limits<int>::max(),
-        1.0);
-    _renderer.property_digits() = 0;
-    _renderer.property_editable() = true;
-    _renderer.signal_edited().connect(signal_changed.make_slot());
-}
-
-void CellRendererProperty::IntegerRenderer::set_value(ValueType const &value)
-{
-    _renderer.property_text() = value.value;
-}
-
-Gtk::CellRenderer *CellRendererProperty::IntegerRenderer::renderer()
-{
-    return &_renderer;
-}
-
-
-/* --- StringRenderer ------------------------------------------------------- */
-CellRendererProperty::StringRenderer::StringRenderer()
-{
-    _renderer.property_editable() = true;
-    _renderer.signal_edited().connect(signal_changed.make_slot());
-}
-
-void CellRendererProperty::StringRenderer::set_value(ValueType const &value)
-{
-    _renderer.property_text() = value.value;
-}
-
-Gtk::CellRenderer *CellRendererProperty::StringRenderer::renderer()
-{
-    return &_renderer;
 }

@@ -60,13 +60,20 @@ EntityPropertyDefinitionFactory::construct(
     }
     else if (typeid(*prop.get()) == typeid(FGD::FlagProperty))
     {
-        type = PropertyType::INTEGER;
         auto const flagprop =\
             std::dynamic_pointer_cast<FGD::FlagProperty>(prop);
-        uint32_t flags = 0;
+
+        std::map<int, std::pair<std::string, bool>> flagdefs{};
         for (auto const &kv : flagprop->flags)
-            flags |= kv.second.start_value? kv.first : 0;
-        default_value = std::to_string(flags);
+        {
+            flagdefs.insert({
+                kv.first,
+                {kv.second.description, kv.second.start_value}});
+        }
+
+        return std::make_shared<EntityPropertyDefinitionFlags>(
+            flagprop->name,
+            flagdefs);
     }
     else if (typeid(*prop.get()) == typeid(FGD::TargetSourceProperty))
     {
