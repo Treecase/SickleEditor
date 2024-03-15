@@ -77,18 +77,32 @@ EntityPropertyDefinitionFlags::EntityPropertyDefinitionFlags(
     std::string const &name,
     std::map<int, std::pair<std::string, bool>> const &flags)
 :   EntityPropertyDefinition{name, generate_default(flags), PropertyType::FLAGS}
-,   _flags{flags.cbegin(), flags.cend()}
 {
+    for (auto const &kv : flags)
+        _flags.at(kv.first).emplace(kv.second);
 }
 
 
 std::string EntityPropertyDefinitionFlags::get_description(int bit) const
 {
     try {
-        return _flags.at(bit).description;
+        return _flags.at(bit).value_or(FlagDef{}).description;
     }
     catch (std::out_of_range const &) {
         return "";
+    }
+}
+
+
+void EntityPropertyDefinitionFlags::merge(
+    EntityPropertyDefinitionFlags const &other)
+{
+    for (size_t i = 0; i < other._flags.size(); ++i)
+    {
+        auto &a = _flags.at(i);
+        auto const &b = other._flags.at(i);
+        if (!a.has_value() && b.has_value())
+            a = b.value();
     }
 }
 

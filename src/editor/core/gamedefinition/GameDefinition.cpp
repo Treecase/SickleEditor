@@ -31,6 +31,7 @@ static std::shared_ptr<FGD::Class> get_class_by_name(
 static std::vector<std::string> get_bases(std::shared_ptr<FGD::Class> cls);
 
 
+
 GameDefinition &GameDefinition::instance()
 {
     static GameDefinition singleton{};
@@ -47,12 +48,10 @@ void GameDefinition::add_game(FGD::GameDef const &game)
 {
     for (auto const &cls : game.classes)
     {
+        // BaseClasses cannot be instantiated.
         if (cls->type() == "BaseClass")
             continue;
-
-        EntityClass ec{cls->type()};
-        _merge_class(ec, cls, game);
-
+        auto ec = _instantiate_class(cls, game);
         _classes.insert({cls->name, ec});
     }
 }
@@ -65,31 +64,23 @@ EntityClass GameDefinition::lookup(std::string const &classname) const
 
 
 
-void GameDefinition::_merge_class(
-    EntityClass &ec,
-    std::shared_ptr<FGD::Class> cls,
+EntityClass GameDefinition::_instantiate_class(
+    std::shared_ptr<FGD::Class> const &cls,
     FGD::GameDef const &game)
 {
     if (!cls)
-        return;
+        return EntityClass{};
 
-    for (auto const &class_property : cls->attributes)
-    {
-        ec.add_class_property(
-            ClassPropertyFactory::construct(class_property));
-    }
-    for (auto const &entity_property : cls->properties)
-    {
-        ec.add_entity_property(
-            EntityPropertyDefinitionFactory::construct(entity_property));
-    }
-
+    EntityClass ec{*cls};
+    // Resolve inheritance hierarchy.
     auto const bases = get_bases(cls);
-    for (auto const base : bases)
+    for (auto const &name : bases)
     {
-        auto const base_cls = get_class_by_name(game, base);
-        _merge_class(ec, base_cls, game);
+        auto const base = get_class_by_name(game, name);
+        auto const base_ec = _instantiate_class(base, game);
+        ec.inherit_from(base_ec);
     }
+    return ec;
 }
 
 

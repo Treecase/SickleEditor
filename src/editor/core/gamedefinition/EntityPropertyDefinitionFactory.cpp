@@ -19,6 +19,8 @@
 
 #include "EntityPropertyDefinition.hpp"
 
+#include <cmath>
+
 
 using namespace Sickle::Editor;
 
@@ -67,7 +69,7 @@ EntityPropertyDefinitionFactory::construct(
         for (auto const &kv : flagprop->flags)
         {
             flagdefs.insert({
-                kv.first,
+                static_cast<int>(std::log2(kv.first)),
                 {kv.second.description, kv.second.start_value}});
         }
 

@@ -37,6 +37,7 @@ namespace Sickle::Editor
     {
     public:
         EntityClass()=default;
+        EntityClass(FGD::Class const &cls);
 
         /**
          * Class type (PointClass, SolidClass, etc.)
@@ -75,6 +76,14 @@ namespace Sickle::Editor
         }
 
         /**
+         * Check if the class has an entity property matching the given name.
+         *
+         * @param name Name of the property to check.
+         * @return True if the class has the property, else false.
+         */
+        bool has_property(std::string const &name) const;
+
+        /**
          * Get the entity property definition identitified by name, or nullptr
          * if it doesn't exist.
          *
@@ -82,7 +91,7 @@ namespace Sickle::Editor
          * @return The property definition, or nullptr if not found.
          */
         std::shared_ptr<EntityPropertyDefinition>
-        get_property(std::string const &name);
+        get_property(std::string const &name) const;
 
         /**
          * Get the entity properties.
@@ -92,12 +101,19 @@ namespace Sickle::Editor
         std::vector<std::shared_ptr<EntityPropertyDefinition>>
         get_entity_properties() const;
 
+        /**
+         * Inherit properties from another class.
+         *
+         * @param other The class to inherit from.
+         */
+        void inherit_from(EntityClass const &other);
+
     protected:
-        friend class GameDefinition;
-
-        EntityClass(std::string const &type);
-
+        /// Attempt to add a class property. Fails silently if the slot is
+        /// already filled.
         void add_class_property(std::shared_ptr<ClassProperty> const &property);
+        /// Attempt to add an entity property. Fails silently if the property
+        /// already exists.
         void add_entity_property(
             std::shared_ptr<EntityPropertyDefinition> const &property);
 

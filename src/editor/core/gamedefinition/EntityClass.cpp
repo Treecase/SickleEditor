@@ -21,9 +21,19 @@
 using namespace Sickle::Editor;
 
 
-EntityClass::EntityClass(std::string const &type)
-:   _type{type}
+EntityClass::EntityClass(FGD::Class const &cls)
+:   _type{cls.type()}
 {
+    for (auto const &class_property : cls.attributes)
+    {
+        add_class_property(
+            ClassPropertyFactory::construct(class_property));
+    }
+    for (auto const &entity_property : cls.properties)
+    {
+        add_entity_property(
+            EntityPropertyDefinitionFactory::construct(entity_property));
+    }
 }
 
 
@@ -33,8 +43,14 @@ std::string EntityClass::type() const
 }
 
 
+bool EntityClass::has_property(std::string const &name) const
+{
+    return _entity_properties.count(name) != 0;
+}
+
+
 std::shared_ptr<EntityPropertyDefinition> EntityClass::get_property(
-    std::string const &name)
+    std::string const &name) const
 {
     try {
         return _entity_properties.at(name);
@@ -55,15 +71,24 @@ EntityClass::get_entity_properties() const
 }
 
 
+void EntityClass::inherit_from(EntityClass const &other)
+{
+    for (auto const &kv : other._class_properties)
+        add_class_property(kv.second);
+    for (auto const &kv : other._entity_properties)
+        add_entity_property(kv.second);
+}
+
+
 
 void EntityClass::add_class_property(
     std::shared_ptr<ClassProperty> const &property)
 {
     if (!property)
         return;
-    _class_properties.insert_or_assign(
+    _class_properties.insert({
         std::type_index{typeid(*property.get())},
-        property);
+        property});
 }
 
 
@@ -72,5 +97,23 @@ void EntityClass::add_entity_property(
 {
     if (!property)
         return;
-    _entity_properties.insert_or_assign(property->name(), property);
+    // Flag properties need special handling...
+    if (auto const &newflagprop =\
+        std::dynamic_pointer_cast<EntityPropertyDefinitionFlags>(property))
+    {
+        std::shared_ptr<EntityPropertyDefinitionFlags> flagprop{nullptr};
+        try {
+            flagprop = std::dynamic_pointer_cast<EntityPropertyDefinitionFlags>(
+                get_property(property->name()));
+        }
+        catch (std::out_of_range const &) {
+        }
+        // ...But only if the property already exists.
+        if (flagprop)
+        {
+            flagprop->merge(*newflagprop);
+            return;
+        }
+    }
+    _entity_properties.insert({property->name(), property});
 }

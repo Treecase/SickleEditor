@@ -21,7 +21,10 @@
 
 #include <files/fgd/fgd.hpp>
 
+#include <array>
+#include <map>
 #include <memory>
+#include <optional>
 #include <string>
 
 
@@ -115,19 +118,28 @@ namespace Sickle::Editor
          * Get the description for a bit. The description is the blank string
          * for undefined bits.
          *
-         * @param bit The bit number. Note that this starts at 1 and goes to 32.
+         * @param bit The bit number. Note that this starts at 0 and goes to 31.
          * @return The description string.
          */
         std::string get_description(int bit) const;
 
+        /**
+         * Merge two Flag properties together. If a bit already exists, the
+         * current value takes precedent. (ie. nothing gets overwritten.)
+         *
+         * @param other Property to insert bits from.
+         */
+        void merge(EntityPropertyDefinitionFlags const &other);
+
     private:
         struct FlagDef
         {
-            std::string description;
-            bool enabled_by_default;
+            std::string description{""};
+            bool enabled_by_default{false};
+            FlagDef()=default;
             FlagDef(std::pair<std::string, bool> const &flagdef);
         };
-        std::map<int, FlagDef> _flags{};
+        std::array<std::optional<FlagDef>, 32> _flags{};
     };
 
 

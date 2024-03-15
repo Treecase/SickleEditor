@@ -61,9 +61,8 @@ namespace Sickle::Editor
     private:
         std::unordered_map<std::string, EntityClass> _classes{};
 
-        void _merge_class(
-            EntityClass &ec,
-            std::shared_ptr<FGD::Class> cls,
+        static EntityClass _instantiate_class(
+            std::shared_ptr<FGD::Class> const &cls,
             FGD::GameDef const &game);
 
         GameDefinition();
