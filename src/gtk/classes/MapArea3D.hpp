@@ -55,7 +55,7 @@ namespace Sickle
 
         MapArea3D(Editor::EditorRef ed);
 
-        Editor::EditorObjectRef pick_object(glm::vec2 const &P);
+        Editor::EditorObjectRef pick_object(ScreenSpacePoint const &P);
         GLSpacePoint screenspace_to_glspace(ScreenSpacePoint const &) const;
 
         auto get_editor() {return _editor;}

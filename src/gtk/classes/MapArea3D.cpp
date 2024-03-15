@@ -198,7 +198,7 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
 
 
 Sickle::Editor::EditorObjectRef
-Sickle::MapArea3D::pick_object(glm::vec2 const &ssp)
+Sickle::MapArea3D::pick_object(ScreenSpacePoint const &ssp)
 {
     static auto const is_collider =\
         [](std::shared_ptr<Component> const &c) -> bool {
@@ -211,9 +211,36 @@ Sickle::MapArea3D::pick_object(glm::vec2 const &ssp)
     float pt = INFINITY;
 
     auto const &_camera = property_camera().get_value();
-    // TODO: For now we pick straight forward from the camera, without
-    // considering where the user actually clicked
-    auto const ray_delta = glm::normalize(_camera.getLookDirection());
+
+    /* Calculate raycast direction. */
+    // Normalize click coords to the range [-1, +1].
+    glm::vec2 const dimensions{get_width(), get_height()};
+    auto const min_dimension = glm::min(dimensions.x, dimensions.y);
+    glm::vec2 const sspN{
+        (ssp.x - 0.5f * dimensions.x) / (0.5f * min_dimension),
+        (ssp.y - 0.5f * dimensions.y) / (0.5f * min_dimension)};
+
+    // Calculate length of camera plane.
+    auto const half_fov = 0.5f * _camera.fov;
+    auto const distance_to_camera_plane = 1.0f;
+    auto const length_of_camera_plane = (
+        (distance_to_camera_plane * glm::sin(glm::radians(half_fov)))
+        / glm::sin(glm::radians(90.0f - half_fov)));
+
+    // Calculate x/y offsets along camera plane.
+    auto const x_component = (
+        -sspN.x
+        * length_of_camera_plane
+        * glm::normalize(_camera.getSideDirection()));
+    auto const y_component = (
+        -sspN.y
+        * length_of_camera_plane
+        * glm::normalize(_camera.getUpDirection()));
+
+    auto const ray_delta = glm::normalize(
+        x_component
+        + y_component
+        + glm::normalize(_camera.getLookDirection()));
 
     // Camera is operating in GL space, map vertices are in map space. This is
     // used to transform map vertices into GL space.
