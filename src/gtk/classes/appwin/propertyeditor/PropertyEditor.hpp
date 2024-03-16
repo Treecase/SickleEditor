@@ -80,10 +80,12 @@ namespace Sickle::AppWin
             {
                 add(name);
                 add(renderer_value);
+                add(tooltip);
             }
             Gtk::TreeModelColumn<Glib::ustring> name{};
             Gtk::TreeModelColumn<
                 CellRendererProperty::ValueType> renderer_value{};
+            Gtk::TreeModelColumn<Glib::ustring> tooltip{};
         };
 
         Glib::Property<Editor::EntityRef> _prop_entity;

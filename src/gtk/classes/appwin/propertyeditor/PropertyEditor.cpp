@@ -23,6 +23,10 @@
 using namespace Sickle::AppWin;
 
 
+static Glib::ustring generate_tooltip(
+    std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property);
+
+
 PropertyEditor::PropertyEditor()
 :   Glib::ObjectBase{typeid(PropertyEditor)}
 ,   _prop_entity{*this, "entity", {}}
@@ -47,6 +51,8 @@ PropertyEditor::PropertyEditor()
     auto col = Gtk::make_managed<Gtk::TreeViewColumn>("Value", *ren);
     col->add_attribute(*ren, "value", _columns.renderer_value);
     _properties.append_column(*col);
+
+    _properties.set_tooltip_column(_columns.tooltip.index());
 
     _add_property_button.set_image_from_icon_name("list-add");
     _add_property_button.set_tooltip_text("Add a new property");
@@ -112,6 +118,7 @@ void PropertyEditor::on_entity_properties_changed()
     _store->clear();
     if (auto const entity = get_entity())
     {
+        auto const &ec = entity->classinfo();
         for (auto kv : entity->properties())
         {
             auto it = _store->append();
@@ -121,6 +128,8 @@ void PropertyEditor::on_entity_properties_changed()
                 CellRendererProperty::ValueType{
                     kv.second,
                     entity->classinfo().get_property(kv.first)});
+            auto const &propdef = ec.get_property(kv.first);
+            it->set_value(_columns.tooltip, generate_tooltip(propdef));
         }
     }
 }
@@ -172,4 +181,30 @@ void PropertyEditor::_remove_property()
         if (auto const entity = get_entity())
             entity->remove_property(name);
     }
+}
+
+
+
+static Glib::ustring generate_tooltip(
+    std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property)
+{
+    if (!property)
+        return "";
+    if (property->type() == Sickle::Editor::PropertyType::FLAGS)
+    {
+        auto const flags =\
+            std::dynamic_pointer_cast<
+                Sickle::Editor::EntityPropertyDefinitionFlags>(property);
+        Glib::ustring text{};
+        for (int i = 0; i < 32; ++i)
+        {
+            auto const desc = flags->get_description(i);
+            if (!desc.empty())
+                text += std::to_string(i) + ": " + desc + "\n";
+        }
+        if (!text.empty())
+            text.erase(text.size() - 1);
+        return text;
+    }
+    return "";
 }
