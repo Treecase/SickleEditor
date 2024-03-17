@@ -47,10 +47,10 @@ static uint32_t clear_bit(uint32_t flags, int bit)
 CellRendererFlags::CellRendererFlags()
 :   Glib::ObjectBase{typeid(CellRendererFlags)}
 ,   _prop_activatable{*this, "activatable", false}
-,   _prop_bit_size{*this, "bit-size", 16}
-,   _prop_bits_per_row{*this, "bits-per-row", 8}
+,   _prop_bits_per_row{*this, "bits-per-row", 16}
 ,   _prop_column_padding{*this, "column-padding", 1}
 ,   _prop_flags{*this, "flags", 0}
+,   _prop_mask{*this, "mask", 0xffffffff}
 ,   _prop_row_padding{*this, "row-padding", 1}
 {
     property_activatable().signal_changed().connect(
@@ -132,31 +132,9 @@ void CellRendererFlags::render_vfunc(
                 - 2 * ypad
                 - padding.get_top() - padding.get_bottom()
                 - border.get_top() - border.get_bottom()));
-        context->set_state(
-            (   state
-                & ( Gtk::StateFlags::STATE_FLAG_SELECTED
-                    | Gtk::StateFlags::STATE_FLAG_PRELIGHT))
-                ? Gtk::StateFlags::STATE_FLAG_NORMAL
-                : Gtk::StateFlags::STATE_FLAG_PRELIGHT);
-        context->render_background(
-            cr,
-            (   cell_area.get_x()
-                + x_offset
-                + xpad
-                + padding.get_left()
-                + border.get_left()
-                + rect.get_x()),
-            (   cell_area.get_y()
-                + y_offset
-                + ypad
-                + padding.get_top()
-                + border.get_top()
-                + rect.get_y()
-            ),
-            rect.get_width(),
-            rect.get_height());
         context->set_state(state | _get_cell_state(bit));
-        context->render_option(
+        render_bit(
+            context,
             cr,
             (   cell_area.get_x()
                 + x_offset
@@ -213,7 +191,7 @@ bool CellRendererFlags::activate_vfunc(
                     flags = clear_bit(flags, bit);
                 else
                     flags = set_bit(flags, bit);
-                property_flags().set_value(flags);
+                property_flags().set_value(flags & property_mask());
                 signal_flag_changed().emit(path);
                 return true;
             }
@@ -237,10 +215,7 @@ void CellRendererFlags::get_preferred_width_vfunc(
     int const column_count = property_bits_per_row();
     int const padding_count = std::max(0, column_count - 1);
 
-    minimum_width = (
-        column_count * property_bit_size()
-        + padding_count * property_column_padding()
-    );
+    minimum_width = column_count + padding_count;
     natural_width = minimum_width;
 }
 
@@ -254,30 +229,75 @@ void CellRendererFlags::get_preferred_height_vfunc(
         (float)BITS_IN_INT / (float)property_bits_per_row());
     int const padding_count = std::max(0, row_count - 1);
 
-    minimum_height = (
-        row_count * property_bit_size()
-        + padding_count * property_row_padding()
-    );
+    minimum_height = row_count + padding_count;
     natural_height = minimum_height;
 }
 
 
-// void CellRendererFlags::get_preferred_width_for_height_vfunc(
-//     Gtk::Widget &widget,
-//     int height,
-//     int &minimum_width,
-//     int &natural_width) const
-// {
-// }
+void CellRendererFlags::get_preferred_width_for_height_vfunc(
+    Gtk::Widget &widget,
+    int height,
+    int &minimum_width,
+    int &natural_width) const
+{
+    get_preferred_width(widget, minimum_width, natural_width);
+}
 
 
-// void CellRendererFlags::get_preferred_height_for_width_vfunc(
-//     Gtk::Widget &widget,
-//     int width,
-//     int &minimum_height,
-//     int &natural_height) const
-// {
-// }
+void CellRendererFlags::get_preferred_height_for_width_vfunc(
+    Gtk::Widget &widget,
+    int width,
+    int &minimum_height,
+    int &natural_height) const
+{
+    get_preferred_height(widget, minimum_height, natural_height);
+}
+
+
+void CellRendererFlags::render_bit(
+    Glib::RefPtr<Gtk::StyleContext> const &context,
+    Cairo::RefPtr<Cairo::Context> const &cr,
+    double x, double y,
+    double width, double height) const
+{
+    context->context_save();
+    cr->save();
+    auto const fg = context->get_color(context->get_state());
+    auto const bg = context->get_color(
+        context->get_state() | Gtk::StateFlags::STATE_FLAG_INSENSITIVE);
+
+    if (context->get_state() & Gtk::StateFlags::STATE_FLAG_CHECKED)
+    {
+        cr->set_source_rgba(
+            fg.get_red(),
+            fg.get_green(),
+            fg.get_blue(),
+            fg.get_alpha());
+    }
+    else
+    {
+        cr->set_source_rgba(
+            bg.get_red(),
+            bg.get_green(),
+            bg.get_blue(),
+            bg.get_alpha());
+    }
+    cr->rectangle(x, y, width, height);
+    cr->fill();
+
+    cr->set_antialias(Cairo::Antialias::ANTIALIAS_NONE);
+    cr->set_line_width(1.0);
+    cr->set_source_rgba(
+        fg.get_red(),
+        fg.get_green(),
+        fg.get_blue(),
+        fg.get_alpha());
+    cr->rectangle(x+1, y+1, width-1, height-1);
+    cr->stroke();
+
+    cr->restore();
+    context->context_restore();
+}
 
 
 
@@ -307,14 +327,31 @@ Gdk::Rectangle CellRendererFlags::_get_cell_rect_for_size(
     int const usable_for_rows = height - used_by_row_spacers;
     int const cell_height = usable_for_rows / num_rows;
 
+    // Cells are square, so cell size will be the minimum dimension.
     int const cell_size = std::min(cell_width, cell_height);
+
+    // Calculate horizontal padding.
+    int const unused_horizontal = (
+        width
+        - num_column_spacers
+        - num_columns * cell_size);
+    int const padding_horizontal = unused_horizontal / 2;
+
+    // Calculate vertical padding.
+    int const unused_vertical = (
+        height
+        - num_row_spacers
+        - num_rows * cell_size);
+    int const padding_vertical = unused_vertical / 2;
 
     int const bit_column_idx = bit % property_bits_per_row();
     int const bit_row_idx = bit / property_bits_per_row();
     return {
-        (   bit_column_idx * property_column_padding()
+        (   padding_horizontal
+            + bit_column_idx * property_column_padding()
             + bit_column_idx * cell_size),
-        (   bit_row_idx * property_row_padding()
+        (   padding_vertical
+            + bit_row_idx * property_row_padding()
             + bit_row_idx * cell_size),
         cell_size,
         cell_size};
@@ -323,10 +360,13 @@ Gdk::Rectangle CellRendererFlags::_get_cell_rect_for_size(
 
 Gtk::StateFlags CellRendererFlags::_get_cell_state(int bit) const
 {
+    Gtk::StateFlags state = Gtk::StateFlags::STATE_FLAG_NORMAL;
     if (is_bit_set(property_flags(), bit))
-        return Gtk::StateFlags::STATE_FLAG_CHECKED;
-    else
-        return Gtk::StateFlags::STATE_FLAG_NORMAL;
+        state |= Gtk::StateFlags::STATE_FLAG_CHECKED;
+    if (!is_bit_set(property_mask(), bit))
+        state |= Gtk::StateFlags::STATE_FLAG_INSENSITIVE;
+
+    return state;
 }
 
 

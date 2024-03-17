@@ -83,6 +83,17 @@ EntityPropertyDefinitionFlags::EntityPropertyDefinitionFlags(
 }
 
 
+bool EntityPropertyDefinitionFlags::is_bit_defined(int bit) const
+{
+    try {
+        return _flags.at(bit).has_value();
+    }
+    catch (std::out_of_range const &) {
+        return false;
+    }
+}
+
+
 std::string EntityPropertyDefinitionFlags::get_description(int bit) const
 {
     try {

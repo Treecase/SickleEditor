@@ -115,6 +115,14 @@ namespace Sickle::Editor
         virtual ~EntityPropertyDefinitionFlags()=default;
 
         /**
+         * Check if a bit is defined.
+         *
+         * @param bit The bit number. Note that this starts at 0 and goes to 31.
+         * @return True if the bit is defined, else false.
+         */
+        bool is_bit_defined(int bit) const;
+
+        /**
          * Get the description for a bit. The description is the blank string
          * for undefined bits.
          *

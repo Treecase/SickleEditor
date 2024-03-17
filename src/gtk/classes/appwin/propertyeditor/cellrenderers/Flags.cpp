@@ -42,7 +42,17 @@ void CellRendererProperty::FlagsRenderer::set_value(ValueType const &value)
     uint32_t flags = 0;
     std::stringstream ss{value.value};
     ss >> flags;
+
+    auto const &type =\
+        std::dynamic_pointer_cast<Editor::EntityPropertyDefinitionFlags>(
+            value.type);
+
+    uint32_t mask = 0;
+    for (int i = 0; i < 32; ++i)
+        mask |= (type->is_bit_defined(i)? (1 << i) : 0);
+
     _renderer.property_flags() = flags;
+    _renderer.property_mask() = mask;
 }
 
 

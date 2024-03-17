@@ -46,10 +46,6 @@ namespace Sickle::AppWin
         auto property_activatable() const
         {return _prop_activatable.get_proxy();}
 
-        /** Size of each bit cell in pixels. */
-        auto property_bit_size() {return _prop_bit_size.get_proxy();}
-        auto property_bit_size() const {return _prop_bit_size.get_proxy();}
-
         /** Number of bits per display row. */
         auto property_bits_per_row() {return _prop_bits_per_row.get_proxy();}
         auto property_bits_per_row() const
@@ -64,6 +60,13 @@ namespace Sickle::AppWin
         /** The bitwise flag values being displayed. */
         auto property_flags() {return _prop_flags.get_proxy();}
         auto property_flags() const {return _prop_flags.get_proxy();}
+
+        /**
+         * The bit mask for displayed values. Masked-out values will display
+         * faded and not react to user input.
+         */
+        auto property_mask() {return _prop_mask.get_proxy();}
+        auto property_mask() const {return _prop_mask.get_proxy();}
 
         /** Height of rows between the bit cells. */
         auto property_row_padding()
@@ -104,27 +107,33 @@ namespace Sickle::AppWin
             int &minimum_height,
             int &natural_height) const override;
 
-        // virtual void get_preferred_width_for_height_vfunc(
-        //     Gtk::Widget &widget,
-        //     int height,
-        //     int &minimum_width,
-        //     int &natural_width) const override;
+        virtual void get_preferred_width_for_height_vfunc(
+            Gtk::Widget &widget,
+            int height,
+            int &minimum_width,
+            int &natural_width) const override;
 
-        // virtual void get_preferred_height_for_width_vfunc(
-        //     Gtk::Widget &widget,
-        //     int width,
-        //     int &minimum_height,
-        //     int &natural_height) const override;
+        virtual void get_preferred_height_for_width_vfunc(
+            Gtk::Widget &widget,
+            int width,
+            int &minimum_height,
+            int &natural_height) const override;
+
+        virtual void render_bit(
+            Glib::RefPtr<Gtk::StyleContext> const &context,
+            Cairo::RefPtr<Cairo::Context> const &cr,
+            double x, double y,
+            double width, double height) const;
 
 
     private:
         static constexpr int BITS_IN_INT = 32;
 
         Glib::Property<bool> _prop_activatable;
-        Glib::Property<int> _prop_bit_size;
         Glib::Property<int> _prop_bits_per_row;
         Glib::Property<int> _prop_column_padding;
         Glib::Property<uint32_t> _prop_flags;
+        Glib::Property<uint32_t> _prop_mask;
         Glib::Property<int> _prop_row_padding;
 
         sigc::signal<void(Glib::ustring const &)> _sig_flag_changed{};
