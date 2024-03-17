@@ -24,12 +24,15 @@
 using namespace Sickle::AppWin;
 
 
+CellRendererProperty::ComboRenderer::ChoicesColumnDefs const
+CellRendererProperty::ComboRenderer::columns{};
+
+
 CellRendererProperty::ComboRenderer::ComboRenderer()
-:   _store{Gtk::ListStore::create(_columns)}
+:   filter_edit{[](auto p, auto v){return v;}}
 {
     _renderer.property_editable() = true;
-    _renderer.property_model() = _store;
-    _renderer.property_text_column() = 1;
+    _renderer.property_text_column() = columns.desc.index();
     _renderer.signal_edited().connect(
         sigc::mem_fun(*this, &ComboRenderer::on_edited));
 }
@@ -40,15 +43,6 @@ void CellRendererProperty::ComboRenderer::set_value(ValueType const &value)
     auto const type =\
         std::dynamic_pointer_cast<Editor::EntityPropertyDefinitionChoices>(
             value.type);
-
-    // TODO: Wrong descriptions sometimes show up when modifying. Not sure why?
-    _store->clear();
-    for (auto const &kv : type->choices())
-    {
-        auto it = _store->append();
-        it->set_value(_columns.idx, kv.first);
-        it->set_value(_columns.desc, Glib::ustring{kv.second});
-    }
 
     std::stringstream ss{value.value};
     int value_idx = 0;
@@ -81,21 +75,6 @@ void CellRendererProperty::ComboRenderer::on_edited(
     Glib::ustring const &path,
     Glib::ustring const &displayed)
 {
-    auto the_value = displayed;
-
-    _store->foreach_iter(
-        [this, displayed, &the_value](
-            Gtk::TreeModel::iterator const &it) -> bool
-        {
-            auto const desc = it->get_value(_columns.desc);
-            if (desc == displayed)
-            {
-                the_value = std::to_string(it->get_value(_columns.idx));
-                return true;
-            }
-            else
-                return false;
-        });
-
+    auto const the_value = std::invoke(filter_edit, path, displayed);
     signal_changed.emit(path, the_value);
 }

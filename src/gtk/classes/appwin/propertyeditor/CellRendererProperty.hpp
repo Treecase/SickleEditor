@@ -31,6 +31,7 @@
 #include <gtkmm/cellrenderertext.h>
 #include <gtkmm/liststore.h>
 
+#include <functional>
 #include <memory>
 
 
@@ -63,8 +64,86 @@ namespace Sickle::AppWin
             }
         };
 
+        struct Renderer
+        {
+            virtual ~Renderer()=default;
+            virtual void set_value(ValueType const &value)=0;
+            virtual Gtk::CellRenderer *renderer()=0;
+            virtual Gtk::CellRendererMode mode()=0;
+            sigc::signal<void(
+                Glib::ustring const &,
+                Glib::ustring const &)> signal_changed{};
+        };
+
+        struct ComboRenderer : public Renderer
+        {
+            struct ChoicesColumnDefs : public Gtk::TreeModelColumnRecord
+            {
+                ChoicesColumnDefs()
+                {
+                    add(idx);
+                    add(desc);
+                }
+                Gtk::TreeModelColumn<int> idx{};
+                Gtk::TreeModelColumn<Glib::ustring> desc{};
+            };
+            /// Column definition for the choices menu.
+            static ChoicesColumnDefs const columns;
+            /// Remaps the editing result from the value's description to the
+            // value's integer value.
+            std::function<Glib::ustring(
+                Glib::ustring const &,
+                Glib::ustring const &)> filter_edit{};
+            ComboRenderer();
+            virtual ~ComboRenderer()=default;
+            virtual void set_value(ValueType const &value) override;
+            virtual Gtk::CellRenderer *renderer() override;
+            virtual Gtk::CellRendererMode mode();
+        private:
+            Gtk::CellRendererCombo _renderer{};
+            void on_edited(Glib::ustring const &, Glib::ustring const &);
+        };
+
+        struct FlagsRenderer : public Renderer
+        {
+            FlagsRenderer();
+            virtual ~FlagsRenderer()=default;
+            virtual void set_value(ValueType const &value);
+            virtual Gtk::CellRenderer *renderer();
+            virtual Gtk::CellRendererMode mode();
+        private:
+            CellRendererFlags _renderer{};
+            void on_renderer_flag_changed(Glib::ustring const &);
+        };
+
+        struct IntegerRenderer : public Renderer
+        {
+            IntegerRenderer();
+            virtual ~IntegerRenderer()=default;
+            virtual void set_value(ValueType const &value) override;
+            virtual Gtk::CellRenderer *renderer() override;
+            virtual Gtk::CellRendererMode mode();
+        private:
+            Gtk::CellRendererSpin _renderer{};
+        };
+
+        struct StringRenderer : public Renderer
+        {
+            StringRenderer();
+            virtual ~StringRenderer()=default;
+            virtual void set_value(ValueType const &value) override;
+            virtual Gtk::CellRenderer *renderer() override;
+            virtual Gtk::CellRendererMode mode();
+        private:
+            Gtk::CellRendererText _renderer{};
+        };
+
+
         CellRendererProperty();
         virtual ~CellRendererProperty()=default;
+
+        /** TreeModel for the Choices renderer to use. */
+        auto property_choices_model() {return _prop_choices_model.get_proxy();}
 
         /** The actual value of the displayed property. */
         auto property_value() {return _prop_value.get_proxy();}
@@ -72,6 +151,17 @@ namespace Sickle::AppWin
 
         /** Emitted when the value of the property changes. */
         auto &signal_changed() {return _sig_changed;}
+
+
+        // FIXME: Temporary cruft to let PropertyEditor access the choices
+        // renderer to set up the 'filter_edit' function. Probably the filter
+        // should be insinde the combo renderer, with the tree store being a
+        // property on the renderer, but that also seems kinda janky?
+        //
+        // Perhaps change how setting entity properties works to let choice
+        // properties be set to the choice text rather than the integer value.
+        // Seems like it would be the cleanest option.
+        ComboRenderer &choices_renderer() {return _choices_renderer;}
 
 
     protected:
@@ -122,82 +212,16 @@ namespace Sickle::AppWin
 
 
     private:
-        struct Renderer
-        {
-            virtual ~Renderer()=default;
-            virtual void set_value(ValueType const &value)=0;
-            virtual Gtk::CellRenderer *renderer()=0;
-            virtual Gtk::CellRendererMode mode()=0;
-            sigc::signal<void(
-                Glib::ustring const &,
-                Glib::ustring const &)> signal_changed{};
-        };
-
-        struct ComboRenderer : public Renderer
-        {
-            ComboRenderer();
-            virtual ~ComboRenderer()=default;
-            virtual void set_value(ValueType const &value) override;
-            virtual Gtk::CellRenderer *renderer() override;
-            virtual Gtk::CellRendererMode mode();
-        private:
-            struct ChoicesColumnDefs : public Gtk::TreeModelColumnRecord
-            {
-                ChoicesColumnDefs()
-                {
-                    add(idx);
-                    add(desc);
-                }
-                Gtk::TreeModelColumn<int> idx{};
-                Gtk::TreeModelColumn<Glib::ustring> desc{};
-            };
-            ChoicesColumnDefs _columns{};
-            Glib::RefPtr<Gtk::ListStore> _store{nullptr};
-            Gtk::CellRendererCombo _renderer{};
-            void on_edited(Glib::ustring const &, Glib::ustring const &);
-        };
-
-        struct FlagsRenderer : public Renderer
-        {
-            FlagsRenderer();
-            virtual ~FlagsRenderer()=default;
-            virtual void set_value(ValueType const &value);
-            virtual Gtk::CellRenderer *renderer();
-            virtual Gtk::CellRendererMode mode();
-        private:
-            CellRendererFlags _renderer{};
-            void on_renderer_flag_changed(Glib::ustring const &);
-        };
-
-        struct IntegerRenderer : public Renderer
-        {
-            IntegerRenderer();
-            virtual ~IntegerRenderer()=default;
-            virtual void set_value(ValueType const &value) override;
-            virtual Gtk::CellRenderer *renderer() override;
-            virtual Gtk::CellRendererMode mode();
-        private:
-            Gtk::CellRendererSpin _renderer{};
-        };
-
-        struct StringRenderer : public Renderer
-        {
-            StringRenderer();
-            virtual ~StringRenderer()=default;
-            virtual void set_value(ValueType const &value) override;
-            virtual Gtk::CellRenderer *renderer() override;
-            virtual Gtk::CellRendererMode mode();
-        private:
-            Gtk::CellRendererText _renderer{};
-        };
-
         ComboRenderer _choices_renderer{};
         FlagsRenderer _flags_renderer{};
         IntegerRenderer _integer_renderer{};
         StringRenderer _text_renderer{};
         Renderer *renderer{nullptr};
 
+        Glib::Property<Glib::RefPtr<Gtk::TreeModel>> _prop_choices_model;
         Glib::Property<ValueType> _prop_value;
+
+        Glib::RefPtr<Glib::Binding> _bind_choices_model{nullptr};
 
         sigc::signal<void(
             Glib::ustring const &,

@@ -29,7 +29,16 @@ CellRendererProperty::CellRendererProperty()
 :   Glib::ObjectBase{typeid(CellRendererProperty)}
 ,   Gtk::CellRenderer{}
 ,   renderer{&_text_renderer}
+,   _prop_choices_model{
+        *this,
+        "choices-model",
+        Glib::RefPtr<Gtk::TreeModel>{nullptr}}
 ,   _prop_value{*this, "value"}
+,   _bind_choices_model{
+        Glib::Binding::bind_property(
+            property_choices_model(),
+            dynamic_cast<Gtk::CellRendererCombo *>(
+                _choices_renderer.renderer())->property_model())}
 {
     property_value().signal_changed().connect(
         sigc::mem_fun(*this, &CellRendererProperty::on_value_changed));

@@ -81,15 +81,19 @@ namespace Sickle::AppWin
                 add(name);
                 add(renderer_value);
                 add(tooltip);
+                add(choices);
             }
             Gtk::TreeModelColumn<Glib::ustring> name{};
             Gtk::TreeModelColumn<
                 CellRendererProperty::ValueType> renderer_value{};
             Gtk::TreeModelColumn<Glib::ustring> tooltip{};
+            Gtk::TreeModelColumn<Glib::RefPtr<Gtk::ListStore>> choices{};
         };
 
         Glib::Property<Editor::EntityRef> _prop_entity;
         sigc::connection _conn_entity_properties_changed{};
+
+        CellRendererProperty _renderer{};
 
         Gtk::Frame _frame{};
         // scroll, buttons
@@ -106,6 +110,10 @@ namespace Sickle::AppWin
 
         void _add_property();
         void _remove_property();
+
+        Glib::ustring _choices_filter_edit(
+            Glib::ustring const &path,
+            Glib::ustring const &choice) const;
     };
 }
 

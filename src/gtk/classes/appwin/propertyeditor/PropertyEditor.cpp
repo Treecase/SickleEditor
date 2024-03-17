@@ -25,6 +25,8 @@ using namespace Sickle::AppWin;
 
 static Glib::ustring generate_tooltip(
     std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property);
+static Glib::RefPtr<Gtk::ListStore> generate_choices(
+    std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property);
 
 
 PropertyEditor::PropertyEditor()
@@ -43,13 +45,17 @@ PropertyEditor::PropertyEditor()
         sigc::mem_fun(*this, &PropertyEditor::on_name_edited), false);
 
     // Value column.
-    auto ren = Gtk::make_managed<CellRendererProperty>();
-    ren->property_mode().set_value(
+    _renderer.property_mode().set_value(
         Gtk::CellRendererMode::CELL_RENDERER_MODE_EDITABLE);
-    ren->signal_changed().connect(
+    _renderer.signal_changed().connect(
         sigc::mem_fun(*this, &PropertyEditor::on_value_edited));
-    auto col = Gtk::make_managed<Gtk::TreeViewColumn>("Value", *ren);
-    col->add_attribute(*ren, "value", _columns.renderer_value);
+    _renderer.choices_renderer().filter_edit =\
+        [this](auto const &p, auto const &v){
+            return _choices_filter_edit(p, v);
+        };
+    auto col = Gtk::make_managed<Gtk::TreeViewColumn>("Value", _renderer);
+    col->add_attribute(_renderer.property_value(), _columns.renderer_value);
+    col->add_attribute(_renderer.property_choices_model(), _columns.choices);
     _properties.append_column(*col);
 
     _properties.set_tooltip_column(_columns.tooltip.index());
@@ -121,6 +127,7 @@ void PropertyEditor::on_entity_properties_changed()
         auto const &ec = entity->classinfo();
         for (auto kv : entity->properties())
         {
+            auto const &property_definition = ec.get_property(kv.first);
             auto it = _store->append();
             it->set_value<Glib::ustring>(_columns.name, kv.first);
             it->set_value(
@@ -128,8 +135,12 @@ void PropertyEditor::on_entity_properties_changed()
                 CellRendererProperty::ValueType{
                     kv.second,
                     entity->classinfo().get_property(kv.first)});
-            auto const &propdef = ec.get_property(kv.first);
-            it->set_value(_columns.tooltip, generate_tooltip(propdef));
+            it->set_value(
+                _columns.tooltip,
+                generate_tooltip(property_definition));
+            it->set_value(
+                _columns.choices,
+                generate_choices(property_definition));
         }
     }
 }
@@ -184,27 +195,72 @@ void PropertyEditor::_remove_property()
 }
 
 
+Glib::ustring PropertyEditor::_choices_filter_edit(
+    Glib::ustring const &path,
+    Glib::ustring const &choice) const
+{
+    auto const it = _store->get_iter(path);
+    auto const choices = it->get_value(_columns.choices);
+    Glib::ustring filtered = choice;
+    choices->foreach_iter(
+        [this, choice, &filtered](Gtk::TreeModel::iterator const &it) -> bool
+        {
+            auto const desc = it->get_value(
+                CellRendererProperty::ComboRenderer::columns.desc);
+            if (desc == choice)
+            {
+                filtered = std::to_string(
+                    it->get_value(
+                        CellRendererProperty::ComboRenderer::columns.idx));
+                return true;
+            }
+            else
+                return false;
+        });
+    return filtered;
+}
+
+
 
 static Glib::ustring generate_tooltip(
     std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property)
 {
-    if (!property)
+    auto const flags =\
+        std::dynamic_pointer_cast<
+            Sickle::Editor::EntityPropertyDefinitionFlags>(property);
+    if (!flags)
         return "";
-    if (property->type() == Sickle::Editor::PropertyType::FLAGS)
+
+    Glib::ustring text{};
+    for (int i = 0; i < 32; ++i)
     {
-        auto const flags =\
-            std::dynamic_pointer_cast<
-                Sickle::Editor::EntityPropertyDefinitionFlags>(property);
-        Glib::ustring text{};
-        for (int i = 0; i < 32; ++i)
-        {
-            auto const desc = flags->get_description(i);
-            if (!desc.empty())
-                text += std::to_string(i) + ": " + desc + "\n";
-        }
-        if (!text.empty())
-            text.erase(text.size() - 1);
-        return text;
+        auto const desc = flags->get_description(i);
+        if (!desc.empty())
+            text += std::to_string(i) + ": " + desc + "\n";
     }
-    return "";
+    if (!text.empty())
+        text.erase(text.size() - 1);
+    return text;
+}
+
+
+static Glib::RefPtr<Gtk::ListStore> generate_choices(
+    std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property)
+{
+    Glib::RefPtr<Gtk::ListStore> output{nullptr};
+    auto const choices =\
+        std::dynamic_pointer_cast<
+            Sickle::Editor::EntityPropertyDefinitionChoices>(property);
+    if (!choices)
+        return output;
+
+    auto const &columns = CellRendererProperty::ComboRenderer::columns;
+    output = Gtk::ListStore::create(columns);
+    for (auto const &kv : choices->choices())
+    {
+        auto it = output->append();
+        it->set_value(columns.idx, kv.first);
+        it->set_value(columns.desc, Glib::ustring{kv.second});
+    }
+    return output;
 }
