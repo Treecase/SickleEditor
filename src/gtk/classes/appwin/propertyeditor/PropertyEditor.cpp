@@ -121,26 +121,53 @@ void PropertyEditor::on_entity_changed()
 
 void PropertyEditor::on_entity_properties_changed()
 {
-    _store->clear();
-    if (auto const entity = get_entity())
-    {
-        auto const &ec = entity->classinfo();
-        for (auto kv : entity->properties())
+    auto const entity = get_entity();
+    if (!entity)
+        return;
+
+    std::unordered_set<std::string> existing_properties{};
+    std::vector<Gtk::TreeModel::iterator> iters_to_delete{};
+
+    auto const &ec = entity->classinfo();
+    _store->foreach_iter(
+        [this, entity, ec, &existing_properties, &iters_to_delete](
+            Gtk::TreeModel::iterator const &it) -> bool
         {
-            auto const &property_definition = ec.get_property(kv.first);
+            auto const &name = it->get_value(_columns.name);
+            existing_properties.insert(name);
+
+            std::string value{};
+            try {
+                value = entity->get_property(name);
+            }
+            // Property exists in the tree, but not on the entity, so
+            // remove it from the tree.
+            catch (std::out_of_range const &) {
+                iters_to_delete.push_back(it);
+                return false;
+            }
+
+            // Property exists in the tree and on the entity. We just need
+            // to update the value.
+            auto const &property_definition = ec.get_property(name);
+            _update_row(it, name, value, property_definition);
+
+            return false;
+        }
+    );
+
+    for (auto const &it : iters_to_delete)
+        _store->erase(it);
+
+    for (auto const &[name, value] : entity->properties())
+    {
+        if (existing_properties.count(name) == 0)
+        {
+            // Property does not exist in the tree, but does exist on the
+            // entity, so add it to the tree.
+            auto const &property_definition = ec.get_property(name);
             auto it = _store->append();
-            it->set_value<Glib::ustring>(_columns.name, kv.first);
-            it->set_value(
-                _columns.renderer_value,
-                CellRendererProperty::ValueType{
-                    kv.second,
-                    entity->classinfo().get_property(kv.first)});
-            it->set_value(
-                _columns.tooltip,
-                generate_tooltip(property_definition));
-            it->set_value(
-                _columns.choices,
-                generate_choices(property_definition));
+            _update_row(it, name, value, property_definition);
         }
     }
 }
@@ -192,6 +219,28 @@ void PropertyEditor::_remove_property()
         if (auto const entity = get_entity())
             entity->remove_property(name);
     }
+}
+
+
+void PropertyEditor::_update_row(
+    Gtk::TreeModel::iterator const &it,
+    Glib::ustring const &name,
+    std::string const &value,
+    std::shared_ptr<
+        Sickle::Editor::EntityPropertyDefinition> const &property_definition)
+{
+    it->set_value<Glib::ustring>(_columns.name, name);
+    it->set_value(
+        _columns.renderer_value,
+        CellRendererProperty::ValueType{
+            value,
+            property_definition});
+    it->set_value(
+        _columns.tooltip,
+        generate_tooltip(property_definition));
+    it->set_value(
+        _columns.choices,
+        generate_choices(property_definition));
 }
 
 

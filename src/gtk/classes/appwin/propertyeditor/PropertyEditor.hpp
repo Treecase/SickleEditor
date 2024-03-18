@@ -111,6 +111,14 @@ namespace Sickle::AppWin
         void _add_property();
         void _remove_property();
 
+        void _update_row(
+            Gtk::TreeModel::iterator const &it,
+            Glib::ustring const &name,
+            std::string const &value,
+            std::shared_ptr<
+                Sickle::Editor::EntityPropertyDefinition
+                > const &property_definition);
+
         Glib::ustring _choices_filter_edit(
             Glib::ustring const &path,
             Glib::ustring const &choice) const;
