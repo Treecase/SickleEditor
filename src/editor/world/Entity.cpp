@@ -32,11 +32,13 @@ std::shared_ptr<EntityPropertyDefinition> Entity::classname_definition{
     std::make_shared<EntityPropertyDefinition>(
         "classname",
         "",
+        "The name of this entity's class.",
         PropertyType::STRING)};
 std::shared_ptr<EntityPropertyDefinition> Entity::origin_definition{
     std::make_shared<EntityPropertyDefinition>(
         "origin",
         "0 0 0",
+        "Location of the entity in the world.",
         PropertyType::STRING)};
 
 
@@ -50,6 +52,7 @@ EntityRef Entity::create()
 EntityRef Entity::create(MAP::Entity const &entity)
 {
     auto e = create();
+    e->set_property("classname", entity.properties.at("classname"));
     for (auto const &kv : entity.properties)
         e->set_property(kv.first, kv.second);
     for (auto const &brush : entity.brushes)
@@ -61,10 +64,9 @@ EntityRef Entity::create(MAP::Entity const &entity)
 EntityRef Entity::create(RMF::Entity const &entity)
 {
     auto e = create();
+    e->set_property("classname", entity.classname);
     for (auto const &kv : entity.kv_pairs)
         e->set_property(kv.first, kv.second);
-
-    e->set_property("classname", entity.classname);
 
     if (e->classinfo().type() == "PointClass")
     {
@@ -138,17 +140,16 @@ void Entity::set_property(std::string const &key, std::string const &value)
     try {
         _properties.at(key).value = value;
     }
-    // If the key doesn't exist, we have to create it.
+    // Fail silently if the key doesn't exist.
     catch (std::out_of_range const &e) {
-        _properties.insert({
-            key,
-            Property{std::make_shared<EntityPropertyDefinition>(
-                key,
-                "",
-                PropertyType::STRING)}});
+        return;
     }
     if (key == "classname")
+    {
+        if (value == classname())
+            return;
         _on_classname_changed();
+    }
     signal_properties_changed().emit();
 }
 

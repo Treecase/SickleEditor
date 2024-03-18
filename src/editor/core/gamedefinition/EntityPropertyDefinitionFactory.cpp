@@ -31,7 +31,14 @@ EntityPropertyDefinitionFactory::construct(
 {
     std::string const &name = prop->name;
     std::string default_value = "";
+    std::string description = "";
     PropertyType type = PropertyType::STRING;
+
+    if (auto const descprop =\
+        std::dynamic_pointer_cast<FGD::DescriptionProperty>(prop))
+    {
+        description = descprop->description.value_or("");
+    }
 
     if (typeid(*prop.get()) == typeid(FGD::IntegerProperty))
     {
@@ -58,6 +65,7 @@ EntityPropertyDefinitionFactory::construct(
         return std::make_shared<EntityPropertyDefinitionChoices>(
             prop->name,
             default_value,
+            choiceprop->description.value_or(""),
             choiceprop->choices);
     }
     else if (typeid(*prop.get()) == typeid(FGD::FlagProperty))
@@ -117,5 +125,6 @@ EntityPropertyDefinitionFactory::construct(
     return std::make_shared<EntityPropertyDefinition>(
         name,
         default_value,
+        description,
         type);
 }

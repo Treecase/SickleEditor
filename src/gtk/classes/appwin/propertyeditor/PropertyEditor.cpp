@@ -225,19 +225,24 @@ static Glib::ustring generate_tooltip(
     auto const flags =\
         std::dynamic_pointer_cast<
             Sickle::Editor::EntityPropertyDefinitionFlags>(property);
-    if (!flags)
-        return "";
-
-    Glib::ustring text{};
-    for (int i = 0; i < 32; ++i)
+    if (flags)
     {
-        auto const desc = flags->get_description(i);
-        if (!desc.empty())
-            text += std::to_string(i) + ": " + desc + "\n";
+        Glib::ustring text{};
+        for (int i = 0; i < 32; ++i)
+        {
+            auto const desc = flags->get_description(i);
+            if (!desc.empty())
+                text += std::to_string(i) + ": " + desc + "\n";
+        }
+        if (!text.empty())
+            text.erase(text.size() - 1);
+        return text;
     }
-    if (!text.empty())
-        text.erase(text.size() - 1);
-    return text;
+    else if (property)
+    {
+        return property->description();
+    }
+    return "";
 }
 
 

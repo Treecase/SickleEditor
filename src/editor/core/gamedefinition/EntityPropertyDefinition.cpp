@@ -25,9 +25,11 @@ using namespace Sickle::Editor;
 EntityPropertyDefinition::EntityPropertyDefinition(
     std::string const &name,
     std::string const &default_value,
+    std::string const &description,
     PropertyType type)
 :   _name{name}
 ,   _default_value{default_value}
+,   _description{description}
 ,   _type{type}
 {
 }
@@ -45,6 +47,12 @@ std::string EntityPropertyDefinition::default_value() const
 }
 
 
+std::string EntityPropertyDefinition::description() const
+{
+    return _description;
+}
+
+
 PropertyType EntityPropertyDefinition::type() const
 {
     return _type;
@@ -56,8 +64,13 @@ PropertyType EntityPropertyDefinition::type() const
 EntityPropertyDefinitionChoices::EntityPropertyDefinitionChoices(
     std::string const &name,
     std::string const &default_value,
+    std::string const &description,
     std::map<int, std::string> const &choices)
-:   EntityPropertyDefinition{name, default_value, PropertyType::CHOICES}
+:   EntityPropertyDefinition{
+        name,
+        default_value,
+        description,
+        PropertyType::CHOICES}
 ,   _choices{choices}
 {
 }
@@ -76,7 +89,11 @@ static std::string generate_default(
 EntityPropertyDefinitionFlags::EntityPropertyDefinitionFlags(
     std::string const &name,
     std::map<int, std::pair<std::string, bool>> const &flags)
-:   EntityPropertyDefinition{name, generate_default(flags), PropertyType::FLAGS}
+:   EntityPropertyDefinition{
+        name,
+        generate_default(flags),
+        "",
+        PropertyType::FLAGS}
 {
     for (auto const &kv : flags)
         _flags.at(kv.first).emplace(kv.second);

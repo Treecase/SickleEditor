@@ -50,6 +50,7 @@ namespace Sickle::Editor
         EntityPropertyDefinition(
             std::string const &name,
             std::string const &default_value,
+            std::string const &description,
             PropertyType type);
         virtual ~EntityPropertyDefinition()=default;
 
@@ -68,6 +69,13 @@ namespace Sickle::Editor
         virtual std::string default_value() const;
 
         /**
+         * Get the property's description.
+         *
+         * @return The property's description.
+         */
+        virtual std::string description() const;
+
+        /**
          * Get the type of the property.
          *
          * @return The property's default value.
@@ -77,6 +85,7 @@ namespace Sickle::Editor
     private:
         std::string _name;
         std::string _default_value;
+        std::string _description;
         PropertyType _type;
     };
 
@@ -89,6 +98,7 @@ namespace Sickle::Editor
         EntityPropertyDefinitionChoices(
             std::string const &name,
             std::string const &default_value,
+            std::string const &description,
             std::map<int, std::string> const &choices);
         virtual ~EntityPropertyDefinitionChoices()=default;
 
