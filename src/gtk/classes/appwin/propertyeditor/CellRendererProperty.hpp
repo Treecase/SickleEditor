@@ -75,7 +75,7 @@ namespace Sickle::AppWin
                 Glib::ustring const &)> signal_changed{};
         };
 
-        struct ComboRenderer : public Renderer
+        struct ChoicesRenderer : public Renderer
         {
             struct ChoicesColumnDefs : public Gtk::TreeModelColumnRecord
             {
@@ -88,14 +88,14 @@ namespace Sickle::AppWin
                 Gtk::TreeModelColumn<Glib::ustring> desc{};
             };
             /// Column definition for the choices menu.
-            static ChoicesColumnDefs const columns;
+            static ChoicesColumnDefs const &columns();
             /// Remaps the editing result from the value's description to the
             // value's integer value.
             std::function<Glib::ustring(
                 Glib::ustring const &,
                 Glib::ustring const &)> filter_edit{};
-            ComboRenderer();
-            virtual ~ComboRenderer()=default;
+            ChoicesRenderer();
+            virtual ~ChoicesRenderer()=default;
             virtual void set_value(ValueType const &value) override;
             virtual Gtk::CellRenderer *renderer() override;
             virtual Gtk::CellRendererMode mode();
@@ -161,7 +161,7 @@ namespace Sickle::AppWin
         // Perhaps change how setting entity properties works to let choice
         // properties be set to the choice text rather than the integer value.
         // Seems like it would be the cleanest option.
-        ComboRenderer &choices_renderer() {return _choices_renderer;}
+        ChoicesRenderer &choices_renderer() {return _choices_renderer;}
 
 
     protected:
@@ -212,7 +212,7 @@ namespace Sickle::AppWin
 
 
     private:
-        ComboRenderer _choices_renderer{};
+        ChoicesRenderer _choices_renderer{};
         FlagsRenderer _flags_renderer{};
         IntegerRenderer _integer_renderer{};
         StringRenderer _text_renderer{};

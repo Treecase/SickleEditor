@@ -24,21 +24,25 @@
 using namespace Sickle::AppWin;
 
 
-CellRendererProperty::ComboRenderer::ChoicesColumnDefs const
-CellRendererProperty::ComboRenderer::columns{};
-
-
-CellRendererProperty::ComboRenderer::ComboRenderer()
+CellRendererProperty::ChoicesRenderer::ChoicesRenderer()
 :   filter_edit{[](auto p, auto v){return v;}}
 {
     _renderer.property_editable() = true;
-    _renderer.property_text_column() = columns.desc.index();
+    _renderer.property_text_column() = columns().desc.index();
     _renderer.signal_edited().connect(
-        sigc::mem_fun(*this, &ComboRenderer::on_edited));
+        sigc::mem_fun(*this, &ChoicesRenderer::on_edited));
 }
 
 
-void CellRendererProperty::ComboRenderer::set_value(ValueType const &value)
+CellRendererProperty::ChoicesRenderer::ChoicesColumnDefs const &
+CellRendererProperty::ChoicesRenderer::columns()
+{
+    static ChoicesColumnDefs the_columns{};
+    return the_columns;
+}
+
+
+void CellRendererProperty::ChoicesRenderer::set_value(ValueType const &value)
 {
     auto const type =\
         std::dynamic_pointer_cast<Editor::EntityPropertyDefinitionChoices>(
@@ -59,19 +63,19 @@ void CellRendererProperty::ComboRenderer::set_value(ValueType const &value)
 }
 
 
-Gtk::CellRenderer *CellRendererProperty::ComboRenderer::renderer()
+Gtk::CellRenderer *CellRendererProperty::ChoicesRenderer::renderer()
 {
     return &_renderer;
 }
 
 
-Gtk::CellRendererMode CellRendererProperty::ComboRenderer::mode()
+Gtk::CellRendererMode CellRendererProperty::ChoicesRenderer::mode()
 {
     return Gtk::CellRendererMode::CELL_RENDERER_MODE_EDITABLE;
 }
 
 
-void CellRendererProperty::ComboRenderer::on_edited(
+void CellRendererProperty::ChoicesRenderer::on_edited(
     Glib::ustring const &path,
     Glib::ustring const &displayed)
 {

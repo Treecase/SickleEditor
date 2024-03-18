@@ -24,7 +24,6 @@
 #include <editor/world/Entity.hpp>
 
 #include <gtkmm/bin.h>
-#include <gtkmm/box.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/liststore.h>
 #include <gtkmm/scrolledwindow.h>
@@ -37,9 +36,9 @@ namespace Sickle::AppWin
      * Allows the user to modify Entity properties.
      *
      * Displays the entity's properties in an editable TreeView. The user can
-     * rename, change the value of, and add or remove properties. Properties of
-     * different types are displayed using an appropriate CellRenderer, so eg.
-     * a string uses a CellRendererText while a number uses a CellRendererSpin.
+     * change the value of properties. Properties of different types are
+     * displayed using an appropriate CellRenderer, so eg. a string uses a
+     * CellRendererText while a number uses a CellRendererSpin.
      */
     class PropertyEditor : public Gtk::Bin
     {
@@ -66,9 +65,6 @@ namespace Sickle::AppWin
     protected:
         void on_entity_changed();
         void on_entity_properties_changed();
-        void on_name_edited(
-            Glib::ustring const &path,
-            Glib::ustring const &new_name);
         void on_value_edited(
             Glib::ustring const &path,
             Glib::ustring const &new_value);
@@ -93,23 +89,14 @@ namespace Sickle::AppWin
         Glib::Property<Editor::EntityRef> _prop_entity;
         sigc::connection _conn_entity_properties_changed{};
 
+        Glib::RefPtr<Gtk::ListStore> _store{};
         CellRendererProperty _renderer{};
 
         Gtk::Frame _frame{};
-        // scroll, buttons
-        Gtk::Box _main_box{Gtk::Orientation::ORIENTATION_VERTICAL};
         Gtk::ScrolledWindow _scroll{};
-        Columns _columns{};
-        Glib::RefPtr<Gtk::ListStore> _store{};
         Gtk::TreeView _properties;
 
-        // add property, remove property
-        Gtk::Box _buttons_box{Gtk::Orientation::ORIENTATION_HORIZONTAL};
-        Gtk::Button _add_property_button{};
-        Gtk::Button _remove_property_button{};
-
-        void _add_property();
-        void _remove_property();
+        static Columns const &_columns();
 
         void _update_row(
             Gtk::TreeModel::iterator const &it,

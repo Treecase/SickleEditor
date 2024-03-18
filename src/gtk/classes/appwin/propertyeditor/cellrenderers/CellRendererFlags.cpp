@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// TODO: Make this resize dynamically.
 // TODO: Custom CSS integration.
 
 #include "CellRendererFlags.hpp"
@@ -169,6 +168,8 @@ bool CellRendererFlags::activate_vfunc(
 {
     if (property_activatable())
     {
+        if (!event)
+            return false;
         if (event->type != GdkEventType::GDK_BUTTON_PRESS)
             return false;
 

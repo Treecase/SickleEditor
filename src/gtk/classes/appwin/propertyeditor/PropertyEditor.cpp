@@ -32,62 +32,36 @@ static Glib::RefPtr<Gtk::ListStore> generate_choices(
 PropertyEditor::PropertyEditor()
 :   Glib::ObjectBase{typeid(PropertyEditor)}
 ,   _prop_entity{*this, "entity", {}}
-,   _store{Gtk::ListStore::create(_columns)}
+,   _store{Gtk::ListStore::create(_columns())}
 ,   _properties{_store}
 {
-    _store->set_sort_column(_columns.name, Gtk::SortType::SORT_ASCENDING);
+    _store->set_sort_column(_columns().name, Gtk::SortType::SORT_ASCENDING);
 
-    // Name column.
-    _properties.append_column_editable("Name", _columns.name);
-    auto cr = dynamic_cast<Gtk::CellRendererText *>(
-        _properties.get_column_cell_renderer(0));
-    cr->signal_edited().connect(
-        sigc::mem_fun(*this, &PropertyEditor::on_name_edited), false);
-
-    // Value column.
-    _renderer.property_mode().set_value(
-        Gtk::CellRendererMode::CELL_RENDERER_MODE_EDITABLE);
-    _renderer.signal_changed().connect(
-        sigc::mem_fun(*this, &PropertyEditor::on_value_edited));
     _renderer.choices_renderer().filter_edit =\
         [this](auto const &p, auto const &v){
             return _choices_filter_edit(p, v);
         };
+
     auto col = Gtk::make_managed<Gtk::TreeViewColumn>("Value", _renderer);
-    col->add_attribute(_renderer.property_value(), _columns.renderer_value);
-    col->add_attribute(_renderer.property_choices_model(), _columns.choices);
+    col->add_attribute(_renderer.property_value(), _columns().renderer_value);
+    col->add_attribute(_renderer.property_choices_model(), _columns().choices);
+
+    _properties.append_column("Name", _columns().name);
     _properties.append_column(*col);
-
-    _properties.set_tooltip_column(_columns.tooltip.index());
-
-    _add_property_button.set_image_from_icon_name("list-add");
-    _add_property_button.set_tooltip_text("Add a new property");
-    _add_property_button.signal_clicked().connect(
-        sigc::mem_fun(*this, &PropertyEditor::_add_property));
-
-    _remove_property_button.set_image_from_icon_name("list-remove");
-    _remove_property_button.set_tooltip_text("Remove the selected property");
-    _remove_property_button.signal_clicked().connect(
-        sigc::mem_fun(*this, &PropertyEditor::_remove_property));
+    _properties.set_tooltip_column(_columns().tooltip.index());
 
     _frame.set_label("Properties");
 
     // Add widgets.
     _scroll.add(_properties);
-
-    _buttons_box.add(_add_property_button);
-    _buttons_box.add(_remove_property_button);
-
-    _main_box.pack_start(_scroll, Gtk::PackOptions::PACK_EXPAND_WIDGET);
-    _main_box.pack_end(_buttons_box, Gtk::PackOptions::PACK_SHRINK);
-
-    _frame.add(_main_box);
-
+    _frame.add(_scroll);
     add(_frame);
 
     // Connect signals.
     property_entity().signal_changed().connect(
         sigc::mem_fun(*this, &PropertyEditor::on_entity_changed));
+    _renderer.signal_changed().connect(
+        sigc::mem_fun(*this, &PropertyEditor::on_value_edited));
 }
 
 
@@ -133,7 +107,7 @@ void PropertyEditor::on_entity_properties_changed()
         [this, entity, ec, &existing_properties, &iters_to_delete](
             Gtk::TreeModel::iterator const &it) -> bool
         {
-            auto const &name = it->get_value(_columns.name);
+            auto const &name = it->get_value(_columns().name);
             existing_properties.insert(name);
 
             std::string value{};
@@ -173,52 +147,26 @@ void PropertyEditor::on_entity_properties_changed()
 }
 
 
-void PropertyEditor::on_name_edited(
-    Glib::ustring const &path,
-    Glib::ustring const &new_name)
-{
-    auto const it = _store->get_iter(path);
-    auto const old_name = it->get_value(_columns.name);
-    auto const value = it->get_value(_columns.renderer_value);
-
-    auto const entity = get_entity();
-    if (entity->remove_property(old_name))
-        entity->set_property(new_name, value.value);
-}
-
-
 void PropertyEditor::on_value_edited(
     Glib::ustring const &path,
     Glib::ustring const &value)
 {
     auto const it = _store->get_iter(path);
-    auto const name = it->get_value(_columns.name);
-    auto the_value = it->get_value(_columns.renderer_value);
+    auto const name = it->get_value(_columns().name);
+    auto the_value = it->get_value(_columns().renderer_value);
 
     the_value.value = value;
 
-    it->set_value(_columns.renderer_value, the_value);
+    it->set_value(_columns().renderer_value, the_value);
     get_entity()->set_property(name, value);
 }
 
 
 
-void PropertyEditor::_add_property()
+PropertyEditor::Columns const &PropertyEditor::_columns()
 {
-    if (auto const entity = get_entity())
-        entity->set_property("<name>", "<value>");
-}
-
-
-void PropertyEditor::_remove_property()
-{
-    auto const sel = _properties.get_selection();
-    if (auto const it = sel->get_selected())
-    {
-        auto const name = it->get_value(_columns.name);
-        if (auto const entity = get_entity())
-            entity->remove_property(name);
-    }
+    static Columns const the_columns{};
+    return the_columns;
 }
 
 
@@ -229,17 +177,17 @@ void PropertyEditor::_update_row(
     std::shared_ptr<
         Sickle::Editor::EntityPropertyDefinition> const &property_definition)
 {
-    it->set_value<Glib::ustring>(_columns.name, name);
+    it->set_value<Glib::ustring>(_columns().name, name);
     it->set_value(
-        _columns.renderer_value,
+        _columns().renderer_value,
         CellRendererProperty::ValueType{
             value,
             property_definition});
     it->set_value(
-        _columns.tooltip,
+        _columns().tooltip,
         generate_tooltip(property_definition));
     it->set_value(
-        _columns.choices,
+        _columns().choices,
         generate_choices(property_definition));
 }
 
@@ -249,18 +197,18 @@ Glib::ustring PropertyEditor::_choices_filter_edit(
     Glib::ustring const &choice) const
 {
     auto const it = _store->get_iter(path);
-    auto const choices = it->get_value(_columns.choices);
+    auto const choices = it->get_value(_columns().choices);
     Glib::ustring filtered = choice;
     choices->foreach_iter(
         [this, choice, &filtered](Gtk::TreeModel::iterator const &it) -> bool
         {
             auto const desc = it->get_value(
-                CellRendererProperty::ComboRenderer::columns.desc);
+                CellRendererProperty::ChoicesRenderer::columns().desc);
             if (desc == choice)
             {
                 filtered = std::to_string(
                     it->get_value(
-                        CellRendererProperty::ComboRenderer::columns.idx));
+                        CellRendererProperty::ChoicesRenderer::columns().idx));
                 return true;
             }
             else
@@ -303,7 +251,7 @@ static Glib::RefPtr<Gtk::ListStore> generate_choices(
     if (!choices)
         return output;
 
-    auto const &columns = CellRendererProperty::ComboRenderer::columns;
+    auto const &columns = CellRendererProperty::ChoicesRenderer::columns();
     output = Gtk::ListStore::create(columns);
     for (auto const &kv : choices->choices())
     {
