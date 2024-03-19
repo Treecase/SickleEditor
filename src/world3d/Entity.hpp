@@ -137,6 +137,7 @@ namespace World3D
 
         static PreDrawFunc predraw;
         static std::string sprite_root_path;
+        static std::string game_root_path;
 
         /** @warning First call requires an active OpenGL context. */
         static GLUtil::Program &shader();
@@ -159,7 +160,12 @@ namespace World3D
         virtual void on_detach(Sickle::Componentable &) override;
 
     private:
-        Sickle::Editor::Entity const *_src{nullptr};
+        // FIXME: Kinda cludgey to do both sprite() and iconsprite() in one
+        // class. But whatever, I'll clean it up later(TM).
+        bool _is_iconsprite{true};
+        std::optional<std::string> _sprite_path{};
+
+        Sickle::Editor::Entity *_src{nullptr};
 
         std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
         std::shared_ptr<GLUtil::Buffer> _vbo{nullptr};
@@ -169,6 +175,13 @@ namespace World3D
         void _init_construct();
         /** @warning Requires an active OpenGL context. */
         void _init();
+
+        /** @warning Requires an active OpenGL context. */
+        void _load_sprite(std::string const &path);
+
+        void _sprite_update();
+
+        void _on_src_properties_changed();
     };
 
 

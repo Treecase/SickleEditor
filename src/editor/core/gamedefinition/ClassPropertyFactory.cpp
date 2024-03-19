@@ -67,5 +67,9 @@ std::shared_ptr<ClassProperty> ClassPropertyFactory::construct(
         }
         return std::make_shared<ClassPropertySize>(p1, p2);
     }
+    else if (typeid(*prop.get()) == typeid(FGD::SpriteAttribute))
+    {
+        return std::make_shared<ClassPropertySprite>();
+    }
     return nullptr;
 }

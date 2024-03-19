@@ -48,6 +48,9 @@ RenderComponentFactory::construct(Sickle::Editor::EditorObjectRef const &object)
             if (entity_class
                 .has_class_property<Sickle::Editor::ClassPropertyIconsprite>())
                 renderer = std::make_shared<PointEntitySprite>();
+            else if (entity_class
+                .has_class_property<Sickle::Editor::ClassPropertySprite>())
+                renderer = std::make_shared<PointEntitySprite>();
             else
                 renderer = std::make_shared<PointEntityBox>();
         }

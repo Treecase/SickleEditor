@@ -39,17 +39,23 @@ Sickle::App::App()
 ,   Gtk::Application{
         SE_APPLICATION_ID, Gio::ApplicationFlags::APPLICATION_HANDLES_OPEN}
 ,   _settings{Gio::Settings::create(SE_APPLICATION_ID)}
+,   _prop_fgd_path{*this, "fgd-path", "."}
+,   _prop_game_root_path{*this, "game-root-path", "."}
 ,   _prop_sprite_root_path{*this, "sprite-root-path", "."}
-,   _prop_fgd_path{*this, "fgd-path", ""}
 ,   _prop_wad_paths{*this, "wad-paths", {}}
 {
-    property_sprite_root_path().signal_changed().connect(
-        sigc::mem_fun(*this, &App::_on_sprite_root_path_changed));
     property_fgd_path().signal_changed().connect(
         sigc::mem_fun(*this, &App::_on_fgd_path_changed));
+    property_game_root_path().signal_changed().connect(
+        sigc::mem_fun(*this, &App::_on_game_root_path_changed));
+    property_sprite_root_path().signal_changed().connect(
+        sigc::mem_fun(*this, &App::_on_sprite_root_path_changed));
+    property_wad_paths().signal_changed().connect(
+        sigc::mem_fun(*this, &App::_on_wad_paths_changed));
 
-    _settings->bind("sprite-root-path", property_sprite_root_path());
     _settings->bind("fgd-path", property_fgd_path());
+    _settings->bind("game-root-path", property_game_root_path());
+    _settings->bind("sprite-root-path", property_sprite_root_path());
     _settings->bind("wad-paths", property_wad_paths());
 
     WAD::TextureManager::signal_texlump_load_error().connect(
@@ -240,8 +246,13 @@ Sickle::AppWin::AppWin *Sickle::App::_create_appwindow()
 
 void Sickle::App::_sync_wadpaths(AppWin::AppWin *appwin)
 {
-    auto const settings = Gio::Settings::create(SE_APPLICATION_ID);
-    appwin->editor->set_wads(settings->get_string_array("wad-paths"));
+    if (!appwin)
+        return;
+    auto const ppaths = property_wad_paths().get_value();
+    std::vector<std::string> paths{};
+    for (auto const &path : property_wad_paths().get_value())
+        paths.push_back(Glib::filename_from_utf8(path));
+    appwin->editor->set_wads(paths);
 }
 
 
@@ -251,20 +262,35 @@ void Sickle::App::_on_hide_window(Gtk::Window *window)
 }
 
 
-void Sickle::App::_on_sprite_root_path_changed()
-{
-    auto const path = property_sprite_root_path().get_value();
-    World3D::PointEntitySprite::sprite_root_path = path;
-}
-
-
 void Sickle::App::_on_fgd_path_changed()
 {
     auto const path = property_fgd_path().get_value();
     if (!path.empty())
     {
-        _game_definition = FGD::from_file(path);
+        _game_definition = FGD::from_file(Glib::filename_from_utf8(path));
         auto &games = Editor::GameDefinition::instance();
         games.add_game(_game_definition);
     }
+}
+
+
+void Sickle::App::_on_game_root_path_changed()
+{
+    auto const path = property_game_root_path().get_value();
+    World3D::PointEntitySprite::game_root_path = Glib::filename_from_utf8(path);
+}
+
+
+void Sickle::App::_on_sprite_root_path_changed()
+{
+    auto const path = property_sprite_root_path().get_value();
+    World3D::PointEntitySprite::sprite_root_path =\
+        Glib::filename_from_utf8(path);
+}
+
+
+void Sickle::App::_on_wad_paths_changed()
+{
+    for (auto const &window : get_windows())
+        _sync_wadpaths(dynamic_cast<AppWin::AppWin *>(window));
 }

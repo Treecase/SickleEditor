@@ -36,6 +36,10 @@ PreferencesDialog::PreferencesDialog(Gtk::Window &parent)
     _gamedef_entry.property_secondary_icon_name() = "folder";
     _gamedef_entry.property_secondary_icon_activatable() = true;
 
+    _game_path_entry.set_text(_settings->get_string("game-root-path"));
+    _game_path_entry.property_secondary_icon_name() = "folder";
+    _game_path_entry.property_secondary_icon_activatable() = true;
+
     _sprite_path_entry.set_text(_settings->get_string("sprite-root-path"));
     _sprite_path_entry.property_secondary_icon_name() = "folder";
     _sprite_path_entry.property_secondary_icon_activatable() = true;
@@ -47,10 +51,13 @@ PreferencesDialog::PreferencesDialog(Gtk::Window &parent)
     _grid.attach(_gamedef_label, 0, 0);
     _grid.attach(_gamedef_entry, 1, 0);
 
-    _grid.attach(_sprite_path_label, 0, 1);
-    _grid.attach(_sprite_path_entry, 1, 1);
+    _grid.attach(_game_path_label, 0, 1);
+    _grid.attach(_game_path_entry, 1, 1);
 
-    _grid.attach(_wads, 0, 2, 2);
+    _grid.attach(_sprite_path_label, 0, 2);
+    _grid.attach(_sprite_path_entry, 1, 2);
+
+    _grid.attach(_wads, 0, 3, 2);
 
     add_button("Cancel", Gtk::ResponseType::RESPONSE_CANCEL);
     add_button("Confirm", Gtk::ResponseType::RESPONSE_ACCEPT);
@@ -61,6 +68,10 @@ PreferencesDialog::PreferencesDialog(Gtk::Window &parent)
         sigc::mem_fun(
             *this,
             &PreferencesDialog::on_gamedef_entry_icon_pressed));
+    _game_path_entry.signal_icon_press().connect(
+        sigc::mem_fun(
+            *this,
+            &PreferencesDialog::on_game_path_entry_icon_pressed));
     _sprite_path_entry.signal_icon_press().connect(
         sigc::mem_fun(
             *this,
@@ -83,8 +94,9 @@ void PreferencesDialog::on_response(int response_id)
 
 void PreferencesDialog::_apply_preferences()
 {
-    _settings->set_string("sprite-root-path", _sprite_path_entry.get_text());
     _settings->set_string("fgd-path", _gamedef_entry.get_text());
+    _settings->set_string("game-root-path", _game_path_entry.get_text());
+    _settings->set_string("sprite-root-path", _sprite_path_entry.get_text());
     _settings->set_string_array(
         "wad-paths",
         _wads.property_wad_paths().get_value());
@@ -115,6 +127,26 @@ void PreferencesDialog::on_gamedef_entry_icon_pressed(
     if (response == Gtk::ResponseType::RESPONSE_ACCEPT)
     {
         _gamedef_entry.set_text(
+            Glib::filename_to_utf8(chooser->get_filename()));
+    }
+}
+
+
+void PreferencesDialog::on_game_path_entry_icon_pressed(
+    Gtk::EntryIconPosition icon_pos,
+    GdkEventButton const *event)
+{
+    auto const chooser = Gtk::FileChooserNative::create(
+        "Select Game Root Directory",
+        Gtk::FileChooserAction::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+    chooser->set_transient_for(*this);
+    chooser->set_filename(
+        Glib::filename_from_utf8(_game_path_entry.get_text()));
+
+    int const response = chooser->run();
+    if (response == Gtk::ResponseType::RESPONSE_ACCEPT)
+    {
+        _game_path_entry.set_text(
             Glib::filename_to_utf8(chooser->get_filename()));
     }
 }

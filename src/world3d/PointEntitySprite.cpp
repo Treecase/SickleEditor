@@ -61,6 +61,7 @@ static std::shared_ptr<GLUtil::Texture> frame_to_texture(
 
 PointEntitySprite::PreDrawFunc PointEntitySprite::predraw = [](auto, auto){};
 std::string PointEntitySprite::sprite_root_path = ".";
+std::string PointEntitySprite::game_root_path = ".";
 
 
 GLUtil::Program &PointEntitySprite::shader()
@@ -139,10 +140,33 @@ void PointEntitySprite::on_attach(Sickle::Componentable &obj)
     _src = &dynamic_cast<Sickle::Editor::Entity &>(obj);
     if (_src->classinfo().type() != "PointClass")
         throw std::invalid_argument{"must be PointClass"};
-    if (!_src->classinfo()
-        .has_class_property<Sickle::Editor::ClassPropertyIconsprite>())
-        throw std::invalid_argument{"must have an iconsprite() class property"};
 
+    // Entity class must have either iconsprite() or sprite() property, but not
+    // both.
+    bool const has_iconsprite = _src->classinfo()
+        .has_class_property<Sickle::Editor::ClassPropertyIconsprite>();
+    bool const has_sprite = _src->classinfo()
+        .has_class_property<Sickle::Editor::ClassPropertySprite>();
+    if (has_iconsprite && has_sprite)
+    {
+        throw std::invalid_argument{
+            "conflict: has both iconsprite() and sprite() properties"};
+    }
+    else if (!has_iconsprite && !has_sprite)
+    {
+        throw std::invalid_argument{
+            "must have either an iconsprite() or a sprite() class property"};
+    }
+
+    if (has_sprite)
+    {
+        _src->signal_properties_changed().connect(
+            sigc::mem_fun(
+                *this,
+                &PointEntitySprite::_on_src_properties_changed));
+    }
+
+    _is_iconsprite = has_iconsprite;
     push_queue([this](){_init();});
 }
 
@@ -151,6 +175,7 @@ void PointEntitySprite::on_detach(Sickle::Componentable &obj)
 {
     _src = nullptr;
     _sprite.reset();
+    _sprite_path.reset();
     clear_queue();
 }
 
@@ -186,13 +211,25 @@ void PointEntitySprite::_init_construct()
 
 void PointEntitySprite::_init()
 {
-    // TODO: Only load textures once and share the data.
-    auto const iconsprite =\
-        _src->classinfo()
-            .get_class_property<Sickle::Editor::ClassPropertyIconsprite>();
-    auto const path =\
-        sprite_root_path + "/" + iconsprite->get_path();
+    if (_is_iconsprite)
+    {
+        // TODO: Only load textures once and share the data.
+        auto const iconsprite =\
+            _src->classinfo()
+                .get_class_property<Sickle::Editor::ClassPropertyIconsprite>();
+        auto const path =\
+            sprite_root_path + "/" + iconsprite->get_path();
+        _load_sprite(path);
+    }
+    else
+    {
+        _sprite_update();
+    }
+}
 
+
+void PointEntitySprite::_load_sprite(std::string const &path)
+{
     std::unique_ptr<GioFileSpriteStream> sprite_stream{nullptr};
     try {
         sprite_stream = std::make_unique<GioFileSpriteStream>(
@@ -216,6 +253,23 @@ void PointEntitySprite::_init()
     }
 
     _sprite = frame_to_texture(sprite->frames.at(0), sprite->palette);
+}
+
+
+void PointEntitySprite::_sprite_update()
+{
+    auto const model = _src->get_property("model");
+    if (_sprite_path.has_value() && model == _sprite_path.value())
+        return;
+    _sprite_path = model;
+    auto const path = game_root_path + "/" + model;
+    push_queue([this, path](){_load_sprite(path);});
+}
+
+
+void PointEntitySprite::_on_src_properties_changed()
+{
+    _sprite_update();
 }
 
 

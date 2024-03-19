@@ -50,6 +50,8 @@ namespace Sickle
         Gtk::Grid _grid{};
         Gtk::Label _gamedef_label{"Game Definition"};
         Gtk::Entry _gamedef_entry{};
+        Gtk::Label _game_path_label{"Game Root Path"};
+        Gtk::Entry _game_path_entry{};
         Gtk::Label _sprite_path_label{"Sprite Root Path"};
         Gtk::Entry _sprite_path_entry{};
         WADList _wads{};
@@ -57,6 +59,9 @@ namespace Sickle
         void _apply_preferences();
 
         void on_gamedef_entry_icon_pressed(
+            Gtk::EntryIconPosition icon_pos,
+            GdkEventButton const *event);
+        void on_game_path_entry_icon_pressed(
             Gtk::EntryIconPosition icon_pos,
             GdkEventButton const *event);
         void on_sprite_path_entry_icon_pressed(

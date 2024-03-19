@@ -35,9 +35,14 @@ namespace Sickle
     public:
         static Glib::RefPtr<App> create();
 
+        auto property_fgd_path() {return _prop_fgd_path.get_proxy();}
+
+        auto property_game_root_path()
+        {return _prop_game_root_path.get_proxy();}
+
         auto property_sprite_root_path()
         {return _prop_sprite_root_path.get_proxy();}
-        auto property_fgd_path() {return _prop_fgd_path.get_proxy();}
+
         auto property_wad_paths() {return _prop_wad_paths.get_proxy();}
 
     protected:
@@ -68,8 +73,9 @@ namespace Sickle
         Glib::RefPtr<Gio::Settings> _settings;
         FGD::GameDef _game_definition;
 
-        Glib::Property<Glib::ustring> _prop_sprite_root_path;
         Glib::Property<Glib::ustring> _prop_fgd_path;
+        Glib::Property<Glib::ustring> _prop_game_root_path;
+        Glib::Property<Glib::ustring> _prop_sprite_root_path;
         Glib::Property<std::vector<Glib::ustring>> _prop_wad_paths;
 
         PreferencesDialog *_open_preferences();
@@ -79,8 +85,11 @@ namespace Sickle
 
         // Signal Handlers
         void _on_hide_window(Gtk::Window *window);
-        void _on_sprite_root_path_changed();
+
         void _on_fgd_path_changed();
+        void _on_game_root_path_changed();
+        void _on_sprite_root_path_changed();
+        void _on_wad_paths_changed();
     };
 }
 

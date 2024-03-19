@@ -89,7 +89,11 @@ namespace Sickle::Editor
     };
 
 
-    // TODO: sprite()
+    struct ClassPropertySprite : public ClassProperty
+    {
+        ClassPropertySprite() {}
+        virtual ~ClassPropertySprite()=default;
+    };
 
 
     // TODO: studio()
