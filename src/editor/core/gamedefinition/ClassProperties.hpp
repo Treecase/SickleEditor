@@ -33,7 +33,7 @@ namespace Sickle::Editor
 {
     struct ClassProperty
     {
-        virtual std::string name() const=0;
+        virtual ~ClassProperty()=default;
     };
 
 
@@ -41,7 +41,19 @@ namespace Sickle::Editor
     // creating ClassInfo objects.
 
 
-    // TODO: color
+    struct ClassPropertyColor : public ClassProperty
+    {
+        ClassPropertyColor(glm::vec3 const &color)
+        :   _color{color}
+        {
+        }
+        virtual ~ClassPropertyColor()=default;
+
+        glm::vec3 get_color() const {return _color;}
+
+    private:
+        glm::vec3 _color;
+    };
 
 
     // TODO: decal
@@ -54,8 +66,6 @@ namespace Sickle::Editor
         {
         }
         virtual ~ClassPropertyIconsprite()=default;
-
-        virtual std::string name() const override {return "base";}
 
         std::string get_path() const {return _path;}
 
@@ -71,8 +81,6 @@ namespace Sickle::Editor
         {
         }
         virtual ~ClassPropertySize()=default;
-
-        virtual std::string name() const override {return "base";}
 
         std::pair<glm::vec3, glm::vec3> get_points() const {return _points;}
 

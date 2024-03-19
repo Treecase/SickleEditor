@@ -64,10 +64,9 @@ static int remove_brush(lua_State *L)
 
 static int add_entity(lua_State *L)
 {
-    auto ed = leditor_check(L, 1);
-    auto type = luaL_checkstring(L, 2);
-    auto entity = Entity::create();
-    entity->set_property("classname", type);
+    auto const ed = leditor_check(L, 1);
+    auto const type = luaL_checkstring(L, 2);
+    auto const entity = Entity::create(type);
     try {
         ed->get_map()->add_entity(entity);
     } catch (std::logic_error const &e) {

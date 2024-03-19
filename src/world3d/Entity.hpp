@@ -109,6 +109,8 @@ namespace World3D
         std::shared_ptr<GLUtil::Buffer> _vbo{nullptr};
         std::shared_ptr<GLUtil::Buffer> _ebo{nullptr};
 
+        glm::vec3 _color{1.0f, 1.0f, 0.0f};
+
         /** @warning Requires an active OpenGL context. */
         void _init_construct();
         /** @warning Requires an active OpenGL context. */

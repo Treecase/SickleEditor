@@ -28,7 +28,7 @@ static std::shared_ptr<FGD::Class> get_class_by_name(
     std::string const &name);
 
 // Get the base classes from an fgd class.
-static std::vector<std::string> get_bases(std::shared_ptr<FGD::Class> cls);
+static std::vector<std::string> get_bases(FGD::Class const &cls);
 
 
 
@@ -51,7 +51,7 @@ void GameDefinition::add_game(FGD::GameDef const &game)
         // BaseClasses cannot be instantiated.
         if (cls->type() == "BaseClass")
             continue;
-        auto ec = _instantiate_class(cls, game);
+        auto const ec = _instantiate_class(*cls, game);
         _classes.insert({cls->name, ec});
     }
 }
@@ -65,19 +65,16 @@ EntityClass GameDefinition::lookup(std::string const &classname) const
 
 
 EntityClass GameDefinition::_instantiate_class(
-    std::shared_ptr<FGD::Class> const &cls,
+    FGD::Class const &cls,
     FGD::GameDef const &game)
 {
-    if (!cls)
-        return EntityClass{};
-
-    EntityClass ec{*cls};
+    EntityClass ec{cls};
     // Resolve inheritance hierarchy.
     auto const bases = get_bases(cls);
     for (auto const &name : bases)
     {
         auto const base = get_class_by_name(game, name);
-        auto const base_ec = _instantiate_class(base, game);
+        auto const base_ec = _instantiate_class(*base, game);
         ec.inherit_from(base_ec);
     }
     return ec;
@@ -96,9 +93,9 @@ static std::shared_ptr<FGD::Class> get_class_by_name(
 }
 
 
-static std::vector<std::string> get_bases(std::shared_ptr<FGD::Class> cls)
+static std::vector<std::string> get_bases(FGD::Class const &cls)
 {
-    for (auto const &cp : cls->attributes)
+    for (auto const &cp : cls.attributes)
     {
         auto const bcp = std::dynamic_pointer_cast<FGD::BaseAttribute>(cp);
         if (bcp)

@@ -45,14 +45,13 @@ namespace Sickle::Editor
      * Entities have a list of properties, which modify the entity's behaviour
      * in-game.
      *
-     * All entities have at least one property, "classname". This property
-     * defines the overall in-game behaviour of the entity, for example
-     * 'func_door' or 'func_trigger'.
+     * All entities have a class. This defines the overall in-game behaviour of
+     * the entity, for example 'func_door' or 'func_trigger'.
      */
     class Entity : public EditorObject, public Lua::Referenceable
     {
     public:
-        static EntityRef create();
+        static EntityRef create(std::string const &classname);
         static EntityRef create(MAP::Entity const &entity);
         static EntityRef create(RMF::Entity const &entity);
 
@@ -102,8 +101,7 @@ namespace Sickle::Editor
         void set_property(std::string const &key, std::string const &value);
 
         /**
-         * Remove the entity property named `key`. The "classname" key cannot be
-         * deleted.
+         * Remove the entity property named `key`.
          *
          * @param key Name of the property to remove.
          */
@@ -136,7 +134,7 @@ namespace Sickle::Editor
         virtual std::vector<EditorObjectRef> children() const override;
 
     protected:
-        Entity();
+        Entity(std::string const &classname);
 
     private:
         struct Property
@@ -171,12 +169,12 @@ namespace Sickle::Editor
             }
         };
 
-        static std::shared_ptr<EntityPropertyDefinition> classname_definition;
         static std::shared_ptr<EntityPropertyDefinition> origin_definition;
 
         sigc::signal<void()> _signal_properties_changed{};
 
         EntityClass _classinfo{};
+        std::string _classname;
         std::unordered_map<std::string, Property> _properties{};
         std::vector<BrushRef> _brushes{};
 

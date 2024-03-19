@@ -28,12 +28,6 @@
 using namespace Sickle::Editor;
 
 
-std::shared_ptr<EntityPropertyDefinition> Entity::classname_definition{
-    std::make_shared<EntityPropertyDefinition>(
-        "classname",
-        "",
-        "The name of this entity's class.",
-        PropertyType::STRING)};
 std::shared_ptr<EntityPropertyDefinition> Entity::origin_definition{
     std::make_shared<EntityPropertyDefinition>(
         "origin",
@@ -43,18 +37,18 @@ std::shared_ptr<EntityPropertyDefinition> Entity::origin_definition{
 
 
 
-EntityRef Entity::create()
+EntityRef Entity::create(std::string const &classname)
 {
-    return EntityRef{new Entity{}};
+    return EntityRef{new Entity{classname}};
 }
 
 
 EntityRef Entity::create(MAP::Entity const &entity)
 {
-    auto e = create();
-    e->set_property("classname", entity.properties.at("classname"));
+    auto e = create(entity.properties.at("classname"));
     for (auto const &kv : entity.properties)
-        e->set_property(kv.first, kv.second);
+        if (kv.first != "classname")
+            e->set_property(kv.first, kv.second);
     for (auto const &brush : entity.brushes)
         e->add_brush(Brush::create(brush));
     return e;
@@ -63,8 +57,7 @@ EntityRef Entity::create(MAP::Entity const &entity)
 
 EntityRef Entity::create(RMF::Entity const &entity)
 {
-    auto e = create();
-    e->set_property("classname", entity.classname);
+    auto e = create(entity.classname);
     for (auto const &kv : entity.kv_pairs)
         e->set_property(kv.first, kv.second);
 
@@ -81,11 +74,11 @@ EntityRef Entity::create(RMF::Entity const &entity)
 }
 
 
-Entity::Entity()
+Entity::Entity(std::string const &classname)
 :   Glib::ObjectBase{typeid(Entity)}
+,   _classname{classname}
 {
-    _properties.insert({"classname", Property{classname_definition}});
-    _classinfo = EntityClass{};
+    _on_classname_changed();
 }
 
 
@@ -115,7 +108,7 @@ EntityClass Entity::classinfo() const
 
 std::string Entity::classname() const
 {
-    return _properties.at("classname").value;
+    return _classname;
 }
 
 
@@ -144,20 +137,12 @@ void Entity::set_property(std::string const &key, std::string const &value)
     catch (std::out_of_range const &e) {
         return;
     }
-    if (key == "classname")
-    {
-        if (value == classname())
-            return;
-        _on_classname_changed();
-    }
     signal_properties_changed().emit();
 }
 
 
 bool Entity::remove_property(std::string const &key)
 {
-    if (key == "classname")
-        return false;
     bool const v = _properties.erase(key);
     if (v)
         signal_properties_changed().emit();

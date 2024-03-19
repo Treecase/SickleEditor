@@ -85,7 +85,7 @@ void PointEntityBox::render() const
     shader().setUniformS("model", params.model);
     shader().setUniformS("view", params.view);
     shader().setUniformS("projection", params.projection);
-    shader().setUniformS("color", glm::vec3{1.0f, 1.0f, 0.0f});
+    shader().setUniformS("color", _color);
     shader().setUniformS("modulate",
         _src->is_selected()
             ? glm::vec3{1.0f, 0.0f, 0.0f}
@@ -143,13 +143,17 @@ void PointEntityBox::_init()
     auto B = DEFAULT_BOX_SIZE * glm::vec3{+0.5f, +0.5f, +0.5f};
 
     auto const classinfo = _src->classinfo();
-    auto const size =\
-        classinfo.get_class_property<Sickle::Editor::ClassPropertySize>();
-    if (size)
+    if (auto const size =\
+        classinfo.get_class_property<Sickle::Editor::ClassPropertySize>())
     {
         auto const points = size->get_points();
         A = points.first;
         B = points.second;
+    }
+    if (auto const color =\
+        classinfo.get_class_property<Sickle::Editor::ClassPropertyColor>())
+    {
+        _color = color->get_color();
     }
 
     std::vector<GLfloat> const vbo_data{

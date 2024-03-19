@@ -54,7 +54,7 @@ WorldRef World::create(RMF::RichMap const &map)
     auto worldspawn = world->worldspawn();
     for (auto const &kv : map.worldspawn_properties)
         worldspawn->set_property(kv.first, kv.second);
-    worldspawn->set_property("classname", map.worldspawn_name);
+    // worldspawn->set_property("classname", map.worldspawn_name);
 
     std::stack<RMF::Group> groups{};
     groups.push(map.objects);
@@ -178,7 +178,6 @@ void World::_on_worldspawn_removed()
 
 void World::_add_worldspawn()
 {
-    auto worldspawn = Entity::create();
-    worldspawn->set_property("classname", "worldspawn");
+    auto const worldspawn = Entity::create("worldspawn");
     add_entity(worldspawn);
 }

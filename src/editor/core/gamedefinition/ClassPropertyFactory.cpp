@@ -27,6 +27,24 @@ std::shared_ptr<ClassProperty> ClassPropertyFactory::construct(
 {
     if (!prop)
         ;
+    else if (typeid(*prop.get()) == typeid(FGD::ColorAttribute))
+    {
+        auto const color =\
+            std::dynamic_pointer_cast<FGD::ColorAttribute>(prop);
+        glm::vec3 const rgb{
+            std::get<0>(color->rgb) / 255.0f,
+            std::get<1>(color->rgb) / 255.0f,
+            std::get<2>(color->rgb) / 255.0f,
+        };
+        return std::make_shared<ClassPropertyColor>(rgb);
+    }
+    else if (typeid(*prop.get()) == typeid(FGD::IconSpriteAttribute))
+    {
+        auto const iconsprite =\
+            std::dynamic_pointer_cast<FGD::IconSpriteAttribute>(prop);
+        return std::make_shared<ClassPropertyIconsprite>(
+            iconsprite->iconpath);
+    }
     else if (typeid(*prop.get()) == typeid(FGD::SizeAttribute))
     {
         auto size = std::dynamic_pointer_cast<FGD::SizeAttribute>(prop);
@@ -48,13 +66,6 @@ std::shared_ptr<ClassProperty> ClassPropertyFactory::construct(
             p1 = p1 * glm::vec3{-0.5f, -0.5, -0.5};
         }
         return std::make_shared<ClassPropertySize>(p1, p2);
-    }
-    else if (typeid(*prop.get()) == typeid(FGD::IconSpriteAttribute))
-    {
-        auto const iconsprite =\
-            std::dynamic_pointer_cast<FGD::IconSpriteAttribute>(prop);
-        return std::make_shared<ClassPropertyIconsprite>(
-            iconsprite->iconpath);
     }
     return nullptr;
 }
