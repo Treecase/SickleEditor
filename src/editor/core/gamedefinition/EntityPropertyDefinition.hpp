@@ -34,6 +34,7 @@ namespace Sickle::Editor
     enum PropertyType
     {
         CHOICES,
+        COLOR255,
         FLAGS,
         INTEGER,
         STRING,
@@ -111,6 +112,18 @@ namespace Sickle::Editor
 
     private:
         std::map<int, std::string> _choices{};
+    };
+
+    /**
+     * Color255 properties have 4 integer RGBA elements, ranging from 0-255.
+     */
+    struct EntityPropertyDefinitionColor255 : public EntityPropertyDefinition
+    {
+        EntityPropertyDefinitionColor255(
+            std::string const &name,
+            std::string const &default_value,
+            std::string const &description);
+        virtual ~EntityPropertyDefinitionColor255()=default;
     };
 
     /**

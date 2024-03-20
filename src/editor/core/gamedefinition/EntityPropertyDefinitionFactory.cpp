@@ -99,7 +99,10 @@ EntityPropertyDefinitionFactory::construct(
     {
         auto const colorprop =\
             std::dynamic_pointer_cast<FGD::Color255Property>(prop);
-        default_value = colorprop->value;
+        return std::make_shared<EntityPropertyDefinitionColor255>(
+            name,
+            colorprop->value,
+            description);
     }
     else if (typeid(*prop.get()) == typeid(FGD::StudioProperty))
     {

@@ -43,14 +43,11 @@ CellRendererProperty::CellRendererProperty()
     property_value().signal_changed().connect(
         sigc::mem_fun(*this, &CellRendererProperty::on_value_changed));
 
-    _choices_renderer.signal_changed.connect(
-        sigc::mem_fun(*this, &CellRendererProperty::on_choices_edited));
-    _flags_renderer.signal_changed.connect(
-        sigc::mem_fun(*this, &CellRendererProperty::on_flags_edited));
-    _integer_renderer.signal_changed.connect(
-        sigc::mem_fun(*this, &CellRendererProperty::on_integer_edited));
-    _text_renderer.signal_changed.connect(
-        sigc::mem_fun(*this, &CellRendererProperty::on_text_edited));
+    _choices_renderer.signal_changed.connect(signal_changed().make_slot());
+    _color_renderer.signal_changed.connect(signal_changed().make_slot());
+    _flags_renderer.signal_changed.connect(signal_changed().make_slot());
+    _integer_renderer.signal_changed.connect(signal_changed().make_slot());
+    _text_renderer.signal_changed.connect(signal_changed().make_slot());
 }
 
 
@@ -147,6 +144,7 @@ void CellRendererProperty::on_value_changed()
     RENDERERS
     {
         {Sickle::Editor::PropertyType::CHOICES, &_choices_renderer},
+        {Sickle::Editor::PropertyType::COLOR255, &_color_renderer},
         {Sickle::Editor::PropertyType::FLAGS, &_flags_renderer},
         {Sickle::Editor::PropertyType::INTEGER, &_integer_renderer},
         {Sickle::Editor::PropertyType::STRING, &_text_renderer},
@@ -166,36 +164,4 @@ void CellRendererProperty::on_value_changed()
 
     renderer->set_value(value);
     property_mode() = renderer->mode();
-}
-
-
-void CellRendererProperty::on_choices_edited(
-    Glib::ustring const &path,
-    Glib::ustring const &value)
-{
-    signal_changed().emit(path, value);
-}
-
-
-void CellRendererProperty::on_flags_edited(
-    Glib::ustring const &path,
-    Glib::ustring const &value)
-{
-    signal_changed().emit(path, value);
-}
-
-
-void CellRendererProperty::on_integer_edited(
-    Glib::ustring const &path,
-    Glib::ustring const &value)
-{
-    signal_changed().emit(path, value);
-}
-
-
-void CellRendererProperty::on_text_edited(
-    Glib::ustring const &path,
-    Glib::ustring const &value)
-{
-    signal_changed().emit(path, value);
 }

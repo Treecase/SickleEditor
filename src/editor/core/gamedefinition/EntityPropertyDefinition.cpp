@@ -76,6 +76,21 @@ EntityPropertyDefinitionChoices::EntityPropertyDefinitionChoices(
 }
 
 
+
+/* --- EntityPropertyColor255 ----------------------------------------------- */
+EntityPropertyDefinitionColor255::EntityPropertyDefinitionColor255(
+    std::string const &name,
+    std::string const &default_value,
+    std::string const &description)
+:   EntityPropertyDefinition{
+        name,
+        default_value,
+        description,
+        PropertyType::COLOR255}
+{
+}
+
+
 /* --- EntityPropertyDefinitionFlags ---------------------------------------- */
 static std::string generate_default(
     std::map<int, std::pair<std::string, bool>> const &flagdef)

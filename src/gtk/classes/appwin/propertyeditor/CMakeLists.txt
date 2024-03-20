@@ -1,8 +1,10 @@
 add_library(appwin-propertyeditor STATIC
     CellRendererProperty.cpp
     PropertyEditor.cpp
+    cellrenderers/CellRendererColor.cpp
     cellrenderers/CellRendererFlags.cpp
     cellrenderers/Choices.cpp
+    cellrenderers/Color255.cpp
     cellrenderers/Flags.cpp
     cellrenderers/Integer.cpp
     cellrenderers/String.cpp

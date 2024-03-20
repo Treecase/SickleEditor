@@ -19,6 +19,7 @@
 #ifndef SE_APPWIN_PROPERTYEDITOR_CELLRENDERERPROPERTY_HPP
 #define SE_APPWIN_PROPERTYEDITOR_CELLRENDERERPROPERTY_HPP
 
+#include "cellrenderers/CellRendererColor.hpp"
 #include "cellrenderers/CellRendererFlags.hpp"
 
 #include <editor/world/Entity.hpp>
@@ -102,6 +103,20 @@ namespace Sickle::AppWin
         private:
             Gtk::CellRendererCombo _renderer{};
             void on_edited(Glib::ustring const &, Glib::ustring const &);
+        };
+
+        struct Color255Renderer : Renderer
+        {
+            Color255Renderer();
+            virtual ~Color255Renderer()=default;
+            virtual void set_value(ValueType const &value);
+            virtual Gtk::CellRenderer *renderer();
+            virtual Gtk::CellRendererMode mode();
+        private:
+            CellRendererColor _renderer{};
+            void on_rgba_edited(
+                Glib::ustring const &path,
+                Gdk::RGBA const &rgba);
         };
 
         struct FlagsRenderer : public Renderer
@@ -213,6 +228,7 @@ namespace Sickle::AppWin
 
     private:
         ChoicesRenderer _choices_renderer{};
+        Color255Renderer _color_renderer{};
         FlagsRenderer _flags_renderer{};
         IntegerRenderer _integer_renderer{};
         StringRenderer _text_renderer{};
@@ -228,19 +244,6 @@ namespace Sickle::AppWin
             Glib::ustring const &)> _sig_changed{};
 
         void on_value_changed();
-
-        void on_choices_edited(
-            Glib::ustring const &path,
-            Glib::ustring const &value);
-        void on_flags_edited(
-            Glib::ustring const &path,
-            Glib::ustring const &value);
-        void on_integer_edited(
-            Glib::ustring const &path,
-            Glib::ustring const &value);
-        void on_text_edited(
-            Glib::ustring const &path,
-            Glib::ustring const &value);
     };
 }
 

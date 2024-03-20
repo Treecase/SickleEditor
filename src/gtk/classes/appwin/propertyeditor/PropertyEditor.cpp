@@ -81,6 +81,7 @@ Sickle::Editor::EntityRef PropertyEditor::get_entity() const
 void PropertyEditor::on_entity_changed()
 {
     _conn_entity_properties_changed.disconnect();
+    _store->clear();
     on_entity_properties_changed();
     if (auto const entity = get_entity())
     {
@@ -158,7 +159,8 @@ void PropertyEditor::on_value_edited(
     the_value.value = value;
 
     it->set_value(_columns().renderer_value, the_value);
-    get_entity()->set_property(name, value);
+    if (auto const &entity = get_entity())
+        entity->set_property(name, value);
 }
 
 
