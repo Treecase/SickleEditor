@@ -55,6 +55,8 @@ void CellRendererProperty::FileRenderer::set_value(ValueType const &value)
             {"*.wav", "sound",   "Choose Sound"}},
         {   Sickle::Editor::PropertyType::SPRITE,
             {"*", "sprites", "Choose Sprite"}},
+        {   Sickle::Editor::PropertyType::STUDIO,
+            {"*.mdl", "models", "Choose Model"}},
     };
 
     TypeInfo info{};

@@ -108,6 +108,8 @@ EntityPropertyDefinitionFactory::construct(
     {
         auto const studioprop =\
             std::dynamic_pointer_cast<FGD::StudioProperty>(prop);
+        default_value = studioprop->defaultvalue.value_or(default_value);
+        type = PropertyType::STUDIO;
     }
     else if (typeid(*prop.get()) == typeid(FGD::SpriteProperty))
     {

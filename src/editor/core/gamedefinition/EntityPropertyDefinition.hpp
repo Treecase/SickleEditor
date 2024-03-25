@@ -41,6 +41,7 @@ namespace Sickle::Editor
         SOUND,
         SPRITE,
         STRING,
+        STUDIO,
         NUM_PROPERTYTYPES
     };
 

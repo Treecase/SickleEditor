@@ -152,6 +152,8 @@ void CellRendererProperty::on_value_changed()
         {Sickle::Editor::PropertyType::SOUND, &_file_renderer},
         {Sickle::Editor::PropertyType::SPRITE, &_file_renderer},
         {Sickle::Editor::PropertyType::STRING, &_text_renderer},
+        // TODO: maybe a proper visual model browser?
+        {Sickle::Editor::PropertyType::STUDIO, &_file_renderer},
     };
     renderer = &_text_renderer;
 
