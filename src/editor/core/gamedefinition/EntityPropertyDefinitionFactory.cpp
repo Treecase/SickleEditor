@@ -113,16 +113,21 @@ EntityPropertyDefinitionFactory::construct(
     {
         auto const spriteprop =\
             std::dynamic_pointer_cast<FGD::SpriteProperty>(prop);
+        default_value = spriteprop->defaultvalue.value_or(default_value);
+        type = PropertyType::SPRITE;
     }
     else if (typeid(*prop.get()) == typeid(FGD::SoundProperty))
     {
         auto const soundprop =\
             std::dynamic_pointer_cast<FGD::SoundProperty>(prop);
+        default_value = soundprop->defaultvalue.value_or(default_value);
+        type = PropertyType::SOUND;
     }
     else if (typeid(*prop.get()) == typeid(FGD::DecalProperty))
     {
         auto const decalprop =\
             std::dynamic_pointer_cast<FGD::DecalProperty>(prop);
+        type = PropertyType::DECAL;
     }
 
     return std::make_shared<EntityPropertyDefinition>(

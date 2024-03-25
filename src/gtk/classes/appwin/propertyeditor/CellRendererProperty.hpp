@@ -20,6 +20,7 @@
 #define SE_APPWIN_PROPERTYEDITOR_CELLRENDERERPROPERTY_HPP
 
 #include "cellrenderers/CellRendererColor.hpp"
+#include "cellrenderers/CellRendererFile.hpp"
 #include "cellrenderers/CellRendererFlags.hpp"
 
 #include <editor/world/Entity.hpp>
@@ -117,6 +118,20 @@ namespace Sickle::AppWin
             void on_rgba_edited(
                 Glib::ustring const &path,
                 Gdk::RGBA const &rgba);
+        };
+
+        struct FileRenderer : public Renderer
+        {
+            FileRenderer();
+            virtual ~FileRenderer()=default;
+            virtual void set_value(ValueType const &value);
+            virtual Gtk::CellRenderer *renderer();
+            virtual Gtk::CellRendererMode mode();
+        private:
+            CellRendererFile _renderer{};
+            void on_renderer_path_edited(
+                Glib::ustring const &,
+                Glib::ustring const &);
         };
 
         struct FlagsRenderer : public Renderer
@@ -229,6 +244,7 @@ namespace Sickle::AppWin
     private:
         ChoicesRenderer _choices_renderer{};
         Color255Renderer _color_renderer{};
+        FileRenderer _file_renderer{};
         FlagsRenderer _flags_renderer{};
         IntegerRenderer _integer_renderer{};
         StringRenderer _text_renderer{};

@@ -35,8 +35,11 @@ namespace Sickle::Editor
     {
         CHOICES,
         COLOR255,
+        DECAL,
         FLAGS,
         INTEGER,
+        SOUND,
+        SPRITE,
         STRING,
         NUM_PROPERTYTYPES
     };
