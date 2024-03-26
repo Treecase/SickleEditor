@@ -216,7 +216,7 @@ void CellRendererFlags::get_preferred_width_vfunc(
     int const column_count = property_bits_per_row();
     int const padding_count = std::max(0, column_count - 1);
 
-    minimum_width = column_count + padding_count;
+    minimum_width = column_count + padding_count * property_column_padding();
     natural_width = minimum_width;
 }
 
@@ -230,7 +230,7 @@ void CellRendererFlags::get_preferred_height_vfunc(
         (float)BITS_IN_INT / (float)property_bits_per_row());
     int const padding_count = std::max(0, row_count - 1);
 
-    minimum_height = row_count + padding_count;
+    minimum_height = row_count + padding_count * property_row_padding();
     natural_height = minimum_height;
 }
 
@@ -331,13 +331,6 @@ Gdk::Rectangle CellRendererFlags::_get_cell_rect_for_size(
     // Cells are square, so cell size will be the minimum dimension.
     int const cell_size = std::min(cell_width, cell_height);
 
-    // Calculate horizontal padding.
-    int const unused_horizontal = (
-        width
-        - num_column_spacers
-        - num_columns * cell_size);
-    int const padding_horizontal = unused_horizontal / 2;
-
     // Calculate vertical padding.
     int const unused_vertical = (
         height
@@ -348,8 +341,7 @@ Gdk::Rectangle CellRendererFlags::_get_cell_rect_for_size(
     int const bit_column_idx = bit % property_bits_per_row();
     int const bit_row_idx = bit / property_bits_per_row();
     return {
-        (   padding_horizontal
-            + bit_column_idx * property_column_padding()
+        (   bit_column_idx * property_column_padding()
             + bit_column_idx * cell_size),
         (   padding_vertical
             + bit_row_idx * property_row_padding()
