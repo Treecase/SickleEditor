@@ -44,11 +44,7 @@ void CellRendererColor::render_vfunc(
     auto const xpad = property_xpad().get_value();
     auto const ypad = property_ypad().get_value();
 
-    auto const width = cell_area.get_width() - xpad * 2;
-    auto const height = cell_area.get_height() - ypad * 2;
-
-    if (width <= 0 || height <= 0)
-        return;
+    auto const swatch_rect = _get_swatch_rect(cell_area);
 
 
     auto state = get_state(widget, flags);
@@ -68,12 +64,12 @@ void CellRendererColor::render_vfunc(
     context->set_state(state);
     context->render_background(
         cr,
-        cell_area.get_x() + xpad,
-        cell_area.get_y() + ypad,
-        width,
-        height);
+        background_area.get_x(),
+        background_area.get_y(),
+        background_area.get_width(),
+        background_area.get_height());
 
-    // Draw the color rect.
+    // Draw the color swatch.
     auto const border = context->get_border(context->get_state());
     auto const padding = context->get_padding(context->get_state());
     auto const color = property_rgba().get_value();
@@ -84,14 +80,14 @@ void CellRendererColor::render_vfunc(
         color.get_blue(),
         color.get_alpha());
     cr->rectangle(
-        cell_area.get_x() + border.get_left() + padding.get_left(),
-        cell_area.get_y() + border.get_top() + padding.get_top(),
-        (   width
+        swatch_rect.get_x() + border.get_left() + padding.get_left(),
+        swatch_rect.get_y() + border.get_top() + padding.get_top(),
+        (   swatch_rect.get_width()
             - border.get_left()
             - border.get_right()
             - padding.get_left()
             - padding.get_right()),
-        (   height
+        (   swatch_rect.get_height()
             - border.get_top()
             - border.get_bottom()
             - padding.get_top()
@@ -101,10 +97,10 @@ void CellRendererColor::render_vfunc(
 
     context->render_frame(
         cr,
-        cell_area.get_x() + xpad,
-        cell_area.get_y() + ypad,
-        width,
-        height);
+        swatch_rect.get_x(),
+        swatch_rect.get_y(),
+        swatch_rect.get_width(),
+        swatch_rect.get_height());
 
     context->context_restore();
     cr->restore();
@@ -119,6 +115,20 @@ bool CellRendererColor::activate_vfunc(
     Gdk::Rectangle const &cell_area,
     Gtk::CellRendererState flags)
 {
+    if (event && event->type == GdkEventType::GDK_BUTTON_PRESS)
+    {
+        auto const swatch_rect = _get_swatch_rect(cell_area);
+
+        Gdk::Rectangle const click_rect{
+            static_cast<int>(event->button.x),
+            static_cast<int>(event->button.y),
+            1,
+            1};
+
+        if (!swatch_rect.intersects(click_rect))
+            return false;
+    }
+
     _ccd.property_rgba().set_value(property_rgba().get_value());
     auto const response = _ccd.run();
     if (response == Gtk::ResponseType::RESPONSE_OK)
@@ -151,4 +161,24 @@ void CellRendererColor::get_preferred_height_vfunc(
 Gtk::SizeRequestMode CellRendererColor::get_request_mode_vfunc() const
 {
     return Gtk::SizeRequestMode::SIZE_REQUEST_CONSTANT_SIZE;
+}
+
+
+
+Gdk::Rectangle CellRendererColor::_get_swatch_rect(
+    Gdk::Rectangle const &cell_area) const
+{
+    int const xpad = property_xpad().get_value();
+    int const ypad = property_ypad().get_value();
+
+    int const height = cell_area.get_height() - ypad * 2;
+    int const width = std::min(
+        cell_area.get_width() - xpad * 2,
+        height * SWATCH_ASPECT);
+
+    return Gdk::Rectangle{
+        cell_area.get_x() + xpad,
+        cell_area.get_y() + ypad,
+        width < 0? 0 : width,
+        height < 0? 0 : height};
 }

@@ -76,12 +76,17 @@ namespace Sickle::AppWin
 
 
     private:
+        /* Width of the swatch area is SWATCH_ASPECT * swatch_height */
+        static constexpr int SWATCH_ASPECT = 3;
+
         Glib::Property<Gdk::RGBA> _prop_rgba;
         sigc::signal<void(
             Glib::ustring const &,
             Gdk::RGBA const &)> _sig_rgba_edited{};
 
         Gtk::ColorChooserDialog _ccd{};
+
+        Gdk::Rectangle _get_swatch_rect(Gdk::Rectangle const &cell_area) const;
     };
 }
 
