@@ -19,6 +19,7 @@
 #include "CellRendererFile.hpp"
 
 #include <glibmm/convert.h>
+#include <gtkmm/icontheme.h>
 
 
 using namespace Sickle::AppWin;
@@ -47,9 +48,12 @@ void CellRendererFile::render_vfunc(
     Gdk::Rectangle const &cell_area,
     Gtk::CellRendererState flags)
 {
-    auto const layout = get_layout(widget);
+    auto const layout = _get_layout(widget);
     auto const context = widget.get_style_context();
     auto state = get_state(widget, flags);
+
+    auto const icon = _get_icon(widget);
+    auto const icon_area = _get_icon_area(widget, cell_area);
 
     context->context_save();
     context->set_state(state);
@@ -65,7 +69,12 @@ void CellRendererFile::render_vfunc(
     auto const ypad = property_ypad().get_value();
 
     layout->set_ellipsize(Pango::EllipsizeMode::ELLIPSIZE_END);
-    layout->set_width((cell_area.get_width() - 2 * xpad) * PANGO_SCALE);
+    layout->set_width(
+        std::max(0U, cell_area.get_width() - 2 * xpad - icon_area.get_width())
+        * PANGO_SCALE);
+
+    int text_width, text_height;
+    layout->get_pixel_size(text_width, text_height);
 
     cr->save();
 
@@ -76,10 +85,19 @@ void CellRendererFile::render_vfunc(
         cell_area.get_height());
     cr->clip();
 
+    context->render_icon(cr, icon, icon_area.get_x(), icon_area.get_y());
+
     context->render_layout(
         cr,
-        cell_area.get_x() + xpad,
-        cell_area.get_y() + ypad,
+        (   cell_area.get_x()
+            + xpad
+            + icon_area.get_width()
+            + icon_padding),
+        (   cell_area.get_y()
+            + ypad
+            + cell_area.get_height() / 2
+            - text_height / 2
+        ),
         layout);
 
     cr->restore();
@@ -95,6 +113,20 @@ bool CellRendererFile::activate_vfunc(
     Gdk::Rectangle const &cell_area,
     Gtk::CellRendererState flags)
 {
+    if (event && event->type == GdkEventType::GDK_BUTTON_PRESS)
+    {
+        auto const icon_area = _get_icon_area(widget, cell_area);
+
+        Gdk::Rectangle const click_rect{
+            static_cast<int>(event->button.x),
+            static_cast<int>(event->button.y),
+            1,
+            1};
+
+        if (!icon_area.intersects(click_rect))
+            return false;
+    }
+
     _filechooser->set_current_folder(property_start_path());
     _filechooser->set_filter(property_filter());
     _filechooser->set_title(property_title());
@@ -126,9 +158,14 @@ void CellRendererFile::get_preferred_width_vfunc(
     int &minimum_width,
     int &natural_width) const
 {
-    int _;
-    auto const layout = get_layout(widget);
-    layout->get_pixel_size(natural_width, _);
+    int text_width, _;
+    auto const layout = _get_layout(widget);
+    layout->get_pixel_size(text_width, _);
+
+    auto const icon_area = _get_icon_area(widget, Gdk::Rectangle{});
+    auto const icon_width = icon_area.get_width();
+
+    natural_width = text_width + icon_padding + icon_width;
     minimum_width = natural_width;
 }
 
@@ -138,9 +175,14 @@ void CellRendererFile::get_preferred_height_vfunc(
     int &minimum_height,
     int &natural_height) const
 {
-    int _;
-    auto const layout = get_layout(widget);
-    layout->get_pixel_size(_, natural_height);
+    int _, text_height;
+    auto const layout = _get_layout(widget);
+    layout->get_pixel_size(_, text_height);
+
+    auto const icon_area = _get_icon_area(widget, Gdk::Rectangle{});
+    auto const icon_height = icon_area.get_height();
+
+    natural_height = std::max(text_height, icon_height);
     minimum_height = natural_height;
 }
 
@@ -152,7 +194,33 @@ Gtk::SizeRequestMode CellRendererFile::get_request_mode_vfunc() const
 
 
 
-Glib::RefPtr<Pango::Layout> CellRendererFile::get_layout(
+Glib::RefPtr<Gdk::Pixbuf> CellRendererFile::_get_icon(Gtk::Widget &widget) const
+{
+    auto const icontheme = Gtk::IconTheme::get_for_screen(widget.get_screen());
+    return icontheme->load_icon("folder", GTK_ICON_SIZE_MENU);
+}
+
+
+Gdk::Rectangle CellRendererFile::_get_icon_area(
+    Gtk::Widget &widget,
+    Gdk::Rectangle const &cell_area) const
+{
+    auto const icon = _get_icon(widget);
+    return Gdk::Rectangle{
+        static_cast<int>(
+            cell_area.get_x()
+            + property_xpad().get_value()),
+        static_cast<int>(
+            cell_area.get_y()
+            + property_ypad().get_value()
+            + cell_area.get_height() / 2
+            - icon->get_height() / 2),
+        icon->get_width(),
+        icon->get_height()};
+}
+
+
+Glib::RefPtr<Pango::Layout> CellRendererFile::_get_layout(
     Gtk::Widget &widget) const
 {
     auto const layout = widget.create_pango_layout(

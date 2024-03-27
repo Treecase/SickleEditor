@@ -89,6 +89,8 @@ namespace Sickle::AppWin
 
 
     private:
+        static constexpr int icon_padding = 3;
+
         Glib::Property<std::string> _prop_base_path;
         Glib::Property<Glib::RefPtr<Gtk::FileFilter>> _prop_filter;
         Glib::Property<std::string> _prop_path;
@@ -101,7 +103,12 @@ namespace Sickle::AppWin
 
         Glib::RefPtr<Gtk::FileChooserNative> _filechooser{nullptr};
 
-        Glib::RefPtr<Pango::Layout> get_layout(Gtk::Widget &widget) const;
+        Glib::RefPtr<Gdk::Pixbuf> _get_icon(Gtk::Widget &widget) const;
+        Gdk::Rectangle _get_icon_area(
+            Gtk::Widget &widget,
+            Gdk::Rectangle const &cell_area) const;
+
+        Glib::RefPtr<Pango::Layout> _get_layout(Gtk::Widget &widget) const;
     };
 }
 
