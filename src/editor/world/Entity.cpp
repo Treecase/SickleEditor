@@ -92,6 +92,7 @@ Entity::~Entity()
 Entity::operator MAP::Entity() const
 {
     MAP::Entity out{};
+    out.properties.insert({"classname", classname()});
     for (auto const &kv : _properties)
         out.properties.insert({kv.first, kv.second.value});
     for (auto const &brush : _brushes)
