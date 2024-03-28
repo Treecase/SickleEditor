@@ -6,9 +6,11 @@ An open-source editor for GoldSrc maps. Both `.MAP` and `.RMF` formats are suppo
 
 ## Getting Started
 
-There are a few things that must be set up to get started. Firstly, click `Edit>Preferences` in the menu to open the preferences window. There are three areas here: Game Definition, Sprite Root Path, and Texture WADs.
+There are a few things that must be set up to get started. Firstly, click `Edit>Preferences` in the menu to open the preferences window. There are four areas here: Game Definition, Game Root Path, Sprite Root Path, and Texture WADs.
 
 The Game Definition is a file that tells the editor which Entity types are available in the game. Sickle needs to be pointed to this file in order to properly edit maps; for Half-Life, this file is called 'halflife.fgd'.
+
+The game root path tells Sickle where to find the game data files like sprites and sounds.
 
 The sprite root path tells Sickle where to find the sprite files used for entity icons (eg. lights).
 
