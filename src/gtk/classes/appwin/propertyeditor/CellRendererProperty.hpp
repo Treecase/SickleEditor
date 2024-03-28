@@ -22,6 +22,7 @@
 #include "cellrenderers/CellRendererColor.hpp"
 #include "cellrenderers/CellRendererFile.hpp"
 #include "cellrenderers/CellRendererFlags.hpp"
+#include "cellrenderers/CellRendererTexture.hpp"
 
 #include <editor/world/Entity.hpp>
 
@@ -168,6 +169,17 @@ namespace Sickle::AppWin
             Gtk::CellRendererText _renderer{};
         };
 
+        struct TextureRenderer : public Renderer
+        {
+            TextureRenderer();
+            virtual ~TextureRenderer()=default;
+            virtual void set_value(ValueType const &value) override;
+            virtual Gtk::CellRenderer *renderer() override;
+            virtual Gtk::CellRendererMode mode();
+        private:
+            CellRendererTexture _renderer{};
+        };
+
 
         CellRendererProperty();
         virtual ~CellRendererProperty()=default;
@@ -248,6 +260,7 @@ namespace Sickle::AppWin
         FlagsRenderer _flags_renderer{};
         IntegerRenderer _integer_renderer{};
         StringRenderer _text_renderer{};
+        TextureRenderer _texture_renderer{};
         Renderer *renderer{nullptr};
 
         Glib::Property<Glib::RefPtr<Gtk::TreeModel>> _prop_choices_model;

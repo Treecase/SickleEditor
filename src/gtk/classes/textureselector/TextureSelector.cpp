@@ -1,6 +1,6 @@
 /**
  * TextureSelector.cpp - Texture selection window.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,8 +36,11 @@ TextureSelector::TextureSelector(Sickle::Editor::EditorRef const &editor)
 :   Glib::ObjectBase{typeid(TextureSelector)}
 ,   _editor{editor}
 {
-    _editor->property_wads().signal_changed().connect(
-        sigc::mem_fun(*this, &TextureSelector::on_wads_changed));
+    if (_editor)
+    {
+        _editor->property_wads().signal_changed().connect(
+            sigc::mem_fun(*this, &TextureSelector::on_wads_changed));
+    }
 
     auto const builder = Gtk::Builder::create_from_resource(
         SE_GRESOURCE_PREFIX "gtk/TextureSelector.glade");

@@ -49,6 +49,7 @@ CellRendererProperty::CellRendererProperty()
     _flags_renderer.signal_changed.connect(signal_changed().make_slot());
     _integer_renderer.signal_changed.connect(signal_changed().make_slot());
     _text_renderer.signal_changed.connect(signal_changed().make_slot());
+    _texture_renderer.signal_changed.connect(signal_changed().make_slot());
 }
 
 
@@ -146,7 +147,7 @@ void CellRendererProperty::on_value_changed()
     {
         {Sickle::Editor::PropertyType::CHOICES, &_choices_renderer},
         {Sickle::Editor::PropertyType::COLOR255, &_color_renderer},
-        {Sickle::Editor::PropertyType::DECAL, &_file_renderer},
+        {Sickle::Editor::PropertyType::DECAL, &_texture_renderer},
         {Sickle::Editor::PropertyType::FLAGS, &_flags_renderer},
         {Sickle::Editor::PropertyType::INTEGER, &_integer_renderer},
         {Sickle::Editor::PropertyType::SOUND, &_file_renderer},
