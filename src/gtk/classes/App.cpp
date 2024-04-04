@@ -21,6 +21,7 @@
 
 #include <config/appid.hpp>
 #include <editor/core/gamedefinition/GameDefinition.hpp>
+#include <editor/textures/TextureManager.hpp>
 #include <world3d/Entity.hpp>
 
 #include <gtkmm/filechoosernative.h>
@@ -57,9 +58,6 @@ Sickle::App::App()
     _settings->bind("game-root-path", property_game_root_path());
     _settings->bind("sprite-root-path", property_sprite_root_path());
     _settings->bind("wad-paths", property_wad_paths());
-
-    WAD::TextureManager::signal_texlump_load_error().connect(
-        sigc::mem_fun(*this, &App::on_TextureManager_texlump_load_error));
 }
 
 
@@ -209,14 +207,6 @@ void Sickle::App::on_action_about()
 }
 
 
-void Sickle::App::on_TextureManager_texlump_load_error(std::string const &msg)
-{
-    Gtk::MessageDialog d{msg, true, Gtk::MessageType::MESSAGE_WARNING};
-    d.set_title("WAD TexLump load error");
-    d.run();
-}
-
-
 
 Sickle::PreferencesDialog *Sickle::App::_open_preferences()
 {
@@ -235,7 +225,6 @@ Sickle::PreferencesDialog *Sickle::App::_open_preferences()
 Sickle::AppWin::AppWin *Sickle::App::_create_appwindow()
 {
     auto appwindow = new AppWin::AppWin{};
-    _sync_wadpaths(appwindow);
     add_window(*appwindow);
     // Delete the window when it is hidden.
     appwindow->signal_hide().connect(
@@ -244,15 +233,13 @@ Sickle::AppWin::AppWin *Sickle::App::_create_appwindow()
 }
 
 
-void Sickle::App::_sync_wadpaths(AppWin::AppWin *appwin)
+void Sickle::App::_sync_wadpaths()
 {
-    if (!appwin)
-        return;
-    auto const ppaths = property_wad_paths().get_value();
-    std::vector<std::string> paths{};
-    for (auto const &path : property_wad_paths().get_value())
-        paths.push_back(Glib::filename_from_utf8(path));
-    appwin->editor->set_wads(paths);
+    for (auto const &utf8path : property_wad_paths().get_value())
+    {
+        auto const path = Glib::filename_from_utf8(utf8path);
+        Sickle::Editor::Textures::TextureManager::get_reference().add_wad(path);
+    }
 }
 
 
@@ -291,6 +278,5 @@ void Sickle::App::_on_sprite_root_path_changed()
 
 void Sickle::App::_on_wad_paths_changed()
 {
-    for (auto const &window : get_windows())
-        _sync_wadpaths(dynamic_cast<AppWin::AppWin *>(window));
+    _sync_wadpaths();
 }

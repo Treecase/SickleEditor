@@ -24,7 +24,7 @@ using namespace Sickle::AppWin;
 FaceEditor::FaceEditor(Editor::EditorRef const &editor)
 :   Glib::ObjectBase{typeid(FaceEditor)}
 ,   _prop_face{*this, "face", {}}
-,   _texture_selector{TextureSelector::TextureSelector::create(editor)}
+,   _texture_selector{TextureSelector::TextureSelector::create()}
 {
     set_column_spacing(16);
     set_sensitive(false);

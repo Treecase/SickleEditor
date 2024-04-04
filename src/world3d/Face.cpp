@@ -19,10 +19,7 @@
 #include "Brush.hpp"
 #include "Face.hpp"
 
-#include <files/wad/TextureManager.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-
-#include <numeric>
 
 
 World3D::Face::SlotPreDraw World3D::Face::predraw = [](auto, auto){};
@@ -71,7 +68,7 @@ World3D::Face::Face(Sickle::Editor::FaceRef const &face, GLint offset)
 
 void World3D::Face::render() const
 {
-    if (!_src)
+    if (!_src || !_texture)
         return;
 
     // Modulate to "selected" color if the face or any of its parents is
@@ -89,7 +86,7 @@ void World3D::Face::render() const
     }
     shader().setUniformS("modulate", modulate);
 
-    texture().texture->bind();
+    _texture->texture->bind();
     predraw(Brush::shader(), _src.get());
 }
 
@@ -146,7 +143,9 @@ void World3D::Face::_sync_vertices()
     auto const v_axis = glm::normalize(_src->get_v());
     auto const normal = glm::normalize(glm::cross(u_axis, v_axis));
 
-    glm::vec2 const texture_size{_texture.width, _texture.height};
+    auto const texture_size = (_texture
+        ? glm::vec2{_texture->width, _texture->height}
+        : glm::vec2{0, 0});
 
     _vertices.clear();
     for (auto const &vertex : _src->get_vertices())
@@ -170,13 +169,6 @@ void World3D::Face::_sync_texture()
 {
     if (!_src)
         return;
-    auto &texman = WAD::TextureManagerProxy<Texture>::create();
-    try {
-        _texture = texman.at(_src->get_texture());
-    }
-    catch (std::out_of_range const &e) {
-        _texture = Texture::make_missing_texture();
-        signal_missing_texture().emit(_src->get_texture());
-    }
+    _texture = Texture::create_for_name(_src->get_texture());
     _sync_vertices();
 }

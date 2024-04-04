@@ -1,6 +1,6 @@
 /**
  * Editor.cpp - Editor::Editor.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,12 +34,9 @@ Editor::Editor(lua_State *L)
 ,   _prop_map{*this, "map", {}}
 ,   _prop_maptool{*this, "maptool", ""}
 ,   _prop_mode{*this, "mode", {}}
-,   _prop_wads{*this, "wads", {}}
 {
     property_map().signal_changed().connect(
         sigc::mem_fun(*this, &Editor::_on_map_changed));
-    property_wads().signal_changed().connect(
-        sigc::mem_fun(*this, &Editor::_on_wads_changed));
 
     set_map(World::create());
 }
@@ -101,15 +98,4 @@ void Editor::_on_map_changed()
 
     auto world = get_map();
     on_object_added(world);
-}
-
-
-void Editor::_on_wads_changed()
-{
-    auto &texman = WAD::TextureManager::get_reference();
-    for (auto const &path : get_wads())
-    {
-        auto const wad = WAD::load(path);
-        texman.add_wad(wad);
-    }
 }

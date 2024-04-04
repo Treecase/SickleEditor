@@ -18,6 +18,7 @@ target_sources(sickle PRIVATE
 target_link_libraries(sickle PRIVATE
     appwin
     config
+    editor-textures
     fgd
     luageo
     maparea2d
