@@ -1,6 +1,6 @@
 /**
  * lumps.cpp - WAD lump types.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@ TexLump WAD::readTexLump(Lump const &lump)
 TexLump::TexLump(Lump const &src)
 :   _src{std::make_shared<Lump>(src)}
 ,   _cached{std::make_shared<DataCache>()}
+,   _name{src.name}
 {
     if (_src->type != 0x43)
         throw TexLumpLoadError{*_src, "lump type is not 0x43"};
@@ -49,7 +50,7 @@ TexLump::TexLump(Lump const &src)
 
     char name[16];
     memcpy(name, ptr, 16);
-    _name = std::string{name, 16};
+    _texture_name = std::string{name, 16};
 
     memcpy(&_width, ptr + 16, 4);
     memcpy(&_height, ptr + 20, 4);
@@ -61,6 +62,12 @@ TexLump::TexLump(Lump const &src)
 std::string TexLump::name() const
 {
     return _name;
+}
+
+
+std::string TexLump::texture_name() const
+{
+    return _texture_name;
 }
 
 

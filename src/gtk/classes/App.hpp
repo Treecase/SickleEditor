@@ -67,8 +67,6 @@ namespace Sickle
         // Help
         void on_action_about();
 
-        void on_TextureManager_texlump_load_error(std::string const &msg);
-
     private:
         Glib::RefPtr<Gio::Settings> _settings;
         FGD::GameDef _game_definition;
@@ -81,7 +79,7 @@ namespace Sickle
         PreferencesDialog *_open_preferences();
 
         AppWin::AppWin *_create_appwindow();
-        void _sync_wadpaths(AppWin::AppWin *appwin);
+        void _sync_wadpaths();
 
         // Signal Handlers
         void _on_hide_window(Gtk::Window *window);

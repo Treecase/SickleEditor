@@ -19,10 +19,9 @@
 #ifndef SE_APPWIN_FACE_EDITOR_HPP
 #define SE_APPWIN_FACE_EDITOR_HPP
 
-#include "TextureSelector.hpp"
-
 #include <editor/core/Editor.hpp>
 #include <editor/world/Face.hpp>
+#include <gtk/classes/textureselector/TextureSelector.hpp>
 
 #include <glibmm/binding.h>
 #include <glm/glm.hpp>

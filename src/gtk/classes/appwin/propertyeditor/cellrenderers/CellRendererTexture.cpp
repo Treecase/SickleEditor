@@ -18,7 +18,7 @@
 
 #include "CellRendererTexture.hpp"
 
-#include <TextureSelector.hpp>
+#include <gtk/classes/textureselector/TextureSelector.hpp>
 
 #include <glibmm/convert.h>
 #include <gtkmm/icontheme.h>
@@ -122,8 +122,8 @@ bool CellRendererTexture::activate_vfunc(
             return false;
     }
 
-    auto ts = Sickle::TextureSelector::TextureSelector::create(
-        Sickle::Editor::EditorRef{nullptr});
+    auto ts = TextureSelector::TextureSelector::create();
+    ts->set_wad_filter(property_wad_name());
     int const response = ts->run();
     if (response != GTK_RESPONSE_ACCEPT)
         return false;

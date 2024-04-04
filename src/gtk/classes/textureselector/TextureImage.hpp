@@ -1,6 +1,6 @@
 /**
  * TextureImage.hpp - Texture selection window.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,13 +19,13 @@
 #ifndef SE_TEXTURESELECTOR_TEXTUREIMAGE_HPP
 #define SE_TEXTURESELECTOR_TEXTUREIMAGE_HPP
 
-#include <files/wad/wad.hpp>
-#include <files/wad/lumps.hpp>
+#include <editor/textures/TextureInfo.hpp>
 
-#include <glibmm/refptr.h>
 #include <gtkmm/box.h>
 #include <gtkmm/image.h>
 #include <gtkmm/label.h>
+
+#include <memory>
 
 
 namespace Sickle::TextureSelector
@@ -36,21 +36,23 @@ namespace Sickle::TextureSelector
     class TextureImage : public Gtk::Box
     {
     public:
-        TextureImage(std::string const &name, WAD::TexLump const &texlump);
+        TextureImage(
+            std::shared_ptr<Editor::Textures::TextureInfo> const &texinfo);
 
-        /** Get the Texture's name in the WAD. */
-        std::string get_name() const;
+        /**
+         * Get the texture info represented by this widget.
+         *
+         * @return TextureInfo for this object.
+         */
+        std::shared_ptr<Editor::Textures::TextureInfo> const &get_info() const;
 
     private:
-        std::string _name;
+        std::shared_ptr<Editor::Textures::TextureInfo> _texinfo{nullptr};
         // Image's Pixbuf needs the data buffer to stay alive.
-        std::vector<guint8> _rgb_data{};
+        std::shared_ptr<guint8[]> _rgb_data{nullptr};
 
         Gtk::Image _image;
         Gtk::Label _label;
-
-        static decltype(_rgb_data) convert_texlump_to_rgb_data(
-            WAD::TexLump const &texlump);
     };
 }
 

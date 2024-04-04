@@ -17,9 +17,9 @@
  */
 
 #include "MapToolConfig.hpp"
-#include "TextureSelector.hpp"
 
 #include <editor/core/Editor.hpp>
+#include <gtk/classes/textureselector/TextureSelector.hpp>
 
 #include <glibmm/binding.h>
 #include <gtkmm/grid.h>
@@ -80,7 +80,7 @@ struct TextureConfig : public Gtk::Box, public Config
         EditorRef const &editor,
         Operation::Arg const &arg="")
     :   Gtk::Box{Gtk::Orientation::ORIENTATION_HORIZONTAL}
-    ,   _texture_selector{TextureSelector::create(editor)}
+    ,   _texture_selector{TextureSelector::create()}
     {
         _texture_selector_btn.signal_clicked().connect(
             sigc::mem_fun(

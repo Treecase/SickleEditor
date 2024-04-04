@@ -1,6 +1,6 @@
 /**
  * Texture.hpp - World3D::Texture class.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 #include "DeferredExec.hpp"
 
-#include <files/wad/lumps.hpp>
+#include <editor/textures/TextureInfo.hpp>
 #include <glutils/glutils.hpp>
 
 #include <memory>
@@ -29,10 +29,11 @@
 
 namespace World3D
 {
-    struct Texture
+    class Texture
     {
+    public:
         std::shared_ptr<GLUtil::Texture> texture{nullptr};
-        int width, height;
+        unsigned int width, height;
 
         /**
          * Get the "Missing Texture" texture. It will only be generated once,
@@ -40,12 +41,26 @@ namespace World3D
          *
          * @warning Requires an active OpenGL context.
          */
-        static Texture make_missing_texture();
+        static std::shared_ptr<Texture> make_missing_texture();
+
+        /**
+         * Create a texture object for the named texture.
+         *
+         * @warning Requires an active OpenGL context.
+         */
+        static std::shared_ptr<Texture> create_for_name(
+            std::string const &texture_name);
+
+    protected:
+        using TexInfo = std::shared_ptr<Sickle::Editor::Textures::TextureInfo>;
+
+        static decltype(texture) make_gltexture_for_texinfo(
+            TexInfo const &texinfo);
 
         Texture()=default;
-
         /** @warning Requires an active OpenGL context. */
-        Texture(WAD::TexLump const &texlump);
+        Texture(TexInfo const &texinfo);
+
     };
 }
 

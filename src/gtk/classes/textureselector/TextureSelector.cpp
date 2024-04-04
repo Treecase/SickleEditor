@@ -19,33 +19,28 @@
 #include "TextureSelector.hpp"
 
 #include <config/appid.hpp>
+#include <editor/textures/TextureManager.hpp>
 
 #include <gtkmm/builder.h>
+
 
 using namespace Sickle::TextureSelector;
 
 
-Glib::RefPtr<TextureSelector> TextureSelector::create(
-    Sickle::Editor::EditorRef const &editor)
+Glib::RefPtr<TextureSelector> TextureSelector::create()
 {
-    return Glib::RefPtr{new TextureSelector{editor}};
+    return Glib::RefPtr{new TextureSelector{}};
 }
 
 
-TextureSelector::TextureSelector(Sickle::Editor::EditorRef const &editor)
+TextureSelector::TextureSelector()
 :   Glib::ObjectBase{typeid(TextureSelector)}
-,   _editor{editor}
 {
-    if (_editor)
-    {
-        _editor->property_wads().signal_changed().connect(
-            sigc::mem_fun(*this, &TextureSelector::on_wads_changed));
-    }
-
     auto const builder = Gtk::Builder::create_from_resource(
         SE_GRESOURCE_PREFIX "gtk/TextureSelector.glade");
     builder->get_widget("textureselector", _dialog);
     builder->get_widget("search", _search);
+    builder->get_widget("wad_filter", _wad_filter);
     builder->get_widget("flow", _flow);
     builder->get_widget("cancel", _cancel);
     builder->get_widget("confirm", _confirm);
@@ -55,8 +50,13 @@ TextureSelector::TextureSelector(Sickle::Editor::EditorRef const &editor)
     _search->signal_search_changed().connect(
         sigc::mem_fun(*this, &TextureSelector::on_search_changed));
 
+    _wad_filter->property_active().signal_changed().connect(
+        sigc::mem_fun(*this, &TextureSelector::on_wad_filter_changed));
+
     _flow->set_filter_func(
         sigc::mem_fun(*this, &TextureSelector::filter_func));
+    _flow->set_sort_func(
+        sigc::mem_fun(*this, &TextureSelector::sort_func));
 
     _cancel->signal_clicked().connect(
         [this](){_dialog->response(Gtk::ResponseType::RESPONSE_CANCEL);});
@@ -72,7 +72,14 @@ std::string TextureSelector::get_selected_texture() const
     auto const selected = _flow->get_selected_children();
     auto const child = dynamic_cast<TextureImage *>(
         selected.at(0)->get_child());
-    return child->get_name();
+    auto const &info = child->get_info();
+    return info->get_name();
+}
+
+
+void TextureSelector::set_wad_filter(std::string const &filter)
+{
+    _wad_filter->set_active_text(filter);
 }
 
 
@@ -96,12 +103,31 @@ void TextureSelector::on_search_changed()
 }
 
 
-bool TextureSelector::filter_func(Gtk::FlowBoxChild const *child)
+void TextureSelector::on_wad_filter_changed()
+{
+    _flow->invalidate_filter();
+}
+
+
+void TextureSelector::on_TextureManager_wads_changed()
+{
+    _refresh_textures();
+}
+
+
+bool TextureSelector::filter_func(Gtk::FlowBoxChild const *child) const
 {
     auto const image = dynamic_cast<TextureImage const *>(child->get_child());
+    auto const &texinfo = image->get_info();
+
+    // Exclude textures not in filtered WAD. Special value "*" skips this check.
+    auto const filter_wad = _wad_filter->get_active_text();
+    auto const source_wad = texinfo->get_source_wad();
+    if (filter_wad != "*" && filter_wad != source_wad)
+        return false;
 
     auto const &search = _search->get_text();
-    Glib::ustring const name{image->get_name()};
+    Glib::ustring const name{texinfo->get_name()};
 
     // Search behaviour: Filter in any textures whose name includes SEARCH as a
     // substring, ignoring case.
@@ -113,10 +139,31 @@ bool TextureSelector::filter_func(Gtk::FlowBoxChild const *child)
 }
 
 
+int TextureSelector::sort_func(
+    Gtk::FlowBoxChild const *a,
+    Gtk::FlowBoxChild const *b) const
+{
+    auto const a_image = dynamic_cast<TextureImage const *>(a->get_child());
+    auto const b_image = dynamic_cast<TextureImage const *>(b->get_child());
+
+    auto const &a_texinfo = a_image->get_info();
+    auto const &b_texinfo = b_image->get_info();
+
+    auto const &a_texture_name = a_texinfo->get_name();
+    auto const &b_texture_name = b_texinfo->get_name();
+
+    return a_texture_name.compare(b_texture_name);
+}
+
+
 
 void TextureSelector::_refresh_textures()
 {
     _clear_textures();
+    auto &texman = Editor::Textures::TextureManager::get_reference();
+    // TODO: remove unused wads from the combobox.
+    for (auto const &wad_name : texman.get_wads())
+        _wad_filter->append(wad_name);
     _add_textures();
 }
 
@@ -131,11 +178,10 @@ void TextureSelector::_clear_textures()
 
 void TextureSelector::_add_textures()
 {
-    auto &texman = WAD::TextureManager::get_reference();
-    for (auto const &kv : texman.lumps)
+    auto &texman = Editor::Textures::TextureManager::get_reference();
+    for (auto const &texinfo : texman.get_textures())
     {
-        auto &image = _images.emplace_back(kv.first, texman.at(kv.first));
-        image.set_name(kv.first);
+        auto &image = _images.emplace_back(texinfo);
         _flow->add(image);
     }
 }
