@@ -17,6 +17,7 @@ target_link_libraries(world3d
     PUBLIC
         PkgConfig::GTKMM
         editor-core-gamedefinition
+        editor-textures
         editor-world
         glutils::glutils
         gtkglutils

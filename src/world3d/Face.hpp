@@ -152,7 +152,7 @@ namespace World3D
         Sickle::Editor::FaceRef _src{};
         GLint _offset;
         float const _starting_rotation;
-        Texture _texture{};
+        std::shared_ptr<Texture> _texture{nullptr};
         std::vector<Vertex> _vertices{};
 
         Face(Face const &)=delete;

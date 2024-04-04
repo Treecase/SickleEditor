@@ -1,6 +1,6 @@
 /**
  * TextureSelector.hpp - Texture selection window.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,16 +21,16 @@
 
 #include "TextureImage.hpp"
 
-#include <editor/core/Editor.hpp>
-#include <files/wad/TextureManager.hpp>
-#include <files/wad/wad.hpp>
-
 #include <glibmm/property.h>
 #include <glibmm/refptr.h>
 #include <gtkmm/button.h>
+#include <gtkmm/comboboxtext.h>
 #include <gtkmm/dialog.h>
 #include <gtkmm/flowbox.h>
 #include <gtkmm/searchentry.h>
+
+#include <string>
+#include <vector>
 
 
 namespace Sickle::TextureSelector
@@ -41,11 +41,26 @@ namespace Sickle::TextureSelector
     class TextureSelector : public Glib::Object
     {
     public:
-        static Glib::RefPtr<TextureSelector> create(
-            Editor::EditorRef const &editor);
+        /**
+         * Create a new texture selector.
+         *
+         * @return A newly constructed texture selector.
+         */
+        static Glib::RefPtr<TextureSelector> create();
 
-        /** Get the name of the texture currently selected by the user. */
+        /**
+         * Get the name of the texture currently selected by the user.
+         *
+         * @return Name of the selected texture.
+         */
         std::string get_selected_texture() const;
+
+        /**
+         * Set the WAD filter. This whitelists only textures from this WAD.
+         *
+         * @param filter Name of the WAD to include.
+         */
+        void set_wad_filter(std::string const &filter);
 
         /** See Gtk::Dialog::run. */
         int run();
@@ -53,19 +68,25 @@ namespace Sickle::TextureSelector
     protected:
         void on_wads_changed();
         void on_search_changed();
-        bool filter_func(Gtk::FlowBoxChild const *child);
+        void on_wad_filter_changed();
+
+        void on_TextureManager_wads_changed();
+
+        bool filter_func(Gtk::FlowBoxChild const *child) const;
+        int sort_func(
+            Gtk::FlowBoxChild const *a,
+            Gtk::FlowBoxChild const *b) const;
 
     private:
         Gtk::Dialog *_dialog{nullptr};
         Gtk::SearchEntry *_search{nullptr};
+        Gtk::ComboBoxText *_wad_filter{nullptr};
         Gtk::FlowBox *_flow{nullptr};
         Gtk::Button *_cancel{nullptr};
         Gtk::Button *_confirm{nullptr};
         std::vector<TextureImage> _images{};
 
-        Editor::EditorRef _editor{nullptr};
-
-        TextureSelector(Editor::EditorRef const &editor);
+        TextureSelector();
 
         void _refresh_textures();
         void _clear_textures();

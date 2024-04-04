@@ -1,6 +1,6 @@
 /**
  * Texture.cpp - World3D::Texture class.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,37 +18,11 @@
 
 #include "Texture.hpp"
 
-
-/** Convert WAD lump mipmap to RGBA format. */
-auto
-mipmap_to_rgba(WAD::TexLump const &lump, std::vector<uint8_t> const &mipmap)
-{
-    std::vector<uint8_t> rgba{};
-    auto const &palette = lump.palette();
-    for (auto const &palette_index : mipmap)
-    {
-        auto const &rgb = palette.at(palette_index);
-        rgba.insert(rgba.end(), rgb.cbegin(), rgb.cend());
-        rgba.push_back(0xff);
-    }
-    return rgba;
-}
-
-
-/** Convert paletted texture data to RGBA format. */
-auto texlump_to_rgba(WAD::TexLump const &lump)
-{
-    std::vector<std::vector<uint8_t>> rgba_mipmaps{};
-    std::vector const mipmaps{
-        lump.tex1(), lump.tex2(), lump.tex4(), lump.tex8()};
-    for (auto const &mipmap : mipmaps)
-        rgba_mipmaps.emplace_back(mipmap_to_rgba(lump, mipmap));
-    return rgba_mipmaps;
-}
+#include <editor/textures/TextureManager.hpp>
 
 
 /** Create a GLUtil::Texture shared_ptr. */
-auto make_texture(std::string const &name)
+static auto make_texture(std::string const &name)
 {
     auto texture = std::make_shared<GLUtil::Texture>(GL_TEXTURE_2D, name);
     texture->bind();
@@ -62,18 +36,29 @@ auto make_texture(std::string const &name)
 }
 
 
-/** Make a GL Texture from a WAD lump. */
-auto texture_from_lump(WAD::TexLump const &texlump)
+decltype(World3D::Texture::texture)
+World3D::Texture::make_gltexture_for_texinfo(TexInfo const &texinfo)
 {
-    auto const texture = make_texture(texlump.name());
-    auto const mipmaps = texlump_to_rgba(texlump);
-    for (size_t mipmap = 0; mipmap < mipmaps.size(); ++mipmap)
+    static std::vector const MIPMAPS{
+        Sickle::Editor::Textures::MipmapLevel::MIPMAP_FULL,
+        Sickle::Editor::Textures::MipmapLevel::MIPMAP_HALF,
+        Sickle::Editor::Textures::MipmapLevel::MIPMAP_QUARTER,
+        Sickle::Editor::Textures::MipmapLevel::MIPMAP_EIGHTH,
+    };
+
+    auto const texture = make_texture(texinfo->get_name());
+    for (auto const mipmap : MIPMAPS)
     {
-        GLsizei const scale = pow(2, mipmap);
         glTexImage2D(
-            texture->type(), mipmap, GL_RGBA,
-            texlump.width() / scale, texlump.height() / scale, 0,
-            GL_RGBA, GL_UNSIGNED_BYTE, mipmaps.at(mipmap).data());
+            texture->type(),
+            static_cast<GLint>(mipmap),
+            GL_RGBA,
+            texinfo->get_width(mipmap),
+            texinfo->get_height(mipmap),
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            texinfo->load_rgba(mipmap).get());
     }
     texture->unbind();
     return texture;
@@ -81,26 +66,28 @@ auto texture_from_lump(WAD::TexLump const &texlump)
 
 
 
-World3D::Texture::Texture(WAD::TexLump const &texlump)
-:   texture{texture_from_lump(texlump)}
-,   width{static_cast<int>(texlump.width())}
-,   height{static_cast<int>(texlump.height())}
+World3D::Texture::Texture(TexInfo const &texinfo)
+:   texture{make_gltexture_for_texinfo(texinfo)}
+,   width{texinfo->get_width()}
+,   height{texinfo->get_height()}
 {
 }
 
 
-World3D::Texture World3D::Texture::make_missing_texture()
+std::shared_ptr<World3D::Texture> World3D::Texture::make_missing_texture()
 {
-    static Texture missing{};
-    // Resuse the existing texture if its already been generated.
-    if (missing.texture)
+    static std::shared_ptr<Texture> missing{nullptr};
+    // Reuse the existing texture if its already been generated.
+    if (missing)
         return missing;
+
+    missing.reset(new Texture{});
 
     constexpr int SIZE = 128;
     constexpr int HSIZE = 0.5 * SIZE;
-    missing.width = SIZE;
-    missing.height = SIZE;
-    missing.texture = make_texture("MISSING");
+    missing->width = SIZE;
+    missing->height = SIZE;
+    missing->texture = make_texture("MISSING");
     uint8_t pixels[SIZE*SIZE * 4];
     for (size_t y = 0; y < SIZE; ++y)
     {
@@ -123,9 +110,38 @@ World3D::Texture World3D::Texture::make_missing_texture()
         }
     }
     glTexImage2D(
-        missing.texture->type(), 0, GL_RGBA,
-        missing.width, missing.height, 0,
+        missing->texture->type(), 0, GL_RGBA,
+        missing->width, missing->height, 0,
         GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    glGenerateMipmap(missing.texture->type());
+    glGenerateMipmap(missing->texture->type());
     return missing;
+}
+
+
+std::shared_ptr<World3D::Texture> World3D::Texture::create_for_name(
+    std::string const &texture_name)
+{
+    auto &texman = Sickle::Editor::Textures::TextureManager::get_reference();
+    TexInfo texinfo{nullptr};
+
+    // Get texture info for the named texture.
+    try {
+        texinfo = texman.get_texture(texture_name);
+    }
+    // If this fails, the texture doesn't exist. Return missing texture.
+    catch (std::out_of_range const &) {
+        return make_missing_texture();
+    }
+
+    // Try to get cached texture.
+    try {
+        return texinfo->get_cached<Texture>();
+    }
+    catch (std::out_of_range const &) {
+    }
+
+    // Texture isn't cached, we have to create (and cache) it.
+    std::shared_ptr<Texture> texture{new Texture{texinfo}};
+    texinfo->cache_object(texture);
+    return texture;
 }

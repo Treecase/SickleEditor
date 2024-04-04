@@ -1,6 +1,6 @@
 /**
  * lumps.hpp - WAD lump types.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ namespace WAD
     struct TexLump
     {
         std::string name() const;
+        std::string texture_name() const;
         uint32_t width() const;
         uint32_t height() const;
         std::vector<uint8_t> tex1() const;
@@ -71,6 +72,7 @@ namespace WAD
         std::shared_ptr<DataCache> _cached{nullptr};
 
         std::string _name{};
+        std::string _texture_name{};
         uint32_t _width, _height;
         std::array<uint32_t, 4> _ptrs{};
     };

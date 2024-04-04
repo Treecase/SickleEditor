@@ -1,6 +1,6 @@
 /**
  * Editor.hpp - Map Editor class.
- * Copyright (C) 2023 Trevor Last
+ * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@
 #include "Selection.hpp"
 
 #include <editor/world/EditorWorld.hpp>
-#include <files/wad/TextureManager.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
 #include <glibmm/refptr.h>
@@ -70,23 +69,18 @@ namespace Sickle::Editor
         auto property_maptool() const {return _prop_maptool.get_proxy();}
         auto property_mode() {return _prop_mode.get_proxy();}
         auto property_mode() const {return _prop_mode.get_proxy();}
-        auto property_wads() {return _prop_wads.get_proxy();}
-        auto property_wads() const {return _prop_wads.get_proxy();}
         auto &signal_maptools_changed() {return _sig_maptools_changed;}
 
         auto get_map() {return property_map().get_value();}
         MapTool get_maptool() const;
         auto &get_maptools() const {return _maptools;}
         auto get_mode() const {return property_mode().get_value();}
-        auto get_wads() {return property_wads().get_value();}
 
         void set_map(WorldRef const &value) {
             property_map() = value;}
         void set_maptool(std::string const &value) {
             property_maptool() = value;}
         void set_mode(Mode value) {property_mode() = value;}
-        void set_wads(std::vector<std::string> const &value) {
-            property_wads() = value;}
 
         void add_maptool(MapTool const &maptool);
 
@@ -98,7 +92,6 @@ namespace Sickle::Editor
         Glib::Property<WorldRef> _prop_map;
         Glib::Property<std::string> _prop_maptool;
         Glib::Property<Mode> _prop_mode;
-        Glib::Property<std::vector<std::string>> _prop_wads;
         sigc::signal<void()> _sig_maptools_changed{};
 
         std::unordered_map<std::string, MapTool> _maptools{};
