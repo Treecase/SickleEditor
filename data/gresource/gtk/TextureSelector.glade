@@ -78,7 +78,7 @@
                 <child internal-child="entry">
                   <object class="GtkEntry">
                     <property name="can-focus">False</property>
-                    <property name="text">*</property>
+                    <property name="text" translatable="yes">All</property>
                   </object>
                 </child>
               </object>
