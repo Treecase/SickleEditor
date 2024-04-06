@@ -3,4 +3,4 @@ add_library(editor-textures STATIC
     TextureManager.cpp
 )
 target_include_directories(editor-textures PRIVATE .)
-target_link_libraries(editor-textures PRIVATE wad)
+target_link_libraries(editor-textures PRIVATE wad PkgConfig::GTKMM)

@@ -25,21 +25,21 @@ using namespace Sickle::Editor::Textures;
 
 
 using GetMipmapDataFunc =\
-    std::function<std::vector<uint8_t>(WAD::TexLump const *)>;
+    std::function<std::vector<uint8_t>(WAD::LumpTexture const *)>;
 
 static std::unordered_map<MipmapLevel, GetMipmapDataFunc> const
 GET_MIPMAP_DATA_FUNCS{
-    {MipmapLevel::MIPMAP_FULL, std::mem_fn(&WAD::TexLump::tex1)},
-    {MipmapLevel::MIPMAP_HALF, std::mem_fn(&WAD::TexLump::tex2)},
-    {MipmapLevel::MIPMAP_QUARTER, std::mem_fn(&WAD::TexLump::tex4)},
-    {MipmapLevel::MIPMAP_EIGHTH, std::mem_fn(&WAD::TexLump::tex8)},
+    {MipmapLevel::MIPMAP_FULL, std::mem_fn(&WAD::LumpTexture::tex1)},
+    {MipmapLevel::MIPMAP_HALF, std::mem_fn(&WAD::LumpTexture::tex2)},
+    {MipmapLevel::MIPMAP_QUARTER, std::mem_fn(&WAD::LumpTexture::tex4)},
+    {MipmapLevel::MIPMAP_EIGHTH, std::mem_fn(&WAD::LumpTexture::tex8)},
 };
 
 
 
 TextureInfo::TextureInfo(
     std::string source_wad,
-    WAD::TexLump const &texlump)
+    WAD::LumpTexture const &texlump)
 :   _source_wad{source_wad}
 ,   _texlump{texlump}
 {

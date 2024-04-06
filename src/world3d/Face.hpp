@@ -23,7 +23,6 @@
 #include "Texture.hpp"
 
 #include <editor/world/Face.hpp>
-#include <files/wad/lumps.hpp>
 
 #include <glutils/glutils.hpp>
 #include <sigc++/signal.h>
