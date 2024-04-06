@@ -18,13 +18,59 @@
 
 #include "TextureManager.hpp"
 
-#include <files/wad/wad.hpp>
-#include <files/wad/lumps.hpp>
+#include <files/wad/WADReader.hpp>
+
+#include <giomm/file.h>
+#include <giomm/datainputstream.h>
 
 #include <iostream>
 
 
 using namespace Sickle::Editor::Textures;
+
+
+struct WADInputStreamGIO : WAD::WADInputStream
+{
+    WADInputStreamGIO(std::string const &wad_path)
+    {
+        auto const file = Gio::File::create_for_path(wad_path);
+        _stream = file->read();
+    }
+    virtual ~WADInputStreamGIO()=default;
+
+    virtual void seek(size_t offset)
+    {
+        _stream->seek(offset, Glib::SeekType::SEEK_TYPE_SET);
+    }
+
+    virtual void read_bytes(void *buf, size_t count)
+    {
+        gsize bytes_read = 0;
+        _stream->read_all(buf, count, bytes_read);
+    }
+
+    virtual uint8_t read_uint8()
+    {
+        uint8_t byte = 0;
+        read_bytes(&byte, 1);
+        return byte;
+    }
+
+    virtual uint32_t read_uint32()
+    {
+        uint8_t raw[4];
+        read_bytes(raw, 4);
+        uint32_t num = (
+            raw[0]
+            | (raw[1] << 8)
+            | (raw[2] << 16)
+            | (raw[3] << 24));
+        return num;
+    }
+
+private:
+    Glib::RefPtr<Gio::FileInputStream> _stream{nullptr};
+};
 
 
 sigc::signal<void> TextureManager::_sig_wads_changed{};
@@ -46,15 +92,19 @@ TextureManager::TextureManager()
 void TextureManager::add_wad(std::filesystem::path const &wad_path)
 {
     auto const wad_name = wad_path.stem().generic_string();
-    auto const wad = WAD::load(wad_path);
+
+    WADInputStreamGIO inputstream{wad_path};
+    WAD::WADReader reader{inputstream};
+    reader.load();
+
     std::vector<std::shared_ptr<TextureInfo>> wad_textures{};
-    for (auto const &lump : wad.directory)
+    for (auto const &entry : reader.get_directory())
     {
-        WAD::TexLump texlump;
+        WAD::LumpTexture texlump{};
         try {
-            texlump = WAD::readTexLump(lump);
+            texlump = reader.load_lump_texture(entry);
         }
-        catch (WAD::TexLumpLoadError const &e) {
+        catch (WAD::LumpTexture::BadTypeException const &e) {
             std::cerr << "Texture Load Error: " << e.what() << std::endl;
             continue;
         }

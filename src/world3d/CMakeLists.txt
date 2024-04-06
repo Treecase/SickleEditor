@@ -15,13 +15,12 @@ add_library(world3d STATIC
 target_include_directories(world3d PRIVATE .)
 target_link_libraries(world3d
     PUBLIC
-        PkgConfig::GTKMM
         editor-core-gamedefinition
         editor-textures
         editor-world
-        glutils::glutils
         gtkglutils
         spr
-        wad
+        glutils::glutils
+        PkgConfig::GTKMM
 )
 target_compile_features(world3d PUBLIC cxx_std_17)

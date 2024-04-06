@@ -1,3 +1,2 @@
-add_library(wad STATIC load_wad.cpp lumps.cpp)
+add_library(wad STATIC LumpTexture.cpp WADReader.cpp)
 target_include_directories(wad PRIVATE .)
-target_link_libraries(wad PUBLIC PkgConfig::sigc++)

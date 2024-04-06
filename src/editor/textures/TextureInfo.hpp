@@ -19,7 +19,7 @@
 #ifndef SE_EDITOR_TEXTURES_TEXTUREINFO_HPP
 #define SE_EDITOR_TEXTURES_TEXTUREINFO_HPP
 
-#include <files/wad/lumps.hpp>
+#include <files/wad/LumpTexture.hpp>
 
 #include <memory>
 #include <string>
@@ -155,11 +155,11 @@ namespace Sickle::Editor::Textures
         // TextureInfos can only be created by TextureManagers.
         friend class TextureManager;
 
-        TextureInfo(std::string source_wad, WAD::TexLump const &texlump);
+        TextureInfo(std::string source_wad, WAD::LumpTexture const &texlump);
 
     private:
         std::string _source_wad;
-        WAD::TexLump _texlump;
+        WAD::LumpTexture _texlump;
 
         std::unordered_map<std::type_index, std::shared_ptr<void>> _cache{};
     };
