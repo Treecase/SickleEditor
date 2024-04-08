@@ -18,13 +18,15 @@
 
 #include "FaceEditor.hpp"
 
+#include <gtk/classes/textureselector/TextureSelector.hpp>
+
+
 using namespace Sickle::AppWin;
 
 
 FaceEditor::FaceEditor(Editor::EditorRef const &editor)
 :   Glib::ObjectBase{typeid(FaceEditor)}
 ,   _prop_face{*this, "face", {}}
-,   _texture_selector{TextureSelector::TextureSelector::create()}
 {
     set_column_spacing(16);
     set_sensitive(false);
@@ -151,10 +153,11 @@ void FaceEditor::on_texture_selector_button_clicked(
 
 void FaceEditor::show_texture_select_window()
 {
-    auto const result = _texture_selector->run();
+    auto const texture_selector = TextureSelector::TextureSelector::create();
+    auto const result = texture_selector->run();
     if (result == Gtk::RESPONSE_ACCEPT)
     {
-        auto const tex = _texture_selector->get_selected_texture();
+        auto const tex = texture_selector->get_selected_texture();
         get_face()->set_texture(tex);
     }
 }
