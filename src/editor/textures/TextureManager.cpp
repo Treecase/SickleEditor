@@ -73,6 +73,25 @@ private:
 };
 
 
+/**
+ * Generate a uniquely identifying name for a WAD path given a set of already
+ * used names.
+ */
+static std::string generate_unique_name(
+    std::filesystem::path const &wad_path,
+    std::unordered_set<std::string> const &wads)
+{
+    auto path = wad_path;
+    auto name = wad_path.stem().generic_string();
+    while (wads.count(name) && path.has_parent_path())
+    {
+        path = path.parent_path();
+        name = path.stem().generic_string() + "/" + name;
+    }
+    return name;
+}
+
+
 sigc::signal<void> TextureManager::_sig_wads_changed{};
 
 
@@ -91,7 +110,11 @@ TextureManager::TextureManager()
 
 void TextureManager::add_wad(std::filesystem::path const &wad_path)
 {
-    auto const wad_name = wad_path.stem().generic_string();
+    // Do nothing if the wad is already in the manager.
+    if (_wad_paths.count(wad_path))
+        return;
+
+    auto const wad_name = generate_unique_name(wad_path, get_wads());
 
     WADInputStreamGIO inputstream{wad_path};
     WAD::WADReader reader{inputstream};
@@ -121,6 +144,8 @@ void TextureManager::add_wad(std::filesystem::path const &wad_path)
 
 void TextureManager::remove_wad(std::string const &wad_name)
 {
+    if (!_by_wad.count(wad_name))
+        return;
     for (auto const &texture : _by_wad.at(wad_name))
     {
         _textures.erase(texture);
@@ -128,6 +153,13 @@ void TextureManager::remove_wad(std::string const &wad_name)
     }
     _by_wad.erase(wad_name);
     signal_wads_changed().emit();
+}
+
+
+void TextureManager::remove_wad(std::filesystem::path const &wad_path)
+{
+    if (_wad_paths.count(wad_path))
+        remove_wad(_wad_paths.at(wad_path));
 }
 
 
@@ -144,6 +176,15 @@ std::unordered_set<std::string> TextureManager::get_wads() const
 {
     std::unordered_set<std::string> wads{};
     for (auto const &kv : _by_wad)
+        wads.insert(kv.first);
+    return wads;
+}
+
+
+std::unordered_set<std::filesystem::path> TextureManager::get_wad_paths() const
+{
+    std::unordered_set<std::filesystem::path> wads{};
+    for (auto const &kv : _wad_paths)
         wads.insert(kv.first);
     return wads;
 }

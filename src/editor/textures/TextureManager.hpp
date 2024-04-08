@@ -50,8 +50,7 @@ namespace Sickle::Editor::Textures
         static TextureManager &get_reference();
 
         /**
-         * Add a WAD to the manager. The WAD's name internally will be
-         * `wad_path.stem()`.
+         * Add a WAD to the manager.
          *
          * @param wad_path File path to the wad to be added.
          *
@@ -60,7 +59,16 @@ namespace Sickle::Editor::Textures
         void add_wad(std::filesystem::path const &wad_path);
 
         /**
-         * Remove a WAD and all its textures from the manager.
+         * Remove a WAD and all its textures from the manager. Fails silently
+         * if the path is not in the manager.
+         *
+         * @param wad_path Path of the WAD to remove.
+         */
+        void remove_wad(std::filesystem::path const &wad_path);
+
+        /**
+         * Remove a WAD and all its textures from the manager. Fails silently
+         * if the path is not in the manager.
          *
          * @param wad_name Name of the WAD to remove.
          */
@@ -72,11 +80,18 @@ namespace Sickle::Editor::Textures
         void clear_wads();
 
         /**
-         * Get a list of all the wads in the manager.
+         * Get a list of all the names of the wads in the manager.
          *
-         * @return A collection of all WADs in the manager.
+         * @return A collection of all WAD names in the manager.
          */
         std::unordered_set<std::string> get_wads() const;
+
+        /**
+         * Get a list of all the paths of the wads in the manager.
+         *
+         * @return A collection of all WAD paths in the manager.
+         */
+        std::unordered_set<std::filesystem::path> get_wad_paths() const;
 
         /**
          * Get the named texture.
@@ -99,6 +114,7 @@ namespace Sickle::Editor::Textures
 
         std::unordered_set<std::shared_ptr<TextureInfo>> _textures{};
 
+        std::unordered_map<std::filesystem::path, std::string> _wad_paths{};
         std::unordered_map<
             std::string,
             std::vector<std::shared_ptr<TextureInfo>>> _by_wad{};
