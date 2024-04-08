@@ -63,6 +63,10 @@ TextureSelector::TextureSelector()
     _confirm->signal_clicked().connect(
         [this](){_dialog->response(Gtk::ResponseType::RESPONSE_ACCEPT);});
 
+    auto &texman = Editor::Textures::TextureManager::get_reference();
+    texman.signal_wads_changed().connect(
+        sigc::mem_fun(*this, &TextureSelector::on_TextureManager_wads_changed));
+
     _refresh_textures();
 }
 
@@ -122,11 +126,11 @@ bool TextureSelector::filter_func(Gtk::FlowBoxChild const *child) const
 
     // Exclude textures not in filtered WAD. Special value "*" skips this check.
     auto const filter_wad = _wad_filter->get_active_text();
-    auto const source_wad = texinfo->get_source_wad();
+    Glib::ustring const source_wad{texinfo->get_source_wad()};
     if (filter_wad != "*" && filter_wad != source_wad)
         return false;
 
-    auto const &search = _search->get_text();
+    auto const search = _search->get_text();
     Glib::ustring const name{texinfo->get_name()};
 
     // Search behaviour: Filter in any textures whose name includes SEARCH as a
@@ -149,8 +153,8 @@ int TextureSelector::sort_func(
     auto const &a_texinfo = a_image->get_info();
     auto const &b_texinfo = b_image->get_info();
 
-    auto const &a_texture_name = a_texinfo->get_name();
-    auto const &b_texture_name = b_texinfo->get_name();
+    auto const a_texture_name = a_texinfo->get_name();
+    auto const b_texture_name = b_texinfo->get_name();
 
     return a_texture_name.compare(b_texture_name);
 }
@@ -160,8 +164,9 @@ int TextureSelector::sort_func(
 void TextureSelector::_refresh_textures()
 {
     _clear_textures();
+    _wad_filter->remove_all();
+    _wad_filter->append("*");
     auto &texman = Editor::Textures::TextureManager::get_reference();
-    // TODO: remove unused wads from the combobox.
     for (auto const &wad_name : texman.get_wads())
         _wad_filter->append(wad_name);
     _add_textures();
@@ -171,7 +176,7 @@ void TextureSelector::_refresh_textures()
 void TextureSelector::_clear_textures()
 {
     for (auto &img : _images)
-        _flow->remove(img);
+        _flow->remove(*img);
     _images.clear();
 }
 
@@ -181,7 +186,15 @@ void TextureSelector::_add_textures()
     auto &texman = Editor::Textures::TextureManager::get_reference();
     for (auto const &texinfo : texman.get_textures())
     {
-        auto &image = _images.emplace_back(texinfo);
-        _flow->add(image);
+        std::shared_ptr<TextureImage> image{nullptr};
+        try {
+            image = texinfo->get_cached<TextureImage>();
+        }
+        catch (std::out_of_range const &) {
+            image = std::make_shared<TextureImage>(texinfo);
+            texinfo->cache_object(image);
+        }
+        _images.push_back(image);
+        _flow->add(*image);
     }
 }

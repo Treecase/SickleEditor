@@ -29,6 +29,7 @@
 #include <gtkmm/flowbox.h>
 #include <gtkmm/searchentry.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -84,7 +85,8 @@ namespace Sickle::TextureSelector
         Gtk::FlowBox *_flow{nullptr};
         Gtk::Button *_cancel{nullptr};
         Gtk::Button *_confirm{nullptr};
-        std::vector<TextureImage> _images{};
+
+        std::vector<std::shared_ptr<TextureImage>> _images{};
 
         TextureSelector();
 

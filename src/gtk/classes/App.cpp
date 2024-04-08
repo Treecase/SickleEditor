@@ -235,11 +235,24 @@ Sickle::AppWin::AppWin *Sickle::App::_create_appwindow()
 
 void Sickle::App::_sync_wadpaths()
 {
-    for (auto const &utf8path : property_wad_paths().get_value())
-    {
-        auto const path = Glib::filename_from_utf8(utf8path);
-        Sickle::Editor::Textures::TextureManager::get_reference().add_wad(path);
-    }
+    auto &texman = Sickle::Editor::Textures::TextureManager::get_reference();
+
+    auto const utf8paths = property_wad_paths().get_value();
+    std::unordered_set<std::filesystem::path> paths{};
+    std::transform(
+        utf8paths.cbegin(),
+        utf8paths.cend(),
+        std::inserter(paths, paths.begin()),
+        Glib::filename_from_utf8);
+
+    // Remove removed WADs.
+    for (auto const &wad_path : texman.get_wad_paths())
+        if (!paths.count(wad_path))
+            texman.remove_wad(wad_path);
+
+    // Add new WADs.
+    for (auto const &path : paths)
+        texman.add_wad(path);
 }
 
 

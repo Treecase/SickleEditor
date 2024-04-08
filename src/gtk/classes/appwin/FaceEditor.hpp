@@ -21,7 +21,6 @@
 
 #include <editor/core/Editor.hpp>
 #include <editor/world/Face.hpp>
-#include <gtk/classes/textureselector/TextureSelector.hpp>
 
 #include <glibmm/binding.h>
 #include <glm/glm.hpp>
@@ -152,8 +151,6 @@ namespace Sickle::AppWin
         Glib::RefPtr<Glib::Binding> _bind_shift{};
         Glib::RefPtr<Glib::Binding> _bind_scale{};
         Glib::RefPtr<Glib::Binding> _bind_rotation{};
-
-        Glib::RefPtr<TextureSelector::TextureSelector> _texture_selector{};
 
         Gtk::Label _texture_label{"Texture"};
         Gtk::Entry _texture_entry{};
