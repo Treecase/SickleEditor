@@ -1,6 +1,7 @@
 add_library(textureselector STATIC
-    TextureSelector.cpp
     TextureImage.cpp
+    TextureLoadingWorker.cpp
+    TextureSelector.cpp
 )
 target_link_libraries(textureselector
     PUBLIC

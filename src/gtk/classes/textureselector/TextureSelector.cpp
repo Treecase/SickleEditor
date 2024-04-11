@@ -67,7 +67,23 @@ TextureSelector::TextureSelector()
     texman.signal_wads_changed().connect(
         sigc::mem_fun(*this, &TextureSelector::on_TextureManager_wads_changed));
 
+    _dispatcher.connect(
+        sigc::mem_fun(*this, &TextureSelector::_on_worker_notify));
+
     _refresh_textures();
+}
+
+
+TextureSelector::~TextureSelector()
+{
+    _dialog->hide();
+    if (_worker_thread)
+    {
+        _worker.cancel();
+        if (_worker_thread->joinable())
+            _worker_thread->join();
+    }
+    _clear_textures();
 }
 
 
@@ -183,18 +199,27 @@ void TextureSelector::_clear_textures()
 
 void TextureSelector::_add_textures()
 {
-    auto &texman = Editor::Textures::TextureManager::get_reference();
-    for (auto const &texinfo : texman.get_textures())
+    _worker_thread = std::make_unique<std::thread>(
+        [this](){_worker.do_work(&_dispatcher);});
+}
+
+
+void TextureSelector::_on_worker_notify()
+{
+    auto const results = _worker.get_results();
+
+    for (auto const &[texinfo, pixels] : results)
     {
-        std::shared_ptr<TextureImage> image{nullptr};
-        try {
-            image = texinfo->get_cached<TextureImage>();
-        }
-        catch (std::out_of_range const &) {
-            image = std::make_shared<TextureImage>(texinfo);
-            texinfo->cache_object(image);
-        }
+        auto const image = std::make_shared<TextureImage>(texinfo, pixels);
         _images.push_back(image);
         _flow->add(*image);
+        image->show_all();
+    }
+
+    if (_worker_thread && _worker.is_done())
+    {
+        if (_worker_thread->joinable())
+            _worker_thread->join();
+        _worker_thread.reset();
     }
 }

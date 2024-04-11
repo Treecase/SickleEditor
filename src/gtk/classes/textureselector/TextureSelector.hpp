@@ -20,7 +20,9 @@
 #define SE_APPWIN_TEXTURESELECTOR_HPP
 
 #include "TextureImage.hpp"
+#include "TextureLoadingWorker.hpp"
 
+#include <glibmm/dispatcher.h>
 #include <glibmm/property.h>
 #include <glibmm/refptr.h>
 #include <gtkmm/button.h>
@@ -48,6 +50,8 @@ namespace Sickle::TextureSelector
          * @return A newly constructed texture selector.
          */
         static Glib::RefPtr<TextureSelector> create();
+
+        virtual ~TextureSelector();
 
         /**
          * Get the name of the texture currently selected by the user.
@@ -88,11 +92,17 @@ namespace Sickle::TextureSelector
 
         std::vector<std::shared_ptr<TextureImage>> _images{};
 
+        Glib::Dispatcher _dispatcher{};
+        TextureLoadingWorker _worker{};
+        std::unique_ptr<std::thread> _worker_thread{nullptr};
+
         TextureSelector();
 
         void _refresh_textures();
         void _clear_textures();
         void _add_textures();
+
+        void _on_worker_notify();
     };
 }
 
