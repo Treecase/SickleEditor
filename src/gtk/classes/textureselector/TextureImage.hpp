@@ -37,7 +37,9 @@ namespace Sickle::TextureSelector
     {
     public:
         TextureImage(
-            std::shared_ptr<Editor::Textures::TextureInfo> const &texinfo);
+            std::shared_ptr<Editor::Textures::TextureInfo> const &texinfo,
+            std::shared_ptr<uint8_t[]> const &pixels);
+        virtual ~TextureImage()=default;
 
         /**
          * Get the texture info represented by this widget.
@@ -49,10 +51,13 @@ namespace Sickle::TextureSelector
     private:
         std::shared_ptr<Editor::Textures::TextureInfo> _texinfo{nullptr};
         // Image's Pixbuf needs the data buffer to stay alive.
-        std::shared_ptr<guint8[]> _rgb_data{nullptr};
+        std::shared_ptr<uint8_t[]> _pixels{nullptr};
 
         Gtk::Image _image;
         Gtk::Label _label;
+
+        TextureImage(TextureImage const &)=delete;
+        TextureImage &operator=(TextureImage const &)=delete;
     };
 }
 
