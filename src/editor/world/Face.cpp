@@ -92,11 +92,9 @@ FaceRef Face::create(
     HalfPlane const &plane,
     std::vector<glm::vec3> const &brush_vertices)
 {
-    Glib::RefPtr ptr{new Face()};
+    Glib::RefPtr ptr{new Face{}};
 
     ptr->set_texture(""); // TODO
-    ptr->set_u({1.0, 0.0, 0.0}); // TODO
-    ptr->set_v({1.0, 0.0, 0.0}); // TODO
     ptr->set_shift({0.0, 0.0});
     ptr->set_scale({1.0, 1.0});
     ptr->set_rotation(0.0);
@@ -114,6 +112,10 @@ FaceRef Face::create(
     std::sort(
         vertices.begin(), vertices.end(),
         VectorLessCounterClockwise{plane, vertices});
+
+    auto const planepoints = ptr->get_plane_points();
+    ptr->set_u(glm::normalize(planepoints.at(0) - planepoints.at(1)));
+    ptr->set_v(glm::normalize(planepoints.at(2) - planepoints.at(1)));
 
     return ptr;
 }
