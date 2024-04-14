@@ -8,70 +8,129 @@ ScaleDrag.metatable = {}
 ScaleDrag.metatable.__index = ScaleDrag.metatable
 
 
--- Get the centerpoint of selected brushes.
-local function get_center(drag)
+-- Get the centerpoint of a set of brushes.
+--
+-- find_center(brushes: iterable) -> geo.vec3
+--
+-- brushes: iterable for a collection of brushes
+-- Returns the centerpoint of the brushes in worldspace
+local function find_center(brushes)
     local center = geo.vec3.new()
+    local count = 0.0
+    for brush in brushes do
+        for i,vertex in ipairs(brush:get_vertices()) do
+            center = center + vertex
+            count = count + 1
+        end
+    end
+    return center / count
+end
 
+
+-- Find minimum and maximum coordinates for a set of brushes.
+--
+-- find_bounds2D(brushes: iterable) -> geo.vec2, geo.vec2
+--
+-- maparea: Maparea who's drawspace we're working in
+-- brushes: iterable for a collection of brushes
+-- Returns min, max coordinates in drawspace
+local function find_bounds2D(maparea, brushes)
+    local min = {x=nil, y=nil}
+    local max = {x=nil, y=nil}
+    for brush in brushes do
+        for _,vws in ipairs(brush:get_vertices()) do
+            local v = maparea:worldspace_to_drawspace(vws)
+            if min.x == nil or v.x < min.x then min.x = v.x end
+            if max.x == nil or v.x > max.x then max.x = v.x end
+            if min.y == nil or v.y < min.y then min.y = v.y end
+            if max.y == nil or v.y > max.y then max.y = v.y end
+        end
+    end
+    return geo.vec2.new(min), geo.vec2.new(max)
+end
+
+
+-- find_opposite_corner(
+--   drag: ScaleDrag,
+--   corner: GrabbableBox.Area,
+--   brushes: iterable) -> geo.vec2
+--
+-- drag: ScaleDrag object
+-- corner: Box area corner to find the opposite for
+-- brushes: iterable for a collection of brushes
+-- Returns position of corner opposite to CORNER in drawspace
+local function find_opposite_corner(drag, corner, brushes)
+    local min, max = find_bounds2D(drag.maparea, brushes)
+
+    local DIRECTION_COORD = {
+        ["N"] = min.y,
+        ["E"] = max.x,
+        ["S"] = max.y,
+        ["W"] = min.x,
+        ["x"] = min.x + (max.x - min.x) * 0.5,
+        ["y"] = min.y + (max.y - min.y) * 0.5
+    }
+    local OPPOSITE_HANDLE = {
+        [maparea2d.grabbablebox.NE] = maparea2d.grabbablebox.SW,
+        [maparea2d.grabbablebox.NW] = maparea2d.grabbablebox.SE,
+        [maparea2d.grabbablebox.SE] = maparea2d.grabbablebox.NW,
+        [maparea2d.grabbablebox.SW] = maparea2d.grabbablebox.NE,
+        [maparea2d.grabbablebox.N ] = maparea2d.grabbablebox.S,
+        [maparea2d.grabbablebox.S ] = maparea2d.grabbablebox.N,
+        [maparea2d.grabbablebox.E ] = maparea2d.grabbablebox.W,
+        [maparea2d.grabbablebox.W ] = maparea2d.grabbablebox.E
+    }
+    -- Indexes into DIRECTION_COORD
+    local DIRECTION_LABEL = {
+        [maparea2d.grabbablebox.NE] = {"N", "E"},
+        [maparea2d.grabbablebox.NW] = {"N", "W"},
+        [maparea2d.grabbablebox.SE] = {"S", "E"},
+        [maparea2d.grabbablebox.SW] = {"S", "W"},
+        [maparea2d.grabbablebox.N ] = {"N", "x"},
+        [maparea2d.grabbablebox.S ] = {"S", "x"},
+        [maparea2d.grabbablebox.E ] = {"y", "E"},
+        [maparea2d.grabbablebox.W ] = {"y", "W"}
+    }
+
+    local opposite_handle = OPPOSITE_HANDLE[drag.handle]
+    local opposite_label = DIRECTION_LABEL[opposite_handle]
+    local opposite_corner = geo.vec2.new(
+        DIRECTION_COORD[opposite_label[2]],
+        DIRECTION_COORD[opposite_label[1]])
+
+    return opposite_corner
+end
+
+
+-- Get the point to scale from in drawspace.
+--
+-- get_scale_origin(drag: ScaleDrag) -> geo.vec2
+--
+-- drag: The ScaleDrag object
+-- Returns the scaling origin in drawspace
+local function get_scale_origin(drag)
     -- Scale out from center.
     if drag:centered() then
-        local count = 0.0
-        for brush in drag.maparea:get_editor():get_selection():iterate() do
-            for i,vertex in ipairs(brush:get_vertices()) do
-                center = center + vertex
-                count = count + 1
-            end
-        end
-        center = drag.maparea:worldspace_to_drawspace(center / count)
-
+        local brushes = drag.maparea:get_editor():get_selection():iterate()
+        local center = find_center(brushes)
+        return drag.maparea:worldspace_to_drawspace(center)
     -- Scale from opposite corner.
     else
-        local min_x,max_x, min_y,max_y = nil,nil, nil,nil
-
-        for brush in drag.maparea:get_editor():get_selection():iterate() do
-            for _,v in ipairs(brush:get_vertices()) do
-                local xy = drag.maparea:worldspace_to_drawspace(v)
-                if min_x == nil or xy.x < min_x then min_x = xy.x end
-                if max_x == nil or xy.x > max_x then max_x = xy.x end
-                if min_y == nil or xy.y < min_y then min_y = xy.y end
-                if max_y == nil or xy.y > max_y then max_y = xy.y end
-            end
-        end
-
-        local minmax = {
-            ["N"] = min_y,
-            ["E"] = max_x,
-            ["S"] = max_y,
-            ["W"] = min_x,
-            ["x"] = min_x + (max_x - min_x) * 0.5,
-            ["y"] = min_y + (max_y - min_y) * 0.5
-        }
-
-        -- indexes into minmax
-        local COORD_MAPPING = {
-            [maparea2d.grabbablebox.NE] = {"S", "W"},
-            [maparea2d.grabbablebox.NW] = {"S", "E"},
-            [maparea2d.grabbablebox.SE] = {"N", "W"},
-            [maparea2d.grabbablebox.SW] = {"N", "E"},
-            [maparea2d.grabbablebox.N ] = {"S", "x"},
-            [maparea2d.grabbablebox.E ] = {"y", "W"},
-            [maparea2d.grabbablebox.S ] = {"N", "x"},
-            [maparea2d.grabbablebox.W ] = {"y", "E"}
-        }
-
-        local coords = COORD_MAPPING[drag.handle]
-        center = geo.vec2.new(minmax[coords[2]], minmax[coords[1]])
+        local brushes = drag.maparea:get_editor():get_selection():iterate()
+        return find_opposite_corner(drag, drag.handle, brushes)
     end
-
-    return center
 end
 
-local function get_center3(drag)
-    local v2d = get_center(drag)
-    return geo.vec3.new(v2d.x, v2d.y, 0)
-end
 
 -- Divide two vectors, skipping if the denominator element is 0.
-local function safe_vector_divide3(a, b)
+--
+-- safe_vector_divide2(numerator: geo.vec2, denominator: geo.vec2) -> geo.vec2
+--
+-- numerator: Numerator of the division
+-- denominator: Denominator of the division
+-- Return numerator / denominator, with any zeroes in denominator replaced with
+-- ones.
+local function safe_vector_divide2(numerator, denominator)
     local function make_safe(x)
         if x == 0.0 then
             return 1.0
@@ -79,8 +138,53 @@ local function safe_vector_divide3(a, b)
             return x
         end
     end
-    return a / geo.vec3.map(make_safe, b)
+    return numerator / geo.vec2.map(make_safe, denominator)
 end
+
+
+-- Divide two vectors, skipping if the denominator element is 0.
+--
+-- safe_vector_divide3(numerator: geo.vec3, denominator: geo.vec3) -> geo.vec3
+--
+-- numerator: Numerator of the division
+-- denominator: Denominator of the division
+-- Return numerator / denominator, with any zeroes in denominator replaced with
+-- ones.
+local function safe_vector_divide3(numerator, denominator)
+    local function make_safe(x)
+        if x == 0.0 then
+            return 1.0
+        else
+            return x
+        end
+    end
+    return numerator / geo.vec3.map(make_safe, denominator)
+end
+
+
+-- Convert a 2D scaling vector from drawspace to a 3D one in worldspace.
+--
+-- scale2D_to_scale3D(scale: geo.vec2, maparea: MapArea) -> geo.vec3
+--
+-- scale: 2D scaling vector in drawspace
+-- maparea: The maparea who's drawspace we're in
+-- Return a 3D scaling vector in worldspace.
+local function scale2D_to_scale3D(scale, maparea)
+    local scale3D = maparea:drawspace_to_worldspace(scale)
+    local axis = geo.vec2.new({x=1.0, y=1.0})
+    local axis3 = maparea:drawspace_to_worldspace(axis)
+    for _,d in ipairs({"x", "y", "z"}) do
+        if scale3D[d] == 0 then
+            if axis3[d] == 0 then
+                scale3D[d] = 1
+            else
+                scale3D[d] = axis3[d]
+            end
+        end
+    end
+    return scale3D
+end
+
 
 
 function ScaleDrag.metatable:snapped()
@@ -88,7 +192,8 @@ function ScaleDrag.metatable:snapped()
 end
 
 function ScaleDrag.metatable:centered()
-    return self.maparea.ctrl == true
+    -- return self.maparea.ctrl == true
+    return false
 end
 
 
@@ -98,7 +203,7 @@ end
 
 function ScaleDrag.metatable:on_button_release_event(event)
     self.parent:removeListener(self)
-    return true
+    return self.moved
 end
 
 function ScaleDrag.metatable:on_key_press_event(event)
@@ -108,10 +213,9 @@ function ScaleDrag.metatable:on_key_release_event(event)
 end
 
 function ScaleDrag.metatable:on_motion_notify_event(event)
-    -- Point to scale from.
-    local center = get_center(self)
-
-    local SCALE_DIRECTIONS = {
+    -- Scaling direction factors. Diagonal directions scale in both x and y,
+    -- horizontal only in x, and vertical only in y.
+    local SCALE_FACTORS = {
         [maparea2d.grabbablebox.NE] = {1, 1},
         [maparea2d.grabbablebox.NW] = {1, 1},
         [maparea2d.grabbablebox.SE] = {1, 1},
@@ -121,52 +225,61 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
         [maparea2d.grabbablebox.S ] = {0, 1},
         [maparea2d.grabbablebox.W ] = {1, 0}
     }
-    local scale_directions = geo.vec3.map(
-        math.abs,
-        self.maparea:drawspace_to_worldspace(
-            geo.vec2.new(
-                SCALE_DIRECTIONS[self.handle][1],
-                SCALE_DIRECTIONS[self.handle][2])))
 
-    local click_pos = self.maparea:screenspace_to_drawspace(
+    -- Get the scaling factor and convert it to worldspace?
+    local scale_factors = geo.vec2.new(
+        SCALE_FACTORS[self.handle][1],
+        SCALE_FACTORS[self.handle][2])
+
+    -- Get mouse position in drawspace.
+    local mouse_pos = self.maparea:screenspace_to_drawspace(
         geo.vec2.new(event.x, event.y))
+
+    -- Snap mouse position to grid if necessary.
     if self:snapped() then
-        click_pos = geo.vec2.map(round_to_grid, click_pos)
+        mouse_pos = geo.vec2.map(round_to_grid, mouse_pos)
     end
 
-    local distance2d = geo.vec2.map(math.abs, click_pos - center)
-    local distance = geo.vec3.new(distance2d.x, distance2d.y, 0)
-    local scale = safe_vector_divide3(distance, self.base_distance)
+    -- Calculate distance between mouse and scaling origin.
+    local distance = geo.vec2.map(math.abs, mouse_pos - self.origin)
 
+    -- Calculate scaling factor by dividing current distance by starting
+    -- distance.
+    local scale = safe_vector_divide2(distance, self.base_distance)
+
+    -- Scale needs to be doubled when scaling from the center.
     if self:centered() then
         scale = scale * 2
     end
 
-    -- Prevent scaling to 0, otherwise we won't be able to scale back up!
-    for _,i in ipairs({"x", "y", "z", "w"}) do
-        if scale_directions[i] == 0 then
-            scale[i] = 1
-        elseif scale[i] == 0 then
-            scale[i] = self.prev_scale[i]
-        end
-    end
+    -- Lock scaling to appropriate axes.
+    scale = scale * scale_factors
 
-    local scale_mat = geo.matrix.scale(geo.matrix.new(), scale)
+    -- Convert scaling factor to a worldspace vector.
+    local scale3D = scale2D_to_scale3D(scale, self.maparea)
+    -- Convert previous scaling factor to a worldspace vector.
+    local prev_scale3D = scale2D_to_scale3D(self.prev_scale, self.maparea)
+    -- Convert scale_origin to worldspace.
+    local scale_origin3D = self.maparea:drawspace_to_worldspace(self.origin)
+
+    -- Generate the scaling matrix.
+    local scale_mat = geo.matrix.scale(geo.matrix.new(), scale3D)
+
+    -- Generate matrix to undo the previously applied scaling.
     local inverse_prev_scale_mat = geo.matrix.scale(
         geo.matrix.new(),
-        safe_vector_divide3(1.0, self.prev_scale)
-    )
+        safe_vector_divide3(1.0, prev_scale3D))
 
-    local center_ws = self.maparea:drawspace_to_worldspace(center)
+    -- Apply the transformations.
     for brush in self.maparea:get_editor():get_selection():iterate() do
         brush:transform(
-            geo.matrix.translate(geo.matrix.new(), center_ws)
+            geo.matrix.translate(geo.matrix.new(), scale_origin3D)
             * scale_mat
             * inverse_prev_scale_mat
-            * geo.matrix.translate(geo.matrix.new(), -center_ws)
-        )
+            * geo.matrix.translate(geo.matrix.new(), -scale_origin3D))
     end
 
+    -- Update state.
     self.prev_scale = scale
     self.moved = true
     return true
@@ -185,16 +298,15 @@ function ScaleDrag.new(parent, maparea, x, y, handle)
 
     setmetatable(scale_drag, ScaleDrag.metatable)
 
-    local click_pos2d = maparea:screenspace_to_drawspace(geo.vec2.new(x, y))
-    local click_pos = geo.vec3.new(click_pos2d.x, click_pos2d.y, 0)
+    local click_pos = maparea:screenspace_to_drawspace(geo.vec2.new(x, y))
     if scale_drag:snapped() then
-        click_pos = geo.vec3.map(round_to_grid, click_pos)
+        click_pos = geo.vec2.map(round_to_grid, click_pos)
     end
 
-    local center = get_center3(scale_drag)
-    local distance = geo.vec3.map(math.abs, click_pos - center)
-    scale_drag.base_distance = distance
-    scale_drag.prev_scale = safe_vector_divide3(distance, distance)
+    local origin = get_scale_origin(scale_drag)
+    scale_drag.origin = origin
+    scale_drag.base_distance = geo.vec2.map(math.abs, click_pos - origin)
+    scale_drag.prev_scale = geo.vec2.new(1, 1)
 
     return scale_drag
 end
