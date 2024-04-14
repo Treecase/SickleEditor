@@ -172,7 +172,8 @@ function ScaleDrag.metatable:snapped()
 end
 
 function ScaleDrag.metatable:centered()
-    return self.maparea.ctrl == true
+    -- return self.maparea.ctrl == true
+    return false
 end
 
 
