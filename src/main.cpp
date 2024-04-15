@@ -18,12 +18,22 @@
 
 #include "gtk/classes/App.hpp"
 
+#include <OperationSearch.hpp>
 #include <config/appid.hpp>
 #include <config/version.hpp>
+
+#include <memory>
 
 #ifndef NDEBUG
 #include <glibmm/miscutils.h>
 #endif
+
+
+void initialize_buildable_types()
+{
+    auto const dummy_OperationSearch =\
+        std::make_unique<Sickle::AppWin::OperationSearch>();
+}
 
 
 int main(int argc, char *argv[])
@@ -34,5 +44,6 @@ int main(int argc, char *argv[])
     Glib::setenv("GSETTINGS_SCHEMA_DIR", SE_BINARY_DIR, false);
 #endif
     auto app = Sickle::App::create();
+    initialize_buildable_types();
     return app->run(argc, argv);
 }

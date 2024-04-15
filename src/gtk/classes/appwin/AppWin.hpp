@@ -98,7 +98,7 @@ namespace Sickle::AppWin
         void on_action_openLuaDebugger();
         void on_action_reloadLua();
 
-        bool on_key_press_event(GdkEventKey *event) override;
+        virtual bool on_key_press_event(GdkEventKey *event) override;
 
     private:
         static constexpr guint GRID_SIZE_MIN = 1;
@@ -114,7 +114,7 @@ namespace Sickle::AppWin
         LuaConsole _lua_console{};
         LuaWindow _lua_debugger_window{};
         Gtk::InfoBar _luainfobar{};
-        OperationSearch _opsearch;
+        OperationSearch *_opsearch{nullptr};
         ModeSelector _mode_selector{};
         Outliner _outliner{};
         PropertyEditor _property_editor{};

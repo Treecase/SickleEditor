@@ -19,6 +19,7 @@
 #include "AppWin.hpp"
 #include "AppWin_Lua.hpp"
 #include "MapArea2D_Lua.hpp"
+#include "OperationSearch.hpp"
 
 #include <config/appid.hpp>
 #include <config/version.hpp>
@@ -91,7 +92,7 @@ AppWin::AppWin()
 ,   _view2d_right{editor}
 ,   _maptools{editor}
 ,   _maptool_config{editor}
-,   _opsearch{editor}
+,   _opsearch{OperationSearch::create(editor)}
 ,   _face_editor{editor}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _binding_grid_size_top{
@@ -264,8 +265,8 @@ AppWin::AppWin()
     property_grid_size().signal_changed().connect(
         sigc::mem_fun(*this, &AppWin::_on_grid_size_changed));
 
-    _opsearch.set_transient_for(*this);
-    _opsearch.signal_operation_chosen().connect(
+    _opsearch->set_transient_for(*this);
+    _opsearch->signal_operation_chosen().connect(
         sigc::mem_fun(*this, &AppWin::_on_opsearch_op_chosen));
 
     _on_grid_size_changed();
@@ -376,7 +377,7 @@ void AppWin::reload_scripts()
 
 void AppWin::search_operations()
 {
-    _opsearch.present();
+    _opsearch->present();
 }
 
 
