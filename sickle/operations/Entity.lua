@@ -2,7 +2,7 @@ add_operation(
     "Entity",
     "Create",
     "entity",
-    {"string"},
+    {"classname"},
     function(editor, _, classname)
         pcall(editor.add_entity, editor, classname)
     end)

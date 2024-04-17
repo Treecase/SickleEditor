@@ -92,6 +92,14 @@ std::unordered_map<std::string, Operation::ModeData> const Operation::MODES
 
 
 std::unordered_map<std::string, Operation::TypeData> const Operation::TYPES{
+    {   "classname",
+        {
+            // TODO: Raise error for invalid classnames?
+            Lua::get_as<std::string>,
+            [](auto a){return std::holds_alternative<std::string>(a);},
+            "",
+        },
+    },
     {   "f",
         {
             Lua::get_as<lua_Number>,

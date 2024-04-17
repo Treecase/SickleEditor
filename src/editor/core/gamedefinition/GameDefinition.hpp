@@ -25,6 +25,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 
 namespace Sickle::Editor
@@ -57,6 +58,13 @@ namespace Sickle::Editor
          * @throw std::out_of_range if the class does not exist.
          */
         EntityClass lookup(std::string const &classname) const;
+
+        /**
+         * Get a list of all the defined classnames.
+         *
+         * @return A collection of all the defined classnames.
+         */
+        std::unordered_set<std::string> get_all_classnames() const;
 
     private:
         std::unordered_map<std::string, EntityClass> _classes{};

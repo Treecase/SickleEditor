@@ -63,6 +63,15 @@ EntityClass GameDefinition::lookup(std::string const &classname) const
 }
 
 
+std::unordered_set<std::string> GameDefinition::get_all_classnames() const
+{
+    std::unordered_set<std::string> classnames{};
+    for (auto const &kv : _classes)
+        classnames.insert(kv.first);
+    return classnames;
+}
+
+
 
 EntityClass GameDefinition::_instantiate_class(
     FGD::Class const &cls,
