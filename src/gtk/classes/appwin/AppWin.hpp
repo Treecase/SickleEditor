@@ -24,9 +24,9 @@
 #include "FaceEditor.hpp"
 #include "LuaWindow.hpp"
 #include "LuaConsole.hpp"
-#include "MapToolConfig.hpp"
 #include "MapTools.hpp"
 #include "ModeSelector.hpp"
+#include "OperationParameterEditor.hpp"
 #include "OperationSearch.hpp"
 #include "Outliner.hpp"
 #include "propertyeditor/PropertyEditor.hpp"
@@ -108,7 +108,7 @@ namespace Sickle::AppWin
         MapArea3D _view3d;
         MapArea2D _view2d_top, _view2d_front, _view2d_right;
         MapTools _maptools;
-        MapToolConfig _maptool_config;
+        OperationParameterEditor _maptool_config{};
         Gtk::Label _gridsizelabel{};
         Gtk::Window _lua_console_window{};
         LuaConsole _lua_console{};

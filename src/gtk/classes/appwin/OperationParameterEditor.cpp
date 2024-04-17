@@ -1,5 +1,5 @@
 /**
- * MapToolConfig.cpp - Config box for MapTools.
+ * OperationParameterEditor.cpp - Config box for MapTools.
  * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "MapToolConfig.hpp"
+#include "OperationParameterEditor.hpp"
 
-#include <editor/core/Editor.hpp>
+#include <editor/operations/Operation.hpp>
 #include <gtk/classes/textureselector/TextureSelector.hpp>
 
 #include <glibmm/binding.h>
@@ -31,54 +31,63 @@ using namespace Sickle::Editor;
 using namespace Sickle::TextureSelector;
 
 
-// TODO: error hardening
-struct NumberConfig : public Gtk::Entry, public Config
+struct Config
 {
+    virtual Operation::Arg get_value() const=0;
+};
+
+
+// TODO: error hardening
+class NumberConfig : public Gtk::Entry, public Config
+{
+public:
     NumberConfig(Operation::Arg const &arg=0.0)
     :   Gtk::Entry{}
     {
         auto const value = std::get<lua_Number>(arg);
         set_value(value);
     }
+    virtual ~NumberConfig()=default;
 
     void set_value(lua_Number value)
     {
         set_text(std::to_string(value));
     }
 
-    Operation::Arg get_value() override
+    virtual Operation::Arg get_value() const override
     {
         return Operation::Arg{std::stod(get_text())};
     }
 };
 
 
-struct StringConfig : public Gtk::Entry, public Config
+class StringConfig : public Gtk::Entry, public Config
 {
+public:
     StringConfig(Operation::Arg const &arg="")
     :   Gtk::Entry{}
     {
         auto const value = std::get<std::string>(arg);
         set_value(value);
     }
+    virtual ~StringConfig()=default;
 
     void set_value(std::string const &value)
     {
         set_text(value);
     }
 
-    Operation::Arg get_value() override
+    virtual Operation::Arg get_value() const override
     {
         return Operation::Arg{get_text()};
     }
 };
 
 
-struct TextureConfig : public Gtk::Box, public Config
+class TextureConfig : public Gtk::Box, public Config
 {
-    TextureConfig(
-        EditorRef const &editor,
-        Operation::Arg const &arg="")
+public:
+    TextureConfig(Operation::Arg const &arg="")
     :   Gtk::Box{Gtk::Orientation::ORIENTATION_HORIZONTAL}
     ,   _texture_selector{TextureSelector::create()}
     {
@@ -93,13 +102,14 @@ struct TextureConfig : public Gtk::Box, public Config
         auto const value = std::get<std::string>(arg);
         set_value(value);
     }
+    virtual ~TextureConfig()=default;
 
     void set_value(std::string const &value)
     {
         _texture.set_text(value);
     }
 
-    Operation::Arg get_value() override
+    virtual Operation::Arg get_value() const override
     {
         return Operation::Arg{_texture.get_text()};
     }
@@ -124,7 +134,6 @@ private:
 
 class Vec3Config : public Gtk::Box, public Config
 {
-    std::array<NumberConfig, 3> _xyz{};
 public:
 
     Vec3Config(Operation::Arg const &arg)
@@ -142,8 +151,9 @@ public:
         add(y);
         add(z);
     }
+    virtual ~Vec3Config()=default;
 
-    Operation::Arg get_value() override
+    virtual Operation::Arg get_value() const override
     {
         return Operation::Arg{
             glm::vec3{
@@ -151,17 +161,14 @@ public:
                 std::get<lua_Number>(_xyz.at(1).get_value()),
                 std::get<lua_Number>(_xyz.at(2).get_value())}};
     }
+
+private:
+    std::array<NumberConfig, 3> _xyz{};
 };
 
 
 class Mat4Config : public Gtk::Grid, public Config
 {
-    std::array<NumberConfig, 4*4> _elements{};
-
-    NumberConfig &_config_for(size_t column, size_t row)
-    {
-        return _elements.at((4 * column) + row);
-    }
 public:
 
     Mat4Config(Operation::Arg const &arg)
@@ -182,8 +189,9 @@ public:
             }
         }
     }
+    virtual ~Mat4Config()=default;
 
-    Operation::Arg get_value() override
+    virtual Operation::Arg get_value() const override
     {
         glm::mat4 out{};
         for (size_t col = 0; col < 4; ++col)
@@ -197,39 +205,44 @@ public:
         }
         return Operation::Arg{out};
     }
+
+private:
+    std::array<NumberConfig, 4*4> _elements{};
+
+    NumberConfig &_config_for(size_t column, size_t row)
+    {
+        return _elements.at((4 * column) + row);
+    }
+
+    NumberConfig const &_config_for(size_t column, size_t row) const
+    {
+        return _elements.at((4 * column) + row);
+    }
 };
 
 
-static Glib::RefPtr<Gtk::Widget> make_config_for(
-    EditorRef const &editor,
-    Operation const &op,
-    size_t argument)
+static Gtk::Widget *make_config_for(Operation::ArgDef const &def)
 {
-    auto const &def = op.args.at(argument);
     if (def.type == "f")
-        return Glib::RefPtr{new NumberConfig{def.default_value}};
+        return Gtk::make_managed<NumberConfig>(def.default_value);
     else if (def.type == "string")
-        return Glib::RefPtr{new StringConfig{def.default_value}};
+        return Gtk::make_managed<StringConfig>(def.default_value);
     else if (def.type == "texture")
-        return Glib::RefPtr{new TextureConfig{editor, def.default_value}};
+        return Gtk::make_managed<TextureConfig>(def.default_value);
     else if (def.type == "vec3")
-        return Glib::RefPtr{new Vec3Config{def.default_value}};
+        return Gtk::make_managed<Vec3Config>(def.default_value);
     else if (def.type == "mat4")
-        return Glib::RefPtr{new Mat4Config{def.default_value}};
+        return Gtk::make_managed<Mat4Config>(def.default_value);
     else
         throw std::logic_error{"bad arg type"};
 }
 
 
 
-MapToolConfig::MapToolConfig(Editor::EditorRef const &editor)
-:   Glib::ObjectBase{typeid(MapToolConfig)}
-,   Gtk::Frame{}
-,   _editor{editor}
+OperationParameterEditor::OperationParameterEditor()
+:   Glib::ObjectBase{typeid(OperationParameterEditor)}
 {
     set_label("Tool Options");
-
-    _confirm.signal_clicked().connect(signal_confirmed().make_slot());
 
     _grid.set_row_spacing(8);
     _grid.set_column_spacing(8);
@@ -239,40 +252,39 @@ MapToolConfig::MapToolConfig(Editor::EditorRef const &editor)
     _grid.set_margin_bottom(8);
 
     _scrolled_window.add(_grid);
-
     add(_scrolled_window);
+
+    _confirm.signal_clicked().connect(signal_confirmed().make_slot());
 }
 
 
-bool MapToolConfig::has_operation() const
+bool OperationParameterEditor::has_operation() const
 {
-    return (bool)_operation;
+    return _operation != nullptr;
 }
 
 
-void MapToolConfig::set_operation(Editor::Operation const &op)
+void OperationParameterEditor::set_operation(Editor::Operation const &op)
 {
-    _operation.reset(new Editor::Operation{op});
+    clear_operation();
+    _operation = std::make_unique<Editor::Operation>(op);
 
-    _grid.foreach(sigc::mem_fun(_grid, &Gtk::Grid::remove));
-    _arg_configs.clear();
-
-    for (size_t i = 0; i < _operation->args.size(); ++i)
+    _grid.attach(_confirm, 0, 0, 2);
+    for (auto const &arg : _operation->args)
     {
-        auto const &arg = _operation->args.at(i);
         auto label = Gtk::make_managed<Gtk::Label>(arg.name);
-        auto widget = make_config_for(_editor, *_operation, i);
+        auto widget = make_config_for(arg);
 
         _arg_configs.push_back(widget);
-        _grid.attach(*label, 0, i);
-        _grid.attach(*widget.get(), 1, i);
+        _grid.insert_row(0);
+        _grid.attach(*label, 0, 0);
+        _grid.attach(*widget, 1, 0);
     }
-    _grid.attach(_confirm, 0, _operation->args.size(), 2);
     show_all_children();
 }
 
 
-Operation MapToolConfig::get_operation() const
+Operation OperationParameterEditor::get_operation() const
 {
     if (_operation)
         return *_operation;
@@ -280,7 +292,7 @@ Operation MapToolConfig::get_operation() const
 }
 
 
-void MapToolConfig::clear_operation()
+void OperationParameterEditor::clear_operation()
 {
     _operation.release();
     _grid.foreach(sigc::mem_fun(_grid, &Gtk::Grid::remove));
@@ -288,12 +300,12 @@ void MapToolConfig::clear_operation()
 }
 
 
-Operation::ArgList MapToolConfig::get_arguments() const
+Operation::ArgList OperationParameterEditor::get_arguments() const
 {
     Editor::Operation::ArgList args{};
-    for (auto &config : _arg_configs)
+    for (auto const &config : _arg_configs)
     {
-        auto const c = dynamic_cast<Config *>(config.get());
+        auto const c = dynamic_cast<Config const *>(config);
         args.push_back(c->get_value());
     }
     return args;
