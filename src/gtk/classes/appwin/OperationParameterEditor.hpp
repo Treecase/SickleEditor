@@ -1,5 +1,5 @@
 /**
- * MapToolConfig.hpp - Config box for MapTools.
+ * OperationParameterEditor.hpp - Config box for MapTools.
  * Copyright (C) 2023-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -27,39 +27,65 @@
 #include <gtkmm/grid.h>
 #include <gtkmm/scrolledwindow.h>
 
+#include <memory>
 #include <vector>
 
 
 namespace Sickle::AppWin
 {
-    struct Config
-    {
-        virtual Editor::Operation::Arg get_value()=0;
-    };
-
-    class MapToolConfig : public Gtk::Frame
+    /**
+     * Edit operation parameters before execution.
+     */
+    class OperationParameterEditor : public Gtk::Frame
     {
     public:
-        MapToolConfig(Editor::EditorRef const &editor);
+        OperationParameterEditor();
 
+        /** Emitted when the user is finished editing parameters. */
         auto &signal_confirmed() {return _sig_confirmed;}
 
+        /**
+         * Check if an operation's parameters are currently being edited.
+         *
+         * @return True if an operation is currently being edited, else false.
+         */
         bool has_operation() const;
+
+        /**
+         * Edit an operation's parameters.
+         *
+         * @param op The operation to edit.
+         */
         void set_operation(Editor::Operation const &op);
+
+        /**
+         * Get the edited operation.
+         *
+         * @return The edited operation.
+         */
         Editor::Operation get_operation() const;
+
+        /**
+         * Clear the operation.
+         */
         void clear_operation();
+
+        /**
+         * Get the argument values.
+         *
+         * @return An Arglist containing the argument values.
+         */
         Editor::Operation::ArgList get_arguments() const;
 
     private:
-        Editor::EditorRef _editor{nullptr};
-        std::unique_ptr<Editor::Operation> _operation{nullptr};
-
         sigc::signal<void()> _sig_confirmed{};
 
-        Gtk::Grid _grid{};
         Gtk::Button _confirm{"Confirm"};
-        std::vector<Glib::RefPtr<Gtk::Widget>> _arg_configs{};
+        Gtk::Grid _grid{};
         Gtk::ScrolledWindow _scrolled_window{};
+
+        std::vector<Gtk::Widget *> _arg_configs{};
+        std::unique_ptr<Editor::Operation> _operation{nullptr};
     };
 }
 

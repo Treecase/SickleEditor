@@ -3,9 +3,9 @@ add_subdirectory(propertyeditor)
 add_library(appwin STATIC
     AppWin.cpp
     FaceEditor.cpp
-    MapToolConfig.cpp
     MapTools.cpp
     ModeSelector.cpp
+    OperationParameterEditor.cpp
     OperationSearch.cpp
     Outliner.cpp
 )
