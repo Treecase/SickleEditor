@@ -18,13 +18,17 @@
 
 #include "OperationParameterEditor.hpp"
 
+#include <editor/core/gamedefinition/GameDefinition.hpp>
 #include <editor/operations/Operation.hpp>
 #include <gtk/classes/textureselector/TextureSelector.hpp>
 
-#include <glibmm/binding.h>
-#include <gtkmm/grid.h>
+#include <gtkmm/comboboxtext.h>
+#include <gtkmm/box.h>
+#include <gtkmm/button.h>
+#include <gtkmm/entry.h>
 
-#include <cstdlib>
+#include <array>
+#include <set>
 
 using namespace Sickle::AppWin;
 using namespace Sickle::Editor;
@@ -34,6 +38,30 @@ using namespace Sickle::TextureSelector;
 struct Config
 {
     virtual Operation::Arg get_value() const=0;
+};
+
+
+class ClassnameConfig : public Gtk::ComboBoxText, public Config
+{
+public:
+    ClassnameConfig(Operation::Arg const &arg="")
+    {
+        auto &gamedef = GameDefinition::instance();
+        auto const classnames = gamedef.get_all_classnames();
+        std::set<std::string> classnames_sorted{
+            classnames.cbegin(),
+            classnames.cend()};
+        for (auto const &classname : classnames_sorted)
+            append(classname);
+        auto const value = std::get<std::string>(arg);
+        set_active_text(value);
+    }
+    virtual ~ClassnameConfig()=default;
+
+    virtual Operation::Arg get_value() const override
+    {
+        return Operation::Arg{get_active_text()};
+    }
 };
 
 
@@ -221,9 +249,18 @@ private:
 };
 
 
+/**
+ * Construct an appropriate widget to edit an argument.
+ *
+ * @param def Operation argument definition.
+ * @return An argument editing widget or nullptr if the argument type is
+ *         unsupported.
+ */
 static Gtk::Widget *make_config_for(Operation::ArgDef const &def)
 {
-    if (def.type == "f")
+    if (def.type == "classname")
+        return Gtk::make_managed<ClassnameConfig>(def.default_value);
+    else if (def.type == "f")
         return Gtk::make_managed<NumberConfig>(def.default_value);
     else if (def.type == "string")
         return Gtk::make_managed<StringConfig>(def.default_value);
@@ -234,7 +271,7 @@ static Gtk::Widget *make_config_for(Operation::ArgDef const &def)
     else if (def.type == "mat4")
         return Gtk::make_managed<Mat4Config>(def.default_value);
     else
-        throw std::logic_error{"bad arg type"};
+        return nullptr;
 }
 
 
@@ -275,10 +312,13 @@ void OperationParameterEditor::set_operation(Editor::Operation const &op)
         auto label = Gtk::make_managed<Gtk::Label>(arg.name);
         auto widget = make_config_for(arg);
 
-        _arg_configs.push_back(widget);
         _grid.insert_row(0);
         _grid.attach(*label, 0, 0);
-        _grid.attach(*widget, 1, 0);
+        if (widget)
+        {
+            _grid.attach(*widget, 1, 0);
+            _arg_configs.push_back(widget);
+        }
     }
     show_all_children();
 }
