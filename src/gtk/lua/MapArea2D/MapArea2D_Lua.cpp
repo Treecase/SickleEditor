@@ -76,13 +76,22 @@ static int worldspace_to_drawspace3(lua_State *L)
     return 1;
 }
 
-static int pick_brush(lua_State *L)
+static int pick_object(lua_State *L)
 {
     auto ma = lmaparea2d_check(L, 1);
     auto const xy = lgeo_checkvector<glm::vec2>(L, 2);
-    auto picked = ma->pick_brush(xy);
+    auto picked = ma->pick_object(xy);
     if (picked)
-        Lua::push(L, picked);
+    {
+        if (typeid(*picked.get()) == typeid(Editor::Brush))
+            Lua::push(L, Editor::BrushRef::cast_dynamic(picked));
+        else if (typeid(*picked.get()) == typeid(Editor::Entity))
+            Lua::push(L, Editor::EntityRef::cast_dynamic(picked));
+        else if (typeid(*picked.get()) == typeid(Editor::Face))
+            Lua::push(L, Editor::FaceRef::cast_dynamic(picked));
+        else
+            return luaL_error(L, "object could not be pushed");
+    }
     else
         lua_pushnil(L);
     return 1;
@@ -157,7 +166,7 @@ static luaL_Reg methods[] = {
     {"drawspace3_to_worldspace", drawspace3_to_worldspace},
     {"worldspace_to_drawspace", worldspace_to_drawspace},
     {"worldspace_to_drawspace3", worldspace_to_drawspace3},
-    {"pick_brush", pick_brush},
+    {"pick_object", pick_object},
 
     {"set_cursor", set_cursor},
     {"set_draw_angle", set_draw_angle},

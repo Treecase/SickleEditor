@@ -30,7 +30,7 @@
 
 #include "MapArea2D.hpp"
 #include "AppWin.hpp"
-#include "components/DrawComponent.hpp"
+#include "components/BBoxComponentFactory.hpp"
 #include "components/DrawComponentFactory.hpp"
 
 #include <gtkmm/builder.h>
@@ -208,21 +208,23 @@ Sickle::MapArea2D::worldspace_to_drawspace3(WorldSpacePoint const &v) const
 }
 
 
-Sickle::Editor::BrushRef
-Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
+Sickle::Editor::EditorObjectRef
+Sickle::MapArea2D::pick_object(DrawSpacePoint point)
 {
-    Editor::BrushRef picked{};
+    Editor::EditorObjectRef picked{nullptr};
     BBox2 pbbox{};
 
-    for (auto const &entity : _editor->get_map()->entities())
+    auto const objects = _editor->get_map()->children_recursive_breadth_first();
+    for (auto const &obj : objects)
     {
-        for (auto const &brush : entity->brushes())
+        for (auto const &c : obj->get_components())
         {
-            BBox2 bbox{};
-            for (auto const &face : brush->faces())
-                for (auto const &vertex : face->get_vertices())
-                    bbox.add(worldspace_to_drawspace(vertex));
+            auto const bbox_c =\
+                std::dynamic_pointer_cast<World2D::BBoxComponent>(c);
+            if (!bbox_c)
+                continue;
 
+            auto const bbox = bbox_c->bbox(*this);
             if (bbox.contains(point))
             {
                 // If the point is inside multiple bboxes, we pick the one with
@@ -230,7 +232,7 @@ Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
                 // logical enough.
                 if (bbox.volume() < pbbox.volume())
                 {
-                    picked = brush;
+                    picked = obj;
                     pbbox = bbox;
                 }
             }
@@ -353,10 +355,12 @@ void Sickle::MapArea2D::on_editor_map_changed()
     static auto const on_brush_added =\
         [](Editor::EditorObjectRef const &obj) -> void {
             obj->add_component(World2D::DrawComponentFactory{}.construct(obj));
+            obj->add_component(World2D::BBoxComponentFactory{}.construct(obj));
         };
     static auto const on_entity_added =\
         [](Editor::EditorObjectRef const &obj) -> void {
             obj->add_component(World2D::DrawComponentFactory{}.construct(obj));
+            obj->add_component(World2D::BBoxComponentFactory{}.construct(obj));
 
             sigc::connection conn = obj->signal_child_added()
                 .connect(on_brush_added);
