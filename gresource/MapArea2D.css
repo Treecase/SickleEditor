@@ -1,0 +1,23 @@
+#maparea2d {
+    background-color: black;
+    color: white;
+    margin: 0.3em;
+}
+#maparea2d.brush {
+    color: rgb(255, 255, 255);
+}
+#maparea2d.brush:selected {
+    color: rgb(255, 0, 0);
+}
+#maparea2d.grid {
+    color: rgb(64, 64, 64);
+}
+#maparea2d.grid.x {
+    color: rgb(128, 0, 0);
+}
+#maparea2d.grid.y {
+    color: rgb(0, 128, 0);
+}
+#maparea2d.grid.z {
+    color: rgb(0, 0, 128);
+}

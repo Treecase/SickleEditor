@@ -7,13 +7,25 @@ local ViewDrag = require "MapArea2D/ViewDrag"
 -- Constants for panning/zoom control.
 local MOVE_SMOOTH = 8.0
 local MOVE_STEP = 64.0
-local ZOOM_MULTIPLIER_SMOOTH = 1.1
-local ZOOM_MULTIPLIER_STEP = 2.0
-local MIN_ZOOM = 1.0 / 16.0
-local MAX_ZOOM = 16.0
+local ZOOM_STEP_SMOOTH = 0.01
+local ZOOM_STEP_STEP = 0.1
 
 
 EventListener.inherit(maparea2d.metatable)
+
+
+-- Calculate a point along the zoom curve.
+--
+-- Curve restrictions:
+--   zoom_fn(x) < zoom_fn(x+d) for all x in range [0, 1)
+--   zoom_fn(0) > 0
+--   zoom_fn(0.5) = 1
+--
+-- x is in range [0, 1].
+-- Returns the calculated zoom amount for the given x.
+local function zoom_fn(x)
+    return 2 ^ (8 * x - 4)
+end
 
 
 -- Mouse button pressed.
@@ -62,19 +74,14 @@ function maparea2d.metatable:on_key_press_event(event)
 
     -- Zoom in/out with keypad +/-.
     elseif event == LuaGDK.GDK_KEY_KP_Add then
-        transform:set_zoom(
-            moremath.clamp(
-                transform:get_zoom() * ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM
-            )
-        )
+        self.zoom_x = moremath.clamp(self.zoom_x + ZOOM_STEP_STEP, 0, 1)
+        transform:set_zoom(zoom_fn(self.zoom_x))
     elseif event == LuaGDK.GDK_KEY_KP_Subtract then
-        transform:set_zoom(
-            moremath.clamp(
-                transform:get_zoom() / ZOOM_MULTIPLIER_STEP, MIN_ZOOM, MAX_ZOOM
-            )
-        )
+        self.zoom_x = moremath.clamp(self.zoom_x - ZOOM_STEP_STEP, 0, 1)
+        transform:set_zoom(zoom_fn(self.zoom_x))
     -- Reset zoom with 0.
     elseif event == LuaGDK.GDK_KEY_0 then
+        self.zoom_x = 0.5
         transform:set_zoom(1.0)
 
     else
@@ -166,9 +173,11 @@ function maparea2d.metatable:on_scroll_event(event)
     -- scroll = zoom in/out
     else
         if event.direction == LuaGDK.GDK_SCROLL_DOWN then
-            transform:set_zoom(moremath.clamp(transform:get_zoom() / ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
+            self.zoom_x = moremath.clamp(self.zoom_x - ZOOM_STEP_SMOOTH, 0, 1)
+            transform:set_zoom(zoom_fn(self.zoom_x))
         elseif event.direction == LuaGDK.GDK_SCROLL_UP then
-            transform:set_zoom(moremath.clamp(transform:get_zoom() * ZOOM_MULTIPLIER_SMOOTH, MIN_ZOOM, MAX_ZOOM))
+            self.zoom_x = moremath.clamp(self.zoom_x + ZOOM_STEP_SMOOTH, 0, 1)
+            transform:set_zoom(zoom_fn(self.zoom_x))
         end
     end
 
@@ -186,6 +195,7 @@ end
 
 
 local function setup(maparea)
+    maparea.zoom_x = 0.5
     maparea.shift = false
     maparea.ctrl = false
     maparea.alt = false

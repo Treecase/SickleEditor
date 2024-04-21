@@ -1,6 +1,6 @@
 /**
  * MapArea2D.hpp - Sickle editor main window DrawingArea.
- * Copyright (C) 2022-2023 Trevor Last
+ * Copyright (C) 2022-2024 Trevor Last
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 #include <glibmm/refptr.h>
 #include <glibmm/ustring.h>
 #include <glm/glm.hpp>
+#include <gtkmm/cssprovider.h>
 #include <gtkmm/drawingarea.h>
 #include <gtkmm/menu.h>
 
@@ -59,6 +60,7 @@ namespace Sickle
         using WorldSpacePoint = glm::vec3;
 
         enum DrawAngle {TOP, FRONT, RIGHT};
+        enum Axis {X, Y, Z};
 
         MapArea2D(Editor::EditorRef ed);
 
@@ -78,22 +80,37 @@ namespace Sickle
         /** Pick an EditorBrush based on the given point. */
         Editor::BrushRef pick_brush(DrawSpacePoint point);
 
-        auto property_clear_color() {return _prop_clear_color.get_proxy();}
-        auto property_grid_size() {return _prop_grid_size.get_proxy();}
+        /** Get the name of this area's horizontal axis. */
+        Axis get_horizontal_axis_name() const;
+        /** Get the name of this area's vertical axis. */
+        Axis get_vertical_axis_name() const;
+
         auto property_draw_angle() {return _prop_draw_angle.get_proxy();}
         auto property_draw_angle() const {return _prop_draw_angle.get_proxy();}
+        auto property_grid_size() {return _prop_grid_size.get_proxy();}
+        auto property_grid_size() const {return _prop_grid_size.get_proxy();}
         auto property_transform() {return _prop_transform.get_proxy();}
         auto property_transform() const {return _prop_transform.get_proxy();}
 
-        void set_draw_angle(DrawAngle angle){property_draw_angle().set_value(angle);}
-        auto get_draw_angle() {return property_draw_angle().get_value();};
-        auto get_editor() {return _editor;}
+        void set_draw_angle(DrawAngle angle)
+        {property_draw_angle().set_value(angle);}
+        auto get_draw_angle() const {return property_draw_angle().get_value();}
+
+        void set_grid_size(int grid_size)
+        {property_grid_size().set_value(grid_size);}
+        auto get_grid_size() const {return property_grid_size().get_value();}
+
+        auto get_transform() const {return property_transform().get_value();}
+
+        auto get_editor() const {return _editor;}
         auto &get_selected_box() {return _selected_box;}
+        auto const &get_selected_box() const {return _selected_box;}
         auto &get_brushbox() {return _brushbox;}
+        auto const &get_brushbox() const {return _brushbox;}
 
     protected:
         // Signal handlers
-        bool on_draw(Cairo::RefPtr<Cairo::Context> const &cr) override;
+        virtual bool on_draw(Cairo::RefPtr<Cairo::Context> const &cr) override;
         void on_editor_brushbox_changed();
         void on_editor_map_changed();
         void on_editor_maptools_changed();
@@ -101,29 +118,30 @@ namespace Sickle
         void on_draw_angle_changed();
 
         // Input Signals
-        bool on_button_press_event(GdkEventButton *event) override;
-        bool on_enter_notify_event(GdkEventCrossing *event) override;
+        virtual bool on_button_press_event(GdkEventButton *event) override;
+        virtual bool on_enter_notify_event(GdkEventCrossing *event) override;
 
     private:
         Editor::EditorRef _editor;
+        Glib::RefPtr<Gtk::CssProvider> _css{nullptr};
 
-        GrabbableBox _selected_box{};
-        GrabbableBoxView _selected_box_view;
-        GrabbableBox _brushbox{};
-        GrabbableBoxView _brushbox_view;
-
-        // Properties
-        Glib::Property<Gdk::RGBA> _prop_clear_color;
-        Glib::Property<int> _prop_grid_size;
         Glib::Property<DrawAngle> _prop_draw_angle;
+        Glib::Property<int> _prop_grid_size;
         Glib::Property<MapArea2Dx::Transform2D> _prop_transform;
 
+        GrabbableBox _brushbox{};
+        GrabbableBoxView _brushbox_view;
+        GrabbableBox _selected_box{};
+        GrabbableBoxView _selected_box_view;
         std::unordered_map<std::string, ToolPopupMenu> _popup_menus{};
 
-        void _draw_brush(
-            Cairo::RefPtr<Cairo::Context> const &cr,
-            Editor::BrushRef const &brush) const;
-        void _draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const;
+        void _draw_background(Cairo::RefPtr<Cairo::Context> const &cr) const;
+        void _draw_grid_lines(Cairo::RefPtr<Cairo::Context> const &cr) const;
+        void _draw_axes(Cairo::RefPtr<Cairo::Context> const &cr) const;
+
+        void _draw_name_overlay(Cairo::RefPtr<Cairo::Context> const &cr) const;
+        void _draw_transform_overlay(
+            Cairo::RefPtr<Cairo::Context> const &cr) const;
     };
 }
 
