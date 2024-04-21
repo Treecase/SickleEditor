@@ -58,7 +58,7 @@ function Select.metatable:on_button_release_event(event)
             editor:get_selection():clear()
         end
 
-        local picked = self.maparea:pick_brush(
+        local picked = self.maparea:pick_object(
             self.maparea:screenspace_to_drawspace(
                 geo.vec2.new(event.x, event.y)))
         if picked then
