@@ -59,30 +59,84 @@ namespace Sickle
         using DrawSpacePoint = glm::vec2;
         using WorldSpacePoint = glm::vec3;
 
+        /** Which angle the world is drawn from. */
         enum DrawAngle {TOP, FRONT, RIGHT};
+
+        /** Worldspace axes. */
         enum Axis {X, Y, Z};
 
         MapArea2D(Editor::EditorRef ed);
 
-        /** Convert screen-space coordinates to draw-space coordinates. */
+        /**
+         * Convert screenspace coordinates to drawspace coordinates.
+         *
+         * @param x x-coordinate in screenspace.
+         * @param y y-coordinate in screenspace.
+         * @return The coordinates converted to a point in drawspace.
+         */
         DrawSpacePoint screenspace_to_drawspace(double x, double y) const;
-        /** Convert draw-space coordinates to screen-space coordinates. */
+        /**
+         * Convert drawspace coordinates to screenspace coordinates.
+         *
+         * @param v A point in drawspace.
+         * @return The point converted to a point in screenspace.
+         */
         glm::vec2 drawspace_to_screenspace(DrawSpacePoint const &v) const;
 
-        /** Convert draw-space coordinates to world-space coordinates. */
+        /**
+         * Convert drawspace coordinates to worldspace coordinates.
+         *
+         * @note Since drawspace is 2D, the 3rd dimension coordinate is set to
+         * zero.
+         *
+         * @param v Point in drawspace.
+         * @return The point converted to a worldspace point.
+         */
         WorldSpacePoint drawspace_to_worldspace(DrawSpacePoint const &v) const;
+        /**
+         * Convert drawspace3 coordinates to worldspace coordinates.
+         *
+         * @param v Point in drawspace3.
+         * @return The point converted to a worldspace point.
+         */
         WorldSpacePoint drawspace3_to_worldspace(glm::vec3 const &v) const;
 
-        /** Convert world-space coordinates to draw-space coordinates. */
+        /**
+         * Convert worldspace coordinates to drawspace coordinates.
+         *
+         * @param v Point in worldspace.
+         * @return The point converted to a drawspace point.
+         */
         DrawSpacePoint worldspace_to_drawspace(WorldSpacePoint const &v) const;
+        /**
+         * Convert worldspace coordinates to drawspace3 coordinates.
+         *
+         * @param v Point in worldspace.
+         * @return The point converted to a drawspace3 point.
+         */
         glm::vec3 worldspace_to_drawspace3(WorldSpacePoint const &v) const;
 
-        /** Pick an EditorBrush based on the given point. */
-        Editor::BrushRef pick_brush(DrawSpacePoint point);
+        /**
+         * Pick an EditorBrush based on the given point.
+         *
+         * @param point The point to check in drawspace.
+         * @return The picked object, or nullptr if none.
+         */
+        Editor::EditorObjectRef pick_object(DrawSpacePoint point);
 
-        /** Get the name of this area's horizontal axis. */
+        /**
+         * Get the name of this area's horizontal axis, ie. which worldspace
+         * axis is the drawspace's x axis.
+         *
+         * @return The horizontal axis of the drawspace.
+         */
         Axis get_horizontal_axis_name() const;
-        /** Get the name of this area's vertical axis. */
+        /**
+         * Get the name of this area's vertical axis, ie. which worldspace
+         * axis is the drawspace's y axis.
+         *
+         * @return The vertical axis of the drawspace.
+         */
         Axis get_vertical_axis_name() const;
 
         auto property_draw_angle() {return _prop_draw_angle.get_proxy();}
