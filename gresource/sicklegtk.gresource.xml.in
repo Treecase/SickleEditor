@@ -18,5 +18,6 @@
     <file>logo.png</file>
     <file>logo.svg</file>
     <file>LuaConsole.css</file>
+    <file>MapArea2D.css</file>
   </gresource>
 </gresources>

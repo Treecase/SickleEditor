@@ -16,8 +16,22 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+////////////////////////////////////////////////////////////////////////////////
+// TODO
+//
+// Drawing the world can get pretty slow.
+// Maybe draw the world to a cache surface that updates only when the world
+// changes? Problem is keeping track of the changes.
+//
+// Should take the same caching approach with the grid.
+//
+// Also have to consider widget resizes.
+// And possibly style changes in future although that's static for now.
+
 #include "MapArea2D.hpp"
 #include "AppWin.hpp"
+#include "components/DrawComponent.hpp"
+#include "components/DrawComponentFactory.hpp"
 
 #include <gtkmm/builder.h>
 
@@ -25,82 +39,32 @@
 #include <cmath>
 
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 
 
-struct DrawAnchor
-{
-    bool top;
-    bool left;
+static Glib::ustring const DRAW_ANGLE_NAMES[] = {
+    [Sickle::MapArea2D::DrawAngle::TOP] = "top",
+    [Sickle::MapArea2D::DrawAngle::FRONT] = "front",
+    [Sickle::MapArea2D::DrawAngle::RIGHT] = "right",
 };
-static DrawAnchor const TopLeft{true, true};
-static DrawAnchor const TopRight{true, false};
-static DrawAnchor const BottomLeft{false, true};
-static DrawAnchor const BottomRight{false, false};
 
-
-/** Draw the grid. */
-static void draw_grid(
-    Cairo::RefPtr<Cairo::Context> const &cr,
-    double width, double height,
-    double grid_size,
-    double _transform_x, double _transform_y);
-
-/** Draw main axes. */
-static void draw_axes(
-    Cairo::RefPtr<Cairo::Context> const &cr,
-    double width, double height,
-    double _transform_x, double _transform_y);
-
-
-/** Convert POINTS from typographic point units to pixels. */
-static double points_to_pixels(double points, double dpi);
-
-/**
- * Sets CR's font_face and font_size based on FONT and DPI. Returns font size.
- */
-static double select_font_from_pango(
-    Cairo::RefPtr<Cairo::Context> const &cr,
-    Pango::FontDescription const &font,
-    double dpi);
-
-/** Draw text. */
-static void draw_text(
-    Cairo::RefPtr<Cairo::Context> const &cr,
-    std::string const &text,
-    double x, double y,
-    DrawAnchor anchor=TopLeft);
-
-// FIXME: TEMP? Test function for the Xspace_to_Yspace methods.
-static void _test_space_conversions(Sickle::MapArea2D const &maparea);
+static Glib::ustring const AXIS_NAMES[] = {
+    [Sickle::MapArea2D::Axis::X] = "x",
+    [Sickle::MapArea2D::Axis::Y] = "y",
+    [Sickle::MapArea2D::Axis::Z] = "z",
+};
 
 
 
-/* ===[ MapArea2D ]=== */
 Sickle::MapArea2D::MapArea2D(Editor::EditorRef ed)
 :   Glib::ObjectBase{typeid(MapArea2D)}
-,   Gtk::DrawingArea{}
-,   Lua::Referenceable{}
 ,   _editor{ed}
-,   _prop_clear_color{*this, "clear-color", {}}
+,   _css{Gtk::CssProvider::create()}
 ,   _prop_grid_size{*this, "grid-size", 32}
 ,   _prop_draw_angle{*this, "draw-angle", DrawAngle::TOP}
 ,   _prop_transform{*this, "transform", {}}
-,   _selected_box_view{
-        std::make_shared<BBox2ViewCustom>(
-            [](auto cr, auto box, auto unit){
-                cr->set_source_rgb(1, 0, 0);
-                cr->set_line_width(unit);
-                cr->set_dash(std::vector<double>{4*unit, 4*unit}, 0);},
-            [](auto cr, auto box, auto unit){cr->stroke();}
-        ),
-        std::make_shared<BBox2ViewCustom>(
-            [](auto cr, auto box, auto unit){
-                cr->set_source_rgb(1, 1, 1);
-                cr->set_line_width(unit);},
-            [](auto cr, auto box, auto unit){cr->fill();}
-        )
-    }
 ,   _brushbox_view{
         std::make_shared<BBox2ViewCustom>(
             [](auto cr, auto box, auto unit){
@@ -116,13 +80,40 @@ Sickle::MapArea2D::MapArea2D(Editor::EditorRef ed)
             [](auto cr, auto box, auto unit){cr->fill();}
         )
     }
+,   _selected_box_view{
+        std::make_shared<BBox2ViewCustom>(
+            [](auto cr, auto box, auto unit){
+                cr->set_source_rgb(1, 0, 0);
+                cr->set_line_width(unit);
+                cr->set_dash(std::vector<double>{4*unit, 4*unit}, 0);},
+            [](auto cr, auto box, auto unit){cr->stroke();}
+        ),
+        std::make_shared<BBox2ViewCustom>(
+            [](auto cr, auto box, auto unit){
+                cr->set_source_rgb(1, 1, 1);
+                cr->set_line_width(unit);},
+            [](auto cr, auto box, auto unit){cr->fill();}
+        )
+    }
 {
+    set_name("maparea2d");
     set_hexpand(true);
     set_vexpand(true);
     set_size_request(320, 240);
     set_can_focus(true);
 
-    on_editor_maptools_changed();
+    add_events(
+        Gdk::POINTER_MOTION_MASK
+        | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
+        | Gdk::BUTTON_MOTION_MASK
+        | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK
+        | Gdk::SCROLL_MASK
+        | Gdk::ENTER_NOTIFY_MASK);
+
+    _css->load_from_resource(SE_GRESOURCE_PREFIX "MapArea2D.css");
+    get_style_context()->add_provider(
+        _css,
+        GTK_STYLE_PROVIDER_PRIORITY_FALLBACK);
 
     _editor->signal_maptools_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_maptools_changed));
@@ -141,13 +132,7 @@ Sickle::MapArea2D::MapArea2D(Editor::EditorRef ed)
     property_transform().signal_changed().connect(
         sigc::mem_fun(*this, &MapArea2D::queue_draw));
 
-    add_events(
-        Gdk::POINTER_MOTION_MASK
-        | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
-        | Gdk::BUTTON_MOTION_MASK
-        | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK
-        | Gdk::SCROLL_MASK
-        | Gdk::ENTER_NOTIFY_MASK);
+    on_editor_maptools_changed();
 }
 
 
@@ -255,44 +240,44 @@ Sickle::MapArea2D::pick_brush(DrawSpacePoint point)
 }
 
 
+Sickle::MapArea2D::Axis Sickle::MapArea2D::get_horizontal_axis_name() const
+{
+    switch (property_draw_angle().get_value())
+    {
+    case DrawAngle::TOP  : return Axis::X; break;
+    case DrawAngle::FRONT: return Axis::Y; break;
+    case DrawAngle::RIGHT: return Axis::X; break;
+    }
+    throw std::logic_error{"bad DrawAngle value"};
+}
+
+
+Sickle::MapArea2D::Axis Sickle::MapArea2D::get_vertical_axis_name() const
+{
+    switch (property_draw_angle().get_value())
+    {
+    case DrawAngle::TOP  : return Axis::Y; break;
+    case DrawAngle::FRONT: return Axis::Z; break;
+    case DrawAngle::RIGHT: return Axis::Z; break;
+    }
+    throw std::logic_error{"bad DrawAngle value"};
+}
+
+
+
 bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 {
-#if !NDEBUG
-    _test_space_conversions(*this);
-#endif
-
-    auto const grid_size = property_grid_size().get_value();
-    auto const name = property_name().get_value();
-    auto const &clear_color = property_clear_color().get_value();
-    auto const &_transform = property_transform().get_value();
-
+    auto const style = get_style_context();
+    auto const transform = property_transform().get_value();
     auto const width = get_allocated_width();
     auto const height = get_allocated_height();
 
-    // Clear background
-    cr->set_source_rgb(
-        clear_color.get_red(),
-        clear_color.get_green(),
-        clear_color.get_blue());
-    cr->paint();
+    style->set_state(get_state_flags());
 
-
-    /* ===[ Grid ]=== */
-    // Grid squares
-    cr->set_source_rgb(0.3, 0.3, 0.3);
-    draw_grid(cr,
-        width, height,
-        grid_size * _transform.zoom,
-        _transform.x * _transform.zoom, _transform.y * _transform.zoom);
-    cr->stroke();
-
-    // x/y axes
-    cr->set_source_rgb(0.5, 0.5, 0.5);
-    draw_axes(cr,
-        width, height,
-        _transform.x * _transform.zoom, _transform.y * _transform.zoom);
-    cr->stroke();
-
+    /* ===[ Grid and Axes ]=== */
+    _draw_background(cr);
+    _draw_grid_lines(cr);
+    _draw_axes(cr);
 
     /* ===[ World-Space Drawing ]=== */
     {
@@ -300,31 +285,36 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         cr->set_antialias(Cairo::ANTIALIAS_NONE);
         cr->translate(0.5 * width, 0.5 * height);
         cr->translate(
-            _transform.x * _transform.zoom,
-            _transform.y * _transform.zoom);
-        cr->scale(_transform.zoom, _transform.zoom);
-        auto pixel = 1.0 / _transform.zoom;
+            transform.x * transform.zoom,
+            transform.y * transform.zoom);
+        cr->scale(transform.zoom, transform.zoom);
+        auto const pixel = 1.0 / transform.zoom;
 
-        // Draw all brushes.
-        cr->set_source_rgb(1, 1, 1);
-        cr->set_line_width(pixel);
-        _draw_map(cr);
-        cr->stroke();
-
-        // Draw selected brushes.
-        for (auto const &e : _editor->get_map()->entities())
-        {
-            for (auto const &brush : e->brushes())
-            {
-                if (brush->is_selected())
+        auto const execute_draw_components =\
+            [this, cr](Editor::EditorObjectRef const &obj) -> void {
+                for (auto const &c : obj->get_components())
                 {
-                    cr->set_source_rgb(1, 0, 0);
-                    cr->set_line_width(pixel);
-                    _draw_brush(cr, brush);
-                    cr->stroke();
+                    auto const dc =\
+                        std::dynamic_pointer_cast<World2D::DrawComponent>(c);
+                    if (dc)
+                        dc->draw(cr, *this);
                 }
-            }
-        }
+            };
+
+        // Draw the world.
+        cr->set_line_width(pixel);
+        _editor->get_map()->foreach(
+            [&execute_draw_components](auto obj){
+                if (!obj->is_selected())
+                    execute_draw_components(obj);
+            });
+
+        // Draw selected objects on top.
+        _editor->get_map()->foreach(
+            [&execute_draw_components](auto obj){
+                if (obj->is_selected())
+                    execute_draw_components(obj);
+            });
 
         // Selected brushes grab handles.
         _selected_box.unit = pixel;
@@ -342,22 +332,8 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 
 
     /* ===[ Screen-Space Overlay Drawing ]=== */
-    auto const &font = get_style_context()->get_font();
-    auto const dpi = get_screen()->get_resolution();
-    auto font_size = select_font_from_pango(cr, font, dpi);
-    auto offset = font_size / 3.0;
-
-    cr->set_source_rgb(1, 1, 1);
-    // Show name in top-left corner
-    draw_text(cr, name, offset, offset);
-    // Show transform coords in top-right corner
-    draw_text(
-        cr, std::to_string(_transform.x) + "," + std::to_string(_transform.y),
-        width - offset, offset, TopRight);
-    // Show transform zoom in top-right corner
-    draw_text(
-        cr, std::to_string(_transform.zoom),
-        width - offset, font_size + 2*offset, TopRight);
+    _draw_name_overlay(cr);
+    _draw_transform_overlay(cr);
 
     return true;
 }
@@ -374,10 +350,33 @@ void Sickle::MapArea2D::on_editor_brushbox_changed()
 
 void Sickle::MapArea2D::on_editor_map_changed()
 {
+    static auto const on_brush_added =\
+        [](Editor::EditorObjectRef const &obj) -> void {
+            obj->add_component(World2D::DrawComponentFactory{}.construct(obj));
+        };
+    static auto const on_entity_added =\
+        [](Editor::EditorObjectRef const &obj) -> void {
+            obj->add_component(World2D::DrawComponentFactory{}.construct(obj));
+
+            sigc::connection conn = obj->signal_child_added()
+                .connect(on_brush_added);
+            obj->signal_removed().connect(
+                [conn]() mutable -> void {conn.disconnect();});
+            obj->foreach_direct(on_brush_added);
+        };
+
     _editor->brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_brushbox_changed));
     _editor->selected.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_selection_changed));
+
+    auto const world = _editor->get_map();
+    sigc::connection conn = world->signal_child_added()
+        .connect(on_entity_added);
+    world->signal_removed().connect(
+        [conn]() mutable -> void {conn.disconnect();});
+    world->foreach_direct(on_entity_added);
+
     property_transform().reset_value();
     queue_draw();
 }
@@ -413,12 +412,6 @@ void Sickle::MapArea2D::on_editor_selection_changed()
 
 void Sickle::MapArea2D::on_draw_angle_changed()
 {
-    switch (property_draw_angle().get_value())
-    {
-    case DrawAngle::TOP: property_name() = "top (x/y)"; break;
-    case DrawAngle::FRONT: property_name() = "front (y/z)"; break;
-    case DrawAngle::RIGHT: property_name() = "right (x/z)"; break;
-    }
     queue_draw();
 }
 
@@ -451,45 +444,41 @@ bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 
 
 
-void Sickle::MapArea2D::_draw_brush(
-    Cairo::RefPtr<Cairo::Context> const &cr,
-    Editor::BrushRef const &brush) const
+void Sickle::MapArea2D::_draw_background(
+    Cairo::RefPtr<Cairo::Context> const &cr) const
 {
-    for (auto const &face : brush->faces())
-    {
-        if (face->get_vertices().empty())
-            continue;
-        auto const p0 = worldspace_to_drawspace(face->get_vertex(0));
-        cr->move_to(p0.x, p0.y);
-        for (auto const &vertex : face->get_vertices())
-        {
-            auto const p = worldspace_to_drawspace(vertex);
-            cr->line_to(p.x, p.y);
-        }
-        cr->close_path();
-    }
+    auto const style = get_style_context();
+    auto const clear_color = style->get_background_color(style->get_state());
+    cr->set_source_rgb(
+        clear_color.get_red(),
+        clear_color.get_green(),
+        clear_color.get_blue());
+    cr->paint();
 }
 
 
-void Sickle::MapArea2D::_draw_map(Cairo::RefPtr<Cairo::Context> const &cr) const
+void Sickle::MapArea2D::_draw_grid_lines(
+    Cairo::RefPtr<Cairo::Context> const &cr) const
 {
-    for (auto const &e : _editor->get_map()->entities())
-        for (auto const &brush : e->brushes())
-            _draw_brush(cr, brush);
-}
+    auto const width = get_allocated_width();
+    auto const height = get_allocated_height();
+    auto const transform = property_transform().get_value();
+    auto const grid_size = property_grid_size().get_value() * transform.zoom;
 
+    auto const style = get_style_context();
+    style->context_save();
+    style->add_class("grid");
 
+    auto const grid_color = style->get_color(style->get_state());
+    cr->set_source_rgb(
+        grid_color.get_red(),
+        grid_color.get_green(),
+        grid_color.get_blue());
 
-static void draw_grid(
-    Cairo::RefPtr<Cairo::Context> const &cr,
-    double width, double height,
-    double grid_size,
-    double _transform_x, double _transform_y)
-{
     auto const half_w = 0.5 * width;
     auto const half_h = 0.5 * height;
-    auto const dx = std::fmod(_transform_x, grid_size);
-    auto const dy = std::fmod(_transform_y, grid_size);
+    auto const dx = std::fmod(transform.x * transform.zoom, grid_size);
+    auto const dy = std::fmod(transform.y * transform.zoom, grid_size);
     int const count_x = std::ceil((0.5 * width) / grid_size);
     int const count_y = std::ceil((0.5 * height) / grid_size);
     for (int i = 0; i <= count_x; ++i)
@@ -506,96 +495,112 @@ static void draw_grid(
         cr->move_to(0, half_h - i*grid_size + dy);
         cr->rel_line_to(width, 0);
     }
+
+    cr->stroke();
+    style->context_restore();
 }
 
 
-static void draw_axes(
-    Cairo::RefPtr<Cairo::Context> const &cr,
-    double width, double height,
-    double _transform_x, double _transform_y)
+void Sickle::MapArea2D::_draw_axes(
+    Cairo::RefPtr<Cairo::Context> const &cr) const
 {
-    cr->move_to(0.5 * width + _transform_x, 0);
+    auto const h_axis = AXIS_NAMES[get_horizontal_axis_name()];
+    auto const v_axis = AXIS_NAMES[get_vertical_axis_name()];
+
+    auto const width = get_allocated_width();
+    auto const height = get_allocated_height();
+    auto const transform = property_transform().get_value();
+    auto const style = get_style_context();
+
+    // Draw vertical axis.
+    style->context_save();
+    style->add_class("grid");
+    style->add_class(v_axis);
+    auto const v_axis_color = style->get_color(style->get_state());
+    cr->set_source_rgb(
+        v_axis_color.get_red(),
+        v_axis_color.get_green(),
+        v_axis_color.get_blue());
+    cr->move_to(0.5 * width + transform.x * transform.zoom, 0);
     cr->rel_line_to(0, height);
-    cr->move_to(0, 0.5 * height + _transform_y);
+    cr->stroke();
+    style->context_restore();
+
+    // Draw horizontal axis.
+    style->context_save();
+    style->add_class("grid");
+    style->add_class(h_axis);
+    auto const h_axis_color = style->get_color(style->get_state());
+    cr->set_source_rgb(
+        h_axis_color.get_red(),
+        h_axis_color.get_green(),
+        h_axis_color.get_blue());
+    cr->move_to(0, 0.5 * height + transform.y * transform.zoom);
     cr->rel_line_to(width, 0);
+    cr->stroke();
+    style->context_restore();
 }
 
 
-static double points_to_pixels(double points, double dpi)
+void Sickle::MapArea2D::_draw_name_overlay(
+    Cairo::RefPtr<Cairo::Context> const &cr) const
 {
-    static constexpr auto point_in_inches = 1.0 / 72.0;
-    auto const inches_per_pixel = 1.0 / dpi;
-    auto const font_size_inches = point_in_inches * points;
-    return font_size_inches / inches_per_pixel;
+    auto const style = get_style_context();
+    auto const font = style->get_font();
+    auto const fg = style->get_color(style->get_state());
+    auto const margin = style->get_margin(style->get_state());
+
+    cr->save();
+    cr->set_source_rgb(fg.get_red(), fg.get_green(), fg.get_blue());
+    cr->move_to(margin.get_left(), margin.get_top());
+
+    auto const layout = Pango::Layout::create(cr);
+    layout->set_text(
+        DRAW_ANGLE_NAMES[get_draw_angle()]
+        + " ("
+        + AXIS_NAMES[get_horizontal_axis_name()]
+        + "/"
+        + AXIS_NAMES[get_vertical_axis_name()]
+        + ")");
+    layout->set_font_description(font);
+    layout->show_in_cairo_context(cr);
+
+    cr->restore();
 }
 
 
-static double select_font_from_pango(
-    Cairo::RefPtr<Cairo::Context> const &cr,
-    Pango::FontDescription const &font,
-    double dpi)
+void Sickle::MapArea2D::_draw_transform_overlay(
+    Cairo::RefPtr<Cairo::Context> const &cr) const
 {
-    double const font_size = (
-        font.get_size_is_absolute()
-        ? font.get_size() / Pango::SCALE
-        : points_to_pixels(font.get_size() / Pango::SCALE, dpi));
+    auto const style = get_style_context();
+    auto const font = style->get_font();
+    auto const fg = style->get_color(style->get_state());
+    auto const margin = style->get_margin(style->get_state());
 
-    auto weight = Cairo::FontWeight::FONT_WEIGHT_NORMAL;
-    if (font.get_weight() == Pango::Weight::WEIGHT_BOLD)
-        weight = Cairo::FontWeight::FONT_WEIGHT_BOLD;
+    auto const transform = get_transform();
+    auto const width = get_allocated_width();
 
-    auto slant = Cairo::FontSlant::FONT_SLANT_NORMAL;
-    switch (font.get_style())
-    {
-    case Pango::Style::STYLE_ITALIC:
-        slant = Cairo::FontSlant::FONT_SLANT_ITALIC;
-        break;
-    case Pango::Style::STYLE_OBLIQUE:
-        slant = Cairo::FontSlant::FONT_SLANT_OBLIQUE;
-        break;
-    }
+    std::stringstream text{};
+    text << std::fixed << std::setprecision(1);
+    text << transform.x << ", " << transform.y << '\n';
+    text << std::setprecision(4);
+    text << transform.zoom;
 
-    cr->select_font_face(font.get_family(), slant, weight);
-    cr->set_font_size(font_size);
-    return font_size;
-}
+    cr->save();
+    cr->set_source_rgb(fg.get_red(), fg.get_green(), fg.get_blue());
 
+    auto const layout = Pango::Layout::create(cr);
+    layout->set_text(text.str());
+    layout->set_font_description(font);
+    layout->set_alignment(Pango::Alignment::ALIGN_RIGHT);
 
-static void draw_text(
-    Cairo::RefPtr<Cairo::Context> const &cr,
-    std::string const &text,
-    double x, double y,
-    DrawAnchor anchor)
-{
-    Cairo::TextExtents extents;
-    cr->get_text_extents(text, extents);
+    Pango::Rectangle extents_logical{}, extents_ink{};
+    layout->get_pixel_extents(extents_ink, extents_logical);
 
-    auto tx = x - extents.x_bearing;
-    auto ty = y - extents.y_bearing;
+    cr->move_to(
+        width - extents_logical.get_rbearing() - margin.get_right(),
+        margin.get_top());
+    layout->show_in_cairo_context(cr);
 
-    if (!anchor.left)
-        tx -= extents.width;
-    if (!anchor.top)
-        ty -= extents.height;
-
-    cr->move_to(tx, ty);
-    cr->show_text(text);
-}
-
-
-static void _test_space_conversions(Sickle::MapArea2D const &maparea)
-{
-    static constexpr float EPSILON = 0.001f;
-
-    glm::vec2 ss{
-        (float)rand() / (float)RAND_MAX,
-        (float)rand() / (float)RAND_MAX};
-    auto ss2ds = maparea.screenspace_to_drawspace(ss.x, ss.y);
-    auto ss2ds2ss = maparea.drawspace_to_screenspace(ss2ds);
-    assert(glm::all(glm::epsilonEqual(ss2ds2ss, ss, EPSILON)));
-
-    auto ds = ss2ds;
-    auto ds2ws = maparea.drawspace_to_worldspace(ds);
-    auto ds2ws2ds = maparea.worldspace_to_drawspace(ds2ws);
-    assert(glm::all(glm::epsilonEqual(ds2ws2ds, ds, EPSILON)));
+    cr->restore();
 }
