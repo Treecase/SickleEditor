@@ -61,6 +61,8 @@ namespace Sickle
 
         /** Which angle the world is drawn from. */
         enum DrawAngle {TOP, FRONT, RIGHT};
+
+        /** Worldspace axes. */
         enum Axis {X, Y, Z};
 
         /** Worldspace axes. */
@@ -140,9 +142,19 @@ namespace Sickle
          */
         Axis get_vertical_axis_name() const;
 
-        /** Get the name of this area's horizontal axis. */
+        /**
+         * Get the name of this area's horizontal axis, ie. which worldspace
+         * axis is the drawspace's x axis.
+         *
+         * @return The horizontal axis of the drawspace.
+         */
         Axis get_horizontal_axis_name() const;
-        /** Get the name of this area's vertical axis. */
+        /**
+         * Get the name of this area's vertical axis, ie. which worldspace
+         * axis is the drawspace's y axis.
+         *
+         * @return The vertical axis of the drawspace.
+         */
         Axis get_vertical_axis_name() const;
 
         auto property_draw_angle() {return _prop_draw_angle.get_proxy();}
