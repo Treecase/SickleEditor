@@ -13,5 +13,8 @@ target_link_libraries(maparea2d
     PRIVATE
         appwin
         config
+        maparea2d-components
 )
 target_include_directories(maparea2d PUBLIC .)
+
+add_subdirectory(components)

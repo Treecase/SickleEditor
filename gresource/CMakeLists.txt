@@ -27,6 +27,7 @@ add_custom_command(
         logo.png
         logo.svg
         LuaConsole.css
+        MapArea2D.css
 )
 add_library(resources OBJECT resources.cpp)
 target_link_libraries(resources PRIVATE PkgConfig::GTKMM)
