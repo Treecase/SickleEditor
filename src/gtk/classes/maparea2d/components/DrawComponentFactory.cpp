@@ -19,6 +19,10 @@
 
 #include "DrawComponentFactory.hpp"
 #include "BrushDraw.hpp"
+#include "EntityDraw.hpp"
+
+#include <editor/world/Brush.hpp>
+#include <editor/world/Entity.hpp>
 
 
 using namespace World2D;
@@ -33,6 +37,12 @@ std::shared_ptr<DrawComponent> DrawComponentFactory::construct(
         ;
     else if (typeid(*obj.get()) == typeid(Sickle::Editor::Brush))
         dc = std::make_shared<BrushDraw>();
+    else if (typeid(*obj.get()) == typeid(Sickle::Editor::Entity))
+    {
+        auto const entity = Sickle::Editor::EntityRef::cast_dynamic(obj);
+        if (entity->classinfo().type() == "PointClass")
+            dc = std::make_shared<EntityDraw>();
+    }
 
     return dc;
 }

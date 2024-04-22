@@ -19,6 +19,7 @@
 
 #include "BBoxComponentFactory.hpp"
 #include "BrushBBox.hpp"
+#include "EntityBBox.hpp"
 
 
 using namespace World2D;
@@ -33,6 +34,12 @@ std::shared_ptr<BBoxComponent> BBoxComponentFactory::construct(
         ;
     else if (typeid(*obj.get()) == typeid(Sickle::Editor::Brush))
         dc = std::make_shared<BrushBBox>();
+    else if (typeid(*obj.get()) == typeid(Sickle::Editor::Entity))
+    {
+        auto const entity = Sickle::Editor::EntityRef::cast_dynamic(obj);
+        if (entity->classinfo().type() == "PointClass")
+            dc = std::make_shared<EntityBBox>();
+    }
 
     return dc;
 }
