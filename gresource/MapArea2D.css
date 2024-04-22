@@ -3,10 +3,12 @@
     color: white;
     margin: 0.3em;
 }
-#maparea2d.brush {
+#maparea2d.brush,
+#maparea2d.entity {
     color: rgb(255, 255, 255);
 }
-#maparea2d.brush:selected {
+#maparea2d.brush:selected,
+#maparea2d.entity:selected {
     color: rgb(255, 0, 0);
 }
 #maparea2d.grid {
