@@ -55,12 +55,12 @@ end
 --   corner: GrabbableBox.Area,
 --   brushes: iterable) -> geo.vec2
 --
--- drag: ScaleDrag object
+-- maparea: MapArea2D whose drawspace we're working in
 -- corner: Box area corner to find the opposite for
 -- brushes: iterable for a collection of brushes
 -- Returns position of corner opposite to CORNER in drawspace
-local function find_opposite_corner(drag, corner, brushes)
-    local min, max = find_bounds2D(drag.maparea, brushes)
+local function find_opposite_corner(maparea, corner, brushes)
+    local min, max = find_bounds2D(maparea, brushes)
 
     local DIRECTION_COORD = {
         ["N"] = min.y,
@@ -92,33 +92,13 @@ local function find_opposite_corner(drag, corner, brushes)
         [maparea2d.grabbablebox.W ] = {"y", "W"}
     }
 
-    local opposite_handle = OPPOSITE_HANDLE[drag.handle]
+    local opposite_handle = OPPOSITE_HANDLE[corner]
     local opposite_label = DIRECTION_LABEL[opposite_handle]
     local opposite_corner = geo.vec2.new(
         DIRECTION_COORD[opposite_label[2]],
         DIRECTION_COORD[opposite_label[1]])
 
     return opposite_corner
-end
-
-
--- Get the point to scale from in drawspace.
---
--- get_scale_origin(drag: ScaleDrag) -> geo.vec2
---
--- drag: The ScaleDrag object
--- Returns the scaling origin in drawspace
-local function get_scale_origin(drag)
-    -- Scale out from center.
-    if drag:centered() then
-        local brushes = drag.maparea:get_editor():get_selection():iterate()
-        local center = find_center(brushes)
-        return drag.maparea:worldspace_to_drawspace(center)
-    -- Scale from opposite corner.
-    else
-        local brushes = drag.maparea:get_editor():get_selection():iterate()
-        return find_opposite_corner(drag, drag.handle, brushes)
-    end
 end
 
 
@@ -192,8 +172,7 @@ function ScaleDrag.metatable:snapped()
 end
 
 function ScaleDrag.metatable:centered()
-    -- return self.maparea.ctrl == true
-    return false
+    return self.maparea.ctrl == true
 end
 
 
@@ -240,17 +219,18 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
         mouse_pos = geo.vec2.map(round_to_grid, mouse_pos)
     end
 
+
+    local scale_info = self.corner
+    if self:centered() then
+        scale_info = self.center
+    end
+
     -- Calculate distance between mouse and scaling origin.
-    local distance = geo.vec2.map(math.abs, mouse_pos - self.origin)
+    local distance = geo.vec2.map(math.abs, mouse_pos - scale_info.origin)
 
     -- Calculate scaling factor by dividing current distance by starting
     -- distance.
-    local scale = safe_vector_divide2(distance, self.base_distance)
-
-    -- Scale needs to be doubled when scaling from the center.
-    if self:centered() then
-        scale = scale * 2
-    end
+    local scale = safe_vector_divide2(distance, scale_info.base_distance)
 
     -- Lock scaling to appropriate axes.
     scale = scale * scale_factors
@@ -260,7 +240,8 @@ function ScaleDrag.metatable:on_motion_notify_event(event)
     -- Convert previous scaling factor to a worldspace vector.
     local prev_scale3D = scale2D_to_scale3D(self.prev_scale, self.maparea)
     -- Convert scale_origin to worldspace.
-    local scale_origin3D = self.maparea:drawspace_to_worldspace(self.origin)
+    local scale_origin3D = self.maparea:drawspace_to_worldspace(
+        scale_info.origin)
 
     -- Generate the scaling matrix.
     local scale_mat = geo.matrix.scale(geo.matrix.new(), scale3D)
@@ -303,9 +284,21 @@ function ScaleDrag.new(parent, maparea, x, y, handle)
         click_pos = geo.vec2.map(round_to_grid, click_pos)
     end
 
-    local origin = get_scale_origin(scale_drag)
-    scale_drag.origin = origin
-    scale_drag.base_distance = geo.vec2.map(math.abs, click_pos - origin)
+    local center = maparea:worldspace_to_drawspace(
+        find_center(maparea:get_editor():get_selection():iterate()))
+    scale_drag.center = {
+        origin = center,
+        base_distance = geo.vec2.map(math.abs, click_pos - center)
+    }
+
+    local corner = find_opposite_corner(
+        maparea,
+        handle,
+        maparea:get_editor():get_selection():iterate())
+    scale_drag.corner = {
+        origin = corner,
+        base_distance = geo.vec2.map(math.abs, click_pos - corner)
+    }
     scale_drag.prev_scale = geo.vec2.new(1, 1)
 
     return scale_drag
