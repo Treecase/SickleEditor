@@ -120,6 +120,18 @@ static int do_operation(lua_State *L)
 }
 
 
+static int matches_mode(lua_State *L)
+{
+    auto const ed = leditor_check(L, 1);
+    auto const obj = static_cast<EditorObjectRef *>(lua_touserdata(L, 2));
+    bool const matches = Operation::object_matches_mode_type(
+        ed->get_mode(),
+        *obj);
+    lua_pushboolean(L, matches);
+    return 1;
+}
+
+
 static int get_selection(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
@@ -132,6 +144,14 @@ static int get_brushbox(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
     Lua::push(L, &ed->brushbox);
+    return 1;
+}
+
+
+static int get_mode(lua_State *L)
+{
+    auto ed = leditor_check(L, 1);
+    Lua::push(L, ed->get_mode());
     return 1;
 }
 
@@ -149,9 +169,11 @@ static luaL_Reg methods[] = {
     {"remove_entity", remove_entity},
     {"remove_object", remove_object},
     {"do_operation", do_operation},
+    {"matches_mode", matches_mode},
 
     {"get_selection", get_selection},
     {"get_brushbox", get_brushbox},
+    {"get_mode", get_mode},
 
     {"on_map_changed", do_nothing},
     {NULL, NULL}

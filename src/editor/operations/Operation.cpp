@@ -42,6 +42,7 @@ std::unordered_map<std::string, Operation::ModeData> const Operation::MODES
                     lua_seti(L, -2, i++);
                 }
             },
+            typeid(Brush),
         }
     },
     {   "entity",
@@ -55,6 +56,7 @@ std::unordered_map<std::string, Operation::ModeData> const Operation::MODES
                     lua_seti(L, -2, i++);
                 }
             },
+            typeid(Entity),
         }
     },
     {   "face",
@@ -67,7 +69,8 @@ std::unordered_map<std::string, Operation::ModeData> const Operation::MODES
                     Lua::push(L, face);
                     lua_seti(L, -2, i++);
                 }
-            }
+            },
+            typeid(Face)
         }
     },
     {   "object",
@@ -86,6 +89,7 @@ std::unordered_map<std::string, Operation::ModeData> const Operation::MODES
                     lua_seti(L, -2, i++);
                 }
             },
+            typeid(EditorObject)
         }
     },
 };
@@ -144,6 +148,14 @@ std::unordered_set<std::string> Operation::modes()
     for (auto const &kv : MODES)
         the_modes.insert(kv.first);
     return the_modes;
+}
+
+
+bool Operation::object_matches_mode_type(
+    std::string const &mode,
+    EditorObjectRef const &obj)
+{
+    return MODES.at(mode).object_type == typeid(*obj.get());
 }
 
 

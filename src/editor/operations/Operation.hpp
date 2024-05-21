@@ -123,6 +123,18 @@ namespace Sickle::Editor
         static std::unordered_set<std::string> modes();
 
         /**
+         * Check if an object matches the type for a certain Operation mode.
+         *
+         * @param mode Name of the mode to check.
+         * @param obj The object to check the type of.
+         * @return True if the types match, else false.
+         * @throw std::out_of_range if mode is invalid.
+         */
+        static bool object_matches_mode_type(
+            std::string const &mode,
+            EditorObjectRef const &obj);
+
+        /**
          * Get the identifier for this operation.
          *
          * @return The ID for the operation.
@@ -172,6 +184,8 @@ namespace Sickle::Editor
             /// Push an object onto the lua stack representing the contents of
             /// the selection.
             std::function<void(lua_State *L, Selection const &)> push_selection;
+            /// typeid for the object used by this mode.
+            std::type_info const &object_type;
         };
 
         /// Type-dependent data for operations.
