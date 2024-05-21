@@ -64,7 +64,7 @@ function Select.metatable:on_button_release_event(event)
         if picked then
             if picked:is_selected() then
                 editor:get_selection():remove(picked)
-            else
+            elseif editor:matches_mode(picked) then
                 editor:get_selection():add(picked)
             end
         end
