@@ -19,9 +19,9 @@ jobs:
           install: >-
             bison
             flex
-            glew
-            gtkmm3
-            lua
+            mingw-w64-ucrt-x86_64-glew
+            mingw-w64-ucrt-x86_64-gtkmm3
+            mingw-w64-ucrt-x86_64-lua
 
   setup-ubuntu:
     # Installs dependencies through apt-get.
@@ -29,7 +29,7 @@ jobs:
     steps:
       - run: |
           sudo apt-get update
-          sudo apt-get install bison flex freeglut3-dev libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
+          sudo apt-get install bison flex glew-utils libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
 
   build:
     runs-on: ${{ matrix.os }}
