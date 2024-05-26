@@ -9,8 +9,32 @@ on:
     branches: [ "master" ]
 
 jobs:
+  setup-msys2:
+    # Installs dependencies with msys2.
+    runs-on: "windows-latest"
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            bison
+            flex
+            mingw-w64-glew
+            mingw-w64-gtkmm3
+            mingw-w64-lua
+
+  setup-ubuntu:
+    # Installs dependencies through apt-get.
+    runs-on: "ubuntu-latest"
+    steps:
+      - run: |
+          sudo apt-get update
+          sudo apt-get install bison flex libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
+
   build:
     runs-on: ${{ matrix.os }}
+    if: ${{ always() }}
+    needs: [setup-msys2, setup-ubuntu]
 
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
@@ -35,6 +59,8 @@ jobs:
             cpp_compiler: g++
 
     steps:
+    # Disable autocrlf for msys2 compatibility.
+    - run: git config --global core.autocrlf input
     - uses: actions/checkout@v4
 
     - name: Set reusable strings
@@ -43,17 +69,6 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-
-    - name: Install dependencies (Ubuntu)
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: |
-        sudo apt-get update
-        sudo apt-get install bison flex libglew-dev libgtkmm-3.0-dev liblua5.4-dev
-
-    - name: Install dependencies (Windows)
-      if: ${{ matrix.os == 'windows-latest' }}
-      run: |
-        pacman -S bison flex mingw-w64-glew mingw-w64-gtkmm3 mingw-w64-lua
 
     - name: Initialize and update submodules
       run: git submodule update --init --recursive
