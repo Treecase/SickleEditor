@@ -41,11 +41,12 @@ set(SCHEMA_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
 
 # Dependencies
+# GLEW
+set(GLEW_VERBOSE TRUE)
+find_package(GLEW REQUIRED)
+
 # glutils
 add_subdirectory(extern/glutils)
-
-# GLEW
-find_package(GLEW REQUIRED)
 
 # gtkmm3
 find_package(PkgConfig REQUIRED)
