@@ -46,7 +46,7 @@ jobs:
       # ===[ First, install dependencies ]===
 
     - name: Install Dependencies (MSYS2)
-      if: ${{ matrix.os == "windows-latest" }}
+      if: ${{ matrix.os == 'windows-latest' }}
       uses: msys2/setup-msys2@v2
       with:
         update: true
@@ -59,7 +59,7 @@ jobs:
           lua:p
 
     - name: Install Dependencies (Ubuntu)
-      if: ${{ matrix.os == "ubuntu-latest" }}
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
           sudo apt-get update
           sudo apt-get install bison flex libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
