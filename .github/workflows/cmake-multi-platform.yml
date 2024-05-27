@@ -9,37 +9,8 @@ on:
     branches: [ "master" ]
 
 jobs:
-  setup-msys2:
-    # Installs dependencies with msys2.
-    runs-on: "windows-latest"
-    steps:
-      - uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: >-
-            bison
-            flex
-          pacboy: >-
-            glew:p
-            gtkmm3:p
-            lua:p
-      # Temp: check GLEW installed files
-      - run: msys2 -c 'pacman -Ql mingw-w64-x86_64-glew'
-
-  setup-ubuntu:
-    # Installs dependencies through apt-get.
-    runs-on: "ubuntu-latest"
-    steps:
-      - run: |
-          sudo apt-get update
-          sudo apt-get install bison flex libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
-      # Temp: check GLEW installed files
-      - run: dpkg -L libglew-dev
-
   build:
     runs-on: ${{ matrix.os }}
-    if: ${{ always() }}
-    needs: [setup-msys2, setup-ubuntu]
 
     defaults:
       run:
@@ -72,38 +43,57 @@ jobs:
             shell: bash
 
     steps:
-    # Check for GLEW stuff
-    - run: find /usr/ -iname *glew*  -print
-    
-    # # Disable autocrlf for msys2 compatibility.
-    # - run: git config --global core.autocrlf input
-    # - uses: actions/checkout@v4
+      # ===[ First, install dependencies ]===
 
-    # - name: Set reusable strings
-    #   # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
-    #   id: strings
-    #   run: |
-    #     echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+    - name: Install Dependencies (MSYS2)
+      if: ${{ matrix.os == "windows-latest" }}
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          bison
+          flex
+        pacboy: >-
+          glew:p
+          gtkmm3:p
+          lua:p
 
-    # - name: Initialize and update submodules
-    #   run: git submodule update --init --recursive
+    - name: Install Dependencies (Ubuntu)
+      if: ${{ matrix.os == "ubuntu-latest" }}
+      run: |
+          sudo apt-get update
+          sudo apt-get install bison flex libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
 
-    # - name: Configure CMake
-    #   # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-    #   # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-    #   run: >
-    #     cmake -B ${{ steps.strings.outputs.build-output-dir }}
-    #     -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-    #     -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-    #     -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-    #     -S ${{ github.workspace }}
+    # ===[ Done setting up, now we can build ]===
+    # Disable autocrlf for msys2 compatibility.
+    - run: git config --global core.autocrlf input
+    - uses: actions/checkout@v4
 
-    # - name: Build
-    #   # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-    #   run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+    - name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
+      id: strings
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    # - name: Test
-    #   working-directory: ${{ steps.strings.outputs.build-output-dir }}
-    #   # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-    #   # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-    #   run: ctest --build-config ${{ matrix.build_type }}
+    - name: Initialize and update submodules
+      run: git submodule update --init --recursive
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -S ${{ github.workspace }}
+
+    - name: Build
+      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest --build-config ${{ matrix.build_type }}
