@@ -19,9 +19,10 @@ jobs:
           install: >-
             bison
             flex
-            mingw-w64-ucrt-x86_64-glew
-            mingw-w64-ucrt-x86_64-gtkmm3
-            mingw-w64-ucrt-x86_64-lua
+          pacboy: >-
+            glew:p
+            gtkmm3:p
+            lua:p
 
   setup-ubuntu:
     # Installs dependencies through apt-get.
@@ -29,12 +30,15 @@ jobs:
     steps:
       - run: |
           sudo apt-get update
-          sudo apt-get install bison flex glew-utils libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
+          sudo apt-get install bison flex libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
 
   build:
     runs-on: ${{ matrix.os }}
-    if: ${{ always() }}
-    needs: [setup-msys2, setup-ubuntu]
+    needs: ${{ matrix.setup }}
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
 
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
@@ -54,9 +58,13 @@ jobs:
           - os: windows-latest
             c_compiler: gcc
             cpp_compiler: g++
+            setup: setup-msys2
+            shell: msys2 {0}
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
+            setup: setup-ubuntu
+            shell: bash
 
     steps:
     # Disable autocrlf for msys2 compatibility.
@@ -66,7 +74,6 @@ jobs:
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
-      shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
