@@ -23,6 +23,8 @@ jobs:
             glew:p
             gtkmm3:p
             lua:p
+      # Temp: check GLEW installed files
+      - run: msys2 -c 'pacman -Ql mingw-w64-x86_64-glew'
 
   setup-ubuntu:
     # Installs dependencies through apt-get.
@@ -31,6 +33,8 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install bison flex libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
+      # Temp: check GLEW installed files
+      - run: dpkg -L libglew-dev
 
   build:
     runs-on: ${{ matrix.os }}
