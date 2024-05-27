@@ -53,6 +53,7 @@ jobs:
         install: >-
           bison
           flex
+          git
         pacboy: >-
           glew:p
           gtkmm3:p
