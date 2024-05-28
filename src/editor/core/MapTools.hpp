@@ -19,7 +19,7 @@
 #ifndef SE_EDITOR_MAPTOOLS_HPP
 #define SE_EDITOR_MAPTOOLS_HPP
 
-#include "Editor.hpp"
+#include <glibmm/refptr.h>
 
 #include <functional> // temp
 #include <string>
@@ -28,22 +28,24 @@
 
 namespace Sickle::Editor
 {
+    class Editor;
+
     class MapTool
     {
     public:
+        // temp
+        using FunctionType = std::function<bool(Glib::RefPtr<Editor> const &)>;
         struct OpDef
         {
             std::string const label;
             std::string const operation_id;
         };
-        // temp
-        std::function<bool(EditorRef)> x;
+        FunctionType x;
 
         MapTool(
             std::string const &name,
             std::vector<OpDef> const &opdefs,
-            decltype(x) fn
-            );
+            FunctionType const &fn);
         virtual ~MapTool()=default;
 
         std::string name() const;

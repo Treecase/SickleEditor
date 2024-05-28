@@ -89,10 +89,11 @@ static int get_vertices(lua_State *L)
     auto const f = lface_check(L, 1);
     auto const vertices = f->get_vertices();
     lua_newtable(L);
-    for (lua_Integer i = 1; i <= vertices.size(); ++i)
+    lua_Integer i = 1;
+    for (auto const &vertex : vertices)
     {
-        Lua::push(L, vertices.at(i - 1));
-        lua_seti(L, -2, i);
+        Lua::push(L, vertex);
+        lua_seti(L, -2, i++);
     }
     return 1;
 }

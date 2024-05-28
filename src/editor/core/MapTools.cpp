@@ -24,10 +24,10 @@ using namespace Sickle::Editor;
 MapTool::MapTool(
     std::string const &name,
     std::vector<OpDef> const &opdefs,
-    decltype(x) fn)
-:   _name{name}
+    FunctionType const &fn)
+:   x{fn}
+,   _name{name}
 ,   _opdefs{opdefs}
-,   x{fn}
 {
 }
 

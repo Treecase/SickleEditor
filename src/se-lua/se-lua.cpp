@@ -149,7 +149,6 @@ void Lua::checkerror(lua_State *L, int status)
 
 int Lua::pcall(lua_State *L, int nargs, int nresults)
 {
-    int const ti = lua_gettop(L);
     if (!lua_checkstack(L, 1))
         throw Lua::StackOverflow{};
 
