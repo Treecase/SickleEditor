@@ -32,6 +32,12 @@
 #include <vector>
 
 
+namespace Lua
+{
+    template<> Sickle::Editor::Operation get_as(lua_State *L, int idx);
+}
+
+
 namespace Sickle::Editor
 {
     class Operation
@@ -198,7 +204,5 @@ namespace Sickle::Editor
         friend Sickle::Editor::Operation Lua::get_as(lua_State *L, int idx);
     };
 }
-
-template<> Sickle::Editor::Operation Lua::get_as(lua_State *L, int idx);
 
 #endif
