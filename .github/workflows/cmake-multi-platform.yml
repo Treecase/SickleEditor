@@ -20,12 +20,7 @@ jobs:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
 
-      # Set up a matrix to run the following 3 configurations:
-      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
-      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
-      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
-      #
-      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
+      # Targeting Linux and Windows with gcc (through MSYS2 for Windows).
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
@@ -43,8 +38,6 @@ jobs:
             shell: bash
 
     steps:
-      # ===[ First, install dependencies ]===
-
     - name: Install Dependencies (MSYS2)
       if: ${{ matrix.os == 'windows-latest' }}
       uses: msys2/setup-msys2@v2
@@ -52,6 +45,7 @@ jobs:
         update: true
         install: >-
           bison
+          cmake
           flex
           git
         pacboy: >-
@@ -65,8 +59,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install bison flex libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
 
-    # ===[ Done setting up, now we can build ]===
-    # Disable autocrlf for msys2 compatibility.
+
+    # Disable autocrlf for MSYS2 compatibility.
     - run: git config --global core.autocrlf input
     - uses: actions/checkout@v4
 

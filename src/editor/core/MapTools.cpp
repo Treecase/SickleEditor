@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "MapTools.hpp"
 #include "Editor.hpp"
 
 using namespace Sickle::Editor;
@@ -24,7 +25,7 @@ using namespace Sickle::Editor;
 MapTool::MapTool(
     std::string const &name,
     std::vector<OpDef> const &opdefs,
-    decltype(x) fn)
+    FunctionType const &fn)
 :   _name{name}
 ,   _opdefs{opdefs}
 ,   x{fn}
