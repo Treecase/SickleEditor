@@ -71,13 +71,13 @@ jobs:
     # MSYS2 needs to convert paths to Unix style, so instead of using github.workspace directly we create an intermediate var which is modified on Windows.
     - name: Set workspace string (MSYS2)
       if: ${{ matrix.os == 'windows-latest' }}
-      run: echo "workspace=$(cygpath -u ${{ github.workspace }})" >> "$GITHUB_ENV"
+      run: echo "workspace=$(cygpath -u $workspace)" >> "$GITHUB_ENV"
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
       run: |
-        echo "build-output-dir=${{ workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "build-output-dir=$workspace/build" >> "$GITHUB_OUTPUT"
 
     - name: Initialize and update submodules
       run: git submodule update --init --recursive
@@ -90,7 +90,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -S ${{ workspace }}
+        -S $workspace
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
