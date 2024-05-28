@@ -27,7 +27,7 @@
 #if RMFENABLEDEBUG
 static std::ofstream dbgstream;
 
-std::string dbgbyte(uint8_t byte)
+static std::string dbgbyte(uint8_t byte)
 {
     std::stringstream ss{};
     ss << std::hex << std::setw(2) << std::setfill('0') << (int)byte;
@@ -35,20 +35,20 @@ std::string dbgbyte(uint8_t byte)
 }
 
 template<typename T>
-void dbg_lo(T arg)
+static void dbg_lo(T arg)
 {
     dbgstream << arg;
 }
 
 template<typename T, typename... Ts>
-void dbg_lo(T arg, Ts... args)
+static void dbg_lo(T arg, Ts... args)
 {
     dbgstream << arg;
     dbg_lo(args...);
 }
 
 template<typename... Ts>
-void dbg(std::istream &s, Ts... ts)
+static void dbg(std::istream &s, Ts... ts)
 {
     std::stringstream ss{};
     ss << std::hex << std::setw(8) << std::setfill('0') << s.tellg();
@@ -56,9 +56,19 @@ void dbg(std::istream &s, Ts... ts)
     dbg_lo(ts...);
 }
 #else
-#define dbg(...) (0)
-#define dbg_lo(...) (0)
-#define dbgbyte(...) (0)
+static std::string dbgbyte(uint8_t byte)
+{
+    return "";
+}
+
+template<typename T>
+static void dbg_lo(T arg) {}
+
+template<typename T, typename... Ts>
+static void dbg_lo(T arg, Ts... args) {}
+
+template<typename... Ts>
+void dbg(std::istream &s, Ts... ts) {}
 #endif
 
 
@@ -381,6 +391,7 @@ RichMap RMF::load(std::string const &path)
     readBytes(s, 4);
 
     auto worldspawn_flags = readInt(s); // unused?
+    static_cast<void>(worldspawn_flags);
     auto worldspawn_kv_count = readInt(s);
     for (int32_t i = 0; i < worldspawn_kv_count; ++i)
     {

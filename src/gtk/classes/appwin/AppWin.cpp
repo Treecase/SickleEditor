@@ -560,7 +560,7 @@ void AppWin::_run_runtime_scripts()
 
     // Load and execute runtime scripts.
     int const start_top1 = lua_gettop(L);
-    for (auto const dir_path : _lua_script_dirs)
+    for (auto const &dir_path : _lua_script_dirs)
     {
         auto const newPATH = oldPATH + ";" + _make_lua_include_path(dir_path);
         Lua::push(L, newPATH);
@@ -609,7 +609,7 @@ void AppWin::_run_operations_scripts()
 
     // Load and execute operation scripts.
     int const start_top1 = lua_gettop(L);
-    for (auto const dir_path : _operation_script_dirs)
+    for (auto const &dir_path : _operation_script_dirs)
     {
         auto const newPATH = oldPATH + ";" + _make_lua_include_path(dir_path);
         Lua::push(L, newPATH);

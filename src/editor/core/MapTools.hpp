@@ -33,14 +33,14 @@ namespace Sickle::Editor
     class MapTool
     {
     public:
-        using FunctionType = std::function<bool(Glib::RefPtr<Editor>)>;
+        // temp
+        using FunctionType = std::function<bool(Glib::RefPtr<Editor> const &)>;
         struct OpDef
         {
             std::string const label;
             std::string const operation_id;
         };
-        // temp
-        FunctionType x{};
+        FunctionType x;
 
         MapTool(
             std::string const &name,

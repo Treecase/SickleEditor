@@ -23,8 +23,6 @@
 
 #include <se-lua/se-lua.hpp>
 
-#include <cstring>
-
 
 static int _refbuilder_dunder_newindex(lua_State *L)
 {
@@ -86,8 +84,8 @@ namespace Lua
             std::string const &library,
             PointerType pointer)
         :   _library{library}
-        ,   _pointer{pointer}
         ,   L{L}
+        ,   _pointer{pointer}
         {
         }
 
@@ -151,10 +149,8 @@ namespace Lua
                 return false;
             }
 
-            auto ptr = static_cast<PointerType *>(
-                lua_newuserdatauv(L, sizeof(PointerType), 1));
-            std::memset(ptr, 0, sizeof(*ptr));
-            *ptr = _pointer;
+            void *userdata_ptr = lua_newuserdatauv(L, sizeof(PointerType), 1);
+            new(userdata_ptr) PointerType{_pointer};
             luaL_setmetatable(L, _library.c_str());
 
             lua_newtable(L);
@@ -190,7 +186,7 @@ namespace Lua
         {
             auto cL = L;
             auto cP = _pointer;
-            auto conn = sig.connect(
+            sig.connect(
                 [cL, cP, fn_name](A... args){
                     ReferenceManager refman{};
                     refman.get(cL, cP);

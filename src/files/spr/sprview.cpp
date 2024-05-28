@@ -195,7 +195,7 @@ std::vector<Glib::RefPtr<Gdk::Pixbuf>> convert_sprite(SPR::Sprite const &sprite)
     for (auto const &frame : sprite.frames)
     {
         auto pixel_data = new guchar[frame.w * frame.h * 4];
-        for (int i = 0, j = 0; i < frame.w * frame.h; ++i, j += 4)
+        for (uint64_t i = 0, j = 0; i < frame.w * frame.h; ++i, j += 4)
         {
             auto const color = frame.data[i];
             auto const &pixel = sprite.palette.colors[color];

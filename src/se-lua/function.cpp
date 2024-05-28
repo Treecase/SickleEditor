@@ -18,7 +18,6 @@
 
 #include "function.hpp"
 
-#include <cstring>
 #include <memory>
 
 
@@ -66,9 +65,8 @@ void Lua::set_msgh(lua_State *L, Function msgh)
 template<>
 void Lua::push(lua_State *L, Function msgh)
 {
-    auto fn = static_cast<std::unique_ptr<Function> *>(
-        lua_newuserdatauv(L, sizeof(std::unique_ptr<Function>), 0));
-    memset(fn, 0, sizeof(*fn));
+    void *ptr = lua_newuserdatauv(L, sizeof(std::unique_ptr<Function>), 0);
+    auto fn = new(ptr) std::unique_ptr<Function>{};
     fn->reset(new Function{msgh});
     luaL_getmetatable(L, "Lua.function");
     lua_setmetatable(L, -2);

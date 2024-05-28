@@ -133,7 +133,7 @@ std::unordered_map<std::string, Operation::TypeData> const Operation::TYPES{
 std::unordered_set<std::string> Operation::modes()
 {
     std::unordered_set<std::string> the_modes{};
-    for (auto const kv : MODES)
+    for (auto const &kv : MODES)
         the_modes.insert(kv.first);
     return the_modes;
 }
@@ -200,7 +200,9 @@ Operation Lua::get_as<Operation>(lua_State *L, int idx)
 
             args.emplace_back(
                 type,
-                i <= arg_names.size()? arg_names.at(i - 1) : "",
+                static_cast<size_t>(i) <= arg_names.size()
+                    ? arg_names.at(i - 1)
+                    : "",
                 value);
             lua_pop(L, 1);
         }
@@ -271,15 +273,15 @@ Operation::Operation(
     std::string const &operation_name,
     std::string const &mode,
     std::vector<ArgDef> const &args)
-:   L{L}
-,   module_name{module_name}
+:   module_name{module_name}
 ,   name{operation_name}
 ,   mode{mode}
 ,   args{args}
+,   L{L}
 {
     if (MODES.count(mode) == 0)
         throw std::runtime_error{"bad mode '" + mode + "'"};
-    for (auto const arg : args)
+    for (auto const &arg : args)
         if (TYPES.count(arg.type) == 0)
             throw std::runtime_error{"bad arg type '" + arg.type + "'"};
 }

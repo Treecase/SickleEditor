@@ -26,9 +26,9 @@ MapTool::MapTool(
     std::string const &name,
     std::vector<OpDef> const &opdefs,
     FunctionType const &fn)
-:   _name{name}
+:   x{fn}
+,   _name{name}
 ,   _opdefs{opdefs}
-,   x{fn}
 {
 }
 
