@@ -64,38 +64,36 @@ static int selection_contains(lua_State *L)
 
 static int selection_iterate_iterator(lua_State *L)
 {
-    auto s = lselection_check(L, lua_upvalueindex(1));
-    auto const I = luaL_checkinteger(L, lua_upvalueindex(2));
+    auto const I = luaL_checkinteger(L, lua_upvalueindex(1));
 
     lua_pushinteger(L, I + 1);
-    lua_replace(L, lua_upvalueindex(2));
+    lua_replace(L, lua_upvalueindex(1));
 
-    int const type = lua_geti(L, lua_upvalueindex(3), I);
+    int const type = lua_geti(L, lua_upvalueindex(2), I);
     if (type == LUA_TNIL)
         return 0;
     else if (type != LUA_TUSERDATA)
-        return luaL_error(L, "selection:iterate error -- bad 3rd upvalue");
+        return luaL_error(L, "selection:iterate error -- bad 2nd upvalue");
 
     return 1;
 }
 static int selection_iterate(lua_State *L)
 {
-    auto s = lselection_check(L, 1);
+    auto const s = lselection_check(L, 1);
+
+    // Upvalue 1: Iterator index
     lua_pushinteger(L, 1);
 
+    // Upvalue 2: List of selected objects
     lua_newtable(L);
     lua_Integer i = 1;
-    for (auto it = s->begin(); it != s->end(); it++)
+    for (auto brush : s->get_all_of_type<Brush>())
     {
-        auto const brush = BrushRef::cast_dynamic(*it);
-        if (brush)
-        {
-            Lua::push(L, brush);
-            lua_seti(L, -2, i++);
-        }
+        Lua::push(L, brush);
+        lua_seti(L, -2, i++);
     }
 
-    lua_pushcclosure(L, &selection_iterate_iterator, 3);
+    lua_pushcclosure(L, &selection_iterate_iterator, 2);
     return 1;
 }
 

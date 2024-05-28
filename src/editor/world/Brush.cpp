@@ -90,7 +90,7 @@ Brush::Brush()
 
 Brush::~Brush()
 {
-    for (auto const face : _faces)
+    for (auto const &face : _faces)
         signal_child_removed().emit(face);
 }
 

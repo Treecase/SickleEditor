@@ -105,12 +105,6 @@ static int remove_brush(lua_State *L)
 }
 
 
-static int do_nothing(lua_State *L)
-{
-    return 0;
-}
-
-
 static luaL_Reg methods[] = {
     {"is_selected", is_selected},
     {"classname", classname},

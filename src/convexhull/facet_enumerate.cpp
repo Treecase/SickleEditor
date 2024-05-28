@@ -133,9 +133,9 @@ public:
     auto as_points() const
     {
         std::unordered_set<glm::vec3> points{};
-        for (auto const kv : edges)
+        for (auto const &kv : edges)
         {
-            for (auto const edge : kv.second)
+            for (auto const &edge : kv.second)
             {
                 points.insert(edge.first);
                 points.insert(edge.second);

@@ -204,9 +204,10 @@ static int vector_newindex(lua_State *L)
 }
 
 
-template<class V> static int vector_tostring(lua_State *L);
+template<class V> static int vector_tostring(lua_State *L)=delete;
 
 template<>
+[[maybe_unused]]
 int vector_tostring<glm::vec2>(lua_State *L)
 {
     auto v = lgeo_checkvector<glm::vec2>(L, 1);
@@ -215,6 +216,7 @@ int vector_tostring<glm::vec2>(lua_State *L)
 }
 
 template<>
+[[maybe_unused]]
 int vector_tostring<glm::vec3>(lua_State *L)
 {
     auto v = lgeo_checkvector<glm::vec3>(L, 1);
@@ -223,6 +225,7 @@ int vector_tostring<glm::vec3>(lua_State *L)
 }
 
 template<>
+[[maybe_unused]]
 int vector_tostring<glm::vec4>(lua_State *L)
 {
     auto v = lgeo_checkvector<glm::vec4>(L, 1);
