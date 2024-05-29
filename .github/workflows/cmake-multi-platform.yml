@@ -52,6 +52,7 @@ jobs:
           cmake
           flex
           git
+          make
         pacboy: >-
           glew:p
           gtkmm3:p

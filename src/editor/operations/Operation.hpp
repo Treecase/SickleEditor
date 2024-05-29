@@ -201,7 +201,7 @@ namespace Sickle::Editor
             std::vector<ArgDef> const &args);
 
         // Operations can only be constructed through this function.
-        friend Sickle::Editor::Operation Lua::get_as(lua_State *L, int idx);
+        friend Operation Lua::get_as<Operation>(lua_State *L, int idx);
     };
 }
 
