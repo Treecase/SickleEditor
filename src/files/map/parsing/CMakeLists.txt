@@ -25,5 +25,6 @@ target_include_directories(map_parsing PRIVATE
     .
 )
 target_include_directories(map_parsing PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" PRIVATE)
-target_link_libraries(map_parsing PRIVATE "${FLEX_LIBRARIES}" convexhull)
+# target_link_libraries(map_parsing PRIVATE "${FLEX_LIBRARIES}" convexhull)
+target_link_libraries(map_parsing PRIVATE convexhull)
 target_compile_features(map_parsing PUBLIC cxx_std_17)

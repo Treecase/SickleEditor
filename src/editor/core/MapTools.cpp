@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "MapTools.hpp"
 #include "Editor.hpp"
 
 using namespace Sickle::Editor;

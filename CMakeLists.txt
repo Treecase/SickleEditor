@@ -32,6 +32,10 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
 # Application ID
 set(APPLICATION_ID com.github.treecase.sicklegtk)
 # GResource prefix

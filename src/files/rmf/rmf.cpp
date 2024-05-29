@@ -390,8 +390,8 @@ RichMap RMF::load(std::string const &path)
     map.worldspawn_name = readNString(s);
     readBytes(s, 4);
 
+    [[maybe_unused]]
     auto worldspawn_flags = readInt(s); // unused?
-    static_cast<void>(worldspawn_flags);
     auto worldspawn_kv_count = readInt(s);
     for (int32_t i = 0; i < worldspawn_kv_count; ++i)
     {
