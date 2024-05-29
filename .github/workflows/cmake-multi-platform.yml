@@ -65,6 +65,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install bison flex libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
 
+    - name: Workaround for flex bug.
+      # See https://github.com/msys2/MSYS2-packages/issues/1911#issuecomment-832199076
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: sudo cp /usr/include/FlexLexer.h /mingw64/include/FlexLexer.h
 
     # Disable autocrlf for MSYS2 compatibility.
     - run: git config --global core.autocrlf input
