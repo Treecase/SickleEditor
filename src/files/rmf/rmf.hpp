@@ -19,10 +19,13 @@
 #ifndef SE_RMF_HPP
 #define SE_RMF_HPP
 
+#include <iosfwd>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include <cstdint>
 
 
 namespace RMF
