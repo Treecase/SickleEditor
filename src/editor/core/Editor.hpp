@@ -20,6 +20,7 @@
 #define SE_EDITOR_HPP
 
 #include "BrushBox.hpp"
+#include "MapTools.hpp"
 #include "Selection.hpp"
 
 #include <editor/world/EditorWorld.hpp>
@@ -40,7 +41,6 @@ namespace Sickle::Editor
 {
     class Operation;
     class OperationLoader;
-    class MapTool;
 
     // FIXME: temp -- probably want an enum or something.
     using Mode = std::string;
@@ -112,7 +112,6 @@ namespace Sickle::Editor
     };
 }
 
-#include "MapTools.hpp"
 #include <editor/operations/OperationLoader.hpp>
 
 #endif

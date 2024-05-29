@@ -87,7 +87,7 @@ namespace Sickle::AppWin
         auto signal_lua_reloaded() {return _sig_lua_reloaded;}
 
         // Lua constructor needs access to private members.
-        friend void Lua::push(lua_State *, AppWin *);
+        friend void Lua::push<AppWin *>(lua_State *, AppWin *);
 
     protected:
         void setup_lua_state();

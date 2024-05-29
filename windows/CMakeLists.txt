@@ -8,5 +8,6 @@ add_custom_command(
         -o resources.res
 )
 add_library(windows-resources OBJECT resources.res)
+set_target_properties(windows-resources PROPERTIES LINKER_LANGUAGE CXX)
 
 target_link_libraries(sickle PRIVATE windows-resources)
