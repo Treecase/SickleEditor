@@ -49,15 +49,15 @@ jobs:
         update: true
         install: >-
           bison
-          cmake
           flex
           git
-          gcc
-          make
         pacboy: >-
+          cmake:p
           glew:p
           gtkmm3:p
           lua:p
+          ninja:p
+          toolchain:p
 
     - name: Install Dependencies (Ubuntu)
       if: ${{ matrix.os == 'ubuntu-latest' }}
