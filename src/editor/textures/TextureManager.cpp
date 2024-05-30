@@ -31,9 +31,9 @@ using namespace Sickle::Editor::Textures;
 
 struct WADInputStreamGIO : WAD::WADInputStream
 {
-    WADInputStreamGIO(std::string const &wad_path)
+    WADInputStreamGIO(std::filesystem::path const &wad_path)
     {
-        auto const file = Gio::File::create_for_path(wad_path);
+        auto const file = Gio::File::create_for_path(wad_path.string());
         _stream = file->read();
     }
     virtual ~WADInputStreamGIO()=default;
