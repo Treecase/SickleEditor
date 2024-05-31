@@ -62,8 +62,8 @@ Sickle::MapArea2D::MapArea2D(Editor::EditorRef ed)
 :   Glib::ObjectBase{typeid(MapArea2D)}
 ,   _editor{ed}
 ,   _css{Gtk::CssProvider::create()}
-,   _prop_grid_size{*this, "grid-size", 32}
 ,   _prop_draw_angle{*this, "draw-angle", DrawAngle::TOP}
+,   _prop_grid_size{*this, "grid-size", 32}
 ,   _prop_transform{*this, "transform", {}}
 ,   _brushbox_view{
         std::make_shared<BBox2ViewCustom>(

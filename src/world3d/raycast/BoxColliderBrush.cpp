@@ -33,7 +33,7 @@ void BoxColliderBrush::on_attach(Sickle::Componentable &obj)
     _src = &brush;
     _signals = std::make_unique<Signals>();
 
-    for (auto const face : _src->faces())
+    for (auto const &face : _src->faces())
     {
         _signals->conns.push_back(
             face->signal_vertices_changed().connect(
@@ -54,7 +54,7 @@ void BoxColliderBrush::on_detach(Sickle::Componentable &obj)
 void BoxColliderBrush::update_bbox()
 {
     BBox3 bbox{};
-    for (auto const face : _src->faces())
+    for (auto const &face : _src->faces())
         for (auto const vertex : face->get_vertices())
             bbox.add(vertex);
     set_box(bbox);

@@ -41,9 +41,6 @@ void CellRendererColor::render_vfunc(
 {
     auto context = widget.get_style_context();
 
-    auto const xpad = property_xpad().get_value();
-    auto const ypad = property_ypad().get_value();
-
     auto const swatch_rect = _get_swatch_rect(cell_area);
 
 

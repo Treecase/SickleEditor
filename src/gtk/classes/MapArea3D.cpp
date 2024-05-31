@@ -96,12 +96,12 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
 ,   Lua::Referenceable{}
 ,   _editor{ed}
 ,   _prop_camera{*this, "camera", DEFAULT_CAMERA}
+,   _prop_mouse_sensitivity{
+        *this, "mouse-sensitivity", DEFAULT_MOUSE_SENSITIVITY}
+,   _prop_shift_multiplier{*this, "grid-size", 2.0f}
 ,   _prop_state{*this, "state", {}}
 ,   _prop_transform{*this, "transform", DEFAULT_TRANSFORM}
 ,   _prop_wireframe{*this, "wireframe", false}
-,   _prop_shift_multiplier{*this, "grid-size", 2.0f}
-,   _prop_mouse_sensitivity{
-        *this, "mouse-sensitivity", DEFAULT_MOUSE_SENSITIVITY}
 {
     set_required_version(4, 3);
     set_use_es(false);
