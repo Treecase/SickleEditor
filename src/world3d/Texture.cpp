@@ -94,7 +94,7 @@ std::shared_ptr<World3D::Texture> World3D::Texture::make_missing_texture()
         for (size_t x = 0; x < SIZE; ++x)
         {
             auto const idx = 4 * (y * SIZE + x);
-            if (x < HSIZE && y < HSIZE || x >= HSIZE && y >= HSIZE)
+            if ((x < HSIZE && y < HSIZE) || (x >= HSIZE && y >= HSIZE))
             {
                 pixels[idx+0] = 0x00;
                 pixels[idx+1] = 0x00;
