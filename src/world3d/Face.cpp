@@ -141,7 +141,6 @@ void World3D::Face::_sync_vertices()
 
     auto const u_axis = glm::normalize(_src->get_u());
     auto const v_axis = glm::normalize(_src->get_v());
-    auto const normal = glm::normalize(glm::cross(u_axis, v_axis));
 
     auto const texture_size = (_texture
         ? glm::vec2{_texture->width, _texture->height}
