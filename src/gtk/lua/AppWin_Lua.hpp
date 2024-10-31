@@ -21,7 +21,6 @@
 
 #include <se-lua/se-lua.hpp>
 
-
 namespace Sickle::AppWin
 {
     class AppWin;
@@ -30,6 +29,7 @@ namespace Sickle::AppWin
 int luaopen_appwin(lua_State *L);
 Sickle::AppWin::AppWin *lappwin_check(lua_State *L, int arg);
 
-template<> void Lua::push(lua_State *L, Sickle::AppWin::AppWin *appwin);
+template<>
+void Lua::push(lua_State *L, Sickle::AppWin::AppWin *appwin);
 
 #endif

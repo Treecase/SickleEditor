@@ -23,7 +23,6 @@
 #include <iostream>
 #include <sstream>
 
-
 #if RMFENABLEDEBUG
 static std::ofstream dbgstream;
 
@@ -62,34 +61,37 @@ static std::string dbgbyte(uint8_t byte)
 }
 
 template<typename T>
-static void dbg_lo(T arg) {}
+static void dbg_lo(T arg)
+{
+}
 
 template<typename T, typename... Ts>
-static void dbg_lo(T arg, Ts... args) {}
+static void dbg_lo(T arg, Ts... args)
+{
+}
 
 template<typename... Ts>
-void dbg(std::istream &s, Ts... ts) {}
+void dbg(std::istream &s, Ts... ts)
+{
+}
 #endif
-
 
 using namespace RMF;
 
-
-std::string
-LoadError::_make_what(std::streampos where, std::string const &what)
+std::string LoadError::_make_what(std::streampos where, std::string const &what)
 {
     std::stringstream ss{};
     ss << std::hex << std::setw(8) << std::setfill('0') << where << " " << what;
     return ss.str();
 }
 
-
 void rmfloadassert(std::istream &s, bool expr, std::string const &what)
 {
     if (!expr)
+    {
         throw RMF::LoadError(s.tellg(), what);
+    }
 }
-
 
 int32_t readInt(std::istream &s)
 {
@@ -152,7 +154,6 @@ std::string readNString(std::istream &s)
     return str;
 }
 
-
 Color readColor(std::istream &s)
 {
     dbg(s, " Color(\n");
@@ -205,7 +206,9 @@ Face readFace(std::istream &s)
     readBytes(s, 16);
     auto vertex_count = readInt(s);
     for (int i = 0; i < vertex_count; ++i)
+    {
         face.vertices.push_back(readVector(s));
+    }
     face.plane[0] = readVector(s);
     face.plane[1] = readVector(s);
     face.plane[2] = readVector(s);
@@ -213,7 +216,7 @@ Face readFace(std::istream &s)
     return face;
 }
 
-auto readSolid(std::istream &s, bool withheader=true)
+auto readSolid(std::istream &s, bool withheader = true)
 {
     dbg(s, " Solid(\n");
     Solid solid{};
@@ -230,12 +233,14 @@ auto readSolid(std::istream &s, bool withheader=true)
     readBytes(s, 4);
     auto face_count = readInt(s);
     for (int32_t i = 0; i < face_count; ++i)
+    {
         solid.faces.push_back(readFace(s));
+    }
     dbg(s, " Solid)\n");
     return solid;
 }
 
-auto readEntity(std::istream &s, bool withheader=true)
+auto readEntity(std::istream &s, bool withheader = true)
 {
     dbg(s, " Entity(\n");
     Entity entity{};
@@ -251,7 +256,9 @@ auto readEntity(std::istream &s, bool withheader=true)
     entity.color = readColor(s);
     auto brush_count = readInt(s);
     for (int32_t i = 0; i < brush_count; ++i)
+    {
         entity.brushes.push_back(readSolid(s));
+    }
     entity.classname = readNString(s);
     readBytes(s, 4);
     entity.flags = readInt(s);
@@ -271,7 +278,7 @@ auto readEntity(std::istream &s, bool withheader=true)
 
 void readObject(std::istream &s, Group &group);
 
-auto readGroup(std::istream &s, bool withheader=true)
+auto readGroup(std::istream &s, bool withheader = true)
 {
     dbg(s, " Group(\n");
     Group group{};
@@ -287,7 +294,9 @@ auto readGroup(std::istream &s, bool withheader=true)
     group.color = readColor(s);
     auto object_count = readInt(s);
     for (int32_t i = 0; i < object_count; ++i)
+    {
         readObject(s, group);
+    }
     dbg(s, " Group)\n");
     return group;
 }
@@ -296,13 +305,21 @@ void readObject(std::istream &s, Group &group)
 {
     auto type = readNString(s);
     if (type == "CMapSolid")
+    {
         group.brushes.push_back(readSolid(s, false));
+    }
     else if (type == "CMapEntity")
+    {
         group.entities.push_back(readEntity(s, false));
+    }
     else if (type == "CMapGroup")
+    {
         group.groups.push_back(readGroup(s, false));
+    }
     else
+    {
         throw RMF::LoadError{s.tellg(), "Invalid Object type '" + type + "'"};
+    }
 }
 
 auto readCorner(std::istream &s)
@@ -332,7 +349,9 @@ auto readPath(std::istream &s)
     path.type = readInt(s);
     auto corner_count = readInt(s);
     for (int32_t i = 0; i < corner_count; ++i)
+    {
         path.corners.push_back(readCorner(s));
+    }
     dbg(s, " Path)\n");
     return path;
 }
@@ -347,7 +366,6 @@ auto readCamera(std::istream &s)
     return camera;
 }
 
-
 RichMap RMF::load(std::string const &path)
 {
 #if RMFENABLEDEBUG
@@ -361,8 +379,8 @@ RichMap RMF::load(std::string const &path)
     map.version = readFloat(s);
     if (map.version != 2.2f)
     {
-        std::cerr << "WARNING: Possibly unsupported RMF version "
-            << map.version << "!\n";
+        std::cerr << "WARNING: Possibly unsupported RMF version " << map.version
+                  << "!\n";
     }
 
     char rmf[3];
@@ -374,7 +392,9 @@ RichMap RMF::load(std::string const &path)
 
     auto visgroup_count = readInt(s);
     for (int32_t i = 0; i < visgroup_count; ++i)
+    {
         map.visgroups.push_back(readVisGroup(s));
+    }
 
     auto cmapworld = readNString(s);
     rmfloadassert(
@@ -385,13 +405,16 @@ RichMap RMF::load(std::string const &path)
 
     auto object_count = readInt(s);
     for (int32_t i = 0; i < object_count; ++i)
+    {
         readObject(s, map.objects);
+    }
 
     map.worldspawn_name = readNString(s);
     readBytes(s, 4);
 
     [[maybe_unused]]
-    auto worldspawn_flags = readInt(s); // unused?
+    auto worldspawn_flags
+        = readInt(s); // unused?
     auto worldspawn_kv_count = readInt(s);
     for (int32_t i = 0; i < worldspawn_kv_count; ++i)
     {
@@ -402,7 +425,9 @@ RichMap RMF::load(std::string const &path)
     readBytes(s, 12);
     auto path_count = readInt(s);
     for (int32_t i = 0; i < path_count; ++i)
+    {
         map.paths.push_back(readPath(s));
+    }
     auto docinfo = readString(s, 8);
     rmfloadassert(
         s,
@@ -412,7 +437,9 @@ RichMap RMF::load(std::string const &path)
     map.active_camera = readInt(s);
     auto camera_count = readInt(s);
     for (int32_t i = 0; i < camera_count; ++i)
+    {
         map.cameras.push_back(readCamera(s));
+    }
 
     return map;
 }

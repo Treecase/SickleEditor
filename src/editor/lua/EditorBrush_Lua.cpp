@@ -26,7 +26,6 @@
 
 using namespace Sickle::Editor;
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
 static int is_selected(lua_State *L)
@@ -36,7 +35,6 @@ static int is_selected(lua_State *L)
     return 1;
 }
 
-
 static int transform(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
@@ -45,7 +43,6 @@ static int transform(lua_State *L)
     return 0;
 }
 
-
 static int translate(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
@@ -53,7 +50,6 @@ static int translate(lua_State *L)
     brush->translate(vec);
     return 0;
 }
-
 
 /**
  * Brush:rotate(angle: number, axis: geo.vec3)
@@ -69,7 +65,6 @@ static int rotate(lua_State *L)
     return 0;
 }
 
-
 static int scale(lua_State *L)
 {
     auto brush = leditorbrush_check(L, 1);
@@ -77,7 +72,6 @@ static int scale(lua_State *L)
     brush->transform(glm::scale(glm::mat4{1.0}, vec));
     return 0;
 }
-
 
 static int get_faces(lua_State *L)
 {
@@ -91,7 +85,6 @@ static int get_faces(lua_State *L)
     }
     return 1;
 }
-
 
 static int get_vertices(lua_State *L)
 {
@@ -109,27 +102,23 @@ static int get_vertices(lua_State *L)
     return 1;
 }
 
-
 static int do_nothing(lua_State *L)
 {
     return 0;
 }
 
-
 static luaL_Reg methods[] = {
-    {"is_selected", is_selected},
-    {"transform", transform},
-    {"translate", translate},
-    {"rotate", rotate},
-    {"scale", scale},
-    {"get_faces", get_faces},
+    { "is_selected",  is_selected},
+    {   "transform",    transform},
+    {   "translate",    translate},
+    {      "rotate",       rotate},
+    {       "scale",        scale},
+    {   "get_faces",    get_faces},
     {"get_vertices", get_vertices},
 
-    {"on_selected", do_nothing},
-    {NULL, NULL}
+    { "on_selected",   do_nothing},
+    {          NULL,         NULL}
 };
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
@@ -145,9 +134,11 @@ void Lua::push(lua_State *L, BrushRef brush)
         return;
     }
     builder.addSignalHandler(
-        brush->property_selected().signal_changed(), "on_selected");
+        brush->property_selected().signal_changed(),
+        "on_selected");
     brush->signal_removed().connect(
-        [L, brush](){
+        [L, brush]()
+        {
             ReferenceManager refman{};
             refman.erase(L, brush);
         });
@@ -156,14 +147,12 @@ void Lua::push(lua_State *L, BrushRef brush)
     assert(t3 == t1 + 1);
 }
 
-
 BrushRef leditorbrush_check(lua_State *L, int arg)
 {
     void *ud = luaL_checkudata(L, arg, METATABLE);
     luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
     return *static_cast<BrushRef *>(ud);
 }
-
 
 int luaopen_editorbrush(lua_State *L)
 {

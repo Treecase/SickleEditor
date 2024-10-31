@@ -21,14 +21,15 @@
 
 #include <editor/interfaces/Component.hpp>
 
-
 namespace World3D
 {
     /**
      * Render components draw a 3D representation of their attached object using
      * OpenGL.
      */
-    class RenderComponent : public Sickle::Component {};
-}
+    class RenderComponent : public Sickle::Component
+    {
+    };
+} // namespace World3D
 
 #endif

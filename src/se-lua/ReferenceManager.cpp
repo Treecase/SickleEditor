@@ -20,10 +20,8 @@
 
 using namespace Lua;
 
-
 static char _KEY = 'k';
 static void *const REFTABLE_KEY = &_KEY;
-
 
 void ReferenceManager::set(lua_State *L, Referenceable *pointer, int idx)
 {
@@ -33,10 +31,9 @@ void ReferenceManager::set(lua_State *L, Referenceable *pointer, int idx)
     lua_pushvalue(L, index);
     lua_settable(L, -3);
     lua_pop(L, 1);
-    pointer->signal_destroy().connect(
-        [this, L, pointer](){this->erase(L, pointer);});
+    pointer->signal_destroy().connect([this, L, pointer]()
+                                      { this->erase(L, pointer); });
 }
-
 
 void ReferenceManager::get(lua_State *L, Referenceable *pointer)
 {
@@ -46,7 +43,6 @@ void ReferenceManager::get(lua_State *L, Referenceable *pointer)
     lua_remove(L, -2);
 }
 
-
 void ReferenceManager::erase(lua_State *L, Referenceable *pointer)
 {
     pushRefTable(L);
@@ -55,8 +51,6 @@ void ReferenceManager::erase(lua_State *L, Referenceable *pointer)
     lua_settable(L, -3);
     lua_pop(L, 1);
 }
-
-
 
 void ReferenceManager::pushRefTable(lua_State *L)
 {

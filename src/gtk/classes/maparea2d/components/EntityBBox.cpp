@@ -20,9 +20,7 @@
 
 #include <sstream>
 
-
 using namespace World2D;
-
 
 /**
  * Extract a vector from a string.
@@ -33,14 +31,16 @@ using namespace World2D;
  */
 static bool extract_vector(std::stringstream &input, glm::vec3 &output);
 
-
 static constexpr float DEFAULT_BOX_SIZE = 32.0f;
-
 
 BBox2 EntityBBox::bbox(Sickle::MapArea2D const &maparea) const
 {
     if (!_entity)
-        return BBox2{glm::vec2{0.0f, 0.0f}};
+    {
+        return BBox2{
+            glm::vec2{0.0f, 0.0f}
+        };
+    }
 
     std::stringstream origin_str{_entity->get_property("origin")};
     glm::vec3 origin3{0.0f, 0.0f, 0.0f};
@@ -51,8 +51,8 @@ BBox2 EntityBBox::bbox(Sickle::MapArea2D const &maparea) const
     auto B = origin + DEFAULT_BOX_SIZE * glm::vec2{+0.5f, +0.5f};
 
     auto const classinfo = _entity->classinfo();
-    if (auto const size_prop = classinfo
-        .get_class_property<Sickle::Editor::ClassPropertySize>())
+    if (auto const size_prop
+        = classinfo.get_class_property<Sickle::Editor::ClassPropertySize>())
     {
         auto const points = size_prop->get_points();
         A = origin + maparea.worldspace_to_drawspace(points.first);
@@ -63,31 +63,32 @@ BBox2 EntityBBox::bbox(Sickle::MapArea2D const &maparea) const
     return the_bbox;
 }
 
-
-
 void EntityBBox::on_attach(Sickle::Componentable &obj)
 {
     if (_entity)
+    {
         throw std::logic_error{"already attached"};
+    }
     _entity = &dynamic_cast<Sickle::Editor::Entity const &>(obj);
     if (_entity->classinfo().type() != "PointClass")
+    {
         throw std::invalid_argument{"must be PointClass"};
+    }
 }
-
 
 void EntityBBox::on_detach(Sickle::Componentable &obj)
 {
     _entity = nullptr;
 }
 
-
-
 static bool extract_vector(std::stringstream &input, glm::vec3 &output)
 {
     glm::vec3 v{};
     input >> v.x >> v.y >> v.z;
     if (input.fail())
+    {
         return false;
+    }
     else
     {
         output = v;

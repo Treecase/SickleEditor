@@ -23,36 +23,47 @@
 
 #include <initializer_list>
 
-
 /** Templated bounding box using glm vectors. */
 template<glm::length_t L, typename T>
 struct BBox
 {
     using Point = glm::vec<L, T>;
     Point min{INFINITY}, max{-INFINITY};
-    BBox()=default;
+    BBox() = default;
+
     BBox(std::initializer_list<Point> const &points)
     {
         for (auto const &point : points)
+        {
             add(point);
+        }
     }
+
     T volume() const
     {
         auto const wh = glm::abs(max - min);
         return wh.x * wh.y;
     }
+
     bool contains(Point point) const
     {
         return (
             glm::all(glm::lessThanEqual(min, point))
             && glm::all(glm::lessThanEqual(point, max)));
     }
+
     void add(Point pt)
     {
         for (glm::length_t i = 0; i < Point::length(); ++i)
         {
-            if (pt[i] < min[i]) min[i] = pt[i];
-            if (pt[i] > max[i]) max[i] = pt[i];
+            if (pt[i] < min[i])
+            {
+                min[i] = pt[i];
+            }
+            if (pt[i] > max[i])
+            {
+                max[i] = pt[i];
+            }
         }
     }
 };

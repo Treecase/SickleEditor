@@ -21,13 +21,13 @@
 
 #include <cstddef>
 
-
 /** Apply a callable over all the arguments. */
 template<class Callable>
 size_t foreach(Callable c)
 {
     return 0;
 }
+
 template<class Callable, typename Arg, typename... Rest>
 size_t foreach(Callable c, Arg arg, Rest... rest)
 {

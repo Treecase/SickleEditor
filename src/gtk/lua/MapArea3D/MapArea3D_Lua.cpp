@@ -25,9 +25,7 @@
 
 #define METATABLE "Sickle.gtk.maparea3d"
 
-
 using namespace Sickle;
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -39,16 +37,26 @@ static int pick_object(lua_State *L)
     if (obj)
     {
         if (typeid(*obj.get()) == typeid(Editor::Brush))
+        {
             Lua::push(L, Editor::BrushRef::cast_dynamic(obj));
+        }
         else if (typeid(*obj.get()) == typeid(Editor::Entity))
+        {
             Lua::push(L, Editor::EntityRef::cast_dynamic(obj));
+        }
         else if (typeid(*obj.get()) == typeid(Editor::Face))
+        {
             Lua::push(L, Editor::FaceRef::cast_dynamic(obj));
+        }
         else
+        {
             return luaL_error(L, "object could not be pushed");
+        }
     }
     else
+    {
         lua_pushnil(L);
+    }
     return 1;
 }
 
@@ -148,33 +156,32 @@ static int do_nothing(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
-    {"pick_object", pick_object},
-    {"screenspace_to_glspace", screenspace_to_glspace},
+    {            "pick_object",            pick_object},
+    { "screenspace_to_glspace", screenspace_to_glspace},
 
-    {"get_camera", get_camera},
-    {"get_editor", get_editor},
-    {"get_mouse_sensitivity", get_mouse_sensitivity},
-    {"get_shift_multiplier", get_shift_multiplier},
-    {"get_state", get_state},
+    {             "get_camera",             get_camera},
+    {             "get_editor",             get_editor},
+    {  "get_mouse_sensitivity",  get_mouse_sensitivity},
+    {   "get_shift_multiplier",   get_shift_multiplier},
+    {              "get_state",              get_state},
     // {"get_transform", get_transform},
-    {"get_wireframe", get_wireframe},
+    {          "get_wireframe",          get_wireframe},
 
-    {"set_camera", set_camera},
-    {"set_mouse_sensitivity", set_mouse_sensitivity},
-    {"set_shift_multiplier", set_shift_multiplier},
-    {"set_state", set_state},
+    {             "set_camera",             set_camera},
+    {  "set_mouse_sensitivity",  set_mouse_sensitivity},
+    {   "set_shift_multiplier",   set_shift_multiplier},
+    {              "set_state",              set_state},
     // {"set_transform", set_transform},
-    {"set_wireframe", set_wireframe},
+    {          "set_wireframe",          set_wireframe},
 
-    {"on_key_press_event", do_nothing},
-    {"on_key_release_event", do_nothing},
-    {"on_button_press_event", do_nothing},
-    {"on_button_release_event", do_nothing},
-    {"on_motion_notify_event", do_nothing},
-    {"on_scroll_event", do_nothing},
-    {NULL, NULL}
+    {     "on_key_press_event",             do_nothing},
+    {   "on_key_release_event",             do_nothing},
+    {  "on_button_press_event",             do_nothing},
+    {"on_button_release_event",             do_nothing},
+    { "on_motion_notify_event",             do_nothing},
+    {        "on_scroll_event",             do_nothing},
+    {                     NULL,                   NULL}
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
@@ -183,18 +190,25 @@ void Lua::push(lua_State *L, MapArea3D *maparea)
 {
     Lua::RefBuilder builder{L, METATABLE, maparea};
     if (builder.pushnew())
+    {
         return;
+    }
 
     builder.addSignalHandler(
-        maparea->signal_key_press_event(), "on_key_press_event");
+        maparea->signal_key_press_event(),
+        "on_key_press_event");
     builder.addSignalHandler(
-        maparea->signal_key_release_event(), "on_key_release_event");
+        maparea->signal_key_release_event(),
+        "on_key_release_event");
     builder.addSignalHandler(
-        maparea->signal_button_press_event(), "on_button_press_event");
+        maparea->signal_button_press_event(),
+        "on_button_press_event");
     builder.addSignalHandler(
-        maparea->signal_button_release_event(), "on_button_release_event");
+        maparea->signal_button_release_event(),
+        "on_button_release_event");
     builder.addSignalHandler(
-        maparea->signal_motion_notify_event(), "on_motion_notify_event");
+        maparea->signal_motion_notify_event(),
+        "on_motion_notify_event");
     builder.addSignalHandler(maparea->signal_scroll_event(), "on_scroll_event");
 
     builder.finish();

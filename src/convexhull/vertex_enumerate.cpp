@@ -21,7 +21,6 @@
 #include <glm/ext/scalar_constants.hpp>
 #include <glm/gtc/epsilon.hpp>
 
-
 /**
  * Cramer's rule. Solve `Ax = d` for x. Returns true if there is one solution,
  * false for no solutions or infinite solutions.
@@ -49,10 +48,10 @@ bool _cramer(glm::mat3 const &A, glm::vec3 const &d, glm::vec3 &x)
         // Single solution
         if (glm::epsilonNotEqual(D, 0.0f, HalfPlane::EPSILON))
         {
-            x = {
-                glm::determinant(glm::mat3{d, b, c}) / D,
-                glm::determinant(glm::mat3{a, d, c}) / D,
-                glm::determinant(glm::mat3{a, b, d}) / D};
+            x
+                = {glm::determinant(glm::mat3{d, b, c}) / D,
+                   glm::determinant(glm::mat3{a, d, c}) / D,
+                   glm::determinant(glm::mat3{a, b, d}) / D};
             return true;
         }
         // No unique solution
@@ -64,17 +63,21 @@ bool _cramer(glm::mat3 const &A, glm::vec3 const &d, glm::vec3 &x)
 
 /** Test if X is on or inside the polygon defined by FACETS. */
 bool _is_point_in_polygon(
-    std::vector<HalfPlane> const &facets, glm::vec3 const &x)
+    std::vector<HalfPlane> const &facets,
+    glm::vec3 const &x)
 {
     for (auto const &f : facets)
+    {
         if (f.classify(x) == ABOVE)
+        {
             return false;
+        }
+    }
     return true;
 }
 
-
-std::unordered_set<glm::vec3>
-vertex_enumeration(std::vector<HalfPlane> const &facets)
+std::unordered_set<glm::vec3> vertex_enumeration(
+    std::vector<HalfPlane> const &facets)
 {
     // Algorithm from
     // http://www.lab2.kuis.kyoto-u.ac.jp/~avis/courses/pc/2010/notes/lec2.pdf
@@ -98,7 +101,6 @@ vertex_enumeration(std::vector<HalfPlane> const &facets)
     // [d1]   [a1 b1 c1]              [a1x1 b1x2 c1x3]
     // [d2] + [a2 b2 c2] [x1 x2 x3] = [a2x1 b2x2 c2x3] >= 0
     // [..]   [   ..   ]              [      ..      ]
-
 
     // This simplified method can produce duplicates, unordered_set is used to
     // filter these out.
@@ -130,8 +132,12 @@ vertex_enumeration(std::vector<HalfPlane> const &facets)
                 // If `b_bar + B*x_bar = 0` has a unique solution, and that
                 // solution satisfies `b + A*x_bar >= 0`, output it.
                 if (_cramer(B, -b_bar, x_bar))
+                {
                     if (_is_point_in_polygon(facets, x_bar))
+                    {
                         vertices.emplace(x_bar);
+                    }
+                }
             }
         }
     }

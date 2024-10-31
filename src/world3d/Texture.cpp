@@ -20,7 +20,6 @@
 
 #include <editor/textures/TextureManager.hpp>
 
-
 /** Create a GLUtil::Texture shared_ptr. */
 static auto make_texture(std::string const &name)
 {
@@ -35,9 +34,8 @@ static auto make_texture(std::string const &name)
     return texture;
 }
 
-
-decltype(World3D::Texture::texture)
-World3D::Texture::make_gltexture_for_texinfo(TexInfo const &texinfo)
+decltype(World3D::Texture::texture) World3D::Texture::
+    make_gltexture_for_texinfo(TexInfo const &texinfo)
 {
     static std::vector const MIPMAPS{
         Sickle::Editor::Textures::MipmapLevel::MIPMAP_FULL,
@@ -64,22 +62,21 @@ World3D::Texture::make_gltexture_for_texinfo(TexInfo const &texinfo)
     return texture;
 }
 
-
-
 World3D::Texture::Texture(TexInfo const &texinfo)
-:   texture{make_gltexture_for_texinfo(texinfo)}
-,   width{texinfo->get_width()}
-,   height{texinfo->get_height()}
+: texture{make_gltexture_for_texinfo(texinfo)}
+, width{texinfo->get_width()}
+, height{texinfo->get_height()}
 {
 }
-
 
 std::shared_ptr<World3D::Texture> World3D::Texture::make_missing_texture()
 {
     static std::shared_ptr<Texture> missing{nullptr};
     // Reuse the existing texture if its already been generated.
     if (missing)
+    {
         return missing;
+    }
 
     missing.reset(new Texture{});
 
@@ -88,7 +85,7 @@ std::shared_ptr<World3D::Texture> World3D::Texture::make_missing_texture()
     missing->width = SIZE;
     missing->height = SIZE;
     missing->texture = make_texture("MISSING");
-    uint8_t pixels[SIZE*SIZE * 4];
+    uint8_t pixels[SIZE * SIZE * 4];
     for (size_t y = 0; y < SIZE; ++y)
     {
         for (size_t x = 0; x < SIZE; ++x)
@@ -96,27 +93,32 @@ std::shared_ptr<World3D::Texture> World3D::Texture::make_missing_texture()
             auto const idx = 4 * (y * SIZE + x);
             if ((x < HSIZE && y < HSIZE) || (x >= HSIZE && y >= HSIZE))
             {
-                pixels[idx+0] = 0x00;
-                pixels[idx+1] = 0x00;
-                pixels[idx+2] = 0x00;
+                pixels[idx + 0] = 0x00;
+                pixels[idx + 1] = 0x00;
+                pixels[idx + 2] = 0x00;
             }
             else
             {
-                pixels[idx+0] = 0xff;
-                pixels[idx+1] = 0x00;
-                pixels[idx+2] = 0xff;
+                pixels[idx + 0] = 0xff;
+                pixels[idx + 1] = 0x00;
+                pixels[idx + 2] = 0xff;
             }
-            pixels[idx+3] = 0xff;
+            pixels[idx + 3] = 0xff;
         }
     }
     glTexImage2D(
-        missing->texture->type(), 0, GL_RGBA,
-        missing->width, missing->height, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        missing->texture->type(),
+        0,
+        GL_RGBA,
+        missing->width,
+        missing->height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        pixels);
     glGenerateMipmap(missing->texture->type());
     return missing;
 }
-
 
 std::shared_ptr<World3D::Texture> World3D::Texture::create_for_name(
     std::string const &texture_name)
@@ -125,19 +127,23 @@ std::shared_ptr<World3D::Texture> World3D::Texture::create_for_name(
     TexInfo texinfo{nullptr};
 
     // Get texture info for the named texture.
-    try {
+    try
+    {
         texinfo = texman.get_texture(texture_name);
     }
     // If this fails, the texture doesn't exist. Return missing texture.
-    catch (std::out_of_range const &) {
+    catch (std::out_of_range const &)
+    {
         return make_missing_texture();
     }
 
     // Try to get cached texture.
-    try {
+    try
+    {
         return texinfo->get_cached<Texture>();
     }
-    catch (std::out_of_range const &) {
+    catch (std::out_of_range const &)
+    {
     }
 
     // Texture isn't cached, we have to create (and cache) it.

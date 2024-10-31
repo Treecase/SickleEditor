@@ -22,33 +22,32 @@
 
 using namespace Sickle;
 
-
 std::vector<std::shared_ptr<Component>> Componentable::get_components() const
 {
     return components;
 }
-
 
 std::vector<std::shared_ptr<Component>> Componentable::get_components_matching(
     std::function<bool(std::shared_ptr<Component>)> predicate) const
 {
     std::vector<std::shared_ptr<Component>> matching{};
     std::copy_if(
-        components.cbegin(), components.cend(),
+        components.cbegin(),
+        components.cend(),
         std::back_inserter(matching),
         predicate);
     return matching;
 }
 
-
 void Componentable::add_component(std::shared_ptr<Component> const &component)
 {
     if (!component)
+    {
         return;
+    }
     component->on_attach(*this);
     components.push_back(component);
 }
-
 
 void Componentable::remove_component(
     std::shared_ptr<Component> const &component)

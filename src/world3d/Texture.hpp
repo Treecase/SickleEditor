@@ -26,7 +26,6 @@
 
 #include <memory>
 
-
 namespace World3D
 {
     class Texture
@@ -57,11 +56,10 @@ namespace World3D
         static decltype(texture) make_gltexture_for_texinfo(
             TexInfo const &texinfo);
 
-        Texture()=default;
+        Texture() = default;
         /** @warning Requires an active OpenGL context. */
         Texture(TexInfo const &texinfo);
-
     };
-}
+} // namespace World3D
 
 #endif

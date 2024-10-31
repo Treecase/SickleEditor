@@ -20,55 +20,46 @@
 
 #include <functional>
 
-
 using namespace Sickle::Editor::Textures;
 
-
-using GetMipmapDataFunc =\
-    std::function<std::vector<uint8_t>(WAD::LumpTexture const *)>;
+using GetMipmapDataFunc
+    = std::function<std::vector<uint8_t>(WAD::LumpTexture const *)>;
 
 static std::unordered_map<MipmapLevel, GetMipmapDataFunc> const
-GET_MIPMAP_DATA_FUNCS{
-    {MipmapLevel::MIPMAP_FULL, std::mem_fn(&WAD::LumpTexture::tex1)},
-    {MipmapLevel::MIPMAP_HALF, std::mem_fn(&WAD::LumpTexture::tex2)},
-    {MipmapLevel::MIPMAP_QUARTER, std::mem_fn(&WAD::LumpTexture::tex4)},
-    {MipmapLevel::MIPMAP_EIGHTH, std::mem_fn(&WAD::LumpTexture::tex8)},
+    GET_MIPMAP_DATA_FUNCS{
+        {   MipmapLevel::MIPMAP_FULL, std::mem_fn(&WAD::LumpTexture::tex1)},
+        {   MipmapLevel::MIPMAP_HALF, std::mem_fn(&WAD::LumpTexture::tex2)},
+        {MipmapLevel::MIPMAP_QUARTER, std::mem_fn(&WAD::LumpTexture::tex4)},
+        { MipmapLevel::MIPMAP_EIGHTH, std::mem_fn(&WAD::LumpTexture::tex8)},
 };
-
-
 
 TextureInfo::TextureInfo(
     std::string source_wad,
     WAD::LumpTexture const &texlump)
-:   _source_wad{source_wad}
-,   _texlump{texlump}
+: _source_wad{source_wad}
+, _texlump{texlump}
 {
 }
-
 
 std::string TextureInfo::get_source_wad() const
 {
     return _source_wad;
 }
 
-
 std::string TextureInfo::get_name() const
 {
     return _texlump.name();
 }
-
 
 unsigned int TextureInfo::get_width(MipmapLevel mipmap) const
 {
     return _texlump.width() / (1 << static_cast<int>(mipmap));
 }
 
-
 unsigned int TextureInfo::get_height(MipmapLevel mipmap) const
 {
     return _texlump.height() / (1 << static_cast<int>(mipmap));
 }
-
 
 std::shared_ptr<uint8_t[]> TextureInfo::load_rgba(MipmapLevel mipmap) const
 {
@@ -76,21 +67,19 @@ std::shared_ptr<uint8_t[]> TextureInfo::load_rgba(MipmapLevel mipmap) const
     auto const tex = std::invoke(GET_MIPMAP_DATA_FUNCS.at(mipmap), &_texlump);
 
     auto const texture_size = get_width(mipmap) * get_height(mipmap);
-    std::shared_ptr<uint8_t[]> buffer{
-        new uint8_t[texture_size * 4]};
+    std::shared_ptr<uint8_t[]> buffer{new uint8_t[texture_size * 4]};
 
     for (size_t i = 0; i < texture_size; ++i)
     {
         auto const &rgb = palette.at(tex.at(i));
-        buffer[(i*4)+0] = rgb.at(0);
-        buffer[(i*4)+1] = rgb.at(1);
-        buffer[(i*4)+2] = rgb.at(2);
-        buffer[(i*4)+3] = 0xff;
+        buffer[(i * 4) + 0] = rgb.at(0);
+        buffer[(i * 4) + 1] = rgb.at(1);
+        buffer[(i * 4) + 2] = rgb.at(2);
+        buffer[(i * 4) + 3] = 0xff;
     }
 
     return buffer;
 }
-
 
 std::shared_ptr<uint8_t[]> TextureInfo::load_rgb(MipmapLevel mipmap) const
 {
@@ -98,15 +87,14 @@ std::shared_ptr<uint8_t[]> TextureInfo::load_rgb(MipmapLevel mipmap) const
     auto const tex = std::invoke(GET_MIPMAP_DATA_FUNCS.at(mipmap), &_texlump);
 
     auto const texture_size = get_width(mipmap) * get_height(mipmap);
-    std::shared_ptr<uint8_t[]> buffer{
-        new uint8_t[texture_size * 3]};
+    std::shared_ptr<uint8_t[]> buffer{new uint8_t[texture_size * 3]};
 
     for (size_t i = 0; i < texture_size; ++i)
     {
         auto const &rgb = palette.at(tex.at(i));
-        buffer[(i*3)+0] = rgb.at(0);
-        buffer[(i*3)+1] = rgb.at(1);
-        buffer[(i*3)+2] = rgb.at(2);
+        buffer[(i * 3) + 0] = rgb.at(0);
+        buffer[(i * 3) + 1] = rgb.at(1);
+        buffer[(i * 3) + 2] = rgb.at(2);
     }
 
     return buffer;

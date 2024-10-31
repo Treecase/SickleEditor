@@ -18,9 +18,7 @@
 
 #include "CellRendererProperty.hpp"
 
-
 using namespace Sickle::AppWin;
-
 
 CellRendererProperty::StringRenderer::StringRenderer()
 {
@@ -28,18 +26,15 @@ CellRendererProperty::StringRenderer::StringRenderer()
     _renderer.signal_edited().connect(signal_changed.make_slot());
 }
 
-
 void CellRendererProperty::StringRenderer::set_value(ValueType const &value)
 {
     _renderer.property_text() = value.value;
 }
 
-
 Gtk::CellRenderer *CellRendererProperty::StringRenderer::renderer()
 {
     return &_renderer;
 }
-
 
 Gtk::CellRendererMode CellRendererProperty::StringRenderer::mode()
 {

@@ -27,7 +27,6 @@
 #include <gtkmm/treestore.h>
 #include <gtkmm/treeview.h>
 
-
 namespace Sickle
 {
     /**
@@ -40,29 +39,37 @@ namespace Sickle
     public:
         FunctionInspector();
 
-        auto property_lua_state() {return _prop_lua_state.get_proxy();}
-        auto property_lua_state() const {return _prop_lua_state.get_proxy();}
-        void set_lua_state(lua_State *L) {property_lua_state().set_value(L);}
-        lua_State *get_lua_state() const {
-            return static_cast<lua_State *>(property_lua_state().get_value());}
+        auto property_lua_state() { return _prop_lua_state.get_proxy(); }
+
+        auto property_lua_state() const { return _prop_lua_state.get_proxy(); }
+
+        void set_lua_state(lua_State *L) { property_lua_state().set_value(L); }
+
+        lua_State *get_lua_state() const
+        {
+            return static_cast<lua_State *>(property_lua_state().get_value());
+        }
 
         /** Lua call stack level to be inspected. */
-        auto property_level() {return _prop_level.get_proxy();}
+        auto property_level() { return _prop_level.get_proxy(); }
+
         /** Lua call stack level to be inspected. */
-        auto property_level() const {return _prop_level.get_proxy();}
+        auto property_level() const { return _prop_level.get_proxy(); }
+
         /**
          * Set the call stack level to inspect.
          *
          * @todo Limit the value to valid stack levels.
          * @param level The new stack level.
          */
-        void set_level(int level) {property_level().set_value(level);}
+        void set_level(int level) { property_level().set_value(level); }
+
         /**
          * Get the stack level of the function currently being inspected.
          *
          * @return The inspected stack level.
          */
-        int get_level() const {return property_level().get_value();}
+        int get_level() const { return property_level().get_value(); }
 
         void update();
         void clear();
@@ -90,6 +97,6 @@ namespace Sickle
 
         void on_level_changed();
     };
-}
+} // namespace Sickle
 
 #endif

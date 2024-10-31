@@ -20,9 +20,7 @@
 
 #include <config/appid.hpp>
 
-
 using namespace Sickle::AppWin;
-
 
 OperationSearch *OperationSearch::create(Editor::EditorRef const &editor)
 {
@@ -33,24 +31,21 @@ OperationSearch *OperationSearch::create(Editor::EditorRef const &editor)
     return opsearch;
 }
 
-
-
 OperationSearch::OperationSearch()
-:   Glib::ObjectBase{"OperationSearch"}
+: Glib::ObjectBase{"OperationSearch"}
 {
 }
-
 
 OperationSearch::OperationSearch(
     BaseObjectType *cobject,
     Glib::RefPtr<Gtk::Builder> const &builder,
     Editor::EditorRef const &editor)
-:   Glib::ObjectBase{"OperationSearch"}
-,   Gtk::Window{cobject}
-,   _editor{editor}
-,   _operations{Gtk::ListStore::create(_columns())}
-,   _filtered{Gtk::TreeModelFilter::create(_operations)}
-,   _sorted{Gtk::TreeModelSort::create(_filtered)}
+: Glib::ObjectBase{"OperationSearch"}
+, Gtk::Window{cobject}
+, _editor{editor}
+, _operations{Gtk::ListStore::create(_columns())}
+, _filtered{Gtk::TreeModelFilter::create(_operations)}
+, _sorted{Gtk::TreeModelSort::create(_filtered)}
 {
     builder->get_widget("searchbar", _searchbar);
     builder->get_widget("operationview", _treeview);
@@ -67,8 +62,9 @@ OperationSearch::OperationSearch(
 
     auto const &ops = _editor->oploader->get_operations();
     for (auto const &operation : ops)
+    {
         _add_row(operation);
-
+    }
 
     _editor->oploader->signal_operation_added().connect(
         sigc::mem_fun(*this, &OperationSearch::_on_editor_operation_added));
@@ -82,12 +78,7 @@ OperationSearch::OperationSearch(
         sigc::mem_fun(*this, &OperationSearch::_on_row_activated));
 }
 
-
-OperationSearch::~OperationSearch()
-{
-}
-
-
+OperationSearch::~OperationSearch() {}
 
 bool OperationSearch::on_focus_out_event(GdkEventFocus *gdk_event)
 {
@@ -95,13 +86,11 @@ bool OperationSearch::on_focus_out_event(GdkEventFocus *gdk_event)
     return Gtk::Window::on_focus_out_event(gdk_event);
 }
 
-
 void OperationSearch::on_hide()
 {
     Gtk::Window::on_hide();
     _searchbar->set_text("");
 }
-
 
 bool OperationSearch::on_key_press_event(GdkEventKey *event)
 {
@@ -113,26 +102,27 @@ bool OperationSearch::on_key_press_event(GdkEventKey *event)
     return Gtk::Window::on_key_press_event(event);
 }
 
-
-
 OperationSearch::Columns &OperationSearch::_columns()
 {
     static Columns columns{};
     return columns;
 }
 
-
 size_t OperationSearch::_similarity(
-    Glib::ustring const &a, Glib::ustring const &b)
+    Glib::ustring const &a,
+    Glib::ustring const &b)
 {
     auto const ac = a.casefold();
     auto const bc = b.casefold();
     for (size_t i = 0; i < ac.size() && i < bc.size(); ++i)
+    {
         if (ac.at(i) != bc.at(i))
+        {
             return i;
+        }
+    }
     return bc.size();
 }
-
 
 void OperationSearch::_add_row(Editor::Operation const &op)
 {
@@ -143,16 +133,19 @@ void OperationSearch::_add_row(Editor::Operation const &op)
     iter->set_value<Glib::ustring>(_columns().name, op.id());
 }
 
-
 bool OperationSearch::_filter_visible_func(
     Gtk::TreeModelFilter::iterator const &iter) const
 {
     if (!iter)
+    {
         return false;
+    }
 
     auto const op = iter->get_value(_columns().operation);
     if (!op)
+    {
         return false;
+    }
 
     auto const query = _searchbar->get_text();
     Glib::ustring const name{op->name};
@@ -164,13 +157,18 @@ bool OperationSearch::_filter_visible_func(
     return name_matches && correct_mode;
 }
 
-
 int OperationSearch::_operations_sort_func(
     Gtk::TreeModel::iterator const &a,
     Gtk::TreeModel::iterator const &b) const
 {
-    if (!a) return -1;
-    if (!b) return 1;
+    if (!a)
+    {
+        return -1;
+    }
+    if (!b)
+    {
+        return 1;
+    }
 
     auto const aptr = a->get_value(_columns().operation);
     auto const bptr = b->get_value(_columns().operation);
@@ -183,19 +181,23 @@ int OperationSearch::_operations_sort_func(
     auto const sim_b = _similarity(bu, query);
 
     if (sim_a < sim_b)
+    {
         return 1;
+    }
     else if (sim_a == sim_b)
+    {
         return au.casefold().compare(bu.casefold());
+    }
     else
+    {
         return -1;
+    }
 }
-
 
 void OperationSearch::_on_editor_operation_added(std::string const &id)
 {
     _add_row(_editor->oploader->get_operation(id));
 }
-
 
 void OperationSearch::_on_row_activated(
     Gtk::TreeModel::Path const &path,
@@ -210,7 +212,6 @@ void OperationSearch::_on_row_activated(
 
     signal_operation_chosen().emit(*operation);
 }
-
 
 void OperationSearch::_on_search_changed()
 {

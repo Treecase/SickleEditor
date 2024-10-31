@@ -19,10 +19,8 @@
 
 #include "DeferredExec.hpp"
 
-
 sigc::signal<void()> DeferredExec::_sig_glcontext_ready{};
 sigc::signal<void()> DeferredExec::_sig_glcontext_unready{};
-
 
 void DeferredExec::context_ready()
 {
@@ -34,7 +32,6 @@ void DeferredExec::context_unready()
     _sig_glcontext_unready.emit();
 }
 
-
 DeferredExec::DeferredExec()
 {
     _conn_ready = _sig_glcontext_ready.connect(
@@ -43,13 +40,11 @@ DeferredExec::DeferredExec()
         sigc::mem_fun(*this, &DeferredExec::_on_unready));
 }
 
-
 DeferredExec::~DeferredExec()
 {
     _conn_ready.disconnect();
     _conn_unready.disconnect();
 }
-
 
 void DeferredExec::flush_queue()
 {
@@ -61,30 +56,31 @@ void DeferredExec::flush_queue()
     }
 }
 
-
 void DeferredExec::clear_queue()
 {
     while (!_queue.empty())
+    {
         _queue.pop();
+    }
 }
-
 
 void DeferredExec::push_queue(QueuedFunc func)
 {
     if (_is_ready)
+    {
         std::invoke(func);
+    }
     else
+    {
         _queue.push(func);
+    }
 }
-
-
 
 void DeferredExec::_on_ready()
 {
     _is_ready = true;
     flush_queue();
 }
-
 
 void DeferredExec::_on_unready()
 {

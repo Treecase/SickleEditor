@@ -24,12 +24,10 @@
 
 using namespace Sickle::Editor;
 
-
 BrushRef Brush::create()
 {
     return Glib::RefPtr{new Brush()};
 }
-
 
 BrushRef Brush::create(std::vector<glm::vec3> const &vertices)
 {
@@ -47,12 +45,13 @@ BrushRef Brush::create(std::vector<glm::vec3> const &vertices)
     return result;
 }
 
-
 BrushRef Brush::create(MAP::Brush const &brush)
 {
     std::vector<HalfPlane> halfplanes{};
     for (auto const &plane : brush.planes)
+    {
         halfplanes.emplace_back(plane.a, plane.b, plane.c);
+    }
     auto const vertices = vertex_enumeration(halfplanes);
     assert(vertices.size() != 0);
 
@@ -66,7 +65,6 @@ BrushRef Brush::create(MAP::Brush const &brush)
     return result;
 }
 
-
 BrushRef Brush::create(RMF::Solid const &solid)
 {
     auto result = Brush::create();
@@ -79,51 +77,55 @@ BrushRef Brush::create(RMF::Solid const &solid)
     return result;
 }
 
-
 Brush::Brush()
-:   Glib::ObjectBase{typeid(Brush)}
-,   Lua::Referenceable{}
+: Glib::ObjectBase{typeid(Brush)}
+, Lua::Referenceable{}
 {
     signal_removed().connect(sigc::mem_fun(*this, &Brush::on_removed));
 }
 
-
 Brush::~Brush()
 {
     for (auto const &face : _faces)
+    {
         signal_child_removed().emit(face);
+    }
 }
-
 
 Brush::operator MAP::Brush() const
 {
     MAP::Brush out{};
     for (auto const &face : _faces)
+    {
         out.planes.push_back(*face.get());
+    }
     return out;
 }
-
 
 std::vector<FaceRef> Brush::faces() const
 {
     return _faces;
 }
 
-
 void Brush::transform(glm::mat4 const &matrix)
 {
     for (auto &face : _faces)
+    {
         for (size_t i = 0; i < face->get_vertices().size(); ++i)
+        {
             face->set_vertex(
-                i, glm::vec3{matrix * glm::vec4{face->get_vertex(i), 1.0}});
+                i,
+                glm::vec3{
+                    matrix * glm::vec4{face->get_vertex(i), 1.0}
+            });
+        }
+    }
 }
-
 
 void Brush::translate(glm::vec3 const &translation)
 {
     transform(glm::translate(glm::mat4{1.0}, translation));
 }
-
 
 /* ---[ EditorObject interface ]--- */
 Glib::ustring Brush::name() const
@@ -133,23 +135,21 @@ Glib::ustring Brush::name() const
     return Glib::ustring{ss.str()};
 }
 
-
 Glib::RefPtr<Gdk::Pixbuf> Brush::icon() const
 {
-    return Gdk::Pixbuf::create_from_resource(
-        SE_GRESOURCE_PREFIX "icons/outliner/brush.png");
+    return Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX
+                                             "icons/outliner/brush.png");
 }
-
 
 std::vector<EditorObjectRef> Brush::children() const
 {
     std::vector<EditorObjectRef> out{};
     for (auto const &face : _faces)
+    {
         out.push_back(face);
+    }
     return out;
 }
-
-
 
 void Brush::on_removed()
 {

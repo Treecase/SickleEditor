@@ -20,70 +20,75 @@
 
 using namespace Sickle::Editor;
 
-
 void Selection::clear()
 {
     signal_updated().block();
     auto const copy = _selected;
     for (auto item : copy)
+    {
         remove(item);
+    }
     signal_updated().unblock();
     signal_updated().emit();
 }
 
-
 void Selection::add(Item item)
 {
     if (contains(item))
+    {
         return;
+    }
     if (!item->is_selected())
+    {
         item->select(true);
+    }
     _selected.emplace(item);
     signal_updated().emit();
 }
 
-
 void Selection::remove(Item item)
 {
     if (!contains(item))
+    {
         return;
+    }
     if (item->is_selected())
+    {
         item->select(false);
+    }
     _selected.erase(item);
     signal_updated().emit();
 }
-
 
 bool Selection::contains(Item item) const
 {
     return _selected.count(item) != 0;
 }
 
-
 bool Selection::empty() const
 {
     return _selected.empty();
 }
 
-
-std::vector<Selection::Item>
-Selection::get_all_of_type(std::type_info const &type) const
+std::vector<Selection::Item> Selection::get_all_of_type(
+    std::type_info const &type) const
 {
     std::vector<Item> items{};
     std::copy_if(
-        begin(), end(),
+        begin(),
+        end(),
         std::back_inserter(items),
-        [&type](Item const &item) -> bool {
-            return typeid(*item.get()) == type;
-        });
+        [&type](Item const &item) -> bool
+        { return typeid(*item.get()) == type; });
     return items;
 }
-
 
 Selection::Item Selection::get_latest_of_type(std::type_info const &type) const
 {
     auto const all = get_all_of_type(type);
     if (!all.empty())
+    {
         return all.back();
+    }
     return Item{};
 }

@@ -27,21 +27,20 @@
 
 #include <cstdint>
 
-
 namespace RMF
 {
     struct LoadError : public std::runtime_error
     {
         LoadError(std::streampos where, std::string const &what)
-        :   std::runtime_error{_make_what(where, what)}
+        : std::runtime_error{_make_what(where, what)}
         {
         }
 
     private:
-        static std::string
-        _make_what(std::streampos where, std::string const &what);
+        static std::string _make_what(
+            std::streampos where,
+            std::string const &what);
     };
-
 
     struct Color
     {
@@ -123,7 +122,6 @@ namespace RMF
         Vector look{};
     };
 
-
     struct RichMap
     {
         float version;
@@ -137,6 +135,6 @@ namespace RMF
     };
 
     RichMap load(std::string const &path);
-}
+} // namespace RMF
 
 #endif

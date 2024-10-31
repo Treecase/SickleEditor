@@ -23,21 +23,19 @@
 
 #include <ostream>
 
-
 namespace std
 {
-std::ostream &operator<<(std::ostream &os, MAP::Vertex const &vertex);
-std::ostream &operator<<(std::ostream &os, MAP::Plane const &plane);
-std::ostream &operator<<(std::ostream &os, MAP::Brush const &brush);
-std::ostream &operator<<(std::ostream &os, MAP::Entity const &entity);
-std::ostream &operator<<(std::ostream &os, MAP::Map const &map);
-}
-
+    std::ostream &operator<<(std::ostream &os, MAP::Vertex const &vertex);
+    std::ostream &operator<<(std::ostream &os, MAP::Plane const &plane);
+    std::ostream &operator<<(std::ostream &os, MAP::Brush const &brush);
+    std::ostream &operator<<(std::ostream &os, MAP::Entity const &entity);
+    std::ostream &operator<<(std::ostream &os, MAP::Map const &map);
+} // namespace std
 
 namespace MAP
 {
     /** Save a map to a .map file. */
     void save(std::ostream &out, Map const &map);
-}
+} // namespace MAP
 
 #endif

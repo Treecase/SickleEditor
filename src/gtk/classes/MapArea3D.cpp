@@ -20,24 +20,34 @@
 
 #include <gtkmm/messagedialog.h>
 #include <utils/BoundingBox.hpp>
-#include <world3d/RenderComponentFactory.hpp>
 #include <world3d/raycast/Collider.hpp>
 #include <world3d/raycast/ColliderFactory.hpp>
+#include <world3d/RenderComponentFactory.hpp>
 
 #include <iostream>
 
+#define DEFAULT_MOUSE_SENSITIVITY 0.75f
 
-#define DEFAULT_MOUSE_SENSITIVITY   0.75f
+#define NEAR_PLANE 0.1f
+#define FAR_PLANE 1000.0f
 
-#define NEAR_PLANE  0.1f
-#define FAR_PLANE   1000.0f
+#define DEFAULT_CAMERA                \
+    {                                 \
+        {0.0f, 0.0f, 0.0f},           \
+        {glm::radians(180.0f), 0.0f}, \
+        70.0f,                        \
+        1.0f,                         \
+        30.0f,                        \
+        90.0f \
+}
+#define DEFAULT_TRANSFORM                   \
+    {                                       \
+        {                0.0f,   0.0f,   0.0f},                 \
+        {glm::radians(-90.0f),   0.0f,   0.0f}, \
+        {              0.005f, 0.005f, 0.005f} \
+    }
 
-#define DEFAULT_CAMERA  {{0.0f, 0.0f, 0.0f}, {glm::radians(180.0f), 0.0f}, 70.0f, 1.0f, 30.0f, 90.0f}
-#define DEFAULT_TRANSFORM   {{0.0f, 0.0f, 0.0f}, {glm::radians(-90.0f), 0.0f, 0.0f}, {0.005f, 0.005f, 0.005f}}
-
-
-bool
-raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
+bool raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
 {
     // https://people.csail.mit.edu/amy/papers/box-jgt.pdf
     float tmin, tmax, tymin, tymax, tzmin, tzmax;
@@ -62,11 +72,17 @@ raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
         tymax = (bbox.min.y - pos.y) / delta.y;
     }
     if ((tmin > tymax) || (tymin > tmax))
+    {
         return false;
+    }
     if (tymin > tmin)
+    {
         tmin = tymin;
+    }
     if (tymax < tmax)
+    {
         tmax = tymax;
+    }
     if (delta.z >= 0)
     {
         tzmin = (bbox.min.z - pos.z) / delta.z;
@@ -78,30 +94,33 @@ raycast(glm::vec3 pos, glm::vec3 delta, BBox3 const &bbox, float &t)
         tzmax = (bbox.min.z - pos.z) / delta.z;
     }
     if ((tmin > tzmax) || (tzmin > tmax))
+    {
         return false;
+    }
     if (tzmin > tmin)
+    {
         tmin = tzmin;
+    }
     if (tzmax < tmax)
+    {
         tmax = tzmax;
+    }
     t = glm::min(tmin, tmax);
     return (tmin < INFINITY) && (tmax > 0);
 }
 
-
-
 /* ===[ MapArea3D ]=== */
 Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
-:   Glib::ObjectBase{typeid(MapArea3D)}
-,   Gtk::GLArea{}
-,   Lua::Referenceable{}
-,   _editor{ed}
-,   _prop_camera{*this, "camera", DEFAULT_CAMERA}
-,   _prop_mouse_sensitivity{
-        *this, "mouse-sensitivity", DEFAULT_MOUSE_SENSITIVITY}
-,   _prop_shift_multiplier{*this, "grid-size", 2.0f}
-,   _prop_state{*this, "state", {}}
-,   _prop_transform{*this, "transform", DEFAULT_TRANSFORM}
-,   _prop_wireframe{*this, "wireframe", false}
+: Glib::ObjectBase{typeid(MapArea3D)}
+, Gtk::GLArea{}
+, Lua::Referenceable{}
+, _editor{ed}
+, _prop_camera{*this, "camera", DEFAULT_CAMERA}
+, _prop_mouse_sensitivity{*this, "mouse-sensitivity", DEFAULT_MOUSE_SENSITIVITY}
+, _prop_shift_multiplier{*this, "grid-size", 2.0f}
+, _prop_state{*this, "state", {}}
+, _prop_transform{*this, "transform", DEFAULT_TRANSFORM}
+, _prop_wireframe{*this, "wireframe", false}
 {
     set_required_version(4, 3);
     set_use_es(false);
@@ -132,80 +151,82 @@ Sickle::MapArea3D::MapArea3D(Editor::EditorRef ed)
         sigc::mem_fun(*this, &MapArea3D::on_wireframe_changed));
 
     add_events(
-        Gdk::POINTER_MOTION_MASK
-        | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
-        | Gdk::BUTTON_MOTION_MASK
-        | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK
-        | Gdk::SCROLL_MASK
-        | Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
+        Gdk::POINTER_MOTION_MASK | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
+        | Gdk::BUTTON_MOTION_MASK | Gdk::BUTTON_PRESS_MASK
+        | Gdk::BUTTON_RELEASE_MASK | Gdk::SCROLL_MASK | Gdk::ENTER_NOTIFY_MASK
+        | Gdk::LEAVE_NOTIFY_MASK);
 
     add_tick_callback(sigc::mem_fun(*this, &MapArea3D::tick_callback));
 
-
     // Set global PointEntityBox 3D render callback.
-    World3D::PointEntityBox::predraw =\
-        [this](
-            World3D::PointEntityBox::ShaderParams &params,
-            Editor::Entity const *entity) -> void
-        {
-            auto const &camera = property_camera().get_value();
-            params.model =\
-                property_transform().get_value().getMatrix() * params.model;
-            params.view = camera.getViewMatrix();
-            params.projection = glm::perspective(
-                glm::radians(camera.fov),
-                get_width() / (float)get_height(),
-                NEAR_PLANE, FAR_PLANE);
-        };
+    World3D::PointEntityBox::predraw
+        = [this](
+              World3D::PointEntityBox::ShaderParams &params,
+              Editor::Entity const *entity) -> void
+    {
+        auto const &camera = property_camera().get_value();
+        params.model
+            = property_transform().get_value().getMatrix() * params.model;
+        params.view = camera.getViewMatrix();
+        params.projection = glm::perspective(
+            glm::radians(camera.fov),
+            get_width() / (float)get_height(),
+            NEAR_PLANE,
+            FAR_PLANE);
+    };
 
     // Set global PointEntitySprite 3D render callback.
-    World3D::PointEntitySprite::predraw =\
-        [this](
-            World3D::PointEntitySprite::ShaderParams &params,
-            Editor::Entity const *entity) -> void
-        {
-            auto const &camera = property_camera().get_value();
-            params.model =\
-                property_transform().get_value().getMatrix() * params.model;
-            params.view = camera.getViewMatrix();
-            params.projection = glm::perspective(
-                glm::radians(camera.fov),
-                get_width() / (float)get_height(),
-                NEAR_PLANE, FAR_PLANE);
-        };
+    World3D::PointEntitySprite::predraw
+        = [this](
+              World3D::PointEntitySprite::ShaderParams &params,
+              Editor::Entity const *entity) -> void
+    {
+        auto const &camera = property_camera().get_value();
+        params.model
+            = property_transform().get_value().getMatrix() * params.model;
+        params.view = camera.getViewMatrix();
+        params.projection = glm::perspective(
+            glm::radians(camera.fov),
+            get_width() / (float)get_height(),
+            NEAR_PLANE,
+            FAR_PLANE);
+    };
 
     // Set global Brush 3D render callback.
-    World3D::Brush::predraw =\
-        [this](GLUtil::Program &shader, Editor::Brush const *brush) -> void {
-            auto const &camera = property_camera().get_value();
-            shader.setUniformS(
-                "model",
-                property_transform().get_value().getMatrix());
-            shader.setUniformS("view", camera.getViewMatrix());
-            shader.setUniformS(
-                "projection",
-                glm::perspective(
-                    glm::radians(camera.fov),
-                    get_width() / (float)get_height(),
-                    NEAR_PLANE, FAR_PLANE));
-        };
+    World3D::Brush::predraw
+        = [this](GLUtil::Program &shader, Editor::Brush const *brush) -> void
+    {
+        auto const &camera = property_camera().get_value();
+        shader.setUniformS(
+            "model",
+            property_transform().get_value().getMatrix());
+        shader.setUniformS("view", camera.getViewMatrix());
+        shader.setUniformS(
+            "projection",
+            glm::perspective(
+                glm::radians(camera.fov),
+                get_width() / (float)get_height(),
+                NEAR_PLANE,
+                FAR_PLANE));
+    };
 
     // Set global Face 3D render callback.
-    World3D::Face::predraw =\
-        [this](GLUtil::Program &shader, Editor::Face const *face) -> void {
-        };
+    World3D::Face::predraw
+        = [this](GLUtil::Program &shader, Editor::Face const *face) -> void {};
 }
 
-
-Sickle::Editor::EditorObjectRef
-Sickle::MapArea3D::pick_object(ScreenSpacePoint const &ssp)
+Sickle::Editor::EditorObjectRef Sickle::MapArea3D::pick_object(
+    ScreenSpacePoint const &ssp)
 {
-    static auto const is_collider =\
-        [](std::shared_ptr<Component> const &c) -> bool {
-            if (std::dynamic_pointer_cast<World3D::Collider>(c))
-                return true;
-            return false;
-        };
+    static auto const is_collider
+        = [](std::shared_ptr<Component> const &c) -> bool
+    {
+        if (std::dynamic_pointer_cast<World3D::Collider>(c))
+        {
+            return true;
+        }
+        return false;
+    };
 
     Sickle::Editor::EditorObjectRef picked{nullptr};
     float pt = INFINITY;
@@ -223,24 +244,20 @@ Sickle::MapArea3D::pick_object(ScreenSpacePoint const &ssp)
     // Calculate length of camera plane.
     auto const half_fov = 0.5f * _camera.fov;
     auto const distance_to_camera_plane = 1.0f;
-    auto const length_of_camera_plane = (
-        (distance_to_camera_plane * glm::sin(glm::radians(half_fov)))
-        / glm::sin(glm::radians(90.0f - half_fov)));
+    auto const length_of_camera_plane
+        = ((distance_to_camera_plane * glm::sin(glm::radians(half_fov)))
+           / glm::sin(glm::radians(90.0f - half_fov)));
 
     // Calculate x/y offsets along camera plane.
-    auto const x_component = (
-        -sspN.x
-        * length_of_camera_plane
-        * glm::normalize(_camera.getSideDirection()));
-    auto const y_component = (
-        -sspN.y
-        * length_of_camera_plane
-        * glm::normalize(_camera.getUpDirection()));
+    auto const x_component
+        = (-sspN.x * length_of_camera_plane
+           * glm::normalize(_camera.getSideDirection()));
+    auto const y_component
+        = (-sspN.y * length_of_camera_plane
+           * glm::normalize(_camera.getUpDirection()));
 
     auto const ray_delta = glm::normalize(
-        x_component
-        + y_component
-        + glm::normalize(_camera.getLookDirection()));
+        x_component + y_component + glm::normalize(_camera.getLookDirection()));
 
     // Camera is operating in GL space, map vertices are in map space. This is
     // used to transform map vertices into GL space.
@@ -252,13 +269,14 @@ Sickle::MapArea3D::pick_object(ScreenSpacePoint const &ssp)
         auto const colliders = obj->get_components_matching(is_collider);
         for (auto const &collider : colliders)
         {
-            auto const c = std::dynamic_pointer_cast<World3D::Collider>(
-                collider);
+            auto const c
+                = std::dynamic_pointer_cast<World3D::Collider>(collider);
             auto const bbox = c->get_box();
 
             BBox3 const bbox_transformed{
                 modelview * glm::vec4{bbox.min, 1.0f},
-                modelview * glm::vec4{bbox.max, 1.0f}};
+                modelview * glm::vec4{bbox.max, 1.0f}
+            };
 
             float t;
             if (raycast(_camera.pos, ray_delta, bbox_transformed, t))
@@ -277,17 +295,14 @@ Sickle::MapArea3D::pick_object(ScreenSpacePoint const &ssp)
     return picked;
 }
 
-
-Sickle::MapArea3D::GLSpacePoint
-Sickle::MapArea3D::screenspace_to_glspace(ScreenSpacePoint const &point) const
+Sickle::MapArea3D::GLSpacePoint Sickle::MapArea3D::screenspace_to_glspace(
+    ScreenSpacePoint const &point) const
 {
     return {
-        point.x - 0.5*get_allocated_width(),
-        -(point.y - 0.5*get_allocated_height()),
-        0
-    };
+        point.x - 0.5 * get_allocated_width(),
+        -(point.y - 0.5 * get_allocated_height()),
+        0};
 }
-
 
 void Sickle::MapArea3D::on_realize()
 {
@@ -302,7 +317,9 @@ void Sickle::MapArea3D::on_realize()
             "glewInit - " + std::string{(char *)glewGetErrorString(error)}};
     }
     if (glewIsSupported("GL_VERSION_4_3") == GL_FALSE)
+    {
         throw std::runtime_error{"GLEW: OpenGL Version 4.3 not supported"};
+    }
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -312,11 +329,7 @@ void Sickle::MapArea3D::on_realize()
     _synchronize_glmap();
 }
 
-
-void Sickle::MapArea3D::on_unrealize()
-{
-}
-
+void Sickle::MapArea3D::on_unrealize() {}
 
 bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
 {
@@ -334,19 +347,25 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     // Walk the world tree and execute any World3D render components.
     // Note that the traversal must be done in depth-first ordering, to allow
     // parents to set things up for their children.
-    static auto const is_render_component =\
-        [](std::shared_ptr<Component> const &c) -> bool {
-            if (std::dynamic_pointer_cast<World3D::RenderComponent>(c))
-                return true;
-            return false;
-        };
-    static auto const execute_render_components =\
-        [](Editor::EditorObjectRef const &obj) -> void {
-            auto const &components =\
-                obj->get_components_matching(is_render_component);
-            for (auto const &rc : components)
-                rc->execute();
-        };
+    static auto const is_render_component
+        = [](std::shared_ptr<Component> const &c) -> bool
+    {
+        if (std::dynamic_pointer_cast<World3D::RenderComponent>(c))
+        {
+            return true;
+        }
+        return false;
+    };
+    static auto const execute_render_components
+        = [](Editor::EditorObjectRef const &obj) -> void
+    {
+        auto const &components
+            = obj->get_components_matching(is_render_component);
+        for (auto const &rc : components)
+        {
+            rc->execute();
+        }
+    };
     _editor->get_map()->foreach(execute_render_components);
 
     // Stop deferred functions from running.
@@ -356,13 +375,12 @@ bool Sickle::MapArea3D::on_render(Glib::RefPtr<Gdk::GLContext> const &context)
     auto const projectionMatrix = glm::perspective(
         glm::radians(camera.fov),
         get_width() / (float)get_height(),
-        NEAR_PLANE, FAR_PLANE);
+        NEAR_PLANE,
+        FAR_PLANE);
     debug.drawRay(camera.getViewMatrix(), projectionMatrix);
 
     return true;
 }
-
-
 
 bool Sickle::MapArea3D::tick_callback(
     Glib::RefPtr<Gdk::FrameClock> const &clock)
@@ -380,10 +398,10 @@ bool Sickle::MapArea3D::tick_callback(
     if (glm::length(_state.move_direction) != 0.0f)
     {
         auto const direction = glm::normalize(_state.move_direction);
-        auto const motion = (
-            direction
-            * _camera.speed
-            * (_state.gofast? property_shift_multiplier().get_value() : 1.0f));
+        auto const motion
+            = (direction * _camera.speed
+               * (_state.gofast ? property_shift_multiplier().get_value()
+                                : 1.0f));
         _camera.translate(motion * delta);
     }
 
@@ -391,7 +409,7 @@ bool Sickle::MapArea3D::tick_callback(
     {
         _camera.rotate(
             _state.turn_rates
-            * (_state.gofast? property_shift_multiplier().get_value() : 1.0f)
+            * (_state.gofast ? property_shift_multiplier().get_value() : 1.0f)
             * property_mouse_sensitivity().get_value() * delta);
     }
 
@@ -400,14 +418,11 @@ bool Sickle::MapArea3D::tick_callback(
     return G_SOURCE_CONTINUE;
 }
 
-
 bool Sickle::MapArea3D::on_enter_notify_event(GdkEventCrossing *event)
 {
     grab_focus();
     return true;
-
 }
-
 
 bool Sickle::MapArea3D::on_leave_notify_event(GdkEventCrossing *crossing_event)
 {
@@ -417,7 +432,6 @@ bool Sickle::MapArea3D::on_leave_notify_event(GdkEventCrossing *crossing_event)
     return true;
 }
 
-
 void Sickle::MapArea3D::on_editor_map_changed()
 {
     property_state().reset_value();
@@ -426,31 +440,31 @@ void Sickle::MapArea3D::on_editor_map_changed()
     if (get_realized())
     {
         _synchronize_glmap();
-        debug.setRayPoints({0,0,0}, {0,0,0});
+        debug.setRayPoints({0, 0, 0}, {0, 0, 0});
         queue_render();
     }
 }
-
 
 void Sickle::MapArea3D::on_wireframe_changed()
 {
     make_current();
     glPolygonMode(
         GL_FRONT_AND_BACK,
-        property_wireframe().get_value()? GL_LINE : GL_FILL);
+        property_wireframe().get_value() ? GL_LINE : GL_FILL);
     if (property_wireframe().get_value())
+    {
         glDisable(GL_CULL_FACE);
+    }
     else
+    {
         glEnable(GL_CULL_FACE);
+    }
 }
-
 
 void Sickle::MapArea3D::on_world3d_face_missing_texture(std::string const &what)
 {
     _error_tracker.missing_textures.insert(what);
 }
-
-
 
 void Sickle::MapArea3D::_check_errors()
 {
@@ -461,7 +475,9 @@ void Sickle::MapArea3D::_check_errors()
         {
             msg += "\nMissing textures:";
             for (auto const &texture : _error_tracker.missing_textures)
+            {
                 msg += "\n<small>" + texture + "</small>";
+            }
         }
         Gtk::MessageDialog d{msg, true, Gtk::MessageType::MESSAGE_WARNING};
         d.set_title("World3D Error(s)");
@@ -469,17 +485,18 @@ void Sickle::MapArea3D::_check_errors()
     }
 }
 
-
 void Sickle::MapArea3D::_synchronize_glmap()
 {
-    static auto const add_brush = [](Editor::EditorObjectRef child) -> void {
+    static auto const add_brush = [](Editor::EditorObjectRef child) -> void
+    {
         auto const brush = Editor::BrushRef::cast_dynamic(child);
         brush->add_component(
             World3D::RenderComponentFactory{}.construct(brush));
         brush->add_component(World3D::ColliderFactory{}.construct(brush));
     };
 
-    static auto const add_entity = [](Editor::EditorObjectRef child) -> void {
+    static auto const add_entity = [](Editor::EditorObjectRef child) -> void
+    {
         auto const entity = Editor::EntityRef::cast_dynamic(child);
         entity->add_component(
             World3D::RenderComponentFactory{}.construct(entity));
@@ -487,10 +504,9 @@ void Sickle::MapArea3D::_synchronize_glmap()
 
         sigc::connection conn = entity->signal_child_added().connect(add_brush);
         entity->signal_removed().connect(
-            [conn]() mutable -> void {conn.disconnect();});
+            [conn]() mutable -> void { conn.disconnect(); });
         entity->foreach_direct(add_brush);
     };
-
 
     make_current();
     _error_tracker = ErrorTracker{};
@@ -498,7 +514,7 @@ void Sickle::MapArea3D::_synchronize_glmap()
     auto const world = _editor->get_map();
     sigc::connection conn = world->signal_child_added().connect(add_entity);
     world->signal_removed().connect(
-        [conn]() mutable -> void {conn.disconnect();});
+        [conn]() mutable -> void { conn.disconnect(); });
     world->foreach_direct(add_entity);
 
     _check_errors();

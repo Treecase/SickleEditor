@@ -18,24 +18,13 @@
 
 #include "Entity.hpp"
 
-
-void World3D::SolidEntity::render() const
-{
-}
-
+void World3D::SolidEntity::render() const {}
 
 void World3D::SolidEntity::execute()
 {
     render();
 }
 
+void World3D::SolidEntity::on_attach(Sickle::Componentable &c) {}
 
-
-void World3D::SolidEntity::on_attach(Sickle::Componentable &c)
-{
-}
-
-
-void World3D::SolidEntity::on_detach(Sickle::Componentable &c)
-{
-}
+void World3D::SolidEntity::on_detach(Sickle::Componentable &c) {}

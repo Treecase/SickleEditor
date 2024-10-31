@@ -21,19 +21,20 @@
 
 #include <iostream> // FIXME: temp?
 
-
 using namespace Sickle;
-
 
 static auto nospace_lower(Glib::ustring const &string)
 {
     Glib::ustring out{};
     for (auto const ch : string.lowercase())
+    {
         if (!g_unichar_isspace(ch))
+        {
             out += ch;
+        }
+    }
     return out;
 }
-
 
 static Glib::RefPtr<Gio::Menu> create_menu(Editor::MapTool const &tool)
 {
@@ -45,12 +46,11 @@ static Glib::RefPtr<Gio::Menu> create_menu(Editor::MapTool const &tool)
     return menu;
 }
 
-
 ToolPopupMenu::ToolPopupMenu(Editor::MapTool const &tool)
-:   Glib::ObjectBase{typeid(ToolPopupMenu)}
-,   Gtk::Menu{create_menu(tool)}
-,   _actions{Gio::SimpleActionGroup::create()}
-,   _tool{tool}
+: Glib::ObjectBase{typeid(ToolPopupMenu)}
+, Gtk::Menu{create_menu(tool)}
+, _actions{Gio::SimpleActionGroup::create()}
+, _tool{tool}
 {
     for (auto const &op : _tool.operations())
     {
@@ -63,30 +63,30 @@ ToolPopupMenu::ToolPopupMenu(Editor::MapTool const &tool)
     insert_action_group(nospace_lower(_tool.name()), _actions);
 }
 
-
 void ToolPopupMenu::set_editor(decltype(_editor) editor)
 {
     _editor = editor;
 }
-
 
 bool ToolPopupMenu::should_popup() const
 {
     return _tool.x(_editor);
 }
 
-
-
 void ToolPopupMenu::action_triggered(std::string const &id)
 {
     if (!_editor)
+    {
         return;
+    }
 
-    try {
+    try
+    {
         auto const op = _editor->oploader->get_operation(id);
         op.execute(_editor, {});
     }
-    catch (Lua::Error const &e) {
+    catch (Lua::Error const &e)
+    {
         std::cerr << e.what() << '\n'; // FIXME: temp?
     }
 }

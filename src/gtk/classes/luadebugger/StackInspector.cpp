@@ -24,17 +24,15 @@
 
 using namespace Sickle;
 
-
 StackInspector::StackInspector()
-:   Glib::ObjectBase{typeid(StackInspector)}
-,   Gtk::Bin{}
-,   _prop_lua_state{*this, "lua-state", nullptr}
-,   _store{Gtk::ListStore::create(_columns)}
-,   _view{_store}
+: Glib::ObjectBase{typeid(StackInspector)}
+, Gtk::Bin{}
+, _prop_lua_state{*this, "lua-state", nullptr}
+, _store{Gtk::ListStore::create(_columns)}
+, _view{_store}
 {
     set_hexpand(true);
     set_vexpand(true);
-
 
     // Create ListStore for 'Type' column CellRendererCombo.
     _combo_store = Gtk::ListStore::create(_combo_columns);
@@ -75,30 +73,21 @@ StackInspector::StackInspector()
     _view.append_column("Value", _columns.value);
     add(_view);
 
-
     property_lua_state().signal_changed().connect(
         sigc::mem_fun(*this, &StackInspector::on_lua_state_changed));
 }
-
 
 void StackInspector::update()
 {
     _update_store();
 }
 
-
 void StackInspector::clear()
 {
     _store->clear();
 }
 
-
-
-void StackInspector::on_lua_state_changed()
-{
-}
-
-
+void StackInspector::on_lua_state_changed() {}
 
 void StackInspector::_on_type_cell_edited(
     Glib::ustring const &path,
@@ -106,15 +95,18 @@ void StackInspector::_on_type_cell_edited(
 {
     auto it = _store->get_iter(path);
     if (it)
+    {
         (*it)[_columns.type] = value;
+    }
 }
-
 
 void StackInspector::_update_store()
 {
     auto const L = get_lua_state();
     if (!L)
+    {
         return;
+    }
 
     _store->clear();
 

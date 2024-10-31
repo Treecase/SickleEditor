@@ -22,29 +22,27 @@
 
 #include <stdexcept>
 
-
-World3D::Brush::PreDrawFunc World3D::Brush::predraw = [](auto, auto){};
-
-
+World3D::Brush::PreDrawFunc World3D::Brush::predraw = [](auto, auto) {};
 
 GLUtil::Program &World3D::Brush::shader()
 {
     static GLUtil::Program the_shader{
         std::vector{
-            GLUtil::shader_from_resource("shaders/map.vert", GL_VERTEX_SHADER),
-            GLUtil::shader_from_resource("shaders/map.frag", GL_FRAGMENT_SHADER),
-        },
+                    GLUtil::shader_from_resource("shaders/map.vert", GL_VERTEX_SHADER),
+                    GLUtil::shader_from_resource(
+                "shaders/map.frag", GL_FRAGMENT_SHADER),
+                    },
         "BrushShader"
     };
     return the_shader;
 }
 
-
-
 void World3D::Brush::render() const
 {
     if (!_src || !_vao)
+    {
         return;
+    }
 
     shader().use();
     shader().setUniformS("model", glm::identity<glm::mat4>());
@@ -64,20 +62,21 @@ void World3D::Brush::render() const
     }
 }
 
-
 void World3D::Brush::execute()
 {
-    push_queue([this](){render();});
+    push_queue([this]() { render(); });
 }
-
-
 
 void World3D::Brush::on_attach(Sickle::Componentable &obj)
 {
     if (_src)
+    {
         throw std::logic_error{"already attached"};
+    }
     if (typeid(obj) != typeid(Sickle::Editor::Brush &))
+    {
         throw std::invalid_argument{"expected a Sickle::Editor::Brush"};
+    }
 
     _src = dynamic_cast<Sickle::Editor::Brush const *>(&obj);
 
@@ -89,30 +88,26 @@ void World3D::Brush::on_attach(Sickle::Componentable &obj)
 
         offset += face->vertices().size();
 
-        _signals.push_back(
-            face->signal_vertices_changed().connect(
-                sigc::bind(
-                    sigc::mem_fun(*this, &Brush::_on_face_changed),
-                    face)));
+        _signals.push_back(face->signal_vertices_changed().connect(
+            sigc::bind(sigc::mem_fun(*this, &Brush::_on_face_changed), face)));
     }
 
-    push_queue([this](){_init();});
+    push_queue([this]() { _init(); });
 }
-
 
 void World3D::Brush::on_detach(Sickle::Componentable &obj)
 {
     _src = nullptr;
     _faces.clear();
     for (auto conn : _signals)
+    {
         conn.disconnect();
+    }
     _signals.clear();
     _vao = nullptr;
     _vbo = nullptr;
     clear_queue();
 }
-
-
 
 void World3D::Brush::_init()
 {
@@ -136,17 +131,23 @@ void World3D::Brush::_init()
 
     // NOTE: These MUST match Vertex::as_vbo() format!
     // Attrib 0: Vertex positions
-    _vao->enableVertexAttribArray(0, 3, GL_FLOAT,
-        Vertex::ELEMENTS * sizeof(GLfloat), 0);
+    _vao->enableVertexAttribArray(
+        0,
+        3,
+        GL_FLOAT,
+        Vertex::ELEMENTS * sizeof(GLfloat),
+        0);
     // Attrib 1: UVs
     _vao->enableVertexAttribArray(
-        1, 2, GL_FLOAT,
-        Vertex::ELEMENTS * sizeof(GLfloat), 3 * sizeof(GLfloat));
+        1,
+        2,
+        GL_FLOAT,
+        Vertex::ELEMENTS * sizeof(GLfloat),
+        3 * sizeof(GLfloat));
 
     _vbo->unbind();
     _vao->unbind();
 }
-
 
 void World3D::Brush::_sync_face(std::shared_ptr<Face> const &face)
 {
@@ -164,8 +165,7 @@ void World3D::Brush::_sync_face(std::shared_ptr<Face> const &face)
     _vbo->unbind();
 }
 
-
 void World3D::Brush::_on_face_changed(std::shared_ptr<Face> const &face)
 {
-    push_queue([this, face](){_sync_face(face);});
+    push_queue([this, face]() { _sync_face(face); });
 }

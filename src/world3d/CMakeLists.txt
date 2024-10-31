@@ -23,4 +23,3 @@ target_link_libraries(world3d
         glutils::glutils
         PkgConfig::GTKMM
 )
-target_compile_features(world3d PUBLIC cxx_std_17)

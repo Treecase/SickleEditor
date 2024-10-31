@@ -24,9 +24,8 @@
 
 #include <files/fgd/fgd.hpp>
 
-#include <gtkmm/application.h>
 #include <giomm/settings.h>
-
+#include <gtkmm/application.h>
 
 namespace Sickle
 {
@@ -35,15 +34,19 @@ namespace Sickle
     public:
         static Glib::RefPtr<App> create();
 
-        auto property_fgd_path() {return _prop_fgd_path.get_proxy();}
+        auto property_fgd_path() { return _prop_fgd_path.get_proxy(); }
 
         auto property_game_root_path()
-        {return _prop_game_root_path.get_proxy();}
+        {
+            return _prop_game_root_path.get_proxy();
+        }
 
         auto property_sprite_root_path()
-        {return _prop_sprite_root_path.get_proxy();}
+        {
+            return _prop_sprite_root_path.get_proxy();
+        }
 
-        auto property_wad_paths() {return _prop_wad_paths.get_proxy();}
+        auto property_wad_paths() { return _prop_wad_paths.get_proxy(); }
 
     protected:
         App();
@@ -89,6 +92,6 @@ namespace Sickle
         void _on_sprite_root_path_changed();
         void _on_wad_paths_changed();
     };
-}
+} // namespace Sickle
 
 #endif

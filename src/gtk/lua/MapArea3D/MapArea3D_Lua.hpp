@@ -24,7 +24,6 @@
 #include <se-lua/se-lua.hpp>
 #include <utils/FreeCam.hpp>
 
-
 int luaopen_maparea3d(lua_State *L);
 Sickle::MapArea3D *lmaparea3d_check(lua_State *L, int arg);
 
@@ -34,11 +33,13 @@ FreeCam *lfreecam_check(lua_State *L, int arg);
 int luaopen_maparea3d_state(lua_State *L);
 Sickle::MapArea3D::State *lmaparea3d_state_check(lua_State *L, int arg);
 
-template<> void Lua::push(lua_State *L, Sickle::MapArea3D *maparea);
+template<>
+void Lua::push(lua_State *L, Sickle::MapArea3D *maparea);
+
 namespace Lua
 {
     void push(lua_State *L, FreeCam camera);
     void push(lua_State *L, Sickle::MapArea3D::State state);
-}
+} // namespace Lua
 
 #endif

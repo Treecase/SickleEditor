@@ -20,14 +20,12 @@
 
 #include <gtkmm/adjustment.h>
 
-
 using namespace Sickle::AppWin;
 
-
 MapTools::MapTools(Editor::EditorRef editor)
-:   Glib::ObjectBase{typeid(MapTools)}
-,   Gtk::Frame{}
-,   _editor{editor}
+: Glib::ObjectBase{typeid(MapTools)}
+, Gtk::Frame{}
+, _editor{editor}
 {
     set_label("Tools");
 
@@ -43,14 +41,13 @@ MapTools::MapTools(Editor::EditorRef editor)
         sigc::mem_fun(*this, &MapTools::on_tool_changed));
 }
 
-
-
 void MapTools::on_tool_button_toggled(std::string const &tool)
 {
     if (_buttons.at(tool).get_active())
+    {
         _editor->set_maptool(tool);
+    }
 }
-
 
 void MapTools::on_tool_changed()
 {
@@ -58,26 +55,26 @@ void MapTools::on_tool_changed()
     _buttons.at(tool).set_active(true);
 }
 
-
 void MapTools::on_maptools_changed()
 {
     for (auto const &p : _editor->get_maptools())
+    {
         _add_tool(p.second);
+    }
 }
-
-
 
 void MapTools::_add_tool(Editor::MapTool const &tool)
 {
     if (_buttons.count(tool.name()) != 0)
+    {
         return;
+    }
     _buttons[tool.name()] = {};
     auto &button = _buttons.at(tool.name());
     button.set_label(tool.name());
     button.set_group(_button_group);
-    button.signal_toggled().connect(
-        sigc::bind(
-            sigc::mem_fun(*this, &MapTools::on_tool_button_toggled),
-            tool.name()));
+    button.signal_toggled().connect(sigc::bind(
+        sigc::mem_fun(*this, &MapTools::on_tool_button_toggled),
+        tool.name()));
     _box.add(button);
 }

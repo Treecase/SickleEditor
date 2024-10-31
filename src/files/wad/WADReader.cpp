@@ -18,28 +18,23 @@
 
 #include "WADReader.hpp"
 
-
 using namespace WAD;
 
-
 WADReader::WADReader(WADInputStream &inputstream)
-:   _stream{inputstream}
+: _stream{inputstream}
 {
 }
-
 
 std::vector<WADReader::DirectoryEntry> const &WADReader::get_directory() const
 {
     return _directory;
 }
 
-
 WADReader::DirectoryEntry const &WADReader::get_directory_entry(
     std::size_t index) const
 {
     return _directory.at(index);
 }
-
 
 void WADReader::load()
 {
@@ -51,7 +46,6 @@ void WADReader::load()
     }
 }
 
-
 LumpTexture WADReader::load_lump_texture(DirectoryEntry const &entry)
 {
     _stream.seek(entry.lump_offset);
@@ -62,8 +56,6 @@ LumpTexture WADReader::load_lump_texture(DirectoryEntry const &entry)
     return texlump;
 }
 
-
-
 WADReader::Header WADReader::read_header()
 {
     Header header{};
@@ -72,7 +64,6 @@ WADReader::Header WADReader::read_header()
     header.directory_offset = _stream.read_uint32();
     return header;
 }
-
 
 WADReader::DirectoryEntry WADReader::read_directory_entry()
 {
@@ -87,7 +78,6 @@ WADReader::DirectoryEntry WADReader::read_directory_entry()
     _stream.read_bytes(dirent.name, 16);
     return dirent;
 }
-
 
 WADReader::DirectoryEntry WADReader::read_directory_entry(size_t index)
 {

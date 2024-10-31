@@ -26,9 +26,8 @@
 
 #include <sigc++/connection.h>
 
-#include <vector>
 #include <memory>
-
+#include <vector>
 
 namespace World3D
 {
@@ -41,8 +40,8 @@ namespace World3D
     class BoxColliderBrush : public BoxCollider
     {
     public:
-        BoxColliderBrush()=default;
-        virtual ~BoxColliderBrush()=default;
+        BoxColliderBrush() = default;
+        virtual ~BoxColliderBrush() = default;
 
     protected:
         virtual void on_attach(Sickle::Componentable &obj) override;
@@ -52,10 +51,13 @@ namespace World3D
         struct Signals
         {
             std::vector<sigc::connection> conns{};
+
             ~Signals()
             {
                 for (auto conn : conns)
+                {
                     conn.disconnect();
+                }
             }
         };
 
@@ -64,6 +66,6 @@ namespace World3D
 
         void update_bbox();
     };
-}
+} // namespace World3D
 
 #endif

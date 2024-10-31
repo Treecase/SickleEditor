@@ -23,7 +23,6 @@
 #include <gtk/classes/maparea2d/MapArea2D.hpp>
 #include <utils/BoundingBox.hpp>
 
-
 namespace World2D
 {
     /**
@@ -38,10 +37,10 @@ namespace World2D
          * @param maparea The MapArea2D who's drawspace we're using.
          * @return Bounding box of the object in drawspace.
          */
-        virtual BBox2 bbox(Sickle::MapArea2D const &maparea) const=0;
+        virtual BBox2 bbox(Sickle::MapArea2D const &maparea) const = 0;
 
         virtual void execute() override {}
     };
-}
+} // namespace World2D
 
 #endif

@@ -30,7 +30,6 @@
 #include <memory>
 #include <vector>
 
-
 namespace Sickle::Editor
 {
     class World;
@@ -61,7 +60,7 @@ namespace Sickle::Editor
          *
          * @return A list of entities in the World.
          */
-        auto &entities() const {return _entities;}
+        auto &entities() const { return _entities; }
 
         /**
          * Add an entity to the world.
@@ -110,6 +109,6 @@ namespace Sickle::Editor
         void _add_worldspawn();
         void _replace_worldspawn(EntityRef const &entity);
     };
-}
+} // namespace Sickle::Editor
 
 #endif

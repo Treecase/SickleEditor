@@ -1,5 +1,5 @@
-.vscode/
-build/
-notes/
+/.vscode/
+/build/
+/notes/
 *.dll
 *.glade~

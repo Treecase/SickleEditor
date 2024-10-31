@@ -25,16 +25,18 @@
 
 #include <array>
 
-
 // Metatable names.
-template<class V> static constexpr char const *vector_module;
-template<> constexpr char const *vector_module<glm::vec2> = "geo.vec2";
-template<> constexpr char const *vector_module<glm::vec3> = "geo.vec3";
-template<> constexpr char const *vector_module<glm::vec4> = "geo.vec4";
+template<class V>
+static constexpr char const *vector_module;
+template<>
+constexpr char const *vector_module<glm::vec2> = "geo.vec2";
+template<>
+constexpr char const *vector_module<glm::vec3> = "geo.vec3";
+template<>
+constexpr char const *vector_module<glm::vec4> = "geo.vec4";
 
 // Names for vector fields.
 static constexpr std::array<char const *, 4> XYZW{"x", "y", "z", "w"};
-
 
 template<class V>
 V lgeo_tovector(lua_State *L, int idx)
@@ -44,21 +46,27 @@ V lgeo_tovector(lua_State *L, int idx)
 
     int const I = lua_absindex(L, idx);
     if (!(lua_istable(L, I) || lua_isuserdata(L, I)))
+    {
         throw Lua::Error{"expected table or userdata"};
+    }
 
     // If the value has an 'x' field, interpret it as a table-style vector.
     int const xT = lua_getfield(L, I, XYZW.at(0));
     if (xT != LUA_TNIL)
     {
         for (typename V::length_type d = 1; d < S; ++d)
+        {
             lua_getfield(L, I, XYZW.at(d));
+        }
     }
     // Otherwise, interpret as a list-style vector.
     else
     {
         lua_pop(L, 1);
         for (typename V::length_type d = 0; d < S; ++d)
+        {
             lua_geti(L, I, static_cast<lua_Integer>(d + 1));
+        }
     }
 
     V vector{};
@@ -67,13 +75,14 @@ V lgeo_tovector(lua_State *L, int idx)
         int success = 0;
         vector[d] = lua_tonumberx(L, -(S - d), &success);
         if (success == 0)
+        {
             throw Lua::Error{"value is not a vector-like object"};
+        }
     }
     lua_pop(L, S);
 
     return vector;
 }
-
 
 template<class V>
 static void lgeo_checkvectorfast(lua_State *L, int arg)
@@ -81,14 +90,12 @@ static void lgeo_checkvectorfast(lua_State *L, int arg)
     luaL_checkudata(L, arg, vector_module<V>);
 }
 
-
 template<class V>
 V lgeo_checkvector(lua_State *L, int arg)
 {
     lgeo_checkvectorfast<V>(L, arg);
     return lgeo_tovector<V>(L, arg);
 }
-
 
 template<class V>
 static void _make_vector(lua_State *L, V const &vector)
@@ -99,20 +106,25 @@ static void _make_vector(lua_State *L, V const &vector)
     luaL_setmetatable(L, vector_module<V>);
     lua_newtable(L);
     for (typename V::length_type i = 0; i < S; ++i)
+    {
         Lua::set_table(L, XYZW.at(i), static_cast<lua_Number>(vector[i]));
+    }
     lua_setiuservalue(L, -2, 1);
 }
 
+template<>
+void Lua::push(lua_State *L, glm::vec2 vector);
+template<>
+void Lua::push(lua_State *L, glm::vec3 vector);
+template<>
+void Lua::push(lua_State *L, glm::vec4 vector);
 
-template<> void Lua::push(lua_State *L, glm::vec2 vector);
-template<> void Lua::push(lua_State *L, glm::vec3 vector);
-template<> void Lua::push(lua_State *L, glm::vec4 vector);
-
-
-template<> glm::vec2 Lua::get_as(lua_State *L, int idx);
-template<> glm::vec3 Lua::get_as(lua_State *L, int idx);
-template<> glm::vec4 Lua::get_as(lua_State *L, int idx);
-
+template<>
+glm::vec2 Lua::get_as(lua_State *L, int idx);
+template<>
+glm::vec3 Lua::get_as(lua_State *L, int idx);
+template<>
+glm::vec4 Lua::get_as(lua_State *L, int idx);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Metamethods
@@ -123,14 +135,12 @@ static int vector_add(lua_State *L)
     return 1;
 }
 
-
 template<class V>
 static int vector_sub(lua_State *L)
 {
     Lua::push(L, lgeo_checkvector<V>(L, 1) - lgeo_checkvector<V>(L, 2));
     return 1;
 }
-
 
 template<class V>
 static int vector_mul(lua_State *L)
@@ -148,10 +158,11 @@ static int vector_mul(lua_State *L)
         Lua::push(L, v * n);
     }
     else
+    {
         Lua::push(L, lgeo_checkvector<V>(L, 1) * lgeo_checkvector<V>(L, 2));
+    }
     return 1;
 }
-
 
 template<class V>
 static int vector_div(lua_State *L)
@@ -169,10 +180,11 @@ static int vector_div(lua_State *L)
         Lua::push(L, v / n);
     }
     else
+    {
         Lua::push(L, lgeo_checkvector<V>(L, 1) / lgeo_checkvector<V>(L, 2));
+    }
     return 1;
 }
-
 
 template<class V>
 static int vector_negate(lua_State *L)
@@ -180,7 +192,6 @@ static int vector_negate(lua_State *L)
     Lua::push(L, -lgeo_checkvector<V>(L, 1));
     return 1;
 }
-
 
 template<class V>
 static int vector_index(lua_State *L)
@@ -192,7 +203,6 @@ static int vector_index(lua_State *L)
     return 1;
 }
 
-
 template<class V>
 static int vector_newindex(lua_State *L)
 {
@@ -203,8 +213,8 @@ static int vector_newindex(lua_State *L)
     return 0;
 }
 
-
-template<class V> static int vector_tostring(lua_State *L)=delete;
+template<class V>
+static int vector_tostring(lua_State *L) = delete;
 
 template<>
 [[maybe_unused]]
@@ -233,22 +243,19 @@ int vector_tostring<glm::vec4>(lua_State *L)
     return 1;
 }
 
-
 template<class V>
 static constexpr luaL_Reg _vector_methods[] = {
-    {"__add", vector_add<V>},
-    {"__sub", vector_sub<V>},
-    {"__mul", vector_mul<V>},
-    {"__div", vector_div<V>},
-    {"__unm", vector_negate<V>},
-    {"__index", vector_index<V>},
+    {     "__add",      vector_add<V>},
+    {     "__sub",      vector_sub<V>},
+    {     "__mul",      vector_mul<V>},
+    {     "__div",      vector_div<V>},
+    {     "__unm",   vector_negate<V>},
+    {   "__index",    vector_index<V>},
     {"__newindex", vector_newindex<V>},
 
     {"__tostring", vector_tostring<V>},
-    {NULL, NULL}
+    {        NULL,               NULL}
 };
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -261,26 +268,31 @@ int lgeo_vector_new(lua_State *L)
         Lua::push(L, V{});
         break;
     case 1:
-        try {
+        try
+        {
             Lua::push(L, lgeo_tovector<V>(L, 1));
         }
-        catch (Lua::Error const &e) {
+        catch (Lua::Error const &e)
+        {
             luaL_error(L, "%s", e.what());
         }
         break;
-    case V::length():{
+    case V::length():
+    {
         V vector{};
         for (auto i = 0; i < V::length(); ++i)
+        {
             vector[i] = luaL_checknumber(L, 1 + i);
+        }
         Lua::push(L, vector);
-        break;}
+        break;
+    }
     default:
         luaL_error(L, "incorrect number of arguments");
         return 0;
     }
     return 1;
 }
-
 
 template<class V>
 static int fn_vector_map(lua_State *L)
@@ -299,7 +311,6 @@ static int fn_vector_map(lua_State *L)
     return 1;
 }
 
-
 template<class V>
 static int fn_vector_length(lua_State *L)
 {
@@ -308,16 +319,13 @@ static int fn_vector_length(lua_State *L)
     return 1;
 }
 
-
 template<class V>
 static constexpr luaL_Reg _vector_functions[] = {
-    {"new", lgeo_vector_new<V>},
-    {"map", fn_vector_map<V>},
+    {   "new",  lgeo_vector_new<V>},
+    {   "map",    fn_vector_map<V>},
     {"length", fn_vector_length<V>},
-    {NULL, NULL}
+    {    NULL,                NULL}
 };
-
-
 
 template<class V>
 int luaopen_geo_vector(lua_State *L)

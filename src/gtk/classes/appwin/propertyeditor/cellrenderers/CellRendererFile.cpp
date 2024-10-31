@@ -21,25 +21,21 @@
 #include <glibmm/convert.h>
 #include <gtkmm/icontheme.h>
 
-
 using namespace Sickle::AppWin;
 
-
 CellRendererFile::CellRendererFile()
-:   Glib::ObjectBase{typeid(CellRendererFile)}
-,   _prop_base_path{*this, "base-path", ""}
-,   _prop_filter{*this, "filter"}
-,   _prop_path{*this, "path", "."}
-,   _prop_start_path{*this, "start-path", "."}
-,   _prop_title{*this, "title", "Choose File"}
-,   _filechooser{
-        Gtk::FileChooserNative::create(
-            property_title().get_value(),
-            Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN)}
+: Glib::ObjectBase{typeid(CellRendererFile)}
+, _prop_base_path{*this, "base-path", ""}
+, _prop_filter{*this, "filter"}
+, _prop_path{*this, "path", "."}
+, _prop_start_path{*this, "start-path", "."}
+, _prop_title{*this, "title", "Choose File"}
+, _filechooser{Gtk::FileChooserNative::create(
+      property_title().get_value(),
+      Gtk::FileChooserAction::FILE_CHOOSER_ACTION_OPEN)}
 {
     property_mode() = Gtk::CellRendererMode::CELL_RENDERER_MODE_ACTIVATABLE;
 }
-
 
 void CellRendererFile::render_vfunc(
     Cairo::RefPtr<Cairo::Context> const &cr,
@@ -89,21 +85,14 @@ void CellRendererFile::render_vfunc(
 
     context->render_layout(
         cr,
-        (   cell_area.get_x()
-            + xpad
-            + icon_area.get_width()
-            + icon_padding),
-        (   cell_area.get_y()
-            + ypad
-            + cell_area.get_height() / 2
-            - text_height / 2
-        ),
+        (cell_area.get_x() + xpad + icon_area.get_width() + icon_padding),
+        (cell_area.get_y() + ypad + cell_area.get_height() / 2
+         - text_height / 2),
         layout);
 
     cr->restore();
     context->context_restore();
 }
-
 
 bool CellRendererFile::activate_vfunc(
     GdkEvent *event,
@@ -124,7 +113,9 @@ bool CellRendererFile::activate_vfunc(
             1};
 
         if (!icon_area.intersects(click_rect))
+        {
             return false;
+        }
     }
 
     _filechooser->set_current_folder(property_start_path());
@@ -134,12 +125,14 @@ bool CellRendererFile::activate_vfunc(
     _filechooser->hide();
 
     if (response != GTK_RESPONSE_ACCEPT)
+    {
         return false;
+    }
 
     if (auto const file = _filechooser->get_file())
     {
-        auto const basepath = Gio::File::create_for_path(
-            property_base_path().get_value());
+        auto const basepath
+            = Gio::File::create_for_path(property_base_path().get_value());
         if (file->has_prefix(basepath))
         {
             auto const filepath = file->get_path().substr(
@@ -151,7 +144,6 @@ bool CellRendererFile::activate_vfunc(
 
     return false;
 }
-
 
 void CellRendererFile::get_preferred_width_vfunc(
     Gtk::Widget &widget,
@@ -169,7 +161,6 @@ void CellRendererFile::get_preferred_width_vfunc(
     minimum_width = natural_width;
 }
 
-
 void CellRendererFile::get_preferred_height_vfunc(
     Gtk::Widget &widget,
     int &minimum_height,
@@ -186,13 +177,10 @@ void CellRendererFile::get_preferred_height_vfunc(
     minimum_height = natural_height;
 }
 
-
 Gtk::SizeRequestMode CellRendererFile::get_request_mode_vfunc() const
 {
     return Gtk::SizeRequestMode::SIZE_REQUEST_CONSTANT_SIZE;
 }
-
-
 
 Glib::RefPtr<Gdk::Pixbuf> CellRendererFile::_get_icon(Gtk::Widget &widget) const
 {
@@ -200,30 +188,24 @@ Glib::RefPtr<Gdk::Pixbuf> CellRendererFile::_get_icon(Gtk::Widget &widget) const
     return icontheme->load_icon("folder", GTK_ICON_SIZE_MENU);
 }
 
-
 Gdk::Rectangle CellRendererFile::_get_icon_area(
     Gtk::Widget &widget,
     Gdk::Rectangle const &cell_area) const
 {
     auto const icon = _get_icon(widget);
     return Gdk::Rectangle{
+        static_cast<int>(cell_area.get_x() + property_xpad().get_value()),
         static_cast<int>(
-            cell_area.get_x()
-            + property_xpad().get_value()),
-        static_cast<int>(
-            cell_area.get_y()
-            + property_ypad().get_value()
-            + cell_area.get_height() / 2
-            - icon->get_height() / 2),
+            cell_area.get_y() + property_ypad().get_value()
+            + cell_area.get_height() / 2 - icon->get_height() / 2),
         icon->get_width(),
         icon->get_height()};
 }
 
-
 Glib::RefPtr<Pango::Layout> CellRendererFile::_get_layout(
     Gtk::Widget &widget) const
 {
-    auto const layout = widget.create_pango_layout(
-        Glib::filename_to_utf8(property_path()));
+    auto const layout
+        = widget.create_pango_layout(Glib::filename_to_utf8(property_path()));
     return layout;
 }

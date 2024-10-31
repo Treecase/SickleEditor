@@ -23,11 +23,10 @@
 #include <glibmm/property.h>
 #include <gtkmm/box.h>
 #include <gtkmm/frame.h>
-#include <gtkmm/treeview.h>
 #include <gtkmm/liststore.h>
+#include <gtkmm/treeview.h>
 
 #include <set>
-
 
 namespace Sickle
 {
@@ -41,9 +40,10 @@ namespace Sickle
         WADList();
 
         /** The set of WAD paths added to the editor. */
-        auto property_wad_paths() {return _prop_wad_paths.get_proxy();}
+        auto property_wad_paths() { return _prop_wad_paths.get_proxy(); }
+
         /** The set of WAD paths added to the editor. */
-        auto property_wad_paths() const {return _prop_wad_paths.get_proxy();}
+        auto property_wad_paths() const { return _prop_wad_paths.get_proxy(); }
 
     protected:
         void on_add_path_clicked();
@@ -70,6 +70,6 @@ namespace Sickle
 
         void _on_wad_paths_changed();
     };
-}
+} // namespace Sickle
 
 #endif

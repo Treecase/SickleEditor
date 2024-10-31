@@ -27,29 +27,39 @@
 #include <unordered_map>
 #include <vector>
 
-
 namespace MAP
 {
     struct LoadError : std::runtime_error
     {
-        LoadError(std::string const &what): std::runtime_error{what} {}
+        LoadError(std::string const &what)
+        : std::runtime_error{what}
+        {
+        }
     };
 
     struct TokenizeError : LoadError
     {
-        TokenizeError(std::string const &what): LoadError{what} {}
+        TokenizeError(std::string const &what)
+        : LoadError{what}
+        {
+        }
     };
 
     struct ParseError : LoadError
     {
-        ParseError(std::string const &what): LoadError{what} {}
+        ParseError(std::string const &what)
+        : LoadError{what}
+        {
+        }
     };
 
     struct FormatError : LoadError
     {
-        FormatError(std::string const &what): LoadError{what} {}
+        FormatError(std::string const &what)
+        : LoadError{what}
+        {
+        }
     };
-
 
     typedef glm::vec3 Vertex;
     typedef glm::vec3 Vector3;
@@ -87,9 +97,8 @@ namespace MAP
         std::vector<Entity> entities{};
     };
 
-
     /** Parse a .map file. */
     Map load(std::string const &path);
-}
+} // namespace MAP
 
 #endif

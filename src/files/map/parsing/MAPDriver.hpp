@@ -19,13 +19,12 @@
 #ifndef MAP_DRIVER_HPP
 #define MAP_DRIVER_HPP
 
+#include "map.hpp"
 #include "MAPParser.hpp"
 #include "MAPScanner.hpp"
-#include "map.hpp"
 
 #include <istream>
 #include <memory>
-
 
 namespace MAP
 {
@@ -42,6 +41,6 @@ namespace MAP
         std::unique_ptr<MAPParser> _parser;
         std::unique_ptr<MAPScanner> _scanner;
     };
-}
+} // namespace MAP
 
 #endif

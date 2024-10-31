@@ -23,7 +23,6 @@
 
 #include <functional>
 
-
 namespace Lua
 {
     using Function = std::function<int(lua_State *)>;
@@ -41,7 +40,6 @@ namespace Lua
      */
     Function *checkfunction(lua_State *L, int arg);
 
-
     /**
      * Set the default message handler function used by Lua::pcall. This
      * function is called whenever an error occurs, but before the stack
@@ -53,7 +51,7 @@ namespace Lua
      * @param msgh The new message handler.
      */
     void set_msgh(lua_State *L, Function msgh);
-}
+} // namespace Lua
 
 /** Push a function to the stack. */
 template<>

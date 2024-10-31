@@ -20,9 +20,8 @@
 
 using namespace Sickle::Editor;
 
-
 Selectable::Selectable()
-:   Glib::ObjectBase{typeid(Selectable)}
-,   _prop_selected{*this, "selected", false}
+: Glib::ObjectBase{typeid(Selectable)}
+, _prop_selected{*this, "selected", false}
 {
 }

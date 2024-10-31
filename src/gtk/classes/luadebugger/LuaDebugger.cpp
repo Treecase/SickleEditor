@@ -20,27 +20,26 @@
 
 using namespace Sickle;
 
-
 LuaDebugger::LuaDebugger()
-:   Glib::ObjectBase{typeid(LuaDebugger)}
-,   Gtk::Box{Gtk::Orientation::ORIENTATION_HORIZONTAL}
-,   _prop_lua_state{*this, "lua-state", nullptr}
-,   _bind_lua_state_function_inspector{Glib::Binding::bind_property(
-        property_lua_state(),
-        _function_inspector.property_lua_state(),
-        Glib::BindingFlags::BINDING_SYNC_CREATE)}
-,   _bind_lua_state_call_stack_inspector{Glib::Binding::bind_property(
-        property_lua_state(),
-        _call_stack_inspector.property_lua_state(),
-        Glib::BindingFlags::BINDING_SYNC_CREATE)}
-,   _bind_lua_state_stack_inspector{Glib::Binding::bind_property(
-        property_lua_state(),
-        _stack_inspector.property_lua_state(),
-        Glib::BindingFlags::BINDING_SYNC_CREATE)}
-,   _bind_level_stackinsp_funcinsp{Glib::Binding::bind_property(
-        _call_stack_inspector.property_level(),
-        _function_inspector.property_level(),
-        Glib::BindingFlags::BINDING_SYNC_CREATE)}
+: Glib::ObjectBase{typeid(LuaDebugger)}
+, Gtk::Box{Gtk::Orientation::ORIENTATION_HORIZONTAL}
+, _prop_lua_state{*this, "lua-state", nullptr}
+, _bind_lua_state_function_inspector{Glib::Binding::bind_property(
+      property_lua_state(),
+      _function_inspector.property_lua_state(),
+      Glib::BindingFlags::BINDING_SYNC_CREATE)}
+, _bind_lua_state_call_stack_inspector{Glib::Binding::bind_property(
+      property_lua_state(),
+      _call_stack_inspector.property_lua_state(),
+      Glib::BindingFlags::BINDING_SYNC_CREATE)}
+, _bind_lua_state_stack_inspector{Glib::Binding::bind_property(
+      property_lua_state(),
+      _stack_inspector.property_lua_state(),
+      Glib::BindingFlags::BINDING_SYNC_CREATE)}
+, _bind_level_stackinsp_funcinsp{Glib::Binding::bind_property(
+      _call_stack_inspector.property_level(),
+      _function_inspector.property_level(),
+      Glib::BindingFlags::BINDING_SYNC_CREATE)}
 {
     _function_inspector_scroll.add(_function_inspector);
     _call_stack_inspector_scroll.add(_call_stack_inspector);
@@ -53,11 +52,7 @@ LuaDebugger::LuaDebugger()
     add(_stack_inspector_scroll);
 }
 
-
-LuaDebugger::~LuaDebugger()
-{
-}
-
+LuaDebugger::~LuaDebugger() {}
 
 void LuaDebugger::on_error()
 {

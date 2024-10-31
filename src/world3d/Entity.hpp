@@ -29,19 +29,19 @@
 #include <functional>
 #include <memory>
 
-
 namespace World3D
 {
     /**
      * Entity view interface.
      */
-    class EntityView : public DeferredExec, public RenderComponent
+    class EntityView
+    : public DeferredExec
+    , public RenderComponent
     {
     public:
-        virtual ~EntityView()=default;
-        virtual void render() const=0;
+        virtual ~EntityView() = default;
+        virtual void render() const = 0;
     };
-
 
     /**
      * Entity view for SolidClass entities.
@@ -51,8 +51,8 @@ namespace World3D
     class SolidEntity : public EntityView
     {
     public:
-        SolidEntity()=default;
-        virtual ~SolidEntity()=default;
+        SolidEntity() = default;
+        virtual ~SolidEntity() = default;
 
         virtual void render() const override;
         virtual void execute() override;
@@ -61,7 +61,6 @@ namespace World3D
         virtual void on_attach(Sickle::Componentable &) override;
         virtual void on_detach(Sickle::Componentable &) override;
     };
-
 
     /**
      * Entity view for PointClass entities.
@@ -76,15 +75,15 @@ namespace World3D
             glm::mat4 model, view, projection;
         };
 
-        using PreDrawFunc =\
-            std::function<void(ShaderParams &, Sickle::Editor::Entity const *)>;
+        using PreDrawFunc = std::function<
+            void(ShaderParams &, Sickle::Editor::Entity const *)>;
 
         static PreDrawFunc predraw;
 
         static GLUtil::Program &shader();
 
         PointEntityBox();
-        virtual ~PointEntityBox()=default;
+        virtual ~PointEntityBox() = default;
 
         /**
          * Render the box.
@@ -117,7 +116,6 @@ namespace World3D
         void _init();
     };
 
-
     /**
      * Entity view for PointClass entities.
      *
@@ -126,14 +124,13 @@ namespace World3D
     class PointEntitySprite : public EntityView
     {
     public:
-        struct ShaderParams {
+        struct ShaderParams
+        {
             glm::mat4 model, view, projection;
         };
 
-        using PreDrawFunc =\
-            std::function<void(
-                ShaderParams &,
-                Sickle::Editor::Entity const *)>;
+        using PreDrawFunc = std::function<
+            void(ShaderParams &, Sickle::Editor::Entity const *)>;
 
         static PreDrawFunc predraw;
         static std::string sprite_root_path;
@@ -143,7 +140,7 @@ namespace World3D
         static GLUtil::Program &shader();
 
         PointEntitySprite();
-        virtual ~PointEntitySprite()=default;
+        virtual ~PointEntitySprite() = default;
 
         /**
          * Render the sprite.
@@ -184,7 +181,6 @@ namespace World3D
         void _on_src_properties_changed();
     };
 
-
     /**
      * Entity view for PointClass entities.
      *
@@ -193,9 +189,9 @@ namespace World3D
     class PointEntityModel : public EntityView
     {
     public:
-        virtual ~PointEntityModel()=default;
+        virtual ~PointEntityModel() = default;
         void render() const override;
     };
-}
+} // namespace World3D
 
 #endif

@@ -26,7 +26,6 @@
 
 using namespace Sickle::Editor;
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
 static int is_selected(lua_State *L)
@@ -36,14 +35,12 @@ static int is_selected(lua_State *L)
     return 1;
 }
 
-
 static int classname(lua_State *L)
 {
     auto entity = lentity_check(L, 1);
     Lua::push(L, entity->classname());
     return 1;
 }
-
 
 static int get_property(lua_State *L)
 {
@@ -52,7 +49,6 @@ static int get_property(lua_State *L)
     Lua::push(L, entity->get_property(key));
     return 1;
 }
-
 
 static int set_property(lua_State *L)
 {
@@ -63,7 +59,6 @@ static int set_property(lua_State *L)
     return 0;
 }
 
-
 static int remove_property(lua_State *L)
 {
     auto entity = lentity_check(L, 1);
@@ -71,7 +66,6 @@ static int remove_property(lua_State *L)
     Lua::push(L, entity->remove_property(key));
     return 1;
 }
-
 
 static int get_brushes(lua_State *L)
 {
@@ -86,7 +80,6 @@ static int get_brushes(lua_State *L)
     return 1;
 }
 
-
 static int add_brush(lua_State *L)
 {
     auto entity = lentity_check(L, 1);
@@ -94,7 +87,6 @@ static int add_brush(lua_State *L)
     entity->add_brush(brush);
     return 0;
 }
-
 
 static int remove_brush(lua_State *L)
 {
@@ -104,20 +96,17 @@ static int remove_brush(lua_State *L)
     return 0;
 }
 
-
 static luaL_Reg methods[] = {
-    {"is_selected", is_selected},
-    {"classname", classname},
-    {"get_property", get_property},
-    {"set_property", set_property},
+    {    "is_selected",     is_selected},
+    {      "classname",       classname},
+    {   "get_property",    get_property},
+    {   "set_property",    set_property},
     {"remove_property", remove_property},
-    {"get_brushes", get_brushes},
-    {"add_brush", add_brush},
-    {"remove_brush", remove_brush},
-    {NULL, NULL}
+    {    "get_brushes",     get_brushes},
+    {      "add_brush",       add_brush},
+    {   "remove_brush",    remove_brush},
+    {             NULL,            NULL}
 };
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
@@ -126,15 +115,17 @@ void Lua::push(lua_State *L, EntityRef entity)
 {
     Lua::RefBuilder builder{L, METATABLE, entity};
     if (builder.pushnew())
+    {
         return;
+    }
     entity->signal_removed().connect(
-        [L, entity](){
+        [L, entity]()
+        {
             ReferenceManager refman{};
             refman.erase(L, entity);
         });
     builder.finish();
 }
-
 
 EntityRef lentity_check(lua_State *L, int arg)
 {
@@ -142,7 +133,6 @@ EntityRef lentity_check(lua_State *L, int arg)
     luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
     return *static_cast<EntityRef *>(ud);
 }
-
 
 int luaopen_entity(lua_State *L)
 {

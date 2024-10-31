@@ -20,23 +20,22 @@
 
 #include <memory>
 
-
 static int __call(lua_State *L)
 {
     auto const ptr = Lua::checkfunction(L, 1);
     if (!ptr)
+    {
         return lua_error(L);
+    }
     auto const fn = *ptr;
     lua_remove(L, 1);
     return std::invoke(fn, L);
 }
 
-
 static luaL_Reg methods[] = {
     {"__call", __call},
-    {NULL, NULL}
+    {    NULL,   NULL}
 };
-
 
 int Lua::luaopen_function(lua_State *L)
 {
@@ -46,7 +45,6 @@ int Lua::luaopen_function(lua_State *L)
     return 0;
 }
 
-
 Lua::Function *Lua::checkfunction(lua_State *L, int arg)
 {
     auto fn = luaL_checkudata(L, arg, "Lua.function");
@@ -54,19 +52,17 @@ Lua::Function *Lua::checkfunction(lua_State *L, int arg)
     return static_cast<std::unique_ptr<Lua::Function> *>(fn)->get();
 }
 
-
 void Lua::set_msgh(lua_State *L, Function msgh)
 {
     Lua::push(L, msgh);
     lua_setfield(L, LUA_REGISTRYINDEX, "__msgh");
 }
 
-
 template<>
 void Lua::push(lua_State *L, Function msgh)
 {
     void *ptr = lua_newuserdatauv(L, sizeof(std::unique_ptr<Function>), 0);
-    auto fn = new(ptr) std::unique_ptr<Function>{};
+    auto fn = new (ptr) std::unique_ptr<Function>{};
     fn->reset(new Function{msgh});
     luaL_getmetatable(L, "Lua.function");
     lua_setmetatable(L, -2);

@@ -24,7 +24,6 @@
 #include <unordered_set>
 #include <vector>
 
-
 // FIXME: TEMP
 /** std::hash template so glm::vec3 can be used in std::unordered_set. */
 template<>
@@ -37,10 +36,11 @@ struct std::hash<glm::vec3>
     }
 };
 
-
 enum Classification
 {
-    ON, ABOVE, BELOW,
+    ON,
+    ABOVE,
+    BELOW,
 };
 
 /** 3D half-space. */
@@ -53,7 +53,7 @@ public:
     /** Coefficients for general form plane equation (ax + by + cz + d = 0). */
     float a, b, c, d;
 
-    HalfPlane()=default;
+    HalfPlane() = default;
     HalfPlane(float a, float b, float c, float d);
     /// Points are clockwise ordered.
     HalfPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C);
@@ -88,7 +88,6 @@ struct std::hash<HalfPlane>
     }
 };
 
-
 /**
  * Vertex enumeration. Given a list of half-planes comprising a convex
  * polyhedron, return the vertices of said polyhedron.
@@ -100,7 +99,7 @@ std::unordered_set<glm::vec3> vertex_enumeration(
  * Facet enumeration. Given a list of vertices comprising a convex polyhedron,
  * return a list of half-planes making up said polyhedron.
  */
-std::pair<std::vector<HalfPlane>, std::vector<glm::vec3>>
-facet_enumeration(std::vector<glm::vec3> const &vertices);
+std::pair<std::vector<HalfPlane>, std::vector<glm::vec3>> facet_enumeration(
+    std::vector<glm::vec3> const &vertices);
 
 #endif

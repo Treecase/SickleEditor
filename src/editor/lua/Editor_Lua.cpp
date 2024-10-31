@@ -27,7 +27,6 @@
 
 using namespace Sickle::Editor;
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
 static int add_brush(lua_State *L)
@@ -43,15 +42,16 @@ static int add_brush(lua_State *L)
         points.push_back(v);
     }
 
-    try {
+    try
+    {
         ed->get_map()->worldspawn()->add_brush(Brush::create(points));
     }
-    catch (std::runtime_error const &e) {
+    catch (std::runtime_error const &e)
+    {
         // Brush construction degenerate case.
     }
     return 0;
 }
-
 
 static int remove_brush(lua_State *L)
 {
@@ -61,20 +61,21 @@ static int remove_brush(lua_State *L)
     return 0;
 }
 
-
 static int add_entity(lua_State *L)
 {
     auto const ed = leditor_check(L, 1);
     auto const type = luaL_checkstring(L, 2);
     auto const entity = Entity::create(type);
-    try {
+    try
+    {
         ed->get_map()->add_entity(entity);
-    } catch (std::logic_error const &e) {
+    }
+    catch (std::logic_error const &e)
+    {
         return luaL_error(L, "%s", e.what());
     }
     return 0;
 }
-
 
 static int remove_entity(lua_State *L)
 {
@@ -84,20 +85,24 @@ static int remove_entity(lua_State *L)
     return 0;
 }
 
-
 static int remove_object(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
     auto obj = static_cast<EditorObjectRef *>(lua_touserdata(L, 2));
     if (typeid(*obj->get()) == typeid(Brush))
+    {
         ed->get_map()->remove_brush(BrushRef::cast_dynamic(*obj));
+    }
     else if (typeid(*obj->get()) == typeid(Entity))
+    {
         ed->get_map()->remove_entity(EntityRef::cast_dynamic(*obj));
+    }
     else
+    {
         return luaL_error(L, "object could not be removed");
+    }
     return 0;
 }
-
 
 static int do_operation(lua_State *L)
 {
@@ -108,29 +113,30 @@ static int do_operation(lua_State *L)
 
     Operation::ArgList args{};
     for (size_t i = 0; i < op.args.size(); ++i)
+    {
         args.push_back(op.make_arg_from_lua(i, L, 3 + i));
+    }
 
-    try {
+    try
+    {
         op.execute(ed, args);
     }
-    catch (Lua::Error const &e) {
+    catch (Lua::Error const &e)
+    {
         return luaL_error(L, "%s", e.what());
     }
     return 0;
 }
 
-
 static int matches_mode(lua_State *L)
 {
     auto const ed = leditor_check(L, 1);
     auto const obj = static_cast<EditorObjectRef *>(lua_touserdata(L, 2));
-    bool const matches = Operation::object_matches_mode_type(
-        ed->get_mode(),
-        *obj);
+    bool const matches
+        = Operation::object_matches_mode_type(ed->get_mode(), *obj);
     lua_pushboolean(L, matches);
     return 1;
 }
-
 
 static int get_selection(lua_State *L)
 {
@@ -139,14 +145,12 @@ static int get_selection(lua_State *L)
     return 1;
 }
 
-
 static int get_brushbox(lua_State *L)
 {
     auto ed = leditor_check(L, 1);
     Lua::push(L, &ed->brushbox);
     return 1;
 }
-
 
 static int get_mode(lua_State *L)
 {
@@ -155,31 +159,27 @@ static int get_mode(lua_State *L)
     return 1;
 }
 
-
 static int do_nothing(lua_State *L)
 {
     return 0;
 }
 
-
 static luaL_Reg methods[] = {
-    {"add_brush", add_brush},
-    {"remove_brush", remove_brush},
-    {"add_entity", add_entity},
-    {"remove_entity", remove_entity},
-    {"remove_object", remove_object},
-    {"do_operation", do_operation},
-    {"matches_mode", matches_mode},
+    {     "add_brush",     add_brush},
+    {  "remove_brush",  remove_brush},
+    {    "add_entity",    add_entity},
+    { "remove_entity", remove_entity},
+    { "remove_object", remove_object},
+    {  "do_operation",  do_operation},
+    {  "matches_mode",  matches_mode},
 
-    {"get_selection", get_selection},
-    {"get_brushbox", get_brushbox},
-    {"get_mode", get_mode},
+    { "get_selection", get_selection},
+    {  "get_brushbox",  get_brushbox},
+    {      "get_mode",      get_mode},
 
-    {"on_map_changed", do_nothing},
-    {NULL, NULL}
+    {"on_map_changed",    do_nothing},
+    {            NULL,          NULL}
 };
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
@@ -188,13 +188,14 @@ void Lua::push(lua_State *L, EditorRef editor)
 {
     Lua::RefBuilder builder{L, METATABLE, editor};
     if (builder.pushnew())
+    {
         return;
+    }
     builder.addSignalHandler(
         editor->property_map().signal_changed(),
         "on_map_changed");
     builder.finish();
 }
-
 
 EditorRef leditor_check(lua_State *L, int arg)
 {
@@ -202,7 +203,6 @@ EditorRef leditor_check(lua_State *L, int arg)
     luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
     return *static_cast<EditorRef *>(ud);
 }
-
 
 int luaopen_editor(lua_State *L)
 {

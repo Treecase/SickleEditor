@@ -22,9 +22,7 @@
 
 #define METATABLE "Sickle.gtk.maparea3d.state"
 
-
 using namespace Sickle;
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -109,21 +107,20 @@ static int set_multiselect(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
-    {"get_pointer_prev", get_pointer_prev},
+    {   "get_pointer_prev",    get_pointer_prev},
     {"get_last_frame_time", get_last_frame_time},
-    {"get_move_direction", get_move_direction},
-    {"get_turn_rates", get_turn_rates},
-    {"get_gofast", get_gofast},
-    {"get_multiselect", get_multiselect},
+    { "get_move_direction",  get_move_direction},
+    {     "get_turn_rates",      get_turn_rates},
+    {         "get_gofast",          get_gofast},
+    {    "get_multiselect",     get_multiselect},
 
-    {"set_pointer_prev", set_pointer_prev},
-    {"set_move_direction", set_move_direction},
-    {"set_turn_rates", set_turn_rates},
-    {"set_gofast", set_gofast},
-    {"set_multiselect", set_multiselect},
-    {NULL, NULL}
+    {   "set_pointer_prev",    set_pointer_prev},
+    { "set_move_direction",  set_move_direction},
+    {     "set_turn_rates",      set_turn_rates},
+    {         "set_gofast",          set_gofast},
+    {    "set_multiselect",     set_multiselect},
+    {                 NULL,                NULL}
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing

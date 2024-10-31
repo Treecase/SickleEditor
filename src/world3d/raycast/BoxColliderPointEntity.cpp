@@ -22,9 +22,7 @@
 #include <sstream>
 #include <stdexcept>
 
-
 using namespace World3D;
-
 
 /**
  * Extract a vector from a string.
@@ -35,15 +33,18 @@ using namespace World3D;
  */
 static bool extract_vector(std::stringstream &input, glm::vec3 &output);
 
-
 void BoxColliderPointEntity::on_attach(Sickle::Componentable &obj)
 {
     if (_src)
+    {
         throw std::logic_error{"already attached"};
+    }
     auto &entity = dynamic_cast<Sickle::Editor::Entity &>(obj);
     auto const entity_class = entity.classinfo();
     if (entity_class.type() != "PointClass")
+    {
         throw std::invalid_argument{"must be PointClass"};
+    }
     _src = &entity;
 
     _conn_src_properties_changed = _src->signal_properties_changed().connect(
@@ -52,7 +53,6 @@ void BoxColliderPointEntity::on_attach(Sickle::Componentable &obj)
     update_bbox();
 }
 
-
 void BoxColliderPointEntity::on_detach(Sickle::Componentable &obj)
 {
     _conn_src_properties_changed.disconnect();
@@ -60,28 +60,30 @@ void BoxColliderPointEntity::on_detach(Sickle::Componentable &obj)
     set_box(BBox3{});
 }
 
-
-
 void BoxColliderPointEntity::update_bbox()
 {
     // Get origin property, bailing if its invalid or doesn't exist.
     std::stringstream origin_str{};
-    try {
+    try
+    {
         origin_str << _src->get_property("origin");
     }
-    catch (std::out_of_range const &e) {
+    catch (std::out_of_range const &e)
+    {
         return;
     }
     glm::vec3 origin{};
     if (!extract_vector(origin_str, origin))
+    {
         return;
+    }
 
     auto point1 = DEFAULT_SIZE * glm::vec3{-0.5f, -0.5f, -0.5f};
     auto point2 = DEFAULT_SIZE * glm::vec3{+0.5f, +0.5f, +0.5f};
 
     auto const classinfo = _src->classinfo();
-    auto const size =\
-        classinfo.get_class_property<Sickle::Editor::ClassPropertySize>();
+    auto const size
+        = classinfo.get_class_property<Sickle::Editor::ClassPropertySize>();
     if (size)
     {
         auto const points = size->get_points();
@@ -93,14 +95,14 @@ void BoxColliderPointEntity::update_bbox()
     set_box(bbox);
 }
 
-
-
 static bool extract_vector(std::stringstream &input, glm::vec3 &output)
 {
     glm::vec3 v{};
     input >> v.x >> v.y >> v.z;
     if (input.fail())
+    {
         return false;
+    }
     else
     {
         output = v;

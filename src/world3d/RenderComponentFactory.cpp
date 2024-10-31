@@ -26,40 +26,48 @@
 
 #include <iostream>
 
-
 using namespace World3D;
 
-
-std::shared_ptr<RenderComponent>
-RenderComponentFactory::construct(Sickle::Editor::EditorObjectRef const &object)
+std::shared_ptr<RenderComponent> RenderComponentFactory::construct(
+    Sickle::Editor::EditorObjectRef const &object)
 {
     std::shared_ptr<RenderComponent> renderer{nullptr};
 
     if (!object)
         ;
     else if (typeid(*object.get()) == typeid(Sickle::Editor::Brush))
+    {
         renderer = std::make_shared<Brush>();
+    }
     else if (typeid(*object.get()) == typeid(Sickle::Editor::Entity))
     {
         auto entity = Sickle::Editor::EntityRef::cast_dynamic(object);
         auto const entity_class = entity->classinfo();
         if (entity_class.type() == "PointClass")
         {
-            if (entity_class
-                .has_class_property<Sickle::Editor::ClassPropertyIconsprite>())
+            if (entity_class.has_class_property<
+                    Sickle::Editor::ClassPropertyIconsprite>())
+            {
                 renderer = std::make_shared<PointEntitySprite>();
-            else if (entity_class
-                .has_class_property<Sickle::Editor::ClassPropertySprite>())
+            }
+            else if (entity_class.has_class_property<
+                         Sickle::Editor::ClassPropertySprite>())
+            {
                 renderer = std::make_shared<PointEntitySprite>();
+            }
             else
+            {
                 renderer = std::make_shared<PointEntityBox>();
+            }
         }
         else if (entity_class.type() == "SolidClass")
+        {
             renderer = std::make_shared<SolidEntity>();
+        }
         else
         {
             std::cout << "WARNING: entity has unknown class type '"
-                << entity_class.type() << "'\n";
+                      << entity_class.type() << "'\n";
         }
     }
 

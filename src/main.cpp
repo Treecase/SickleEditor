@@ -18,9 +18,9 @@
 
 #include "gtk/classes/App.hpp"
 
-#include <OperationSearch.hpp>
 #include <config/appid.hpp>
 #include <config/version.hpp>
+#include <OperationSearch.hpp>
 
 #include <memory>
 
@@ -28,13 +28,11 @@
 #include <glibmm/miscutils.h>
 #endif
 
-
-void initialize_buildable_types()
+static void initialize_buildable_types()
 {
-    auto const dummy_OperationSearch =\
-        std::make_unique<Sickle::AppWin::OperationSearch>();
+    auto const dummy_OperationSearch
+        = std::make_unique<Sickle::AppWin::OperationSearch>();
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -44,6 +42,10 @@ int main(int argc, char *argv[])
     Glib::setenv("GSETTINGS_SCHEMA_DIR", SE_BINARY_DIR, false);
 #endif
     auto app = Sickle::App::create();
+    // The Gtkmm Builder API requires us to register the GType of each derived
+    // widget we want to construct. To do this, we simply create a dummy
+    // instance of each derived class here, which then allows us to use the API
+    // as expected.
     initialize_buildable_types();
     return app->run(argc, argv);
 }

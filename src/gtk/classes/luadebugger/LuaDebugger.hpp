@@ -31,7 +31,6 @@
 #include <gtkmm/box.h>
 #include <gtkmm/scrolledwindow.h>
 
-
 namespace Sickle
 {
     /**
@@ -46,11 +45,16 @@ namespace Sickle
         LuaDebugger();
         virtual ~LuaDebugger();
 
-        auto property_lua_state() {return _prop_lua_state.get_proxy();}
-        auto property_lua_state() const {return _prop_lua_state.get_proxy();}
-        void set_lua_state(lua_State *L) {property_lua_state().set_value(L);}
-        lua_State *get_lua_state() const {
-            return static_cast<lua_State *>(property_lua_state().get_value());}
+        auto property_lua_state() { return _prop_lua_state.get_proxy(); }
+
+        auto property_lua_state() const { return _prop_lua_state.get_proxy(); }
+
+        void set_lua_state(lua_State *L) { property_lua_state().set_value(L); }
+
+        lua_State *get_lua_state() const
+        {
+            return static_cast<lua_State *>(property_lua_state().get_value());
+        }
 
         /**
          * Update child widgets to display information about an error.
@@ -72,10 +76,11 @@ namespace Sickle
         Gtk::ScrolledWindow _stack_inspector_scroll{};
 
         Glib::RefPtr<Glib::Binding> _bind_lua_state_function_inspector{nullptr};
-        Glib::RefPtr<Glib::Binding> _bind_lua_state_call_stack_inspector{nullptr};
+        Glib::RefPtr<Glib::Binding> _bind_lua_state_call_stack_inspector{
+            nullptr};
         Glib::RefPtr<Glib::Binding> _bind_lua_state_stack_inspector{nullptr};
         Glib::RefPtr<Glib::Binding> _bind_level_stackinsp_funcinsp{nullptr};
     };
-}
+} // namespace Sickle
 
 #endif

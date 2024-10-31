@@ -25,9 +25,7 @@
 
 #define METATABLE "Sickle.editor.selection"
 
-
 using namespace Sickle::Editor;
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -71,12 +69,17 @@ static int selection_iterate_iterator(lua_State *L)
 
     int const type = lua_geti(L, lua_upvalueindex(2), I);
     if (type == LUA_TNIL)
+    {
         return 0;
+    }
     else if (type != LUA_TUSERDATA)
+    {
         return luaL_error(L, "selection:iterate error -- bad 2nd upvalue");
+    }
 
     return 1;
 }
+
 static int selection_iterate(lua_State *L)
 {
     auto const s = lselection_check(L, 1);
@@ -110,16 +113,15 @@ static int do_nothing(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
-    {"clear", selection_clear},
-    {"add", selection_add},
-    {"remove", selection_remove},
-    {"contains", selection_contains},
-    {"iterate", selection_iterate},
-    {"is_empty", selection_is_empty},
-    {"on_updated", do_nothing},
-    {NULL, NULL}
+    {     "clear",    selection_clear},
+    {       "add",      selection_add},
+    {    "remove",   selection_remove},
+    {  "contains", selection_contains},
+    {   "iterate",  selection_iterate},
+    {  "is_empty", selection_is_empty},
+    {"on_updated",         do_nothing},
+    {        NULL,               NULL}
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
@@ -128,7 +130,9 @@ void Lua::push(lua_State *L, Selection *selection)
 {
     Lua::RefBuilder builder{L, METATABLE, selection};
     if (builder.pushnew())
+    {
         return;
+    }
     builder.addSignalHandler(selection->signal_updated(), "on_updated");
     builder.finish();
 }

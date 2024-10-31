@@ -26,15 +26,14 @@
 #include <editor/world/EditorWorld.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
-#include <glibmm/refptr.h>
 #include <glibmm/property.h>
+#include <glibmm/refptr.h>
 #include <sigc++/signal.h>
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
-
+#include <vector>
 
 namespace Sickle::Editor
 {
@@ -51,7 +50,9 @@ namespace Sickle::Editor
      * The Editor class manages all the objects in the map, as well editor-only
      * data like visgroups.
      */
-    class Editor : public Glib::Object, public Lua::Referenceable
+    class Editor
+    : public Glib::Object
+    , public Lua::Referenceable
     {
     public:
         /** Box used to create new brushes. */
@@ -63,24 +64,36 @@ namespace Sickle::Editor
 
         static EditorRef create(lua_State *L);
 
-        auto property_map() {return _prop_map.get_proxy();}
-        auto property_map() const {return _prop_map.get_proxy();}
-        auto property_maptool() {return _prop_maptool.get_proxy();}
-        auto property_maptool() const {return _prop_maptool.get_proxy();}
-        auto property_mode() {return _prop_mode.get_proxy();}
-        auto property_mode() const {return _prop_mode.get_proxy();}
-        auto &signal_maptools_changed() {return _sig_maptools_changed;}
+        auto property_map() { return _prop_map.get_proxy(); }
 
-        auto get_map() {return property_map().get_value();}
+        auto property_map() const { return _prop_map.get_proxy(); }
+
+        auto property_maptool() { return _prop_maptool.get_proxy(); }
+
+        auto property_maptool() const { return _prop_maptool.get_proxy(); }
+
+        auto property_mode() { return _prop_mode.get_proxy(); }
+
+        auto property_mode() const { return _prop_mode.get_proxy(); }
+
+        auto &signal_maptools_changed() { return _sig_maptools_changed; }
+
+        auto get_map() { return property_map().get_value(); }
+
         MapTool get_maptool() const;
-        auto &get_maptools() const {return _maptools;}
-        auto get_mode() const {return property_mode().get_value();}
 
-        void set_map(WorldRef const &value) {
-            property_map() = value;}
-        void set_maptool(std::string const &value) {
-            property_maptool() = value;}
-        void set_mode(Mode value) {property_mode() = value;}
+        auto &get_maptools() const { return _maptools; }
+
+        auto get_mode() const { return property_mode().get_value(); }
+
+        void set_map(WorldRef const &value) { property_map() = value; }
+
+        void set_maptool(std::string const &value)
+        {
+            property_maptool() = value;
+        }
+
+        void set_mode(Mode value) { property_mode() = value; }
 
         void add_maptool(MapTool const &maptool);
 
@@ -100,10 +113,10 @@ namespace Sickle::Editor
         void _on_wads_changed();
 
         Editor(lua_State *L);
-        Editor(Editor const &)=delete;
-        Editor &operator=(Editor const &)=delete;
+        Editor(Editor const &) = delete;
+        Editor &operator=(Editor const &) = delete;
     };
-}
+} // namespace Sickle::Editor
 
 #include <editor/operations/OperationLoader.hpp>
 

@@ -22,24 +22,25 @@
 #include <glibmm/object.h>
 #include <glibmm/property.h>
 
-
 namespace Sickle::Editor
 {
     class Selectable : public Glib::Object
     {
     public:
         Selectable();
-        virtual ~Selectable()=default;
+        virtual ~Selectable() = default;
 
-        auto property_selected() {return _prop_selected.get_proxy();}
-        auto property_selected() const {return _prop_selected.get_proxy();}
+        auto property_selected() { return _prop_selected.get_proxy(); }
 
-        auto is_selected() const {return property_selected().get_value();}
-        void select(bool value=true) {property_selected().set_value(value);}
+        auto property_selected() const { return _prop_selected.get_proxy(); }
+
+        auto is_selected() const { return property_selected().get_value(); }
+
+        void select(bool value = true) { property_selected().set_value(value); }
 
     private:
         Glib::Property<bool> _prop_selected;
     };
-}
+} // namespace Sickle::Editor
 
 #endif

@@ -23,18 +23,15 @@
 #include <glibmm/convert.h>
 #include <gtkmm/icontheme.h>
 
-
 using namespace Sickle::AppWin;
 
-
 CellRendererTexture::CellRendererTexture()
-:   Glib::ObjectBase{typeid(CellRendererTexture)}
-,   _prop_texture_name{*this, "texture-name", ""}
-,   _prop_wad_name{*this, "wad-name", ""}
+: Glib::ObjectBase{typeid(CellRendererTexture)}
+, _prop_texture_name{*this, "texture-name", ""}
+, _prop_wad_name{*this, "wad-name", ""}
 {
     property_mode() = Gtk::CellRendererMode::CELL_RENDERER_MODE_ACTIVATABLE;
 }
-
 
 void CellRendererTexture::render_vfunc(
     Cairo::RefPtr<Cairo::Context> const &cr,
@@ -84,21 +81,14 @@ void CellRendererTexture::render_vfunc(
 
     context->render_layout(
         cr,
-        (   cell_area.get_x()
-            + xpad
-            + icon_area.get_width()
-            + icon_padding),
-        (   cell_area.get_y()
-            + ypad
-            + cell_area.get_height() / 2
-            - text_height / 2
-        ),
+        (cell_area.get_x() + xpad + icon_area.get_width() + icon_padding),
+        (cell_area.get_y() + ypad + cell_area.get_height() / 2
+         - text_height / 2),
         layout);
 
     cr->restore();
     context->context_restore();
 }
-
 
 bool CellRendererTexture::activate_vfunc(
     GdkEvent *event,
@@ -119,21 +109,24 @@ bool CellRendererTexture::activate_vfunc(
             1};
 
         if (!icon_area.intersects(click_rect))
+        {
             return false;
+        }
     }
 
     auto ts = TextureSelector::TextureSelector::create();
     ts->set_wad_filter(property_wad_name());
     int const response = ts->run();
     if (response != GTK_RESPONSE_ACCEPT)
+    {
         return false;
+    }
 
     auto const texture_name = ts->get_selected_texture();
     signal_texture_edited().emit(path, texture_name);
 
     return true;
 }
-
 
 void CellRendererTexture::get_preferred_width_vfunc(
     Gtk::Widget &widget,
@@ -151,7 +144,6 @@ void CellRendererTexture::get_preferred_width_vfunc(
     minimum_width = natural_width;
 }
 
-
 void CellRendererTexture::get_preferred_height_vfunc(
     Gtk::Widget &widget,
     int &minimum_height,
@@ -168,20 +160,17 @@ void CellRendererTexture::get_preferred_height_vfunc(
     minimum_height = natural_height;
 }
 
-
 Gtk::SizeRequestMode CellRendererTexture::get_request_mode_vfunc() const
 {
     return Gtk::SizeRequestMode::SIZE_REQUEST_CONSTANT_SIZE;
 }
 
-
-
-Glib::RefPtr<Gdk::Pixbuf> CellRendererTexture::_get_icon(Gtk::Widget &widget) const
+Glib::RefPtr<Gdk::Pixbuf> CellRendererTexture::_get_icon(
+    Gtk::Widget &widget) const
 {
     auto const icontheme = Gtk::IconTheme::get_for_screen(widget.get_screen());
     return icontheme->load_icon("folder", GTK_ICON_SIZE_MENU);
 }
-
 
 Gdk::Rectangle CellRendererTexture::_get_icon_area(
     Gtk::Widget &widget,
@@ -189,23 +178,18 @@ Gdk::Rectangle CellRendererTexture::_get_icon_area(
 {
     auto const icon = _get_icon(widget);
     return Gdk::Rectangle{
+        static_cast<int>(cell_area.get_x() + property_xpad().get_value()),
         static_cast<int>(
-            cell_area.get_x()
-            + property_xpad().get_value()),
-        static_cast<int>(
-            cell_area.get_y()
-            + property_ypad().get_value()
-            + cell_area.get_height() / 2
-            - icon->get_height() / 2),
+            cell_area.get_y() + property_ypad().get_value()
+            + cell_area.get_height() / 2 - icon->get_height() / 2),
         icon->get_width(),
         icon->get_height()};
 }
 
-
 Glib::RefPtr<Pango::Layout> CellRendererTexture::_get_layout(
     Gtk::Widget &widget) const
 {
-    auto const layout = widget.create_pango_layout(
-        property_texture_name().get_value());
+    auto const layout
+        = widget.create_pango_layout(property_texture_name().get_value());
     return layout;
 }

@@ -27,7 +27,6 @@
 
 #include <memory>
 
-
 namespace Sickle::TextureSelector
 {
     /**
@@ -39,7 +38,7 @@ namespace Sickle::TextureSelector
         TextureImage(
             std::shared_ptr<Editor::Textures::TextureInfo> const &texinfo,
             std::shared_ptr<uint8_t[]> const &pixels);
-        virtual ~TextureImage()=default;
+        virtual ~TextureImage() = default;
 
         /**
          * Get the texture info represented by this widget.
@@ -56,9 +55,9 @@ namespace Sickle::TextureSelector
         Gtk::Image _image;
         Gtk::Label _label;
 
-        TextureImage(TextureImage const &)=delete;
-        TextureImage &operator=(TextureImage const &)=delete;
+        TextureImage(TextureImage const &) = delete;
+        TextureImage &operator=(TextureImage const &) = delete;
     };
-}
+} // namespace Sickle::TextureSelector
 
 #endif

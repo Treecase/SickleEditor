@@ -21,7 +21,6 @@
 
 #include <glutils/glutils.hpp>
 
-
 class DebugDrawer3D
 {
 public:
@@ -34,14 +33,13 @@ public:
         "{"
         "    gl_Position = projection * view * vec4(vPos, 1.0);"
         "}"};
-    char const *const rayShaderFragmentSource{
-        "#version 430 core\n"
-        "out vec4 FragColor;"
-        "uniform vec3 color;"
-        "void main()"
-        "{"
-        "    FragColor = vec4(color, 1);"
-        "}"};
+    char const *const rayShaderFragmentSource{"#version 430 core\n"
+                                              "out vec4 FragColor;"
+                                              "uniform vec3 color;"
+                                              "void main()"
+                                              "{"
+                                              "    FragColor = vec4(color, 1);"
+                                              "}"};
 
     std::shared_ptr<GLUtil::Program> rayShader{nullptr};
     std::shared_ptr<GLUtil::VertexArray> rayVAO{nullptr};
@@ -49,18 +47,16 @@ public:
 
     void init()
     {
-        rayShader.reset(
-            new GLUtil::Program{{
-                GLUtil::Shader{GL_VERTEX_SHADER, rayShaderVertexSource},
-                GLUtil::Shader{GL_FRAGMENT_SHADER, rayShaderFragmentSource}
-            }}
-        );
+        rayShader.reset(new GLUtil::Program{
+            {GLUtil::Shader{GL_VERTEX_SHADER, rayShaderVertexSource},
+             GLUtil::Shader{GL_FRAGMENT_SHADER, rayShaderFragmentSource}}
+        });
         rayVAO.reset(new GLUtil::VertexArray{"DebugRayVAO"});
         rayVBO.reset(new GLUtil::Buffer{GL_ARRAY_BUFFER, "DebugRayVAO"});
         rayVAO->bind();
         rayVBO->bind();
-        rayVBO->buffer(GL_DYNAMIC_DRAW, std::vector<float>{0,0,0, 0,0,0});
-        rayVAO->enableVertexAttribArray(0, 3, GL_FLOAT, 3*sizeof(float));
+        rayVBO->buffer(GL_DYNAMIC_DRAW, std::vector<float>{0, 0, 0, 0, 0, 0});
+        rayVAO->enableVertexAttribArray(0, 3, GL_FLOAT, 3 * sizeof(float));
         rayVBO->unbind();
         rayVAO->unbind();
     }
@@ -68,9 +64,8 @@ public:
     void setRayPoints(glm::vec3 const &start, glm::vec3 const &end)
     {
         rayVBO->bind();
-        rayVBO->update(std::vector<float>{
-            start.x, start.y, start.z,
-            end.x, end.y, end.z});
+        rayVBO->update(
+            std::vector<float>{start.x, start.y, start.z, end.x, end.y, end.z});
         rayVBO->unbind();
     }
 

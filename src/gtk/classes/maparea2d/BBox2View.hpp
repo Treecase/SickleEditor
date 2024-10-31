@@ -25,14 +25,13 @@
 
 #include <functional>
 
-
 namespace Sickle
 {
     /** BBox2 View. */
     class BBox2View
     {
     public:
-        virtual ~BBox2View()=default;
+        virtual ~BBox2View() = default;
 
         /** Draw the BBox2. */
         virtual void draw(
@@ -46,20 +45,19 @@ namespace Sickle
     {
     public:
         using Func = std::function<
-            void(Cairo::RefPtr<Cairo::Context> const &,
-            BBox2 const &,
-            float)>;
+            void(Cairo::RefPtr<Cairo::Context> const &, BBox2 const &, float)>;
 
         BBox2ViewCustom(Func const &pre, Func const &post);
-        virtual ~BBox2ViewCustom()=default;
+        virtual ~BBox2ViewCustom() = default;
 
         virtual void draw(
             Cairo::RefPtr<Cairo::Context> const &cr,
             BBox2 const &box,
             float unit) override;
+
     private:
         Func _pre{}, _post{};
     };
-}
+} // namespace Sickle
 
 #endif

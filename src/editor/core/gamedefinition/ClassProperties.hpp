@@ -28,83 +28,77 @@
 #include <string>
 #include <vector>
 
-
 namespace Sickle::Editor
 {
     struct ClassProperty
     {
-        virtual ~ClassProperty()=default;
+        virtual ~ClassProperty() = default;
     };
-
 
     // base() is not included since class hierarchies are collapsed when
     // creating ClassInfo objects.
 
-
     struct ClassPropertyColor : public ClassProperty
     {
         ClassPropertyColor(glm::vec3 const &color)
-        :   _color{color}
+        : _color{color}
         {
         }
-        virtual ~ClassPropertyColor()=default;
 
-        glm::vec3 get_color() const {return _color;}
+        virtual ~ClassPropertyColor() = default;
+
+        glm::vec3 get_color() const { return _color; }
 
     private:
         glm::vec3 _color;
     };
 
-
     // TODO: decal
-
 
     struct ClassPropertyIconsprite : public ClassProperty
     {
         ClassPropertyIconsprite(std::string const &path)
-        :   _path{path}
+        : _path{path}
         {
         }
-        virtual ~ClassPropertyIconsprite()=default;
 
-        std::string get_path() const {return _path;}
+        virtual ~ClassPropertyIconsprite() = default;
+
+        std::string get_path() const { return _path; }
 
     private:
         std::string _path;
     };
 
-
     struct ClassPropertySize : public ClassProperty
     {
         ClassPropertySize(glm::vec3 const &p1, glm::vec3 const &p2)
-        :   _points{p1, p2}
+        : _points{p1, p2}
         {
         }
-        virtual ~ClassPropertySize()=default;
 
-        std::pair<glm::vec3, glm::vec3> get_points() const {return _points;}
+        virtual ~ClassPropertySize() = default;
+
+        std::pair<glm::vec3, glm::vec3> get_points() const { return _points; }
 
     private:
         std::pair<glm::vec3, glm::vec3> _points;
     };
 
-
     struct ClassPropertySprite : public ClassProperty
     {
         ClassPropertySprite() {}
-        virtual ~ClassPropertySprite()=default;
+
+        virtual ~ClassPropertySprite() = default;
     };
 
-
     // TODO: studio()
-
-
 
     struct ClassPropertyFactory
     {
         static std::shared_ptr<ClassProperty> construct(
             std::shared_ptr<FGD::Attribute> const &prop);
     };
-}
+} // namespace Sickle::Editor
 
 #endif

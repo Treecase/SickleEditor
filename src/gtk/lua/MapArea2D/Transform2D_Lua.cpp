@@ -20,9 +20,7 @@
 
 #define METATABLE "Sickle.gtk.maparea2d.transform2d"
 
-
 using namespace Sickle::MapArea2Dx;
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -69,15 +67,14 @@ static int set_zoom(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
-    {"get_x", get_x},
-    {"set_x", set_x},
-    {"get_y", get_y},
-    {"set_y", set_y},
+    {   "get_x",    get_x},
+    {   "set_x",    set_x},
+    {   "get_y",    get_y},
+    {   "set_y",    set_y},
     {"get_zoom", get_zoom},
     {"set_zoom", set_zoom},
-    {NULL, NULL}
+    {      NULL,     NULL}
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing

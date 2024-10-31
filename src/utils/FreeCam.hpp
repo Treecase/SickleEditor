@@ -20,8 +20,8 @@
 #define SE_FREECAM_HPP
 
 #include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
-
 
 /** Freelook first-person camera. */
 struct FreeCam
@@ -46,17 +46,10 @@ struct FreeCam
     }
 
     /** Set the camera FOV. */
-    void setFOV(float fov_)
-    {
-        fov = glm::clamp(fov_, min_fov, max_fov);
-    }
-
+    void setFOV(float fov_) { fov = glm::clamp(fov_, min_fov, max_fov); }
 
     /** Turn the camera by `delta` degrees. */
-    void rotate(glm::vec2 delta)
-    {
-        setAngle(angle + glm::radians(delta));
-    }
+    void rotate(glm::vec2 delta) { setAngle(angle + glm::radians(delta)); }
 
     /** Translate camera (local coords). */
     void translate(glm::vec3 delta)
@@ -67,16 +60,15 @@ struct FreeCam
     }
 
     /** Get camera up vector. */
-    constexpr glm::vec3 getUpDirection() const
-    {
-        return {0.0f, 1.0f, 0.0f};
-    }
+    constexpr glm::vec3 getUpDirection() const { return {0.0f, 1.0f, 0.0f}; }
+
     /** Get camera side vector. */
     glm::vec3 getSideDirection() const
     {
         glm::vec3 const look_dir{-glm::sin(angle.x), 0.0f, glm::cos(angle.x)};
         return glm::cross(getUpDirection(), look_dir);
     }
+
     /** Get camera forward vector. */
     glm::vec3 getLookDirection() const
     {
@@ -84,6 +76,7 @@ struct FreeCam
         glm::vec3 const side = glm::cross(getUpDirection(), look_dir);
         return glm::rotate(look_dir, angle.y, side);
     }
+
     /** Get view matrix. */
     glm::mat4 getViewMatrix() const
     {

@@ -22,10 +22,13 @@
 #include <gdkmm/event.h>
 #include <se-lua/se-lua.hpp>
 
-
-template<> void Lua::push(lua_State *L, GdkEventKey *event);
-template<> void Lua::push(lua_State *L, GdkEventButton *event);
-template<> void Lua::push(lua_State *L, GdkEventMotion *event);
-template<> void Lua::push(lua_State *L, GdkEventScroll *event);
+template<>
+void Lua::push(lua_State *L, GdkEventKey *event);
+template<>
+void Lua::push(lua_State *L, GdkEventButton *event);
+template<>
+void Lua::push(lua_State *L, GdkEventMotion *event);
+template<>
+void Lua::push(lua_State *L, GdkEventScroll *event);
 
 #endif

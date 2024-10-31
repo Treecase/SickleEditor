@@ -24,13 +24,11 @@
 
 #include <sstream>
 
-
 using namespace World3D;
 using namespace Sickle::Editor;
 
-
-std::shared_ptr<Collider>
-ColliderFactory::construct(EditorObjectRef const &object)
+std::shared_ptr<Collider> ColliderFactory::construct(
+    EditorObjectRef const &object)
 {
     std::shared_ptr<Collider> collider{nullptr};
     if (!object)

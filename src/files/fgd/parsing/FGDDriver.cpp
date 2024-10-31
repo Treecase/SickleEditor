@@ -18,9 +18,8 @@
 
 #include "FGDDriver.hpp"
 
-#include <stdexcept>
 #include <fstream>
-
+#include <stdexcept>
 
 void FGD::FGDDriver::set_debug(bool debug)
 {
@@ -41,7 +40,9 @@ void FGD::FGDDriver::parse(std::istream &iss)
     }
 
     if (_parser->parse() != 0)
+    {
         throw std::runtime_error{"parse failed"};
+    }
 }
 
 FGD::GameDef FGD::FGDDriver::get_result() const

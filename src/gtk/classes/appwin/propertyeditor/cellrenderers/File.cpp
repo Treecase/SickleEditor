@@ -22,9 +22,7 @@
 
 #include <config/appid.hpp>
 
-
 using namespace Sickle::AppWin;
-
 
 struct TypeInfo
 {
@@ -32,7 +30,6 @@ struct TypeInfo
     std::string start_path{""};
     Glib::ustring title{"Choose File"};
 };
-
 
 CellRendererProperty::FileRenderer::FileRenderer()
 {
@@ -42,32 +39,32 @@ CellRendererProperty::FileRenderer::FileRenderer()
         sigc::mem_fun(*this, &FileRenderer::on_renderer_path_edited));
 }
 
-
 void CellRendererProperty::FileRenderer::set_value(ValueType const &value)
 {
-    static std::unordered_map<
-        Sickle::Editor::PropertyType,
-        TypeInfo> const BASE_PATHS
-    {
-        {   Sickle::Editor::PropertyType::DECAL,
-            {"*", "decals",  "Choose Decal"}},
-        {   Sickle::Editor::PropertyType::SOUND,
-            {"*.wav", "sound",   "Choose Sound"}},
-        {   Sickle::Editor::PropertyType::SPRITE,
-            {"*", "sprites", "Choose Sprite"}},
-        {   Sickle::Editor::PropertyType::STUDIO,
-            {"*.mdl", "models", "Choose Model"}},
+    static std::unordered_map<Sickle::Editor::PropertyType, TypeInfo> const
+        BASE_PATHS{
+            { Sickle::Editor::PropertyType::DECAL,
+             {"*", "decals", "Choose Decal"}    },
+            { Sickle::Editor::PropertyType::SOUND,
+             {"*.wav", "sound", "Choose Sound"} },
+            {Sickle::Editor::PropertyType::SPRITE,
+             {"*", "sprites", "Choose Sprite"}  },
+            {Sickle::Editor::PropertyType::STUDIO,
+             {"*.mdl", "models", "Choose Model"}},
     };
 
     TypeInfo info{};
-    try {
+    try
+    {
         info = BASE_PATHS.at(value.type->type());
     }
-    catch (std::out_of_range const &) {
+    catch (std::out_of_range const &)
+    {
     }
 
-    auto const start_path = Gio::File::create_for_path(
-        _renderer.property_base_path())->get_child(info.start_path);
+    auto const start_path
+        = Gio::File::create_for_path(_renderer.property_base_path())
+              ->get_child(info.start_path);
     auto filter = Gtk::FileFilter::create();
     filter->add_pattern(info.filter_pattern);
 
@@ -77,19 +74,15 @@ void CellRendererProperty::FileRenderer::set_value(ValueType const &value)
     _renderer.property_title() = info.title;
 }
 
-
 Gtk::CellRenderer *CellRendererProperty::FileRenderer::renderer()
 {
     return &_renderer;
 }
 
-
 Gtk::CellRendererMode CellRendererProperty::FileRenderer::mode()
 {
     return Gtk::CellRendererMode::CELL_RENDERER_MODE_ACTIVATABLE;
 }
-
-
 
 void CellRendererProperty::FileRenderer::on_renderer_path_edited(
     Glib::ustring const &path,

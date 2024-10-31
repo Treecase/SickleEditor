@@ -27,7 +27,6 @@
 #include <gtkmm/grid.h>
 #include <gtkmm/label.h>
 
-
 namespace Sickle
 {
     /**
@@ -39,7 +38,7 @@ namespace Sickle
     {
     public:
         PreferencesDialog(Gtk::Window &parent);
-        virtual ~PreferencesDialog()=default;
+        virtual ~PreferencesDialog() = default;
 
     protected:
         virtual void on_response(int response_id) override;
@@ -68,6 +67,6 @@ namespace Sickle
             Gtk::EntryIconPosition icon_pos,
             GdkEventButton const *event);
     };
-}
+} // namespace Sickle
 
 #endif

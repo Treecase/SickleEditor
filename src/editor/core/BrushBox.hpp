@@ -24,7 +24,6 @@
 #include <glm/glm.hpp>
 #include <sigc++/signal.h>
 
-
 namespace Sickle::Editor
 {
     class BrushBox : public Lua::Referenceable
@@ -35,12 +34,12 @@ namespace Sickle::Editor
         glm::vec3 p1() const;
         glm::vec3 p2() const;
 
-        auto &signal_updated() {return _signal_updated;}
+        auto &signal_updated() { return _signal_updated; }
 
     private:
         glm::vec3 _p1, _p2;
         sigc::signal<void()> _signal_updated{};
     };
-}
+} // namespace Sickle::Editor
 
 #endif

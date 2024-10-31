@@ -41,20 +41,18 @@
 #include <iostream>
 #include <typeinfo>
 
-
 using namespace Sickle::AppWin;
-
 
 /** Convert a string to lowercase. */
 std::string lowercase(std::string s)
 {
     std::transform(
-        s.begin(), s.end(),
         s.begin(),
-        [](unsigned char ch){return std::tolower(ch);});
+        s.end(),
+        s.begin(),
+        [](unsigned char ch) { return std::tolower(ch); });
     return s;
 }
-
 
 /**
  * Thrown by 'loadAnyMapFile' if neither RMF or MAP format can load the file
@@ -63,14 +61,14 @@ std::string lowercase(std::string s)
 struct GenericLoadError : public std::runtime_error
 {
     std::string const rmf, map;
+
     GenericLoadError(std::string const &rmf, std::string const &map)
-    :   std::runtime_error{rmf + ";" + map}
-    ,   rmf{rmf}
-    ,   map{map}
+    : std::runtime_error{rmf + ";" + map}
+    , rmf{rmf}
+    , map{map}
     {
     }
 };
-
 
 static int panic_handler(lua_State *L)
 {
@@ -79,62 +77,54 @@ static int panic_handler(lua_State *L)
     return 0;
 }
 
-
 AppWin::AppWin()
-:   Glib::ObjectBase{typeid(AppWin)}
-,   Gtk::ApplicationWindow{}
-,   Lua::Referenceable{}
-,   L{luaL_newstate()}
-,   editor{Editor::Editor::create(L)}
-,   _view3d{editor}
-,   _view2d_top{editor}
-,   _view2d_front{editor}
-,   _view2d_right{editor}
-,   _maptools{editor}
-,   _opsearch{OperationSearch::create(editor)}
-,   _face_editor{editor}
-,   _prop_grid_size{*this, "grid-size", 32}
-,   _binding_grid_size_top{
-        Glib::Binding::bind_property(
-            property_grid_size(),
-            _view2d_top.property_grid_size(),
-            Glib::BindingFlags::BINDING_SYNC_CREATE)}
-,   _binding_grid_size_front{
-        Glib::Binding::bind_property(
-            property_grid_size(),
-            _view2d_front.property_grid_size(),
-            Glib::BindingFlags::BINDING_SYNC_CREATE)}
-,   _binding_grid_size_right{
-        Glib::Binding::bind_property(
-            property_grid_size(),
-            _view2d_right.property_grid_size(),
-            Glib::BindingFlags::BINDING_SYNC_CREATE)}
-,   _binding_left_right_views_position{
-        Glib::Binding::bind_property(
-            _left_views.property_position(),
-            _right_views.property_position(),
-            Glib::BindingFlags::BINDING_BIDIRECTIONAL)}
-,   _binding_editor_modeselector_mode{
-        Glib::Binding::bind_property(
-            editor->property_mode(),
-            _mode_selector.property_mode(),
-            Glib::BindingFlags::BINDING_BIDIRECTIONAL)}
-,   _binding_editor_outliner_world{
-        Glib::Binding::bind_property(
-            editor->property_map(),
-            _outliner.property_world(),
-            Glib::BindingFlags::BINDING_SYNC_CREATE)}
-,   _binding_views_horizontal_half_position{
-        Glib::Binding::bind_property(
-            _sidebar_splitter_R.property_position(),
-            _views.property_position(),
-            Glib::BindingFlags::BINDING_DEFAULT,
-            Glib::Binding::SlotTypedTransform<int, int>{
-                [](int const &from, int &to) -> bool {
-                    to = from / 2;
-                    return true;
-                }
-            })}
+: Glib::ObjectBase{typeid(AppWin)}
+, Gtk::ApplicationWindow{}
+, Lua::Referenceable{}
+, L{luaL_newstate()}
+, editor{Editor::Editor::create(L)}
+, _view3d{editor}
+, _view2d_top{editor}
+, _view2d_front{editor}
+, _view2d_right{editor}
+, _maptools{editor}
+, _opsearch{OperationSearch::create(editor)}
+, _face_editor{editor}
+, _prop_grid_size{*this, "grid-size", 32}
+, _binding_grid_size_top{Glib::Binding::bind_property(
+      property_grid_size(),
+      _view2d_top.property_grid_size(),
+      Glib::BindingFlags::BINDING_SYNC_CREATE)}
+, _binding_grid_size_front{Glib::Binding::bind_property(
+      property_grid_size(),
+      _view2d_front.property_grid_size(),
+      Glib::BindingFlags::BINDING_SYNC_CREATE)}
+, _binding_grid_size_right{Glib::Binding::bind_property(
+      property_grid_size(),
+      _view2d_right.property_grid_size(),
+      Glib::BindingFlags::BINDING_SYNC_CREATE)}
+, _binding_left_right_views_position{Glib::Binding::bind_property(
+      _left_views.property_position(),
+      _right_views.property_position(),
+      Glib::BindingFlags::BINDING_BIDIRECTIONAL)}
+, _binding_editor_modeselector_mode{Glib::Binding::bind_property(
+      editor->property_mode(),
+      _mode_selector.property_mode(),
+      Glib::BindingFlags::BINDING_BIDIRECTIONAL)}
+, _binding_editor_outliner_world{Glib::Binding::bind_property(
+      editor->property_map(),
+      _outliner.property_world(),
+      Glib::BindingFlags::BINDING_SYNC_CREATE)}
+, _binding_views_horizontal_half_position{Glib::Binding::bind_property(
+      _sidebar_splitter_R.property_position(),
+      _views.property_position(),
+      Glib::BindingFlags::BINDING_DEFAULT,
+      Glib::Binding::SlotTypedTransform<int, int>{
+          [](int const &from, int &to) -> bool
+          {
+              to = from / 2;
+              return true;
+          }})}
 {
     set_show_menubar(true);
     set_icon(Gdk::Pixbuf::create_from_resource(SE_GRESOURCE_PREFIX "logo.png"));
@@ -149,17 +139,13 @@ AppWin::AppWin()
     add_action(
         "openLuaDebugger",
         sigc::mem_fun(*this, &AppWin::on_action_openLuaDebugger));
-    add_action(
-        "reloadLua",
-        sigc::mem_fun(*this, &AppWin::on_action_reloadLua));
+    add_action("reloadLua", sigc::mem_fun(*this, &AppWin::on_action_reloadLua));
 
     // TODO: integrate w/ dynamic system?
-    add_action(
-        "mapTools_Select",
-        [this](){editor->set_maptool("Select");});
+    add_action("mapTools_Select", [this]() { editor->set_maptool("Select"); });
     add_action(
         "mapTools_CreateBrush",
-        [this](){editor->set_maptool("Create Brush");});
+        [this]() { editor->set_maptool("Create Brush"); });
 
     add_events(Gdk::EventMask::KEY_PRESS_MASK);
 
@@ -186,7 +172,8 @@ AppWin::AppWin()
     // FIXME: Known bugs
     // - Doesn't work properly on startup or maximize/unmaximize events.
     _views.signal_size_allocate().connect(
-        [this](Gtk::Allocation const &a){
+        [this](Gtk::Allocation const &a)
+        {
             _left_views.set_position(a.get_height() / 2);
             _right_views.set_position(a.get_height() / 2);
         });
@@ -233,8 +220,8 @@ AppWin::AppWin()
     _luainfobar.set_show_close_button(true);
     _luainfobar.set_message_type(Gtk::MessageType::MESSAGE_INFO);
     _luainfobarlabel.set_text("Reloaded Lua scripts");
-    auto contentarea = dynamic_cast<Gtk::Container *>(
-        _luainfobar.get_content_area());
+    auto contentarea
+        = dynamic_cast<Gtk::Container *>(_luainfobar.get_content_area());
     contentarea->add(_luainfobarlabel);
 
     _inforegion.pack_end(_gridsizelabel);
@@ -253,11 +240,12 @@ AppWin::AppWin()
 
     _lua_debugger_window.set_title(SE_CANON_NAME " - Lua Debugger");
 
-    _luainfobar.signal_response().connect([this](int){_luainfobar.hide();});
+    _luainfobar.signal_response().connect([this](int) { _luainfobar.hide(); });
     signal_lua_reloaded().connect(
         sigc::mem_fun(_luainfobar, &Gtk::InfoBar::show));
     signal_lua_reloaded().connect(
-        [this](){
+        [this]()
+        {
             lua_getglobal(L, "print");
             Lua::pcallT(L, 0, "---Lua Reloaded---");
         });
@@ -271,7 +259,9 @@ AppWin::AppWin()
     _on_grid_size_changed();
 
     if (!L)
+    {
         throw Lua::Error{"Failed to allocate new lua_State"};
+    }
     luaL_checkversion(L);
 
     setup_lua_state();
@@ -281,51 +271,61 @@ AppWin::AppWin()
     _luainfobar.hide();
 }
 
-
-Glib::RefPtr<Sickle::Editor::World>
-loadAnyMapFile(Glib::RefPtr<Gio::File> const &file)
+Glib::RefPtr<Sickle::Editor::World> loadAnyMapFile(
+    Glib::RefPtr<Gio::File> const &file)
 {
     auto const path = file->get_path();
     if (lowercase(path).rfind(".rmf") != std::string::npos)
+    {
         return Sickle::Editor::World::create(RMF::load(path));
+    }
 
     else if (lowercase(path).rfind(".map") != std::string::npos)
+    {
         return Sickle::Editor::World::create(MAP::load(path));
+    }
 
     std::string rmferror{};
     std::string maperror{};
-    try {
+    try
+    {
         return Sickle::Editor::World::create(RMF::load(file->get_path()));
     }
-    catch (RMF::LoadError const &e) {
+    catch (RMF::LoadError const &e)
+    {
         rmferror = e.what();
     }
-    try {
+    try
+    {
         return Sickle::Editor::World::create(MAP::load(file->get_path()));
     }
-    catch (MAP::LoadError const &e) {
+    catch (MAP::LoadError const &e)
+    {
         maperror = e.what();
     }
     throw GenericLoadError{rmferror, maperror};
 }
-
 
 void AppWin::open(Glib::RefPtr<Gio::File> const &file)
 {
     if (file)
     {
         std::string errmsg{};
-        try {
+        try
+        {
             editor->set_map(loadAnyMapFile(file));
             return;
         }
-        catch (RMF::LoadError const &e) {
+        catch (RMF::LoadError const &e)
+        {
             errmsg = ".rmf: " + std::string{e.what()};
         }
-        catch (MAP::LoadError const &e) {
+        catch (MAP::LoadError const &e)
+        {
             errmsg = ".map: " + std::string{e.what()};
         }
-        catch (GenericLoadError const &e) {
+        catch (GenericLoadError const &e)
+        {
             errmsg = ".rmf: " + e.rmf + "\n" + ".map: " + e.map;
         }
         Gtk::MessageDialog d{
@@ -336,9 +336,10 @@ void AppWin::open(Glib::RefPtr<Gio::File> const &file)
         d.run();
     }
     else
+    {
         editor->set_map(Editor::World::create());
+    }
 }
-
 
 void AppWin::save(std::string const &filename)
 {
@@ -346,18 +347,15 @@ void AppWin::save(std::string const &filename)
     MAP::save(out, *editor->get_map().get());
 }
 
-
 void AppWin::show_console_window()
 {
     _lua_console_window.present();
 }
 
-
 void AppWin::show_debugger_window()
 {
     _lua_debugger_window.present();
 }
-
 
 void AppWin::reload_scripts()
 {
@@ -373,31 +371,25 @@ void AppWin::reload_scripts()
     signal_lua_reloaded().emit();
 }
 
-
 void AppWin::search_operations()
 {
     _opsearch->present();
 }
-
 
 void AppWin::add_maptool(Editor::MapTool const &maptool)
 {
     editor->add_maptool(maptool);
 }
 
-
 void AppWin::set_grid_size(guint grid_size)
 {
     property_grid_size() = std::clamp(grid_size, GRID_SIZE_MIN, GRID_SIZE_MAX);
 }
 
-
 guint AppWin::get_grid_size()
 {
     return property_grid_size().get_value();
 }
-
-
 
 void AppWin::setup_lua_state()
 {
@@ -409,13 +401,16 @@ void AppWin::setup_lua_state()
     luaL_requiref(L, "geo", luaopen_geo, 1);
     lua_pop(L, 3);
 
-    Lua::set_msgh(L, [this](lua_State *L){
-        int const initial = lua_gettop(L);
-        _lua_debugger_window.set_pause(true);
-        _lua_debugger_window.update();
-        assert(initial == lua_gettop(L));
-        return 1;
-    });
+    Lua::set_msgh(
+        L,
+        [this](lua_State *L)
+        {
+            int const initial = lua_gettop(L);
+            _lua_debugger_window.set_pause(true);
+            _lua_debugger_window.update();
+            assert(initial == lua_gettop(L));
+            return 1;
+        });
 
     _lua_console.property_lua_state().set_value(L);
     _lua_debugger_window.property_lua_state().set_value(L);
@@ -423,7 +418,6 @@ void AppWin::setup_lua_state()
     Lua::push(L, this);
     lua_setglobal(L, "gAppWin");
 }
-
 
 void AppWin::on_maptoolconfig_confirmed()
 {
@@ -435,35 +429,29 @@ void AppWin::on_maptoolconfig_confirmed()
     }
 }
 
-
 void AppWin::on_action_openLuaConsole()
 {
     show_console_window();
 }
-
 
 void AppWin::on_action_openLuaDebugger()
 {
     show_debugger_window();
 }
 
-
 void AppWin::on_action_reloadLua()
 {
     reload_scripts();
 }
 
-
 bool AppWin::on_key_press_event(GdkEventKey *event)
 {
-    auto const is_viewport =\
-        [this](Gtk::Widget const *focus) -> bool {
-            return (
-                focus == &_view2d_front
-                || focus == &_view2d_right
-                || focus == &_view2d_top
-                || focus == &_view3d);
-        };
+    auto const is_viewport = [this](Gtk::Widget const *focus) -> bool
+    {
+        return (
+            focus == &_view2d_front || focus == &_view2d_right
+            || focus == &_view2d_top || focus == &_view3d);
+    };
 
     auto const focus = get_focus();
     if (is_viewport(focus))
@@ -494,13 +482,10 @@ bool AppWin::on_key_press_event(GdkEventKey *event)
     return Gtk::ApplicationWindow::on_key_press_event(event);
 }
 
-
-
 std::string AppWin::_make_lua_include_path(std::string const &path)
 {
     return path + "/?.lua;" + path + "/?";
 }
-
 
 void AppWin::_on_grid_size_changed()
 {
@@ -508,12 +493,10 @@ void AppWin::_on_grid_size_changed()
         "Grid Size: " + std::to_string(property_grid_size().get_value()));
 }
 
-
 void AppWin::_on_opsearch_op_chosen(Editor::Operation const &op)
 {
     _maptool_config.set_operation(op);
 }
-
 
 void AppWin::_sync_property_editor()
 {
@@ -524,28 +507,29 @@ void AppWin::_sync_property_editor()
     _face_editor.set_face(face);
 }
 
-
 void AppWin::_run_internal_scripts()
 {
     int const start_top = lua_gettop(L);
     for (auto const &path : _internal_scripts)
     {
-        auto const &res = Gio::Resource::lookup_data_global(
-            SE_GRESOURCE_PREFIX + path);
+        auto const &res
+            = Gio::Resource::lookup_data_global(SE_GRESOURCE_PREFIX + path);
         gsize _size;
-        try {
-            Lua::checkerror(L,
+        try
+        {
+            Lua::checkerror(
+                L,
                 luaL_dostring(
                     L,
                     static_cast<char const *>(res->get_data(_size))));
         }
-        catch (Lua::Error const &e) {
+        catch (Lua::Error const &e)
+        {
             std::cerr << e.what() << std::endl;
         }
     }
     lua_pop(L, lua_gettop(L) - start_top);
 }
-
 
 void AppWin::_run_runtime_scripts()
 {
@@ -570,10 +554,12 @@ void AppWin::_run_runtime_scripts()
         switch (r)
         {
         case LUA_OK:
-            try {
+            try
+            {
                 Lua::checkerror(L, Lua::pcall(L, 0, LUA_MULTRET));
             }
-            catch (Lua::Error const &e) {
+            catch (Lua::Error const &e)
+            {
                 std::cout << e.what() << std::endl;
             }
             break;
@@ -595,7 +581,6 @@ void AppWin::_run_runtime_scripts()
     lua_pop(L, lua_gettop(L) - start_top);
 }
 
-
 void AppWin::_run_operations_scripts()
 {
     int const start_top = lua_gettop(L);
@@ -616,21 +601,25 @@ void AppWin::_run_operations_scripts()
 
         auto const dir = Gio::File::create_for_path(dir_path);
         Glib::RefPtr<Gio::FileEnumerator> e{nullptr};
-        try {
+        try
+        {
             e = dir->enumerate_children();
         }
-        catch (Gio::Error const &e) {
+        catch (Gio::Error const &e)
+        {
             std::cerr << e.what() << std::endl;
             continue;
         }
 
         for (auto file = e->next_file(); file; file = e->next_file())
         {
-            try {
+            try
+            {
                 editor->oploader->add_source_from_file(
                     dir_path + "/" + file->get_name());
             }
-            catch (Lua::Error const &e) {
+            catch (Lua::Error const &e)
+            {
                 std::cerr << e.what() << std::endl;
             }
         }

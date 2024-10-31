@@ -27,7 +27,6 @@
 #include <typeindex>
 #include <unordered_map>
 
-
 namespace Sickle::Editor
 {
     /**
@@ -36,7 +35,7 @@ namespace Sickle::Editor
     class EntityClass
     {
     public:
-        EntityClass()=default;
+        EntityClass() = default;
         EntityClass(FGD::Class const &cls);
 
         /**
@@ -52,7 +51,8 @@ namespace Sickle::Editor
          * @tparam T Property type.
          * @return True if the class has the property, else false.
          */
-        template<class T> bool has_class_property() const
+        template<class T>
+        bool has_class_property() const
         {
             return _class_properties.count(std::type_index{typeid(T)}) != 0;
         }
@@ -64,13 +64,16 @@ namespace Sickle::Editor
          * @tparam T Property type.
          * @return The property or nullptr.
          */
-        template<class T> T *get_class_property() const
+        template<class T>
+        T *get_class_property() const
         {
-            try {
+            try
+            {
                 return dynamic_cast<T *>(
                     _class_properties.at(std::type_index{typeid(T)}).get());
             }
-            catch (std::out_of_range const &e) {
+            catch (std::out_of_range const &e)
+            {
                 return nullptr;
             }
         }
@@ -90,8 +93,8 @@ namespace Sickle::Editor
          * @param name Name of the property to get.
          * @return The property definition, or nullptr if not found.
          */
-        std::shared_ptr<EntityPropertyDefinition>
-        get_property(std::string const &name) const;
+        std::shared_ptr<EntityPropertyDefinition> get_property(
+            std::string const &name) const;
 
         /**
          * Get the entity properties.
@@ -119,13 +122,13 @@ namespace Sickle::Editor
 
     private:
         std::string _type{"<undefined>"};
-        std::unordered_map<
-            std::type_index,
-            std::shared_ptr<ClassProperty>> _class_properties{};
+        std::unordered_map<std::type_index, std::shared_ptr<ClassProperty>>
+            _class_properties{};
         std::unordered_map<
             std::string,
-            std::shared_ptr<EntityPropertyDefinition>> _entity_properties{};
+            std::shared_ptr<EntityPropertyDefinition>>
+            _entity_properties{};
     };
-}
+} // namespace Sickle::Editor
 
 #endif

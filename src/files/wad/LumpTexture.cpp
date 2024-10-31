@@ -18,17 +18,12 @@
 
 #include "LumpTexture.hpp"
 
-
 using namespace WAD;
-
 
 static uint32_t u32_correct_endian(uint8_t const bytes[4])
 {
-    uint32_t const integer = (
-        bytes[0]
-        | (bytes[1] << 8)
-        | (bytes[2] << 16)
-        | (bytes[3] << 24));
+    uint32_t const integer
+        = (bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24));
     return integer;
 }
 
@@ -38,15 +33,15 @@ static uint16_t u16_correct_endian(uint8_t const bytes[2])
     return integer;
 }
 
-
-
 LumpTexture::LumpTexture(
     WADReader::DirectoryEntry const &entry,
     uint8_t const *bytes)
-:   _name{entry.name}
+: _name{entry.name}
 {
     if (entry.type != 0x43)
+    {
         throw BadTypeException{"expected lump type 0x43"};
+    }
 
     // TODO: Would be good to have some bounds safety here instead of just
     // trusting the pointer.
@@ -69,8 +64,8 @@ LumpTexture::LumpTexture(
     }
 
     // Load palette.
-    auto const final_tex_offset =\
-        u32_correct_endian(bytes + 24 + 4 * (_textures.size() - 1));
+    auto const final_tex_offset
+        = u32_correct_endian(bytes + 24 + 4 * (_textures.size() - 1));
     auto const final_width = _width / (1 << (_textures.size() - 1));
     auto const final_height = _height / (1 << (_textures.size() - 1));
 
@@ -80,61 +75,52 @@ LumpTexture::LumpTexture(
     auto const palette_size = u16_correct_endian(palette_ptr);
     for (uint16_t i = 0; i < palette_size; ++i)
     {
-        _palette.push_back({
-            (palette_ptr + 2 + 3 * i)[0],
-            (palette_ptr + 2 + 3 * i)[1],
-            (palette_ptr + 2 + 3 * i)[2]});
+        _palette.push_back(
+            {(palette_ptr + 2 + 3 * i)[0],
+             (palette_ptr + 2 + 3 * i)[1],
+             (palette_ptr + 2 + 3 * i)[2]});
     }
 }
-
 
 std::string LumpTexture::name() const
 {
     return _name;
 }
 
-
 std::string LumpTexture::texture_name() const
 {
     return _texture_name;
 }
-
 
 uint32_t LumpTexture::width() const
 {
     return _width;
 }
 
-
 uint32_t LumpTexture::height() const
 {
     return _height;
 }
-
 
 std::vector<uint8_t> const &LumpTexture::tex1() const
 {
     return _textures.at(0);
 }
 
-
 std::vector<uint8_t> const &LumpTexture::tex2() const
 {
     return _textures.at(1);
 }
-
 
 std::vector<uint8_t> const &LumpTexture::tex4() const
 {
     return _textures.at(2);
 }
 
-
 std::vector<uint8_t> const &LumpTexture::tex8() const
 {
     return _textures.at(3);
 }
-
 
 std::vector<std::array<uint8_t, 3>> const &LumpTexture::palette() const
 {

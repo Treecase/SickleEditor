@@ -22,7 +22,6 @@
 #include <cstddef>
 #include <cstdint>
 
-
 namespace WAD
 {
     /**
@@ -35,7 +34,7 @@ namespace WAD
          *
          * @param offset Position of the stream after seeking.
          */
-        virtual void seek(size_t offset)=0;
+        virtual void seek(size_t offset) = 0;
 
         /**
          * Read exactly count bytes from the stream into buf.
@@ -43,14 +42,14 @@ namespace WAD
          * @param buf Buffer at least count bytes long.
          * @param count Number of bytes to read into buffer.
          */
-        virtual void read_bytes(void *buf, size_t count)=0;
+        virtual void read_bytes(void *buf, size_t count) = 0;
 
         /**
          * Read an unsigned 8-bit integer.
          *
          * @return Unsigned 8-bit integer.
          */
-        virtual uint8_t read_uint8()=0;
+        virtual uint8_t read_uint8() = 0;
 
         /**
          * Read an unsigned 32-bit integer.
@@ -58,8 +57,8 @@ namespace WAD
          * @return Unsigned 32-bit integer.
          * @note WAD format is little-endian, this method returns host-endian.
          */
-        virtual uint32_t read_uint32()=0;
+        virtual uint32_t read_uint32() = 0;
     };
-}
+} // namespace WAD
 
 #endif

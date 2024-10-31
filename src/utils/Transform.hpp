@@ -22,7 +22,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-
 /** 3D transform. */
 struct Transform
 {
@@ -33,46 +32,39 @@ struct Transform
     // Model scaling.
     glm::vec3 scale;
 
-
     Transform()
-    :   translation{0.0f, 0.0f, 0.0f}
-    ,   rotation{0.0f, 0.0f, 0.0f}
-    ,   scale{1.0f, 1.0f, 1.0f}
+    : translation{0.0f, 0.0f, 0.0f}
+    , rotation{0.0f, 0.0f, 0.0f}
+    , scale{1.0f, 1.0f, 1.0f}
     {
     }
 
-    Transform(glm::vec3 const &translation, glm::vec3 const &rotation, glm::vec3 const &scale)
-    :   translation{translation}
-    ,   rotation{rotation}
-    ,   scale{scale}
+    Transform(
+        glm::vec3 const &translation,
+        glm::vec3 const &rotation,
+        glm::vec3 const &scale)
+    : translation{translation}
+    , rotation{rotation}
+    , scale{scale}
     {
     }
-
 
     /** Get transform matrix. */
     glm::mat4 getMatrix() const
     {
         // TODO: rotation's a bit weird?
-        return
+        return glm::rotate(
             glm::rotate(
                 glm::rotate(
-                    glm::rotate(
-                        glm::scale(
-                            glm::translate(
-                                glm::identity<glm::mat4>(),
-                                translation
-                            ),
-                            scale
-                        ),
-                        rotation.y,
-                        glm::vec3{0.0f, 1.0f, 0.0f}
-                    ),
-                    rotation.z,
-                    glm::vec3{0.0f, 0.0f, 1.0f}
-                ),
-                rotation.x,
-                glm::vec3{1.0f, 0.0f, 0.0f}
-            );
+                    glm::scale(
+                        glm::translate(glm::identity<glm::mat4>(), translation),
+                        scale),
+                    rotation.y,
+                    glm::vec3{0.0f, 1.0f, 0.0f}),
+                rotation.z,
+                glm::vec3{0.0f, 0.0f, 1.0f}),
+            rotation.x,
+            glm::vec3{1.0f, 0.0f, 0.0f});
     }
 };
 

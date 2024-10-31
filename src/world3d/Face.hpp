@@ -31,7 +31,6 @@
 #include <memory>
 #include <vector>
 
-
 namespace World3D
 {
     /**
@@ -58,7 +57,6 @@ namespace World3D
         glm::vec2 _uv;
     };
 
-
     /**
      * A 3D view of an editor face object. Acts as a proxy for an editor face,
      * translating that data into a format usable for OpenGL rendering.
@@ -67,12 +65,13 @@ namespace World3D
      *
      * See Sickle::Editor::Face for more context.
      */
-    class Face : public sigc::trackable, public DeferredExec
+    class Face
+    : public sigc::trackable
+    , public DeferredExec
     {
     public:
-        using SlotPreDraw = sigc::slot<void(
-            GLUtil::Program &,
-            Sickle::Editor::Face const *)>;
+        using SlotPreDraw
+            = sigc::slot<void(GLUtil::Program &, Sickle::Editor::Face const *)>;
 
         /// Called just before a face is rendered.
         static SlotPreDraw predraw;
@@ -81,16 +80,17 @@ namespace World3D
          * Emitted when a face's texture cannot be loaded. The signal parameter
          * is the missing texture's name.
          */
-        static auto &signal_missing_texture() {return _signal_missing_texture;}
+        static auto &signal_missing_texture()
+        {
+            return _signal_missing_texture;
+        }
 
-        Face(
-            Sickle::Editor::FaceRef const &face,
-            GLint offset);
+        Face(Sickle::Editor::FaceRef const &face, GLint offset);
 
         /**
          * Emitted when the vertices change.
          */
-        auto &signal_vertices_changed() {return _signal_vertices_changed;}
+        auto &signal_vertices_changed() { return _signal_vertices_changed; }
 
         /**
          * Length of span in parent brush's VBO. (ie. number of vertices in the
@@ -98,7 +98,7 @@ namespace World3D
          *
          * TODO: Probably shouldn't be here, tight coupling.
          */
-        GLsizei count() const {return _vertices.size();}
+        GLsizei count() const { return _vertices.size(); }
 
         /**
          * Offset into parent brush's VBO marking the start of this face's
@@ -106,21 +106,21 @@ namespace World3D
          *
          * TODO: Probably shouldn't be here, tight coupling.
          */
-        auto offset() const {return _offset;}
+        auto offset() const { return _offset; }
 
         /**
          * Get the face's vertices.
          *
          * @return A `Container` containing the face's vertices.
          */
-        auto const &vertices() const {return _vertices;}
+        auto const &vertices() const { return _vertices; }
 
         /**
          * Get the face's texture.
          *
          * @return The texture to be pasted onto the face.
          */
-        auto const &texture() const {return _texture;}
+        auto const &texture() const { return _texture; }
 
         /**
          * Prepare face data for rendering.
@@ -154,13 +154,13 @@ namespace World3D
         std::shared_ptr<Texture> _texture{nullptr};
         std::vector<Vertex> _vertices{};
 
-        Face(Face const &)=delete;
-        Face &operator=(Face const &)=delete;
+        Face(Face const &) = delete;
+        Face &operator=(Face const &) = delete;
 
         void _sync_vertices();
         /** @warning Requires an active OpenGL context. */
         void _sync_texture();
     };
-}
+} // namespace World3D
 
 #endif

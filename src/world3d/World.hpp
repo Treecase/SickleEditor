@@ -21,7 +21,6 @@
 
 #include <editor/world/World.hpp>
 
-
 // Nothing here for now.
 
 #endif

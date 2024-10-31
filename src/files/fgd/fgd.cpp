@@ -19,9 +19,8 @@
 #include "fgd.hpp"
 #include "parsing/FGDDriver.hpp"
 
-#include <iostream>
 #include <fstream>
-
+#include <iostream>
 
 FGD::GameDef FGD::from_file(std::string const &path)
 {
@@ -34,7 +33,9 @@ FGD::GameDef FGD::from_file(std::string const &path)
 std::ostream &FGD::operator<<(std::ostream &os, GameDef const &fgd)
 {
     for (auto const &cls : fgd.classes)
+    {
         os << *cls << '\n';
+    }
     return os;
 }
 
@@ -43,14 +44,20 @@ std::ostream &FGD::operator<<(std::ostream &os, Class const &cls)
     os << '@';
     std::cout << cls.type();
     for (auto const &attr : cls.attributes)
+    {
         os << ' ' << *attr;
+    }
     os << " = " << cls.name;
     if (cls.description.has_value())
+    {
         os << " : \"" << cls.description.value() << '"';
-    os << (cls.properties.empty()? ' ' : '\n') << '[';
+    }
+    os << (cls.properties.empty() ? ' ' : '\n') << '[';
     for (auto const &prop : cls.properties)
+    {
         os << "\n\t" << *prop;
-    os << (cls.properties.empty()? "" : "\n") << ']';
+    }
+    os << (cls.properties.empty() ? "" : "\n") << ']';
     return os;
 }
 

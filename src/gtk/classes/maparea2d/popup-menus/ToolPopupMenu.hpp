@@ -20,10 +20,9 @@
 
 #include <editor/core/Editor.hpp>
 
-#include <gtkmm/menu.h>
 #include <giomm/simpleactiongroup.h>
 #include <glibmm/refptr.h>
-
+#include <gtkmm/menu.h>
 
 namespace Sickle
 {
@@ -44,6 +43,6 @@ namespace Sickle
 
         void action_triggered(std::string const &id);
     };
-}
+} // namespace Sickle
 
 #endif

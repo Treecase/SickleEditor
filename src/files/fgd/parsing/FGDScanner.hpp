@@ -19,8 +19,8 @@
 #ifndef FGD_SCANNER_HPP
 #define FGD_SCANNER_HPP
 
-#include "location.hh"
 #include "FGDParser.hpp"
+#include "location.hh"
 
 #if !defined(yyFlexLexerOnce)
 #undef yyFlexLexer
@@ -29,19 +29,25 @@
 #endif
 
 #undef YY_DECL
-#define YY_DECL int FGD::FGDScanner::next_token(FGDParser::semantic_type *yylval, FGDParser::location_type *yylloc)
-
+#define YY_DECL                           \
+    int FGD::FGDScanner::next_token(      \
+        FGDParser::semantic_type *yylval, \
+        FGDParser::location_type *yylloc)
 
 namespace FGD
 {
     class FGDScanner : public yyFlexLexer
     {
     public:
-        FGDScanner(std::istream *in): yyFlexLexer(in) {}
+        FGDScanner(std::istream *in)
+        : yyFlexLexer(in)
+        {
+        }
+
         int next_token(
             FGDParser::semantic_type *yylval,
             FGDParser::location_type *yylloc);
     };
-}
+} // namespace FGD
 
 #endif

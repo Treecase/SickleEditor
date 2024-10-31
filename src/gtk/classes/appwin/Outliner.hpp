@@ -31,7 +31,6 @@
 
 #include <memory>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -43,12 +42,14 @@ namespace Sickle::AppWin
         Outliner();
 
         /** The current World to view children of. */
-        auto property_world() {return _prop_world.get_proxy();}
-        /** The current World to view children of. */
-        auto property_world() const {return _prop_world.get_proxy();}
+        auto property_world() { return _prop_world.get_proxy(); }
 
-        auto property_editor() {return _prop_editor.get_proxy();}
-        auto property_editor() const {return _prop_editor.get_proxy();}
+        /** The current World to view children of. */
+        auto property_world() const { return _prop_world.get_proxy(); }
+
+        auto property_editor() { return _prop_editor.get_proxy(); }
+
+        auto property_editor() const { return _prop_editor.get_proxy(); }
 
     protected:
         void on_button_press_event_notify(GdkEventButton *event);
@@ -78,17 +79,18 @@ namespace Sickle::AppWin
         struct Columns : Gtk::TreeModelColumnRecord
         {
             Columns()
-            :   Gtk::TreeModelColumnRecord{}
+            : Gtk::TreeModelColumnRecord{}
             {
                 add(text);
                 add(icon);
                 add(ptr);
                 add(signals);
             }
+
             Gtk::TreeModelColumn<Glib::ustring> text;
             Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
-            Gtk::TreeModelColumn<
-                Glib::RefPtr<Sickle::Editor::EditorObject>> ptr;
+            Gtk::TreeModelColumn<Glib::RefPtr<Sickle::Editor::EditorObject>>
+                ptr;
             Gtk::TreeModelColumn<std::shared_ptr<Signals>> signals;
         };
 
@@ -110,6 +112,6 @@ namespace Sickle::AppWin
 
         void _run_operation(std::string const &operation_name);
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

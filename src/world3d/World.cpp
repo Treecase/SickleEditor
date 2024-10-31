@@ -18,5 +18,4 @@
 
 #include "World.hpp"
 
-
 // Nothing here for now.

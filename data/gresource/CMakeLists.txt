@@ -33,3 +33,9 @@ add_library(resources OBJECT resources.cpp)
 target_link_libraries(resources PRIVATE PkgConfig::GTKMM)
 
 target_link_libraries(sickle PRIVATE resources)
+
+install(
+    FILES logo.svg
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
+    RENAME "${APPLICATION_ID}.svg"
+)

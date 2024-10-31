@@ -27,7 +27,6 @@
 #include <string>
 #include <vector>
 
-
 namespace WAD
 {
     /**
@@ -42,12 +41,12 @@ namespace WAD
         struct BadTypeException : std::runtime_error
         {
             BadTypeException(std::string const &what)
-            :   std::runtime_error{what}
+            : std::runtime_error{what}
             {
             }
         };
 
-        LumpTexture()=default;
+        LumpTexture() = default;
 
         /** Name of the lump in the directory. */
         std::string name() const;
@@ -91,6 +90,6 @@ namespace WAD
         std::array<std::vector<uint8_t>, 4> _textures{};
         std::vector<std::array<uint8_t, 3>> _palette{};
     };
-}
+} // namespace WAD
 
 #endif

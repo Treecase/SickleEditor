@@ -23,7 +23,6 @@
 
 #include <editor/world/Entity.hpp>
 
-
 namespace World2D
 {
     /**
@@ -34,8 +33,8 @@ namespace World2D
     class EntityDraw : public DrawComponent
     {
     public:
-        EntityDraw()=default;
-        virtual ~EntityDraw()=default;
+        EntityDraw() = default;
+        virtual ~EntityDraw() = default;
 
         virtual void draw(
             Cairo::RefPtr<Cairo::Context> const &cr,
@@ -50,6 +49,6 @@ namespace World2D
     private:
         Sickle::Editor::Entity const *_entity{nullptr};
     };
-}
+} // namespace World2D
 
 #endif

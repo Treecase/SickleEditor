@@ -24,7 +24,6 @@
 
 #include <cairomm/cairomm.h>
 
-
 namespace World2D
 {
     /**
@@ -41,10 +40,11 @@ namespace World2D
          */
         virtual void draw(
             Cairo::RefPtr<Cairo::Context> const &cr,
-            Sickle::MapArea2D const &maparea) const=0;
+            Sickle::MapArea2D const &maparea) const
+            = 0;
 
         virtual void execute() final override {};
     };
-}
+} // namespace World2D
 
 #endif

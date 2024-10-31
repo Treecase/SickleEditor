@@ -30,7 +30,6 @@
 #include <memory>
 #include <vector>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -42,7 +41,7 @@ namespace Sickle::AppWin
         OperationParameterEditor();
 
         /** Emitted when the user is finished editing parameters. */
-        auto &signal_confirmed() {return _sig_confirmed;}
+        auto &signal_confirmed() { return _sig_confirmed; }
 
         /**
          * Check if an operation's parameters are currently being edited.
@@ -87,6 +86,6 @@ namespace Sickle::AppWin
         std::vector<Gtk::Widget *> _arg_configs{};
         std::unique_ptr<Editor::Operation> _operation{nullptr};
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

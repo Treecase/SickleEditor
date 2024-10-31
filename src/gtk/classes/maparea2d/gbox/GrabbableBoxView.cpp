@@ -18,26 +18,27 @@
 
 #include "GrabbableBoxView.hpp"
 
-
 using namespace Sickle;
-
 
 GrabbableBoxView::GrabbableBoxView(
     std::shared_ptr<BBox2View> const &box,
     std::shared_ptr<BBox2View> const &handles)
 {
     for (auto &area : _views)
+    {
         area = handles;
+    }
     _views[Area::CENTER] = box;
 }
-
 
 void GrabbableBoxView::draw(
     Cairo::RefPtr<Cairo::Context> const &cr,
     GrabbableBox const &gb)
 {
     if (_views[Area::CENTER])
+    {
         _views[Area::CENTER]->draw(cr, gb.get_box(), gb.unit);
+    }
 
     for (auto area : gb.get_handle_areas())
     {

@@ -28,7 +28,6 @@
 #include <typeinfo>
 #include <unordered_set>
 
-
 namespace Sickle::Editor
 {
     /**
@@ -47,10 +46,10 @@ namespace Sickle::Editor
     public:
         using Item = Glib::RefPtr<Selectable>;
 
-        Selection()=default;
+        Selection() = default;
 
         /** Emitted when an object is selected or deselected. */
-        auto &signal_updated() {return _signal_updated;}
+        auto &signal_updated() { return _signal_updated; }
 
         /**
          * Deselect all selected objects. Sets the object's "selected" property
@@ -79,7 +78,7 @@ namespace Sickle::Editor
          *
          * @param item Item to check status of.
          * @return True if object is selected, else false.
-        */
+         */
         bool contains(Item item) const;
 
         /**
@@ -109,11 +108,11 @@ namespace Sickle::Editor
             auto const items = get_all_of_type(typeid(T));
             std::vector<Glib::RefPtr<T>> cast_items{};
             std::transform(
-                items.cbegin(), items.cend(),
+                items.cbegin(),
+                items.cend(),
                 std::back_inserter(cast_items),
-                [](Item const &item) -> Glib::RefPtr<T> {
-                    return Glib::RefPtr<T>::cast_dynamic(item);
-                });
+                [](Item const &item) -> Glib::RefPtr<T>
+                { return Glib::RefPtr<T>::cast_dynamic(item); });
             return cast_items;
         }
 
@@ -139,8 +138,9 @@ namespace Sickle::Editor
             return Glib::RefPtr<T>::cast_dynamic(get_latest_of_type(typeid(T)));
         }
 
-        auto begin() const {return _selected.begin();}
-        auto end() const {return _selected.end();}
+        auto begin() const { return _selected.begin(); }
+
+        auto end() const { return _selected.end(); }
 
     private:
         struct ItemHasher
@@ -155,9 +155,9 @@ namespace Sickle::Editor
 
         sigc::signal<void()> _signal_updated{};
 
-        Selection(Selection const &)=delete;
-        Selection &operator=(Selection const &)=delete;
+        Selection(Selection const &) = delete;
+        Selection &operator=(Selection const &) = delete;
     };
-}
+} // namespace Sickle::Editor
 
 #endif

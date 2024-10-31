@@ -28,7 +28,6 @@
 #include <string>
 #include <utility>
 
-
 namespace Lua
 {
     struct Error : public std::runtime_error
@@ -42,9 +41,9 @@ namespace Lua
         StackOverflow(std::string const &what);
     };
 
-
     /** Push a value onto the stack. */
-    template<typename T> void push(lua_State *L, T value)=delete;
+    template<typename T>
+    void push(lua_State *L, T value) = delete;
     void push(lua_State *L, bool value);
     void push(lua_State *L, lua_Integer value);
     void push(lua_State *L, lua_Number value);
@@ -53,14 +52,18 @@ namespace Lua
 
     /** Get a value from the stack. */
     template<typename T>
-    T get_as(lua_State *L, int idx)=delete;
+    T get_as(lua_State *L, int idx) = delete;
 
     struct Pusher
     {
         lua_State *L;
-        template<typename T> void operator()(T value) {push(L, value);}
-    };
 
+        template<typename T>
+        void operator()(T value)
+        {
+            push(L, value);
+        }
+    };
 
     /**
      * Set the error handler for this lua_State. The default handler just
@@ -76,7 +79,6 @@ namespace Lua
 
     /** Check a Lua status error. */
     void checkerror(lua_State *L, int status);
-
 
     /**
      * Call the function at the top of the stack in protected mode. Uses the
@@ -107,7 +109,6 @@ namespace Lua
         return pcall(L, count, nresults);
     }
 
-
     /**
      * Gets METHOD from object on top of stack and rotates to prepare for a
      * method call.
@@ -128,13 +129,16 @@ namespace Lua
      * return values.
      */
     template<typename... Args>
-    void call_method_r(lua_State *L, int r, std::string const &method, Args... args)
+    void call_method_r(
+        lua_State *L,
+        int r,
+        std::string const &method,
+        Args... args)
     {
         get_method(L, method);
         auto count = foreach(Pusher{L}, args...);
         checkerror(L, pcall(L, 1 + count, r));
     }
-
 
     /** Set table[KEY] = VALUE. Table is at the top of the stack. */
     template<typename K, typename V>
@@ -152,12 +156,17 @@ namespace Lua
         lua_newtable(L);
         (set_table(L, c.first, c.second), ...);
     }
-}
+} // namespace Lua
 
-template<> bool Lua::get_as(lua_State *L, int idx);
-template<> lua_Integer Lua::get_as(lua_State *L, int idx);
-template<> lua_Number Lua::get_as(lua_State *L, int idx);
-template<> char const *Lua::get_as(lua_State *L, int idx);
-template<> std::string Lua::get_as(lua_State *L, int idx);
+template<>
+bool Lua::get_as(lua_State *L, int idx);
+template<>
+lua_Integer Lua::get_as(lua_State *L, int idx);
+template<>
+lua_Number Lua::get_as(lua_State *L, int idx);
+template<>
+char const *Lua::get_as(lua_State *L, int idx);
+template<>
+std::string Lua::get_as(lua_State *L, int idx);
 
 #endif

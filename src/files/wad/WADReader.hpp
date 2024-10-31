@@ -25,11 +25,9 @@
 #include <cstdint>
 #include <vector>
 
-
 namespace WAD
 {
     class LumpTexture;
-
 
     /**
      * Extracts data from a .wad file.
@@ -99,7 +97,7 @@ namespace WAD
 
         WADInputStream &_stream;
     };
-}
+} // namespace WAD
 
 #include "LumpTexture.hpp"
 
