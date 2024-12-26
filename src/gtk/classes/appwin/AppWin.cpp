@@ -525,7 +525,7 @@ void AppWin::_run_internal_scripts()
         }
         catch (Lua::Error const &e)
         {
-            std::cerr << e.what() << std::endl;
+            g_error("Error in internal script: %s", e.what());
         }
     }
     lua_pop(L, lua_gettop(L) - start_top);
@@ -543,13 +543,14 @@ void AppWin::_run_runtime_scripts()
 
     // Load and execute runtime scripts.
     int const start_top1 = lua_gettop(L);
-    for (auto const &dir_path : _lua_script_dirs)
+    for (auto const &data_dir : Glib::get_system_data_dirs())
     {
-        auto const newPATH = oldPATH + ";" + _make_lua_include_path(dir_path);
+        auto const dir = data_dir + "/sickle/lua-runtime";
+        auto const newPATH = oldPATH + ";" + _make_lua_include_path(dir);
         Lua::push(L, newPATH);
         lua_setfield(L, -2, "path");
 
-        auto const script_path = dir_path + "/main.lua";
+        auto const script_path = dir + "/main.lua";
         auto const r = luaL_loadfile(L, script_path.c_str());
         switch (r)
         {
@@ -560,12 +561,22 @@ void AppWin::_run_runtime_scripts()
             }
             catch (Lua::Error const &e)
             {
-                std::cout << e.what() << std::endl;
+                g_error("Error while running Lua script: %s", e.what());
             }
             break;
+        case LUA_ERRSYNTAX:
+            g_warning("Syntax error in Lua script: %s", lua_tostring(L, -1));
+            lua_pop(L, 1);
+            break;
+        // File errors are expected since we are checking a number of
+        // directories which may or may not contain Lua scripts.
+        case LUA_ERRFILE:
+            lua_pop(L, 1);
+            break;
         default:
-            auto const errmsg = lua_tostring(L, -1);
-            std::cout << errmsg << std::endl;
+            g_error(
+                "Failed to load and run a Lua script: %s",
+                lua_tostring(L, -1));
             lua_pop(L, 1);
             break;
         }
@@ -591,10 +602,13 @@ void AppWin::_run_operations_scripts()
     std::string const oldPATH{lua_tostring(L, -1)};
     lua_pop(L, 1);
 
+    auto const data_dirs = Glib::get_system_data_dirs();
+
     // Load and execute operation scripts.
     int const start_top1 = lua_gettop(L);
-    for (auto const &dir_path : _operation_script_dirs)
+    for (auto const &data_dir : data_dirs)
     {
+        auto const dir_path = data_dir + "/sickle/operations";
         auto const newPATH = oldPATH + ";" + _make_lua_include_path(dir_path);
         Lua::push(L, newPATH);
         lua_setfield(L, -2, "path");
@@ -607,7 +621,9 @@ void AppWin::_run_operations_scripts()
         }
         catch (Gio::Error const &e)
         {
-            std::cerr << e.what() << std::endl;
+            // File errors are expected since we are checking a
+            // number of directories which may or may not contain Lua
+            // scripts.
             continue;
         }
 
@@ -620,7 +636,7 @@ void AppWin::_run_operations_scripts()
             }
             catch (Lua::Error const &e)
             {
-                std::cerr << e.what() << std::endl;
+                g_error("add_source_from_file: %s", e.what());
             }
         }
         lua_pop(L, lua_gettop(L) - start_top1);

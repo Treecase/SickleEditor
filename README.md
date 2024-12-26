@@ -1,10 +1,9 @@
 # Sickle Editor
 
-An open-source editor for GoldSrc maps. Both `.MAP` and `.RMF` formats are supported. Sickle Editor is released under the [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html) license.
-
-
 ![Build Status Badge](https://img.shields.io/github/actions/workflow/status/Treecase/SickleEditor/cmake-multi-platform.yml)
 ![License Badge](https://img.shields.io/github/license/Treecase/SickleEditor)
+
+An open-source editor for GoldSrc maps. Both `.MAP` and `.RMF` formats are supported. Sickle Editor is released under the [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html) license.
 
 
 ## Getting Started
@@ -35,7 +34,6 @@ And then build the program:
 ```bash
 git clone https://github.com/Treecase/SickleEditor
 cd SickleEditor
-git submodule update --init --recursive
 cmake -B build .
 cmake --build build
 ```
@@ -56,7 +54,6 @@ To build the program:
 ```bash
 git clone https://github.com/Treecase/SickleEditor
 cd SickleEditor
-git submodule update --init --recursive
 cmake -B build .
 cmake --build build
 ```
@@ -67,18 +64,17 @@ cmake --build build
 To install the Sickle Editor, use:
 
 ```bash
-cmake --install .
+cmake --install build
 ```
 
 By default, the program will be installed to `/usr/local` on Linux and `C:/Program Files/Sickle Editor` on Windows. If you want the installation to go somewhere else, use:
 
 ```bash
-cmake --install . --prefix=<your/desired/location>
+cmake --install build --prefix=<Install Prefix>
 ```
 
-You'll also have to compile the GSettings schema with the following command.
+Linux users will also have to compile the GSettings schema with the following command.
 
 ```bash
-cd <INSTALL_PREFIX>/share/glib-2.0/schemas
-glib-compile-schemas .
+glib-compile-schemas <Install Prefix>/share/glib-2.0/schemas
 ```

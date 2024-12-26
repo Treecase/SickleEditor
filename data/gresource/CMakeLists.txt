@@ -1,11 +1,17 @@
 # Generate the GResource XML file.
-configure_file(sicklegtk.gresource.xml.in sicklegtk.gresource.xml)
+configure_file(SickleEditor.gresource.xml.in SickleEditor.gresource.xml)
+
+find_program(
+    GLIB_COMPILE_RESOURCES
+    NAMES glib-compile-resources
+    DOC "Path to the glib-compile-resources program"
+    REQUIRED)
 
 # Build resources.cpp.
 add_custom_command(
     OUTPUT resources.cpp
-    COMMAND glib-compile-resources
-        sicklegtk.gresource.xml
+    COMMAND "${GLIB_COMPILE_RESOURCES}"
+        SickleEditor.gresource.xml
         --target=resources.cpp
         --sourcedir="${CMAKE_CURRENT_SOURCE_DIR}"
         --generate-source
@@ -29,13 +35,7 @@ add_custom_command(
         LuaConsole.css
         MapArea2D.css
 )
-add_library(resources OBJECT resources.cpp)
-target_link_libraries(resources PRIVATE PkgConfig::GTKMM)
+add_library(gresources OBJECT resources.cpp)
+target_link_libraries(gresources PRIVATE PkgConfig::GTKMM)
 
-target_link_libraries(sickle PRIVATE resources)
-
-install(
-    FILES logo.svg
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
-    RENAME "${APPLICATION_ID}.svg"
-)
+target_link_libraries(sickle PRIVATE gresources)

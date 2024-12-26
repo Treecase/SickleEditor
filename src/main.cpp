@@ -24,10 +24,6 @@
 
 #include <memory>
 
-#ifndef NDEBUG
-#include <glibmm/miscutils.h>
-#endif
-
 static void initialize_buildable_types()
 {
     auto const dummy_OperationSearch
@@ -36,11 +32,6 @@ static void initialize_buildable_types()
 
 int main(int argc, char *argv[])
 {
-    /* Debug builds won't have a schema installed, so we need to manually point
-     * to it. */
-#ifndef NDEBUG
-    Glib::setenv("GSETTINGS_SCHEMA_DIR", SE_BINARY_DIR, false);
-#endif
     auto app = Sickle::App::create();
     // The Gtkmm Builder API requires us to register the GType of each derived
     // widget we want to construct. To do this, we simply create a dummy

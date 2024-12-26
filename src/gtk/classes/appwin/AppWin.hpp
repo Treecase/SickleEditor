@@ -159,14 +159,6 @@ namespace Sickle::AppWin
         Glib::RefPtr<Glib::Binding> _binding_views_vertical_half_position;
         sigc::signal<void()> _sig_lua_reloaded{};
 
-        std::vector<std::string> _lua_script_dirs{
-            SE_DATA_DIR "sickle/lua-runtime",
-            "../share/sickle/lua-runtime",
-        };
-        std::vector<std::string> _operation_script_dirs{
-            SE_DATA_DIR "sickle/operations",
-            "../share/sickle/operations",
-        };
         std::vector<std::string> const _internal_scripts{
             "lua/gdkevents.lua",
             "lua/gdkkeysyms.lua",

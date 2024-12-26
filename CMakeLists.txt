@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.31)
 
 file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
 if(EXISTS "${LOC_PATH}")
@@ -21,10 +21,9 @@ if(EXISTS "${LOC_PATH}")
 endif()
 
 project("Sickle Editor"
-    VERSION 0.12.1
+    VERSION 0.12.2
     DESCRIPTION "Open-Source GoldSrc Editor"
-    LANGUAGES CXX
-)
+    LANGUAGES CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
     message("CMAKE_BUILD_TYPE is unset, defaulting to Release")
@@ -41,7 +40,13 @@ endif()
 
 
 # --- Dependencies --- ###########################
-add_subdirectory(extern/glutils)
+
+include(FetchContent)
+FetchContent_Declare(
+    glutils
+    GIT_REPOSITORY https://github.com/Treecase/glutils
+    GIT_TAG        59ad12bdfbd0f292fe56524ee72ece755b4771c5)
+FetchContent_MakeAvailable(glutils)
 
 find_package(BISON 3.2 REQUIRED)
 find_package(FLEX 2.6 REQUIRED)
@@ -60,9 +65,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Application ID
-set(APPLICATION_ID com.github.treecase.sicklegtk)
+set(APPLICATION_ID com.github.Treecase.SickleEditor)
 # GResource prefix
-set(GRESOURCE_PREFIX /com/github/treecase/sicklegtk/)
+set(GRESOURCE_PREFIX /com/github/Treecase/SickleEditor/)
 # GSchema path
 set(SCHEMA_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -72,7 +77,6 @@ add_executable(sickle)
 target_link_libraries(sickle PRIVATE ${CMAKE_DL_LIBS})
 
 include(GNUInstallDirs)
-
 
 add_subdirectory(data)
 include_directories(sickle PUBLIC src)
