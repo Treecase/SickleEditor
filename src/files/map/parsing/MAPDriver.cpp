@@ -18,9 +18,8 @@
 
 #include "MAPDriver.hpp"
 
-#include <stdexcept>
 #include <fstream>
-
+#include <stdexcept>
 
 void MAP::MAPDriver::set_debug(bool debug)
 {
@@ -41,7 +40,9 @@ void MAP::MAPDriver::parse(std::istream &iss)
     }
 
     if (_parser->parse() != 0)
+    {
         throw std::runtime_error{"parse failed"};
+    }
 }
 
 MAP::Map MAP::MAPDriver::get_result() const

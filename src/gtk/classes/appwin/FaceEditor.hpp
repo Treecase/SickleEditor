@@ -32,7 +32,6 @@
 
 #include <array>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -42,10 +41,10 @@ namespace Sickle::AppWin
     class VectorEdit : public Gtk::Box
     {
     public:
-        VectorEdit(double increment=1.0)
-        :   Glib::ObjectBase{typeid(VectorEdit)}
-        ,   Gtk::Box{Gtk::Orientation::ORIENTATION_HORIZONTAL}
-        ,   _prop_vector{*this, "vector", {}}
+        VectorEdit(double increment = 1.0)
+        : Glib::ObjectBase{typeid(VectorEdit)}
+        , Gtk::Box{Gtk::Orientation::ORIENTATION_HORIZONTAL}
+        , _prop_vector{*this, "vector", {}}
         {
             for (size_t i = 0; i < N; ++i)
             {
@@ -54,7 +53,8 @@ namespace Sickle::AppWin
                 spin.set_increments(increment, 1.0);
                 spin.set_range(-1e16, 1e16);
                 spin.property_value().signal_changed().connect(
-                    [this, i](){
+                    [this, i]()
+                    {
                         auto v = get_vector();
                         v[i] = _spins.at(i).get_value();
                         set_vector(v);
@@ -66,19 +66,17 @@ namespace Sickle::AppWin
         }
 
         /** The value of the vector. */
-        auto property_vector() {return _prop_vector.get_proxy();}
+        auto property_vector() { return _prop_vector.get_proxy(); }
+
         /** The value of the vector. */
-        auto property_vector() const {return _prop_vector.get_proxy();}
+        auto property_vector() const { return _prop_vector.get_proxy(); }
 
         /**
          * Get the vector.
          *
          * @return The vector.
          */
-        auto get_vector() const
-        {
-            return property_vector().get_value();
-        }
+        auto get_vector() const { return property_vector().get_value(); }
 
         /**
          * Set the vector.
@@ -107,7 +105,6 @@ namespace Sickle::AppWin
         std::array<Gtk::SpinButton, N> _spins{};
     };
 
-
     /**
      * Widget to edit editor face object data.
      */
@@ -117,9 +114,10 @@ namespace Sickle::AppWin
         FaceEditor(Editor::EditorRef const &editor);
 
         /** The face to edit. */
-        auto property_face() {return _prop_face.get_proxy();}
+        auto property_face() { return _prop_face.get_proxy(); }
+
         /** The face to edit. */
-        auto property_face() const {return _prop_face.get_proxy();}
+        auto property_face() const { return _prop_face.get_proxy(); }
 
         /**
          * Set the face to be edited.
@@ -170,6 +168,6 @@ namespace Sickle::AppWin
         Gtk::Label _rotation_label{"Rotation"};
         Gtk::SpinButton _rotation_value{};
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

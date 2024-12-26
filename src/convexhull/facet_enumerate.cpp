@@ -29,7 +29,6 @@
 #include <stdexcept>
 #include <unordered_map>
 
-
 /* ===[ Facet Enumeration Utils ]=== */
 enum class EdgeCompare
 {
@@ -43,19 +42,25 @@ struct Edge
     glm::vec3 first, second;
 
     Edge(glm::vec3 const &first, glm::vec3 const &second)
-    :   first{first}
-    ,   second{second}
+    : first{first}
+    , second{second}
     {
     }
 
     EdgeCompare compare(Edge const &other) const
     {
         if (first == other.first && second == other.second)
+        {
             return EdgeCompare::EQUAL;
+        }
         else if (first == other.second && second == other.first)
+        {
             return EdgeCompare::OPPOSITE;
+        }
         else
+        {
             return EdgeCompare::NOTEQUAL;
+        }
     }
 
     bool operator==(Edge const &o) const
@@ -75,15 +80,13 @@ struct std::hash<Edge>
     }
 };
 
-
 class ConvexHull
 {
 public:
     std::unordered_set<HalfPlane> facets{};
     std::unordered_map<HalfPlane, std::vector<Edge>> edges{};
-    std::unordered_map<
-        HalfPlane,
-        std::unordered_map<Edge, HalfPlane>> neighbors{};
+    std::unordered_map<HalfPlane, std::unordered_map<Edge, HalfPlane>>
+        neighbors{};
 
     // Unless this is the first facet being added, B and C must make up an edge
     // already in the hull.
@@ -115,20 +118,21 @@ public:
         // Erase references in the neighbors map.
         for (auto &kv : neighbors)
         {
-            for (auto it = kv.second.begin(); it != kv.second.end(); )
+            for (auto it = kv.second.begin(); it != kv.second.end();)
             {
                 if (it->second == facet)
+                {
                     it = kv.second.erase(it);
+                }
                 else
+                {
                     it++;
+                }
             }
         }
     }
 
-    auto as_planes() const
-    {
-        return facets;
-    }
+    auto as_planes() const { return facets; }
 
     auto as_points() const
     {
@@ -160,7 +164,9 @@ public:
         for (auto const &kv : edges)
         {
             for (size_t i = 0; i + 1 < kv.second.size(); ++i)
-                assert(kv.second.at(i).second == kv.second.at(i+1).first);
+            {
+                assert(kv.second.at(i).second == kv.second.at(i + 1).first);
+            }
             assert(kv.second.back().second == kv.second.front().first);
         }
 
@@ -201,13 +207,20 @@ private:
     }
 
     // Find the edge between two planes.
-    std::optional<std::pair<Edge, Edge>>
-    neighboring_edge(HalfPlane const &a, HalfPlane const &b) const
+    std::optional<std::pair<Edge, Edge>> neighboring_edge(
+        HalfPlane const &a,
+        HalfPlane const &b) const
     {
         for (auto const &edge1 : edges.at(a))
+        {
             for (auto const &edge2 : edges.at(b))
+            {
                 if (edge1.compare(edge2) == EdgeCompare::OPPOSITE)
+                {
                     return std::make_pair(edge1, edge2);
+                }
+            }
+        }
         return std::nullopt;
     }
 
@@ -219,7 +232,10 @@ private:
         {
             for (auto const &f2 : facets)
             {
-                if (f1 == f2) continue;
+                if (f1 == f2)
+                {
+                    continue;
+                }
 
                 auto edges_pair = neighboring_edge(f1, f2);
                 if (edges_pair.has_value())
@@ -237,7 +253,6 @@ private:
         }
     }
 };
-
 
 /** Distance from X0 to the line between X1 and X2. */
 auto distance_to_line(glm::vec3 x0, glm::vec3 x1, glm::vec3 x2)
@@ -257,25 +272,31 @@ auto choose_minmax(std::vector<glm::vec3> const &vertices)
     std::array<MinMaxT, 3> minmaxes;
 
     // Get min/max points for cardinal axes.
-    auto const compareInAxis = [](auto d){
-        return [d](auto a, auto b){return a[d] < b[d];};
-    };
-    auto const getAxisMinMax = [&vertices, &compareInAxis](auto d){
+    auto const compareInAxis
+        = [](auto d) { return [d](auto a, auto b) { return a[d] < b[d]; }; };
+    auto const getAxisMinMax = [&vertices, &compareInAxis](auto d)
+    {
         return std::minmax_element(
-            vertices.cbegin(), vertices.cend(), compareInAxis(d));
+            vertices.cbegin(),
+            vertices.cend(),
+            compareInAxis(d));
     };
     std::transform(axes.cbegin(), axes.cend(), minmaxes.begin(), getAxisMinMax);
 
     // Ensure we have distinct points in at least one dimension.
-    auto const areEqual = [](auto e){return *e.first == *e.second;};
+    auto const areEqual = [](auto e) { return *e.first == *e.second; };
     if (std::all_of(minmaxes.cbegin(), minmaxes.cend(), areEqual))
+    {
         throw std::runtime_error{"create_tetrahedron degenerate case 1D/2D"};
+    }
 
     // Pick furthest apart min/max points.
     auto const minmax = std::max_element(
-        minmaxes.cbegin(), minmaxes.cend(),
-        [distance=[](auto e){return glm::length(*e.second - *e.first);}]
-        (auto a, auto b){return distance(a) < distance(b);});
+        minmaxes.cbegin(),
+        minmaxes.cend(),
+        [distance = [](auto e)
+         { return glm::length(*e.second - *e.first); }](auto a, auto b)
+        { return distance(a) < distance(b); });
 
     return std::make_pair(*minmax->first, *minmax->second);
 }
@@ -287,26 +308,31 @@ auto create_tetrahedron(std::vector<glm::vec3> const &vertices)
     auto const min = minmax.first, max = minmax.second;
 
     // Find point furthest from the line between the min and max.
-    auto const linedist =\
-        [&min, &max](auto x){return distance_to_line(x, min, max);};
+    auto const linedist
+        = [&min, &max](auto x) { return distance_to_line(x, min, max); };
     auto const farL = *std::max_element(
-        vertices.cbegin(), vertices.cend(),
-        [&linedist](auto a, auto b){return linedist(a) < linedist(b);});
+        vertices.cbegin(),
+        vertices.cend(),
+        [&linedist](auto a, auto b) { return linedist(a) < linedist(b); });
     // Degenerate case if this point is on the line.
     if (glm::epsilonEqual(linedist(farL), 0.0f, HalfPlane::EPSILON))
+    {
         throw std::runtime_error{"create_tetrahedron degenerate case 1D"};
+    }
 
     // Find point furthest from the plane formed by prior 3 points.
     HalfPlane const plane{min, max, farL};
     auto const farP = *std::max_element(
-        vertices.cbegin(), vertices.cend(),
-        [&plane](auto a, auto b){
-            return abs(plane.distanceTo(a)) < abs(plane.distanceTo(b));
-        });
+        vertices.cbegin(),
+        vertices.cend(),
+        [&plane](auto a, auto b)
+        { return abs(plane.distanceTo(a)) < abs(plane.distanceTo(b)); });
     auto const farD = plane.classify(farP);
     // Degenerate case if this point is on the plane.
     if (farD == ON)
+    {
         throw std::runtime_error{"create_tetrahedron degenerate case 2D"};
+    }
 
     // Create the tetrahedron. FARD's sign tells us clockwise vertex ordering.
     auto const A = min;
@@ -332,17 +358,21 @@ auto create_tetrahedron(std::vector<glm::vec3> const &vertices)
 }
 
 /** Find the points outside a convex hull. */
-auto
-get_outer_points(ConvexHull const &hull, std::vector<glm::vec3> const &points)
+auto get_outer_points(
+    ConvexHull const &hull,
+    std::vector<glm::vec3> const &points)
 {
     std::vector<glm::vec3> outside{};
     std::copy_if(
-        points.cbegin(), points.cend(),
+        points.cbegin(),
+        points.cend(),
         std::back_inserter(outside),
-        [&hull](auto p){
+        [&hull](auto p)
+        {
             return std::any_of(
-                hull.facets.cbegin(), hull.facets.cend(),
-                [&p](auto plane){return plane.classify(p) == ABOVE;});
+                hull.facets.cbegin(),
+                hull.facets.cend(),
+                [&p](auto plane) { return plane.classify(p) == ABOVE; });
         });
     return outside;
 }
@@ -371,7 +401,6 @@ auto get_conflict_lists(
     return conflicts;
 }
 
-
 void dfs2(
     ConvexHull const &hull,
     glm::vec3 const &eye,
@@ -391,7 +420,9 @@ void dfs2(
         }
         // If we haven't already visited the neighboring face, visit it.
         else if (visited.count(next) == 0)
+        {
             dfs2(hull, eye, next, visited, horizon);
+        }
     }
 }
 
@@ -420,19 +451,20 @@ auto get_horizon(
 
     // Check horizon is ordered clockwise
     for (size_t i = 0; i < horizon.size() - 1; ++i)
+    {
         assert(horizon.at(i).second == horizon.at(i + 1).first);
+    }
     assert(horizon.back().second == horizon.front().first);
 
     return horizon_and_visible;
 }
 
-
 /**
  * Returns a list of HalfPlanes making up the convex hull, and the vertices
  * that contribute to that hull.
  */
-std::pair<std::vector<HalfPlane>, std::vector<glm::vec3>>
-facet_enumeration(std::vector<glm::vec3> const &vertices)
+std::pair<std::vector<HalfPlane>, std::vector<glm::vec3>> facet_enumeration(
+    std::vector<glm::vec3> const &vertices)
 {
     // QuickHull (from http://algolist.ru/maths/geom/convhull/qhull3d.php)
     // https://ubm-twvideo01.s3.amazonaws.com/o1/vault/GDC2014/Presentations/Gregorius_Dirk_Physics_for_Game_01.pdf
@@ -459,12 +491,15 @@ facet_enumeration(std::vector<glm::vec3> const &vertices)
             auto const &points = conflict.second;
 
             auto const furthest = *std::max_element(
-                points.cbegin(), points.cend(),
-                [&f](auto a, auto b){
-                    return f.distanceTo(a) < f.distanceTo(b);});
+                points.cbegin(),
+                points.cend(),
+                [&f](auto a, auto b)
+                { return f.distanceTo(a) < f.distanceTo(b); });
 
             if (far.first.distanceTo(far.second) < f.distanceTo(furthest))
+            {
                 far = std::make_pair(f, furthest);
+            }
         }
 
         auto const eye = far.second;
@@ -475,16 +510,19 @@ facet_enumeration(std::vector<glm::vec3> const &vertices)
         auto const visible_faces = horizon_and_visible.second;
 
         for (auto const &face : visible_faces)
+        {
             convex_hull.removeFacet(face);
+        }
 
         for (auto const &edge : horizon_edges)
+        {
             convex_hull.addFacet(eye, edge.first, edge.second);
+        }
 
         assert(convex_hull.checkIntegrity());
         outside_points = get_outer_points(convex_hull, outside_points);
         conflict_lists = get_conflict_lists(convex_hull, outside_points);
     }
-
 
     auto const planes1 = convex_hull.as_planes();
     std::vector<HalfPlane> const planes{planes1.cbegin(), planes1.cend()};

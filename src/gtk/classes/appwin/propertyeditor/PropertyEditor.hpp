@@ -29,7 +29,6 @@
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/treeview.h>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -46,9 +45,11 @@ namespace Sickle::AppWin
         PropertyEditor();
 
         /** The entity currently being modified. */
-        auto property_entity() {return _prop_entity.get_proxy();}
+        auto property_entity() { return _prop_entity.get_proxy(); }
+
         /** The entity currently being modified. */
-        auto property_entity() const {return _prop_entity.get_proxy();}
+        auto property_entity() const { return _prop_entity.get_proxy(); }
+
         /**
          * Change the entity to be edited.
          *
@@ -79,9 +80,10 @@ namespace Sickle::AppWin
                 add(tooltip);
                 add(choices);
             }
+
             Gtk::TreeModelColumn<Glib::ustring> name{};
-            Gtk::TreeModelColumn<
-                CellRendererProperty::ValueType> renderer_value{};
+            Gtk::TreeModelColumn<CellRendererProperty::ValueType>
+                renderer_value{};
             Gtk::TreeModelColumn<Glib::ustring> tooltip{};
             Gtk::TreeModelColumn<Glib::RefPtr<Gtk::ListStore>> choices{};
         };
@@ -102,14 +104,13 @@ namespace Sickle::AppWin
             Gtk::TreeModel::iterator const &it,
             Glib::ustring const &name,
             std::string const &value,
-            std::shared_ptr<
-                Sickle::Editor::EntityPropertyDefinition
-                > const &property_definition);
+            std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const
+                &property_definition);
 
         Glib::ustring _choices_filter_edit(
             Glib::ustring const &path,
             Glib::ustring const &choice) const;
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

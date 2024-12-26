@@ -19,13 +19,12 @@
 #ifndef FGD_DRIVER_HPP
 #define FGD_DRIVER_HPP
 
+#include "fgd.hpp"
 #include "FGDParser.hpp"
 #include "FGDScanner.hpp"
-#include "fgd.hpp"
 
 #include <istream>
 #include <memory>
-
 
 namespace FGD
 {
@@ -42,6 +41,6 @@ namespace FGD
         std::unique_ptr<FGDParser> _parser;
         std::unique_ptr<FGDScanner> _scanner;
     };
-}
+} // namespace FGD
 
 #endif /**/

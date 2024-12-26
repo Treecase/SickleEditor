@@ -23,7 +23,6 @@
 #include <gtkmm/cellrenderer.h>
 #include <gtkmm/filechoosernative.h>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -33,31 +32,38 @@ namespace Sickle::AppWin
     {
     public:
         CellRendererFile();
-        virtual ~CellRendererFile()=default;
+        virtual ~CellRendererFile() = default;
 
         /** Path will be relative to here. */
-        auto property_base_path() {return _prop_base_path.get_proxy();}
-        auto property_base_path() const {return _prop_base_path.get_proxy();}
+        auto property_base_path() { return _prop_base_path.get_proxy(); }
+
+        auto property_base_path() const { return _prop_base_path.get_proxy(); }
 
         /** File chooser filter. */
-        auto property_filter() {return _prop_filter.get_proxy();}
-        auto property_filter() const {return _prop_filter.get_proxy();}
+        auto property_filter() { return _prop_filter.get_proxy(); }
+
+        auto property_filter() const { return _prop_filter.get_proxy(); }
 
         /** The path being displayed. */
-        auto property_path() {return _prop_path.get_proxy();}
-        auto property_path() const {return _prop_path.get_proxy();}
+        auto property_path() { return _prop_path.get_proxy(); }
+
+        auto property_path() const { return _prop_path.get_proxy(); }
 
         /** Start path when choosing a new path. */
-        auto property_start_path() {return _prop_start_path.get_proxy();}
-        auto property_start_path() const {return _prop_start_path.get_proxy();}
+        auto property_start_path() { return _prop_start_path.get_proxy(); }
+
+        auto property_start_path() const
+        {
+            return _prop_start_path.get_proxy();
+        }
 
         /** File chooser dialog title. */
-        auto property_title() {return _prop_title.get_proxy();}
-        auto property_title() const {return _prop_title.get_proxy();}
+        auto property_title() { return _prop_title.get_proxy(); }
+
+        auto property_title() const { return _prop_title.get_proxy(); }
 
         /** Emitted when a flag bit is changed. */
-        auto signal_path_edited() {return _sig_path_edited;}
-
+        auto signal_path_edited() { return _sig_path_edited; }
 
     protected:
         virtual void render_vfunc(
@@ -87,7 +93,6 @@ namespace Sickle::AppWin
 
         virtual Gtk::SizeRequestMode get_request_mode_vfunc() const override;
 
-
     private:
         static constexpr int icon_padding = 3;
 
@@ -97,9 +102,8 @@ namespace Sickle::AppWin
         Glib::Property<std::string> _prop_start_path;
         Glib::Property<Glib::ustring> _prop_title;
 
-        sigc::signal<void(
-            Glib::ustring const &,
-            std::string const &)> _sig_path_edited{};
+        sigc::signal<void(Glib::ustring const &, std::string const &)>
+            _sig_path_edited{};
 
         Glib::RefPtr<Gtk::FileChooserNative> _filechooser{nullptr};
 
@@ -110,6 +114,6 @@ namespace Sickle::AppWin
 
         Glib::RefPtr<Pango::Layout> _get_layout(Gtk::Widget &widget) const;
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

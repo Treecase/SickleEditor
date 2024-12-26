@@ -1,4 +1,3 @@
-pkg_check_modules(glibmm REQUIRED IMPORTED_TARGET glibmm-2.4)
 add_library(editor-world STATIC
     Brush.cpp
     Entity.cpp
@@ -18,4 +17,3 @@ target_link_libraries(editor-world
         glm::glm
         PkgConfig::glibmm
 )
-target_compile_features(editor-world PUBLIC cxx_std_17)

@@ -20,12 +20,10 @@
 
 using namespace Sickle::Editor;
 
-
 WorldRef World::create()
 {
     return Glib::RefPtr{new World{}};
 }
-
 
 WorldRef World::create(MAP::Map const &map)
 {
@@ -36,16 +34,21 @@ WorldRef World::create(MAP::Map const &map)
         {
             auto worldspawn = world->worldspawn();
             for (auto const &kv : entity.properties)
+            {
                 worldspawn->set_property(kv.first, kv.second);
+            }
             for (auto const &b : entity.brushes)
+            {
                 worldspawn->add_brush(Brush::create(b));
+            }
         }
         else
+        {
             world->add_entity(Entity::create(entity));
+        }
     }
     return world;
 }
-
 
 WorldRef World::create(RMF::RichMap const &map)
 {
@@ -53,7 +56,9 @@ WorldRef World::create(RMF::RichMap const &map)
 
     auto worldspawn = world->worldspawn();
     for (auto const &kv : map.worldspawn_properties)
+    {
         worldspawn->set_property(kv.first, kv.second);
+    }
     // worldspawn->set_property("classname", map.worldspawn_name);
 
     std::stack<RMF::Group> groups{};
@@ -63,23 +68,27 @@ WorldRef World::create(RMF::RichMap const &map)
         auto group = groups.top();
         groups.pop();
         for (auto const &brush : group.brushes)
+        {
             worldspawn->add_brush(Brush::create(brush));
+        }
         for (auto const &entity : group.entities)
+        {
             world->add_entity(Entity::create(entity));
+        }
         for (auto group2 : group.groups)
+        {
             groups.push(group2);
+        }
     }
 
     return world;
 }
 
-
 World::World()
-:   Glib::ObjectBase{typeid(World)}
+: Glib::ObjectBase{typeid(World)}
 {
     _add_worldspawn();
 }
-
 
 World::~World()
 {
@@ -88,25 +97,29 @@ World::~World()
     _conn_worldspawn_removed.disconnect();
     _worldspawn.reset();
     for (auto const &entity : entities())
+    {
         signal_child_removed().emit(entity);
+    }
 }
-
 
 World::operator MAP::Map() const
 {
     MAP::Map out{};
     for (auto const &entity : _entities)
+    {
         out.entities.push_back(*entity.get());
+    }
     return out;
 }
-
 
 void World::add_entity(EntityRef const &entity)
 {
     if (entity->classname() == "worldspawn")
     {
         if (_worldspawn)
+        {
             throw std::logic_error{"cannot add multiple worldspawns"};
+        }
         else
         {
             _worldspawn = entity;
@@ -118,29 +131,29 @@ void World::add_entity(EntityRef const &entity)
     signal_child_added().emit(entity);
 }
 
-
 void World::remove_entity(EntityRef const &entity)
 {
     auto const it = std::find(_entities.cbegin(), _entities.cend(), entity);
     if (it == _entities.cend())
+    {
         return;
+    }
     _entities.erase(it);
     signal_child_removed().emit(entity);
 }
 
-
 void World::remove_brush(BrushRef const &brush)
 {
     for (auto &entity : _entities)
+    {
         entity->remove_brush(brush);
+    }
 }
-
 
 EntityRef World::worldspawn()
 {
     return _worldspawn;
 }
-
 
 /* ---[ EditorObject interface ]--- */
 Glib::ustring World::name() const
@@ -150,23 +163,27 @@ Glib::ustring World::name() const
     return Glib::ustring{ss.str()};
 }
 
-
 Glib::RefPtr<Gdk::Pixbuf> World::icon() const
 {
     return Gdk::Pixbuf::create_from_data(
-        NULL, Gdk::Colorspace::COLORSPACE_RGB, false, 8, 0, 0, 0);
+        NULL,
+        Gdk::Colorspace::COLORSPACE_RGB,
+        false,
+        8,
+        0,
+        0,
+        0);
 }
-
 
 std::vector<EditorObjectRef> World::children() const
 {
     std::vector<EditorObjectRef> out{};
     for (auto const &entity : entities())
+    {
         out.push_back(entity);
+    }
     return out;
 }
-
-
 
 void World::_on_worldspawn_removed()
 {
@@ -174,7 +191,6 @@ void World::_on_worldspawn_removed()
     _worldspawn.reset();
     _add_worldspawn();
 }
-
 
 void World::_add_worldspawn()
 {

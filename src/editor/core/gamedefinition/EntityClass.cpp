@@ -20,14 +20,12 @@
 
 using namespace Sickle::Editor;
 
-
 EntityClass::EntityClass(FGD::Class const &cls)
-:   _type{cls.type()}
+: _type{cls.type()}
 {
     for (auto const &class_property : cls.attributes)
     {
-        add_class_property(
-            ClassPropertyFactory::construct(class_property));
+        add_class_property(ClassPropertyFactory::construct(class_property));
     }
     for (auto const &entity_property : cls.properties)
     {
@@ -36,77 +34,82 @@ EntityClass::EntityClass(FGD::Class const &cls)
     }
 }
 
-
 std::string EntityClass::type() const
 {
     return _type;
 }
-
 
 bool EntityClass::has_property(std::string const &name) const
 {
     return _entity_properties.count(name) != 0;
 }
 
-
 std::shared_ptr<EntityPropertyDefinition> EntityClass::get_property(
     std::string const &name) const
 {
-    try {
+    try
+    {
         return _entity_properties.at(name);
     }
-    catch (std::out_of_range const &e) {
+    catch (std::out_of_range const &e)
+    {
         return nullptr;
     }
 }
 
-
-std::vector<std::shared_ptr<EntityPropertyDefinition>>
-EntityClass::get_entity_properties() const
+std::vector<std::shared_ptr<EntityPropertyDefinition>> EntityClass::
+    get_entity_properties() const
 {
     std::vector<std::shared_ptr<EntityPropertyDefinition>> properties{};
     for (auto const &kv : _entity_properties)
+    {
         properties.push_back(kv.second);
+    }
     return properties;
 }
-
 
 void EntityClass::inherit_from(EntityClass const &other)
 {
     for (auto const &kv : other._class_properties)
+    {
         add_class_property(kv.second);
+    }
     for (auto const &kv : other._entity_properties)
+    {
         add_entity_property(kv.second);
+    }
 }
-
-
 
 void EntityClass::add_class_property(
     std::shared_ptr<ClassProperty> const &property)
 {
     if (!property)
+    {
         return;
-    _class_properties.insert({
-        std::type_index{typeid(*property.get())},
-        property});
+    }
+    _class_properties.insert(
+        {std::type_index{typeid(*property.get())}, property});
 }
-
 
 void EntityClass::add_entity_property(
     std::shared_ptr<EntityPropertyDefinition> const &property)
 {
     if (!property)
+    {
         return;
+    }
     // Flag properties need special handling...
-    if (auto const &newflagprop =\
-        std::dynamic_pointer_cast<EntityPropertyDefinitionFlags>(property))
+    if (auto const &newflagprop
+        = std::dynamic_pointer_cast<EntityPropertyDefinitionFlags>(property))
     {
         std::shared_ptr<EntityPropertyDefinitionFlags> flagprop{nullptr};
-        try {
+        try
+        {
             flagprop = std::dynamic_pointer_cast<EntityPropertyDefinitionFlags>(
                 get_property(property->name()));
         }
-        catch (std::out_of_range const &) {
+        catch (std::out_of_range const &)
+        {
         }
         // ...But only if the property already exists.
         if (flagprop)

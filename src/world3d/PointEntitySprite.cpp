@@ -27,9 +27,7 @@
 
 #include <iostream>
 
-
 using namespace World3D;
-
 
 // Feeds data from a Gio::File to the sprite loader.
 class GioFileSpriteStream : public SPR::SpriteStream
@@ -48,7 +46,6 @@ private:
     Glib::RefPtr<Gio::DataInputStream> _stream{nullptr};
 };
 
-
 // Get the "missing texture" sprite.
 static std::shared_ptr<GLUtil::Texture> missing_texture();
 
@@ -57,41 +54,35 @@ static std::shared_ptr<GLUtil::Texture> frame_to_texture(
     SPR::Frame const &frame,
     SPR::Palette const &palette);
 
-
-
-PointEntitySprite::PreDrawFunc PointEntitySprite::predraw = [](auto, auto){};
+PointEntitySprite::PreDrawFunc PointEntitySprite::predraw = [](auto, auto) {};
 std::string PointEntitySprite::sprite_root_path = ".";
 std::string PointEntitySprite::game_root_path = ".";
-
 
 GLUtil::Program &PointEntitySprite::shader()
 {
     static GLUtil::Program the_shader{
         std::vector{
-            GLUtil::shader_from_resource(
-                "shaders/billboard.vert",
-                GL_VERTEX_SHADER),
-            GLUtil::shader_from_resource(
-                "shaders/transparent.frag",
-                GL_FRAGMENT_SHADER),
-        },
+                    GLUtil::shader_from_resource(
+                "shaders/billboard.vert", GL_VERTEX_SHADER),
+                    GLUtil::shader_from_resource(
+                "shaders/transparent.frag", GL_FRAGMENT_SHADER),
+                    },
         "PointEntitySpriteShader"
     };
     return the_shader;
 }
 
-
-
 PointEntitySprite::PointEntitySprite()
 {
-    push_queue([this](){_init_construct();});
+    push_queue([this]() { _init_construct(); });
 }
-
 
 void PointEntitySprite::render() const
 {
     if (!_vao || !_sprite)
+    {
         return;
+    }
 
     std::stringstream origin_str{_src->get_property("origin")};
     glm::vec3 origin{};
@@ -111,10 +102,10 @@ void PointEntitySprite::render() const
     shader().setUniformS("view", params.view);
     shader().setUniformS("projection", params.projection);
     shader().setUniformS("tex", 0);
-    shader().setUniformS("modulate",
-        _src->is_selected()
-        ? glm::vec3{1.0f, 0.0f, 0.0f}
-        : glm::vec3{1.0f, 1.0f, 1.0f});
+    shader().setUniformS(
+        "modulate",
+        _src->is_selected() ? glm::vec3{1.0f, 0.0f, 0.0f}
+                            : glm::vec3{1.0f, 1.0f, 1.0f});
 
     glActiveTexture(GL_TEXTURE0);
     _sprite->bind();
@@ -124,29 +115,32 @@ void PointEntitySprite::render() const
     _vao->unbind();
 }
 
-
 void PointEntitySprite::execute()
 {
-    push_queue([this](){render();});
+    push_queue([this]() { render(); });
 }
-
-
 
 void PointEntitySprite::on_attach(Sickle::Componentable &obj)
 {
     if (_src)
+    {
         throw std::logic_error{"already attached"};
+    }
 
     _src = &dynamic_cast<Sickle::Editor::Entity &>(obj);
     if (_src->classinfo().type() != "PointClass")
+    {
         throw std::invalid_argument{"must be PointClass"};
+    }
 
     // Entity class must have either iconsprite() or sprite() property, but not
     // both.
-    bool const has_iconsprite = _src->classinfo()
-        .has_class_property<Sickle::Editor::ClassPropertyIconsprite>();
-    bool const has_sprite = _src->classinfo()
-        .has_class_property<Sickle::Editor::ClassPropertySprite>();
+    bool const has_iconsprite
+        = _src->classinfo()
+              .has_class_property<Sickle::Editor::ClassPropertyIconsprite>();
+    bool const has_sprite
+        = _src->classinfo()
+              .has_class_property<Sickle::Editor::ClassPropertySprite>();
     if (has_iconsprite && has_sprite)
     {
         throw std::invalid_argument{
@@ -160,16 +154,14 @@ void PointEntitySprite::on_attach(Sickle::Componentable &obj)
 
     if (has_sprite)
     {
-        _src->signal_properties_changed().connect(
-            sigc::mem_fun(
-                *this,
-                &PointEntitySprite::_on_src_properties_changed));
+        _src->signal_properties_changed().connect(sigc::mem_fun(
+            *this,
+            &PointEntitySprite::_on_src_properties_changed));
     }
 
     _is_iconsprite = has_iconsprite;
-    push_queue([this](){_init();});
+    push_queue([this]() { _init(); });
 }
-
 
 void PointEntitySprite::on_detach(Sickle::Componentable &obj)
 {
@@ -179,16 +171,26 @@ void PointEntitySprite::on_detach(Sickle::Componentable &obj)
     clear_queue();
 }
 
-
-
 void PointEntitySprite::_init_construct()
 {
     std::vector<GLfloat> const vbo_data{
         // position |  UVs
-        -0.5f, +0.5f,  0.0f, 0.0f, // left top
-        -0.5f, -0.5f,  0.0f, 1.0f, // left bottom
-        +0.5f, +0.5f,  1.0f, 0.0f, // right top
-        +0.5f, -0.5f,  1.0f, 1.0f, // right bottom
+        -0.5f,
+        +0.5f,
+        0.0f,
+        0.0f, // left top
+        -0.5f,
+        -0.5f,
+        0.0f,
+        1.0f, // left bottom
+        +0.5f,
+        +0.5f,
+        1.0f,
+        0.0f, // right top
+        +0.5f,
+        -0.5f,
+        1.0f,
+        1.0f, // right bottom
     };
 
     _vao = std::make_shared<GLUtil::VertexArray>();
@@ -208,17 +210,16 @@ void PointEntitySprite::_init_construct()
     _vao->unbind();
 }
 
-
 void PointEntitySprite::_init()
 {
     if (_is_iconsprite)
     {
         // TODO: Only load textures once and share the data.
-        auto const iconsprite =\
-            _src->classinfo()
-                .get_class_property<Sickle::Editor::ClassPropertyIconsprite>();
-        auto const path =\
-            sprite_root_path + "/" + iconsprite->get_path();
+        auto const iconsprite
+            = _src->classinfo()
+                  .get_class_property<
+                      Sickle::Editor::ClassPropertyIconsprite>();
+        auto const path = sprite_root_path + "/" + iconsprite->get_path();
         _load_sprite(path);
     }
     else
@@ -227,26 +228,29 @@ void PointEntitySprite::_init()
     }
 }
 
-
 void PointEntitySprite::_load_sprite(std::string const &path)
 {
     std::unique_ptr<GioFileSpriteStream> sprite_stream{nullptr};
-    try {
+    try
+    {
         sprite_stream = std::make_unique<GioFileSpriteStream>(
             Gio::File::create_for_path(path));
     }
-    catch (Gio::Error const &e) {
+    catch (Gio::Error const &e)
+    {
         std::cerr << e.what() << std::endl;
         _sprite = missing_texture();
         return;
     }
 
     std::unique_ptr<SPR::Sprite> sprite{nullptr};
-    try {
-        sprite = std::make_unique<SPR::Sprite>(
-            SPR::load_sprite(*sprite_stream));
+    try
+    {
+        sprite
+            = std::make_unique<SPR::Sprite>(SPR::load_sprite(*sprite_stream));
     }
-    catch (SPR::LoadError const &e) {
+    catch (SPR::LoadError const &e)
+    {
         std::cerr << "Error loading " << path << ": " << e.what() << std::endl;
         _sprite = missing_texture();
         return;
@@ -255,43 +259,55 @@ void PointEntitySprite::_load_sprite(std::string const &path)
     _sprite = frame_to_texture(sprite->frames.at(0), sprite->palette);
 }
 
-
 void PointEntitySprite::_sprite_update()
 {
     auto const model = _src->get_property("model");
     if (_sprite_path.has_value() && model == _sprite_path.value())
+    {
         return;
+    }
     _sprite_path = model;
     auto const path = game_root_path + "/" + model;
-    push_queue([this, path](){_load_sprite(path);});
+    push_queue([this, path]() { _load_sprite(path); });
 }
-
 
 void PointEntitySprite::_on_src_properties_changed()
 {
     _sprite_update();
 }
 
-
-
 static std::shared_ptr<GLUtil::Texture> missing_texture()
 {
     static std::shared_ptr<GLUtil::Texture> missing{nullptr};
     if (missing)
+    {
         return missing;
+    }
 
     constexpr GLsizei WIDTH = 7;
     constexpr GLsizei HEIGHT = 9;
     static constexpr uint8_t data[WIDTH * HEIGHT * 4] = {
-        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x80, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xff, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
+        0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff,
+        0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0xff,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0xff,
+        0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff,
+        0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
     missing = std::make_shared<GLUtil::Texture>(GL_TEXTURE_2D);
@@ -301,13 +317,18 @@ static std::shared_ptr<GLUtil::Texture> missing_texture()
     missing->setParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     missing->setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(
-        missing->type(), 0, GL_RGBA,
-        WIDTH, HEIGHT, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, data);
+        missing->type(),
+        0,
+        GL_RGBA,
+        WIDTH,
+        HEIGHT,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        data);
     missing->unbind();
     return missing;
 }
-
 
 static std::shared_ptr<GLUtil::Texture> frame_to_texture(
     SPR::Frame const &frame,
@@ -319,10 +340,10 @@ static std::shared_ptr<GLUtil::Texture> frame_to_texture(
     {
         auto const idx = frame.data[i];
         auto const &color = palette.colors.at(idx);
-        rgba_data[j+0] = color.r;
-        rgba_data[j+1] = color.g;
-        rgba_data[j+2] = color.b;
-        rgba_data[j+3] = color.a;
+        rgba_data[j + 0] = color.r;
+        rgba_data[j + 1] = color.g;
+        rgba_data[j + 2] = color.b;
+        rgba_data[j + 3] = color.a;
     }
 
     auto texture = std::make_shared<GLUtil::Texture>(GL_TEXTURE_2D);
@@ -332,18 +353,22 @@ static std::shared_ptr<GLUtil::Texture> frame_to_texture(
     texture->setParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     texture->setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(
-        texture->type(), 0, GL_RGBA,
-        frame.w, frame.h, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, rgba_data.get());
+        texture->type(),
+        0,
+        GL_RGBA,
+        frame.w,
+        frame.h,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        rgba_data.get());
     texture->unbind();
     return texture;
 }
 
-
-
 /* ===[ Gio::File SpriteStream ]=== */
 GioFileSpriteStream::GioFileSpriteStream(Glib::RefPtr<Gio::File> const &file)
-:   _stream{Gio::DataInputStream::create(file->read())}
+: _stream{Gio::DataInputStream::create(file->read())}
 {
     _stream->set_byte_order(
         Gio::DataStreamByteOrder::DATA_STREAM_BYTE_ORDER_LITTLE_ENDIAN);

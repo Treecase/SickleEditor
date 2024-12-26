@@ -28,7 +28,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-
 namespace Sickle::Editor::Textures
 {
     /**
@@ -40,7 +39,7 @@ namespace Sickle::Editor::Textures
         /**
          * Emitted when WADs are added or removed from the manager.
          */
-        static auto &signal_wads_changed() {return _sig_wads_changed;}
+        static auto &signal_wads_changed() { return _sig_wads_changed; }
 
         /**
          * Get a reference to the TextureManager singleton.
@@ -107,7 +106,7 @@ namespace Sickle::Editor::Textures
          *
          * @return A collection of all the stored textures.
          */
-        auto get_textures() const {return _textures;}
+        auto get_textures() const { return _textures; }
 
     private:
         static sigc::signal<void> _sig_wads_changed;
@@ -117,16 +116,15 @@ namespace Sickle::Editor::Textures
         std::unordered_map<std::filesystem::path, std::string> _wad_paths{};
         std::unordered_map<
             std::string,
-            std::vector<std::shared_ptr<TextureInfo>>> _by_wad{};
-        std::unordered_map<
-            std::string,
-            std::shared_ptr<TextureInfo>> _by_name{};
+            std::vector<std::shared_ptr<TextureInfo>>>
+            _by_wad{};
+        std::unordered_map<std::string, std::shared_ptr<TextureInfo>>
+            _by_name{};
 
         TextureManager();
-        TextureManager(TextureManager const &)=delete;
-        TextureManager &operator=(TextureManager const &)=delete;
-
+        TextureManager(TextureManager const &) = delete;
+        TextureManager &operator=(TextureManager const &) = delete;
     };
-}
+} // namespace Sickle::Editor::Textures
 
 #endif

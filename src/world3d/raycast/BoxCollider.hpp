@@ -24,7 +24,6 @@
 #include <editor/interfaces/Component.hpp>
 #include <utils/BoundingBox.hpp>
 
-
 namespace World3D
 {
     /**
@@ -33,7 +32,7 @@ namespace World3D
     class BoxCollider : public Collider
     {
     public:
-        virtual ~BoxCollider()=default;
+        virtual ~BoxCollider() = default;
 
         virtual void execute() override;
 
@@ -54,6 +53,6 @@ namespace World3D
          */
         virtual void set_box(BBox3 const &bbox);
     };
-}
+} // namespace World3D
 
 #endif

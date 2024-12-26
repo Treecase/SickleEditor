@@ -25,20 +25,17 @@
 
 #include <set>
 
-
 Sickle::WADList::Columns::Columns()
 {
     add(col_path);
 }
 
-
-
 Sickle::WADList::WADList()
-:   Glib::ObjectBase{typeid(WADList)}
-,   Gtk::Frame{"Texture WADs"}
-,   _prop_wad_paths{*this, "wad-paths", {}}
-,   _paths{Gtk::ListStore::create(Columns{})}
-,   _pathview{_paths}
+: Glib::ObjectBase{typeid(WADList)}
+, Gtk::Frame{"Texture WADs"}
+, _prop_wad_paths{*this, "wad-paths", {}}
+, _paths{Gtk::ListStore::create(Columns{})}
+, _pathview{_paths}
 {
     _pathview.append_column("WAD", _columns.col_path);
 
@@ -61,7 +58,6 @@ Sickle::WADList::WADList()
         sigc::mem_fun(*this, &WADList::on_remove_path_clicked));
 }
 
-
 void Sickle::WADList::on_add_path_clicked()
 {
     auto const chooser = Gtk::FileChooserNative::create(
@@ -79,11 +75,12 @@ void Sickle::WADList::on_add_path_clicked()
     {
         auto paths = property_wad_paths().get_value();
         for (auto const &filename : chooser->get_filenames())
+        {
             paths.insert(Glib::filename_to_utf8(filename));
+        }
         property_wad_paths().set_value(paths);
     }
 }
-
 
 void Sickle::WADList::on_remove_path_clicked()
 {
@@ -96,8 +93,6 @@ void Sickle::WADList::on_remove_path_clicked()
         property_wad_paths().set_value(paths);
     }
 }
-
-
 
 void Sickle::WADList::_on_wad_paths_changed()
 {

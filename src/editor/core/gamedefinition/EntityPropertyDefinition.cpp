@@ -18,47 +18,39 @@
 
 #include "EntityPropertyDefinition.hpp"
 
-
 using namespace Sickle::Editor;
-
 
 EntityPropertyDefinition::EntityPropertyDefinition(
     std::string const &name,
     std::string const &default_value,
     std::string const &description,
     PropertyType type)
-:   _name{name}
-,   _default_value{default_value}
-,   _description{description}
-,   _type{type}
+: _name{name}
+, _default_value{default_value}
+, _description{description}
+, _type{type}
 {
 }
-
 
 std::string EntityPropertyDefinition::name() const
 {
     return _name;
 }
 
-
 std::string EntityPropertyDefinition::default_value() const
 {
     return _default_value;
 }
-
 
 std::string EntityPropertyDefinition::description() const
 {
     return _description;
 }
 
-
 PropertyType EntityPropertyDefinition::type() const
 {
     return _type;
 }
-
-
 
 /* --- EntityPropertyChoices ------------------------------------------------ */
 EntityPropertyDefinitionChoices::EntityPropertyDefinitionChoices(
@@ -66,30 +58,23 @@ EntityPropertyDefinitionChoices::EntityPropertyDefinitionChoices(
     std::string const &default_value,
     std::string const &description,
     std::map<int, std::string> const &choices)
-:   EntityPropertyDefinition{
-        name,
-        default_value,
-        description,
-        PropertyType::CHOICES}
-,   _choices{choices}
+: EntityPropertyDefinition{name, default_value, description, PropertyType::CHOICES}
+, _choices{choices}
 {
 }
-
-
 
 /* --- EntityPropertyColor255 ----------------------------------------------- */
 EntityPropertyDefinitionColor255::EntityPropertyDefinitionColor255(
     std::string const &name,
     std::string const &default_value,
     std::string const &description)
-:   EntityPropertyDefinition{
-        name,
-        default_value,
-        description,
-        PropertyType::COLOR255}
+: EntityPropertyDefinition{
+      name,
+      default_value,
+      description,
+      PropertyType::COLOR255}
 {
 }
-
 
 /* --- EntityPropertyDefinitionFlags ---------------------------------------- */
 static std::string generate_default(
@@ -97,45 +82,50 @@ static std::string generate_default(
 {
     unsigned int value = 0;
     for (auto const &kv : flagdef)
-        value |= (kv.second.second? kv.first : 0);
+    {
+        value |= (kv.second.second ? kv.first : 0);
+    }
     return std::to_string(value);
 }
 
 EntityPropertyDefinitionFlags::EntityPropertyDefinitionFlags(
     std::string const &name,
     std::map<int, std::pair<std::string, bool>> const &flags)
-:   EntityPropertyDefinition{
-        name,
-        generate_default(flags),
-        "",
-        PropertyType::FLAGS}
+: EntityPropertyDefinition{
+      name,
+      generate_default(flags),
+      "",
+      PropertyType::FLAGS}
 {
     for (auto const &kv : flags)
+    {
         _flags.at(kv.first).emplace(kv.second);
+    }
 }
-
 
 bool EntityPropertyDefinitionFlags::is_bit_defined(int bit) const
 {
-    try {
+    try
+    {
         return _flags.at(bit).has_value();
     }
-    catch (std::out_of_range const &) {
+    catch (std::out_of_range const &)
+    {
         return false;
     }
 }
 
-
 std::string EntityPropertyDefinitionFlags::get_description(int bit) const
 {
-    try {
+    try
+    {
         return _flags.at(bit).value_or(FlagDef{}).description;
     }
-    catch (std::out_of_range const &) {
+    catch (std::out_of_range const &)
+    {
         return "";
     }
 }
-
 
 void EntityPropertyDefinitionFlags::merge(
     EntityPropertyDefinitionFlags const &other)
@@ -145,14 +135,15 @@ void EntityPropertyDefinitionFlags::merge(
         auto &a = _flags.at(i);
         auto const &b = other._flags.at(i);
         if (!a.has_value() && b.has_value())
+        {
             a = b.value();
+        }
     }
 }
 
-
 EntityPropertyDefinitionFlags::FlagDef::FlagDef(
     std::pair<std::string, bool> const &flagdef)
-:   description{flagdef.first}
-,   enabled_by_default{flagdef.second}
+: description{flagdef.first}
+, enabled_by_default{flagdef.second}
 {
 }

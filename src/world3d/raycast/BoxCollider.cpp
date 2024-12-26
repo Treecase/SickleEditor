@@ -18,21 +18,14 @@
 
 #include "BoxCollider.hpp"
 
-
 using namespace World3D;
 
-
-void BoxCollider::execute()
-{
-}
-
+void BoxCollider::execute() {}
 
 BBox3 BoxCollider::get_box() const
 {
     return _bbox;
 }
-
-
 
 void BoxCollider::set_box(BBox3 const &bbox)
 {

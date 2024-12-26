@@ -26,7 +26,6 @@
 #include <gtkmm/toolbar.h>
 #include <gtkmm/window.h>
 
-
 namespace Sickle
 {
     class LuaWindow : public Gtk::Window
@@ -34,26 +33,34 @@ namespace Sickle
     public:
         LuaWindow();
 
-        auto property_lua_state() {return _prop_lua_state.get_proxy();}
-        auto property_lua_state() const {return _prop_lua_state.get_proxy();}
-        void set_lua_state(lua_State *L) {property_lua_state().set_value(L);}
-        lua_State *get_lua_state() const {
-            return static_cast<lua_State *>(property_lua_state().get_value());}
+        auto property_lua_state() { return _prop_lua_state.get_proxy(); }
+
+        auto property_lua_state() const { return _prop_lua_state.get_proxy(); }
+
+        void set_lua_state(lua_State *L) { property_lua_state().set_value(L); }
+
+        lua_State *get_lua_state() const
+        {
+            return static_cast<lua_State *>(property_lua_state().get_value());
+        }
 
         /** Whether the Lua state execution is paused or not. */
-        auto property_paused() {return _prop_paused.get_proxy();}
+        auto property_paused() { return _prop_paused.get_proxy(); }
+
         /** Whether the Lua state execution is paused or not. */
-        auto property_paused() const {return _prop_paused.get_proxy();}
+        auto property_paused() const { return _prop_paused.get_proxy(); }
+
         /**
          * @return Whether the Lua state execution is paused or not.
          */
-        bool is_paused() const {return property_paused().get_value();}
+        bool is_paused() const { return property_paused().get_value(); }
+
         /**
          * Pause or unpause Lua state execution.
          *
          * @param pause Whether the Lua state execution should be paused or not.
          */
-        void set_pause(bool pause) {property_paused().set_value(pause);}
+        void set_pause(bool pause) { property_paused().set_value(pause); }
 
         /** Update. */
         void update();
@@ -75,7 +82,6 @@ namespace Sickle
         Glib::Property<gboolean> _prop_paused;
         Glib::RefPtr<Glib::Binding> _bind_lua_state_debugger;
     };
-}
-
+} // namespace Sickle
 
 #endif

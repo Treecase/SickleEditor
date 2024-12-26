@@ -20,61 +20,64 @@
 
 #include <ostream>
 
-
 namespace std
 {
-std::ostream &operator<<(std::ostream &os, MAP::Vertex const &vertex)
-{
-    return os << "( " << vertex.x << ' ' << vertex.y << ' ' << vertex.z << " )";
-}
+    std::ostream &operator<<(std::ostream &os, MAP::Vertex const &vertex)
+    {
+        return os << "( " << vertex.x << ' ' << vertex.y << ' ' << vertex.z
+                  << " )";
+    }
 
+    std::ostream &operator<<(std::ostream &os, MAP::Plane const &plane)
+    {
+        os << plane.a << ' ' << plane.b << ' ' << plane.c << ' ' << plane.miptex
+           << " [ " << plane.s.x << ' ' << plane.s.y << ' ' << plane.s.z << ' '
+           << plane.offsets.x << " ] "
+           << "[ " << plane.t.x << ' ' << plane.t.y << ' ' << plane.t.z << ' '
+           << plane.offsets.y << " ] " << plane.rotation << ' ' << plane.scale.x
+           << ' ' << plane.scale.y;
+        return os;
+    }
 
-std::ostream &operator<<(std::ostream &os, MAP::Plane const &plane)
-{
-    os << plane.a << ' ' << plane.b << ' ' << plane.c
-        << ' ' << plane.miptex
-        << " [ " << plane.s.x << ' ' << plane.s.y << ' ' << plane.s.z
-        <<  ' ' << plane.offsets.x << " ] "
-        << "[ "<< plane.t.x << ' ' << plane.t.y << ' ' << plane.t.z
-        << ' ' << plane.offsets.y << " ] "
-        << plane.rotation
-        << ' ' << plane.scale.x << ' ' << plane.scale.y;
-    return os;
-}
+    std::ostream &operator<<(std::ostream &os, MAP::Brush const &brush)
+    {
+        os << "{\n";
+        for (auto const &plane : brush.planes)
+        {
+            os << plane << '\n';
+        }
+        os << '}';
+        return os;
+    }
 
+    std::ostream &operator<<(std::ostream &os, MAP::Entity const &entity)
+    {
+        os << "{\n";
+        os << "\"classname\" \"" << entity.properties.at("classname") << "\"\n";
+        for (auto const &kv : entity.properties)
+        {
+            if (kv.first != "classname")
+            {
+                os << '"' << kv.first << "\" \"" << kv.second << "\"\n";
+            }
+        }
+        for (auto const &brush : entity.brushes)
+        {
+            os << brush << '\n';
+        }
+        os << '}';
+        return os;
+    }
 
-std::ostream &operator<<(std::ostream &os, MAP::Brush const &brush)
-{
-    os << "{\n";
-    for (auto const &plane : brush.planes)
-        os << plane << '\n';
-    os << '}';
-    return os;
-}
-
-
-std::ostream &operator<<(std::ostream &os, MAP::Entity const &entity)
-{
-    os << "{\n";
-    os << "\"classname\" \"" << entity.properties.at("classname") << "\"\n";
-    for (auto const &kv : entity.properties)
-        if (kv.first != "classname")
-            os << '"' << kv.first << "\" \"" << kv.second << "\"\n";
-    for (auto const &brush : entity.brushes)
-        os << brush << '\n';
-    os << '}';
-    return os;
-}
-
-
-std::ostream &operator<<(std::ostream &os, MAP::Map const &map)
-{
-    for (auto const &ent : map.entities)
-        os << ent << '\n';
-    return os;
-}
-}
-
+    std::ostream &operator<<(std::ostream &os, MAP::Map const &map)
+    {
+        for (auto const &ent : map.entities)
+        {
+            os << ent << '\n';
+        }
+        return os;
+    }
+} // namespace std
 
 void MAP::save(std::ostream &out, Map const &map)
 {

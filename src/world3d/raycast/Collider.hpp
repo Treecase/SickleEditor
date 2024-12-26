@@ -22,14 +22,13 @@
 #include <editor/interfaces/Component.hpp>
 #include <utils/BoundingBox.hpp>
 
-
 namespace World3D
 {
     class Collider : public Sickle::Component
     {
     public:
-        virtual BBox3 get_box() const=0;
+        virtual BBox3 get_box() const = 0;
     };
-}
+} // namespace World3D
 
 #endif

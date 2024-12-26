@@ -18,7 +18,6 @@
 
 #include "LuaGdkEvent.hpp"
 
-
 template<>
 void Lua::push(lua_State *L, GdkEventKey *event)
 {
@@ -28,7 +27,8 @@ void Lua::push(lua_State *L, GdkEventKey *event)
 template<>
 void Lua::push(lua_State *L, GdkEventButton *event)
 {
-    make_table(L,
+    make_table(
+        L,
         std::make_pair("x", event->x),
         std::make_pair("y", event->y),
         std::make_pair("button", (lua_Integer)event->button));
@@ -37,7 +37,8 @@ void Lua::push(lua_State *L, GdkEventButton *event)
 template<>
 void Lua::push(lua_State *L, GdkEventMotion *event)
 {
-    make_table(L,
+    make_table(
+        L,
         std::make_pair("state", (lua_Integer)event->state),
         std::make_pair("x", event->x),
         std::make_pair("y", event->y));
@@ -46,7 +47,8 @@ void Lua::push(lua_State *L, GdkEventMotion *event)
 template<>
 void Lua::push(lua_State *L, GdkEventScroll *event)
 {
-    make_table(L,
+    make_table(
+        L,
         std::make_pair("direction", (lua_Integer)event->direction),
         std::make_pair("state", (lua_Integer)event->state));
 }

@@ -18,9 +18,7 @@
 
 #include "ClassProperties.hpp"
 
-
 using namespace Sickle::Editor;
-
 
 std::shared_ptr<ClassProperty> ClassPropertyFactory::construct(
     std::shared_ptr<FGD::Attribute> const &prop)
@@ -29,8 +27,7 @@ std::shared_ptr<ClassProperty> ClassPropertyFactory::construct(
         ;
     else if (typeid(*prop.get()) == typeid(FGD::ColorAttribute))
     {
-        auto const color =\
-            std::dynamic_pointer_cast<FGD::ColorAttribute>(prop);
+        auto const color = std::dynamic_pointer_cast<FGD::ColorAttribute>(prop);
         glm::vec3 const rgb{
             std::get<0>(color->rgb) / 255.0f,
             std::get<1>(color->rgb) / 255.0f,
@@ -40,10 +37,9 @@ std::shared_ptr<ClassProperty> ClassPropertyFactory::construct(
     }
     else if (typeid(*prop.get()) == typeid(FGD::IconSpriteAttribute))
     {
-        auto const iconsprite =\
-            std::dynamic_pointer_cast<FGD::IconSpriteAttribute>(prop);
-        return std::make_shared<ClassPropertyIconsprite>(
-            iconsprite->iconpath);
+        auto const iconsprite
+            = std::dynamic_pointer_cast<FGD::IconSpriteAttribute>(prop);
+        return std::make_shared<ClassPropertyIconsprite>(iconsprite->iconpath);
     }
     else if (typeid(*prop.get()) == typeid(FGD::SizeAttribute))
     {

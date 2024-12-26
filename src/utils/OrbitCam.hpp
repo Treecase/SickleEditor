@@ -22,23 +22,21 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-
 /** Orbiting Camera. */
 class OrbitCam
 {
 public:
-    glm::vec2 angle;        // x/y angle
-    float zoom;             // Distance from origin
-    float fov;              // FOV
-    float min_zoom = 0.5f;  // Distance from origin
-    float min_fov = 30.0f,  // FOV min value
-          max_fov = 90.0f;  // FOV max value
-
+    glm::vec2 angle;       // x/y angle
+    float zoom;            // Distance from origin
+    float fov;             // FOV
+    float min_zoom = 0.5f; // Distance from origin
+    float min_fov = 30.0f, // FOV min value
+        max_fov = 90.0f;   // FOV max value
 
     OrbitCam()
-    :   angle{0.0f, 0.0f}
-    ,   zoom{2.0f}
-    ,   fov{70.0f}
+    : angle{0.0f, 0.0f}
+    , zoom{2.0f}
+    , fov{70.0f}
     {
     }
 
@@ -49,23 +47,13 @@ public:
     }
 
     /** Set the camera zoom. */
-    void setZoom(float zoom_)
-    {
-        zoom = glm::max(zoom_, min_zoom);
-    }
+    void setZoom(float zoom_) { zoom = glm::max(zoom_, min_zoom); }
 
     /** Set the camera FOV. */
-    void setFOV(float fov_)
-    {
-        fov = glm::clamp(fov_, min_fov, max_fov);
-    }
-
+    void setFOV(float fov_) { fov = glm::clamp(fov_, min_fov, max_fov); }
 
     /** Turn the camera by `delta` degrees. */
-    void rotate(glm::vec2 delta)
-    {
-        setAngle(angle + glm::radians(delta));
-    }
+    void rotate(glm::vec2 delta) { setAngle(angle + glm::radians(delta)); }
 
     /** Get view matrix. */
     glm::mat4 getViewMatrix() const

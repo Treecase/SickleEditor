@@ -18,9 +18,7 @@
 
 #include "BBox2View.hpp"
 
-
 using namespace Sickle;
-
 
 /* ===[ BBox2View ]=== */
 void BBox2View::draw(
@@ -33,15 +31,12 @@ void BBox2View::draw(
     cr->rectangle(box.min.x, box.min.y, width, height);
 }
 
-
-
 /* ===[ BBox2ViewCustom ]=== */
 BBox2ViewCustom::BBox2ViewCustom(Func const &pre, Func const &post)
-:   _pre{pre}
-,   _post{post}
+: _pre{pre}
+, _post{post}
 {
 }
-
 
 void BBox2ViewCustom::draw(
     Cairo::RefPtr<Cairo::Context> const &cr,

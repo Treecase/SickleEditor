@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-
 namespace Sickle::TextureSelector
 {
     /**
@@ -78,9 +77,8 @@ namespace Sickle::TextureSelector
         void on_TextureManager_wads_changed();
 
         bool filter_func(Gtk::FlowBoxChild const *child) const;
-        int sort_func(
-            Gtk::FlowBoxChild const *a,
-            Gtk::FlowBoxChild const *b) const;
+        int sort_func(Gtk::FlowBoxChild const *a, Gtk::FlowBoxChild const *b)
+            const;
 
     private:
         Gtk::Dialog *_dialog{nullptr};
@@ -104,6 +102,6 @@ namespace Sickle::TextureSelector
 
         void _on_worker_notify();
     };
-}
+} // namespace Sickle::TextureSelector
 
 #endif

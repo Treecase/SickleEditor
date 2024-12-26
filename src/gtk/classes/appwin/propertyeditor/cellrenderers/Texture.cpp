@@ -18,15 +18,12 @@
 
 #include "CellRendererProperty.hpp"
 
-
 using namespace Sickle::AppWin;
-
 
 CellRendererProperty::TextureRenderer::TextureRenderer()
 {
     _renderer.signal_texture_edited().connect(signal_changed.make_slot());
 }
-
 
 void CellRendererProperty::TextureRenderer::set_value(ValueType const &value)
 {
@@ -34,12 +31,10 @@ void CellRendererProperty::TextureRenderer::set_value(ValueType const &value)
     _renderer.property_wad_name() = "decals";
 }
 
-
 Gtk::CellRenderer *CellRendererProperty::TextureRenderer::renderer()
 {
     return &_renderer;
 }
-
 
 Gtk::CellRendererMode CellRendererProperty::TextureRenderer::mode()
 {

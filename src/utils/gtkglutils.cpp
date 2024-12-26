@@ -20,15 +20,15 @@
 
 #include <config/appid.hpp>
 
-#include <gtkmm/glarea.h>
 #include <giomm/resource.h>
+#include <gtkmm/glarea.h>
 
-
-GLUtil::Shader
-GLUtil::shader_from_resource(std::string const &path, GLenum type)
+GLUtil::Shader GLUtil::shader_from_resource(
+    std::string const &path,
+    GLenum type)
 {
-    auto const &b = Gio::Resource::lookup_data_global(
-        SE_GRESOURCE_PREFIX + path);
+    auto const &b
+        = Gio::Resource::lookup_data_global(SE_GRESOURCE_PREFIX + path);
     gsize size = 0;
     return {type, static_cast<char const *>(b->get_data(size)), path};
 }

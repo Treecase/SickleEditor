@@ -43,7 +43,6 @@
 #include <iostream>
 #include <sstream>
 
-
 static Glib::ustring const DRAW_ANGLE_NAMES[] = {
     [Sickle::MapArea2D::DrawAngle::TOP] = "top",
     [Sickle::MapArea2D::DrawAngle::FRONT] = "front",
@@ -55,8 +54,6 @@ static Glib::ustring const AXIS_NAMES[] = {
     [Sickle::MapArea2D::Axis::Y] = "y",
     [Sickle::MapArea2D::Axis::Z] = "z",
 };
-
-
 
 Sickle::MapArea2D::MapArea2D(Editor::EditorRef ed)
 :   Glib::ObjectBase{typeid(MapArea2D)}
@@ -103,12 +100,9 @@ Sickle::MapArea2D::MapArea2D(Editor::EditorRef ed)
     set_can_focus(true);
 
     add_events(
-        Gdk::POINTER_MOTION_MASK
-        | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
-        | Gdk::BUTTON_MOTION_MASK
-        | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK
-        | Gdk::SCROLL_MASK
-        | Gdk::ENTER_NOTIFY_MASK);
+        Gdk::POINTER_MOTION_MASK | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK
+        | Gdk::BUTTON_MOTION_MASK | Gdk::BUTTON_PRESS_MASK
+        | Gdk::BUTTON_RELEASE_MASK | Gdk::SCROLL_MASK | Gdk::ENTER_NOTIFY_MASK);
 
     _css->load_from_resource(SE_GRESOURCE_PREFIX "MapArea2D.css");
     get_style_context()->add_provider(
@@ -135,81 +129,91 @@ Sickle::MapArea2D::MapArea2D(Editor::EditorRef ed)
     on_editor_maptools_changed();
 }
 
-
-Sickle::MapArea2D::DrawSpacePoint
-Sickle::MapArea2D::screenspace_to_drawspace(double x, double y) const
+Sickle::MapArea2D::DrawSpacePoint Sickle::MapArea2D::screenspace_to_drawspace(
+    double x,
+    double y) const
 {
     auto const &transform = property_transform().get_value();
     auto const width = get_allocated_width();
     auto const height = get_allocated_height();
     return {
-        ((x - 0.5 * width ) / transform.zoom) - transform.x,
-        ((y - 0.5 * height) / transform.zoom) - transform.y
-    };
+        ((x - 0.5 * width) / transform.zoom) - transform.x,
+        ((y - 0.5 * height) / transform.zoom) - transform.y};
 }
 
-
-Sickle::MapArea2D::ScreenSpacePoint
-Sickle::MapArea2D::drawspace_to_screenspace(DrawSpacePoint const &v) const
+Sickle::MapArea2D::ScreenSpacePoint Sickle::MapArea2D::drawspace_to_screenspace(
+    DrawSpacePoint const &v) const
 {
     auto const &transform = property_transform().get_value();
     auto const width = get_allocated_width();
     auto const height = get_allocated_height();
     return {
         (v.x + transform.x) * transform.zoom + 0.5 * width,
-        (v.y + transform.y) * transform.zoom + 0.5 * height
-    };
+        (v.y + transform.y) * transform.zoom + 0.5 * height};
 }
 
-
-Sickle::MapArea2D::WorldSpacePoint
-Sickle::MapArea2D::drawspace_to_worldspace(DrawSpacePoint const &v) const
+Sickle::MapArea2D::WorldSpacePoint Sickle::MapArea2D::drawspace_to_worldspace(
+    DrawSpacePoint const &v) const
 {
     switch (property_draw_angle().get_value())
     {
-    case DrawAngle::TOP  : return {v.x, -v.y, 0}; break;
-    case DrawAngle::FRONT: return {0, v.x, -v.y}; break;
-    case DrawAngle::RIGHT: return {v.x, 0, -v.y}; break;
+    case DrawAngle::TOP:
+        return {v.x, -v.y, 0};
+        break;
+    case DrawAngle::FRONT:
+        return {0, v.x, -v.y};
+        break;
+    case DrawAngle::RIGHT:
+        return {v.x, 0, -v.y};
+        break;
     }
     throw std::logic_error{"bad DrawAngle value"};
 }
 
-
-Sickle::MapArea2D::WorldSpacePoint
-Sickle::MapArea2D::drawspace3_to_worldspace(glm::vec3 const &v) const
+Sickle::MapArea2D::WorldSpacePoint Sickle::MapArea2D::drawspace3_to_worldspace(
+    glm::vec3 const &v) const
 {
     switch (property_draw_angle().get_value())
     {
-    case DrawAngle::TOP  : return {v.x, -v.y, v.z}; break;
-    case DrawAngle::FRONT: return {v.z, v.x, -v.y}; break;
-    case DrawAngle::RIGHT: return {v.x, v.z, -v.y}; break;
+    case DrawAngle::TOP:
+        return {v.x, -v.y, v.z};
+        break;
+    case DrawAngle::FRONT:
+        return {v.z, v.x, -v.y};
+        break;
+    case DrawAngle::RIGHT:
+        return {v.x, v.z, -v.y};
+        break;
     }
     throw std::logic_error{"bad DrawAngle value"};
 }
 
-
-Sickle::MapArea2D::DrawSpacePoint
-Sickle::MapArea2D::worldspace_to_drawspace(WorldSpacePoint const &v) const
+Sickle::MapArea2D::DrawSpacePoint Sickle::MapArea2D::worldspace_to_drawspace(
+    WorldSpacePoint const &v) const
 {
     return glm::vec2{worldspace_to_drawspace3(v)};
 }
 
-
-glm::vec3
-Sickle::MapArea2D::worldspace_to_drawspace3(WorldSpacePoint const &v) const
+glm::vec3 Sickle::MapArea2D::worldspace_to_drawspace3(
+    WorldSpacePoint const &v) const
 {
     switch (property_draw_angle().get_value())
     {
-    case DrawAngle::TOP  : return {v.x, -v.y, v.z}; break;
-    case DrawAngle::FRONT: return {v.y, -v.z, v.x}; break;
-    case DrawAngle::RIGHT: return {v.x, -v.z, v.y}; break;
+    case DrawAngle::TOP:
+        return {v.x, -v.y, v.z};
+        break;
+    case DrawAngle::FRONT:
+        return {v.y, -v.z, v.x};
+        break;
+    case DrawAngle::RIGHT:
+        return {v.x, -v.z, v.y};
+        break;
     }
     throw std::logic_error{"bad DrawAngle value"};
 }
 
-
-Sickle::Editor::EditorObjectRef
-Sickle::MapArea2D::pick_object(DrawSpacePoint point)
+Sickle::Editor::EditorObjectRef Sickle::MapArea2D::pick_object(
+    DrawSpacePoint point)
 {
     Editor::EditorObjectRef picked{nullptr};
     BBox2 pbbox{};
@@ -219,10 +223,12 @@ Sickle::MapArea2D::pick_object(DrawSpacePoint point)
     {
         for (auto const &c : obj->get_components())
         {
-            auto const bbox_c =\
-                std::dynamic_pointer_cast<World2D::BBoxComponent>(c);
+            auto const bbox_c
+                = std::dynamic_pointer_cast<World2D::BBoxComponent>(c);
             if (!bbox_c)
+            {
                 continue;
+            }
 
             auto const bbox = bbox_c->bbox(*this);
             if (bbox.contains(point))
@@ -241,31 +247,39 @@ Sickle::MapArea2D::pick_object(DrawSpacePoint point)
     return picked;
 }
 
-
 Sickle::MapArea2D::Axis Sickle::MapArea2D::get_horizontal_axis_name() const
 {
     switch (property_draw_angle().get_value())
     {
-    case DrawAngle::TOP  : return Axis::X; break;
-    case DrawAngle::FRONT: return Axis::Y; break;
-    case DrawAngle::RIGHT: return Axis::X; break;
+    case DrawAngle::TOP:
+        return Axis::X;
+        break;
+    case DrawAngle::FRONT:
+        return Axis::Y;
+        break;
+    case DrawAngle::RIGHT:
+        return Axis::X;
+        break;
     }
     throw std::logic_error{"bad DrawAngle value"};
 }
-
 
 Sickle::MapArea2D::Axis Sickle::MapArea2D::get_vertical_axis_name() const
 {
     switch (property_draw_angle().get_value())
     {
-    case DrawAngle::TOP  : return Axis::Y; break;
-    case DrawAngle::FRONT: return Axis::Z; break;
-    case DrawAngle::RIGHT: return Axis::Z; break;
+    case DrawAngle::TOP:
+        return Axis::Y;
+        break;
+    case DrawAngle::FRONT:
+        return Axis::Z;
+        break;
+    case DrawAngle::RIGHT:
+        return Axis::Z;
+        break;
     }
     throw std::logic_error{"bad DrawAngle value"};
 }
-
-
 
 bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 {
@@ -283,7 +297,7 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 
     /* ===[ World-Space Drawing ]=== */
     {
-    cr->save();
+        cr->save();
         cr->set_antialias(Cairo::ANTIALIAS_NONE);
         cr->translate(0.5 * width, 0.5 * height);
         cr->translate(
@@ -292,30 +306,39 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
         cr->scale(transform.zoom, transform.zoom);
         auto const pixel = 1.0 / transform.zoom;
 
-        auto const execute_draw_components =\
-            [this, cr](Editor::EditorObjectRef const &obj) -> void {
-                for (auto const &c : obj->get_components())
+        auto const execute_draw_components
+            = [this, cr](Editor::EditorObjectRef const &obj) -> void
+        {
+            for (auto const &c : obj->get_components())
+            {
+                auto const dc
+                    = std::dynamic_pointer_cast<World2D::DrawComponent>(c);
+                if (dc)
                 {
-                    auto const dc =\
-                        std::dynamic_pointer_cast<World2D::DrawComponent>(c);
-                    if (dc)
-                        dc->draw(cr, *this);
+                    dc->draw(cr, *this);
                 }
-            };
+            }
+        };
 
         // Draw the world.
         cr->set_line_width(pixel);
         _editor->get_map()->foreach(
-            [&execute_draw_components](auto obj){
+            [&execute_draw_components](auto obj)
+            {
                 if (!obj->is_selected())
+                {
                     execute_draw_components(obj);
+                }
             });
 
         // Draw selected objects on top.
         _editor->get_map()->foreach(
-            [&execute_draw_components](auto obj){
+            [&execute_draw_components](auto obj)
+            {
                 if (obj->is_selected())
+                {
                     execute_draw_components(obj);
+                }
             });
 
         // Selected brushes grab handles.
@@ -329,9 +352,8 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
             _brushbox_view.draw(cr, _brushbox);
         }
 
-    cr->restore();
+        cr->restore();
     }
-
 
     /* ===[ Screen-Space Overlay Drawing ]=== */
     _draw_name_overlay(cr);
@@ -339,7 +361,6 @@ bool Sickle::MapArea2D::on_draw(Cairo::RefPtr<Cairo::Context> const &cr)
 
     return true;
 }
-
 
 void Sickle::MapArea2D::on_editor_brushbox_changed()
 {
@@ -349,25 +370,26 @@ void Sickle::MapArea2D::on_editor_brushbox_changed()
     queue_draw();
 }
 
-
 void Sickle::MapArea2D::on_editor_map_changed()
 {
-    static auto const on_brush_added =\
-        [](Editor::EditorObjectRef const &obj) -> void {
-            obj->add_component(World2D::DrawComponentFactory{}.construct(obj));
-            obj->add_component(World2D::BBoxComponentFactory{}.construct(obj));
-        };
-    static auto const on_entity_added =\
-        [](Editor::EditorObjectRef const &obj) -> void {
-            obj->add_component(World2D::DrawComponentFactory{}.construct(obj));
-            obj->add_component(World2D::BBoxComponentFactory{}.construct(obj));
+    static auto const on_brush_added
+        = [](Editor::EditorObjectRef const &obj) -> void
+    {
+        obj->add_component(World2D::DrawComponentFactory{}.construct(obj));
+        obj->add_component(World2D::BBoxComponentFactory{}.construct(obj));
+    };
+    static auto const on_entity_added
+        = [](Editor::EditorObjectRef const &obj) -> void
+    {
+        obj->add_component(World2D::DrawComponentFactory{}.construct(obj));
+        obj->add_component(World2D::BBoxComponentFactory{}.construct(obj));
 
-            sigc::connection conn = obj->signal_child_added()
-                .connect(on_brush_added);
-            obj->signal_removed().connect(
-                [conn]() mutable -> void {conn.disconnect();});
-            obj->foreach_direct(on_brush_added);
-        };
+        sigc::connection conn
+            = obj->signal_child_added().connect(on_brush_added);
+        obj->signal_removed().connect(
+            [conn]() mutable -> void { conn.disconnect(); });
+        obj->foreach_direct(on_brush_added);
+    };
 
     _editor->brushbox.signal_updated().connect(
         sigc::mem_fun(*this, &MapArea2D::on_editor_brushbox_changed));
@@ -375,16 +397,15 @@ void Sickle::MapArea2D::on_editor_map_changed()
         sigc::mem_fun(*this, &MapArea2D::on_editor_selection_changed));
 
     auto const world = _editor->get_map();
-    sigc::connection conn = world->signal_child_added()
-        .connect(on_entity_added);
+    sigc::connection conn
+        = world->signal_child_added().connect(on_entity_added);
     world->signal_removed().connect(
-        [conn]() mutable -> void {conn.disconnect();});
+        [conn]() mutable -> void { conn.disconnect(); });
     world->foreach_direct(on_entity_added);
 
     property_transform().reset_value();
     queue_draw();
 }
-
 
 void Sickle::MapArea2D::on_editor_maptools_changed()
 {
@@ -400,25 +421,28 @@ void Sickle::MapArea2D::on_editor_maptools_changed()
     }
 }
 
-
 void Sickle::MapArea2D::on_editor_selection_changed()
 {
     BBox2 selection_bounds{};
     auto const brushes = _editor->selected.get_all_of_type<Editor::Brush>();
     for (auto const &brush : brushes)
+    {
         for (auto const &face : brush->faces())
+        {
             for (auto const &vertex : face->get_vertices())
+            {
                 selection_bounds.add(worldspace_to_drawspace(vertex));
+            }
+        }
+    }
     _selected_box.set_box(selection_bounds);
     queue_draw();
 }
-
 
 void Sickle::MapArea2D::on_draw_angle_changed()
 {
     queue_draw();
 }
-
 
 bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
 {
@@ -439,14 +463,11 @@ bool Sickle::MapArea2D::on_button_press_event(GdkEventButton *event)
     return false;
 }
 
-
 bool Sickle::MapArea2D::on_enter_notify_event(GdkEventCrossing *event)
 {
     grab_focus();
     return true;
 }
-
-
 
 void Sickle::MapArea2D::_draw_background(
     Cairo::RefPtr<Cairo::Context> const &cr) const
@@ -459,7 +480,6 @@ void Sickle::MapArea2D::_draw_background(
         clear_color.get_blue());
     cr->paint();
 }
-
 
 void Sickle::MapArea2D::_draw_grid_lines(
     Cairo::RefPtr<Cairo::Context> const &cr) const
@@ -487,23 +507,22 @@ void Sickle::MapArea2D::_draw_grid_lines(
     int const count_y = std::ceil((0.5 * height) / grid_size);
     for (int i = 0; i <= count_x; ++i)
     {
-        cr->move_to(half_w + i*grid_size + dx, 0);
+        cr->move_to(half_w + i * grid_size + dx, 0);
         cr->rel_line_to(0, height);
-        cr->move_to(half_w - i*grid_size + dx, 0);
+        cr->move_to(half_w - i * grid_size + dx, 0);
         cr->rel_line_to(0, height);
     }
     for (int i = 0; i <= count_y; ++i)
     {
-        cr->move_to(0, half_h + i*grid_size + dy);
+        cr->move_to(0, half_h + i * grid_size + dy);
         cr->rel_line_to(width, 0);
-        cr->move_to(0, half_h - i*grid_size + dy);
+        cr->move_to(0, half_h - i * grid_size + dy);
         cr->rel_line_to(width, 0);
     }
 
     cr->stroke();
     style->context_restore();
 }
-
 
 void Sickle::MapArea2D::_draw_axes(
     Cairo::RefPtr<Cairo::Context> const &cr) const
@@ -545,7 +564,6 @@ void Sickle::MapArea2D::_draw_axes(
     style->context_restore();
 }
 
-
 void Sickle::MapArea2D::_draw_name_overlay(
     Cairo::RefPtr<Cairo::Context> const &cr) const
 {
@@ -560,18 +578,14 @@ void Sickle::MapArea2D::_draw_name_overlay(
 
     auto const layout = Pango::Layout::create(cr);
     layout->set_text(
-        DRAW_ANGLE_NAMES[get_draw_angle()]
-        + " ("
-        + AXIS_NAMES[get_horizontal_axis_name()]
-        + "/"
-        + AXIS_NAMES[get_vertical_axis_name()]
-        + ")");
+        DRAW_ANGLE_NAMES[get_draw_angle()] + " ("
+        + AXIS_NAMES[get_horizontal_axis_name()] + "/"
+        + AXIS_NAMES[get_vertical_axis_name()] + ")");
     layout->set_font_description(font);
     layout->show_in_cairo_context(cr);
 
     cr->restore();
 }
-
 
 void Sickle::MapArea2D::_draw_transform_overlay(
     Cairo::RefPtr<Cairo::Context> const &cr) const

@@ -18,13 +18,11 @@
 
 #include "vector.hpp"
 
-
 template<>
 void Lua::push(lua_State *L, glm::vec2 vector)
 {
     _make_vector(L, vector);
 }
-
 
 template<>
 void Lua::push(lua_State *L, glm::vec3 vector)
@@ -32,13 +30,11 @@ void Lua::push(lua_State *L, glm::vec3 vector)
     _make_vector(L, vector);
 }
 
-
 template<>
 void Lua::push(lua_State *L, glm::vec4 vector)
 {
     _make_vector(L, vector);
 }
-
 
 template<>
 glm::vec2 Lua::get_as(lua_State *L, int idx)
@@ -46,13 +42,11 @@ glm::vec2 Lua::get_as(lua_State *L, int idx)
     return lgeo_tovector<glm::vec2>(L, idx);
 }
 
-
 template<>
 glm::vec3 Lua::get_as(lua_State *L, int idx)
 {
     return lgeo_tovector<glm::vec3>(L, idx);
 }
-
 
 template<>
 glm::vec4 Lua::get_as(lua_State *L, int idx)

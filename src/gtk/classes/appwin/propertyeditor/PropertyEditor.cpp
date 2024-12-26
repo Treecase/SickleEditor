@@ -19,28 +19,24 @@
 #include "PropertyEditor.hpp"
 #include "CellRendererProperty.hpp"
 
-
 using namespace Sickle::AppWin;
-
 
 static Glib::ustring generate_tooltip(
     std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property);
 static Glib::RefPtr<Gtk::ListStore> generate_choices(
     std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property);
 
-
 PropertyEditor::PropertyEditor()
-:   Glib::ObjectBase{typeid(PropertyEditor)}
-,   _prop_entity{*this, "entity", {}}
-,   _store{Gtk::ListStore::create(_columns())}
-,   _properties{_store}
+: Glib::ObjectBase{typeid(PropertyEditor)}
+, _prop_entity{*this, "entity", {}}
+, _store{Gtk::ListStore::create(_columns())}
+, _properties{_store}
 {
     _store->set_sort_column(_columns().name, Gtk::SortType::SORT_ASCENDING);
 
-    _renderer.choices_renderer().filter_edit =\
-        [this](auto const &p, auto const &v){
-            return _choices_filter_edit(p, v);
-        };
+    _renderer.choices_renderer().filter_edit
+        = [this](auto const &p, auto const &v)
+    { return _choices_filter_edit(p, v); };
 
     auto col = Gtk::make_managed<Gtk::TreeViewColumn>("Value", _renderer);
     col->add_attribute(_renderer.property_value(), _columns().renderer_value);
@@ -64,19 +60,15 @@ PropertyEditor::PropertyEditor()
         sigc::mem_fun(*this, &PropertyEditor::on_value_edited));
 }
 
-
 void PropertyEditor::set_entity(Editor::EntityRef const &entity)
 {
     property_entity().set_value(entity);
 }
 
-
 Sickle::Editor::EntityRef PropertyEditor::get_entity() const
 {
     return property_entity().get_value();
 }
-
-
 
 void PropertyEditor::on_entity_changed()
 {
@@ -85,20 +77,20 @@ void PropertyEditor::on_entity_changed()
     on_entity_properties_changed();
     if (auto const entity = get_entity())
     {
-        _conn_entity_properties_changed = entity->signal_properties_changed()
-            .connect(
-                sigc::mem_fun(
-                    *this,
-                    &PropertyEditor::on_entity_properties_changed));
+        _conn_entity_properties_changed
+            = entity->signal_properties_changed().connect(sigc::mem_fun(
+                *this,
+                &PropertyEditor::on_entity_properties_changed));
     }
 }
-
 
 void PropertyEditor::on_entity_properties_changed()
 {
     auto const entity = get_entity();
     if (!entity)
+    {
         return;
+    }
 
     std::unordered_set<std::string> existing_properties{};
     std::vector<Gtk::TreeModel::iterator> iters_to_delete{};
@@ -112,12 +104,14 @@ void PropertyEditor::on_entity_properties_changed()
             existing_properties.insert(name);
 
             std::string value{};
-            try {
+            try
+            {
                 value = entity->get_property(name);
             }
             // Property exists in the tree, but not on the entity, so
             // remove it from the tree.
-            catch (std::out_of_range const &) {
+            catch (std::out_of_range const &)
+            {
                 iters_to_delete.push_back(it);
                 return false;
             }
@@ -128,11 +122,12 @@ void PropertyEditor::on_entity_properties_changed()
             _update_row(it, name, value, property_definition);
 
             return false;
-        }
-    );
+        });
 
     for (auto const &it : iters_to_delete)
+    {
         _store->erase(it);
+    }
 
     for (auto const &[name, value] : entity->properties())
     {
@@ -147,7 +142,6 @@ void PropertyEditor::on_entity_properties_changed()
     }
 }
 
-
 void PropertyEditor::on_value_edited(
     Glib::ustring const &path,
     Glib::ustring const &value)
@@ -160,10 +154,10 @@ void PropertyEditor::on_value_edited(
 
     it->set_value(_columns().renderer_value, the_value);
     if (auto const &entity = get_entity())
+    {
         entity->set_property(name, value);
+    }
 }
-
-
 
 PropertyEditor::Columns const &PropertyEditor::_columns()
 {
@@ -171,28 +165,20 @@ PropertyEditor::Columns const &PropertyEditor::_columns()
     return the_columns;
 }
 
-
 void PropertyEditor::_update_row(
     Gtk::TreeModel::iterator const &it,
     Glib::ustring const &name,
     std::string const &value,
-    std::shared_ptr<
-        Sickle::Editor::EntityPropertyDefinition> const &property_definition)
+    std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const
+        &property_definition)
 {
     it->set_value<Glib::ustring>(_columns().name, name);
     it->set_value(
         _columns().renderer_value,
-        CellRendererProperty::ValueType{
-            value,
-            property_definition});
-    it->set_value(
-        _columns().tooltip,
-        generate_tooltip(property_definition));
-    it->set_value(
-        _columns().choices,
-        generate_choices(property_definition));
+        CellRendererProperty::ValueType{value, property_definition});
+    it->set_value(_columns().tooltip, generate_tooltip(property_definition));
+    it->set_value(_columns().choices, generate_choices(property_definition));
 }
-
 
 Glib::ustring PropertyEditor::_choices_filter_edit(
     Glib::ustring const &path,
@@ -208,25 +194,23 @@ Glib::ustring PropertyEditor::_choices_filter_edit(
                 CellRendererProperty::ChoicesRenderer::columns().desc);
             if (desc == choice)
             {
-                filtered = std::to_string(
-                    it->get_value(
-                        CellRendererProperty::ChoicesRenderer::columns().idx));
+                filtered = std::to_string(it->get_value(
+                    CellRendererProperty::ChoicesRenderer::columns().idx));
                 return true;
             }
             else
+            {
                 return false;
+            }
         });
     return filtered;
 }
 
-
-
 static Glib::ustring generate_tooltip(
     std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property)
 {
-    auto const flags =\
-        std::dynamic_pointer_cast<
-            Sickle::Editor::EntityPropertyDefinitionFlags>(property);
+    auto const flags = std::dynamic_pointer_cast<
+        Sickle::Editor::EntityPropertyDefinitionFlags>(property);
     if (flags)
     {
         Glib::ustring text{};
@@ -234,10 +218,14 @@ static Glib::ustring generate_tooltip(
         {
             auto const desc = flags->get_description(i);
             if (!desc.empty())
+            {
                 text += std::to_string(i) + ": " + desc + "\n";
+            }
         }
         if (!text.empty())
+        {
             text.erase(text.size() - 1);
+        }
         return text;
     }
     else if (property)
@@ -247,16 +235,16 @@ static Glib::ustring generate_tooltip(
     return "";
 }
 
-
 static Glib::RefPtr<Gtk::ListStore> generate_choices(
     std::shared_ptr<Sickle::Editor::EntityPropertyDefinition> const &property)
 {
     Glib::RefPtr<Gtk::ListStore> output{nullptr};
-    auto const choices =\
-        std::dynamic_pointer_cast<
-            Sickle::Editor::EntityPropertyDefinitionChoices>(property);
+    auto const choices = std::dynamic_pointer_cast<
+        Sickle::Editor::EntityPropertyDefinitionChoices>(property);
     if (!choices)
+    {
         return output;
+    }
 
     auto const &columns = CellRendererProperty::ChoicesRenderer::columns();
     output = Gtk::ListStore::create(columns);

@@ -20,13 +20,11 @@
 
 #include <gtk/classes/textureselector/TextureSelector.hpp>
 
-
 using namespace Sickle::AppWin;
 
-
 FaceEditor::FaceEditor(Editor::EditorRef const &editor)
-:   Glib::ObjectBase{typeid(FaceEditor)}
-,   _prop_face{*this, "face", {}}
+: Glib::ObjectBase{typeid(FaceEditor)}
+, _prop_face{*this, "face", {}}
 {
     set_column_spacing(16);
     set_sensitive(false);
@@ -66,19 +64,15 @@ FaceEditor::FaceEditor(Editor::EditorRef const &editor)
         sigc::mem_fun(*this, &FaceEditor::on_texture_selector_button_clicked));
 }
 
-
 void FaceEditor::set_face(Editor::FaceRef const &face)
 {
     property_face().set_value(face);
 }
 
-
 Sickle::Editor::FaceRef FaceEditor::get_face() const
 {
     return property_face().get_value();
 }
-
-
 
 void FaceEditor::on_face_changed()
 {
@@ -99,57 +93,57 @@ void FaceEditor::on_face_changed()
     auto const &face = get_face();
     set_sensitive((bool)face);
     if (!face)
+    {
         return;
+    }
 
     _bind_texture = Glib::Binding::bind_property(
         face->property_texture(),
         _texture_entry.property_text(),
         Glib::BindingFlags::BINDING_SYNC_CREATE
-        | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
+            | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
 
     _bind_u = Glib::Binding::bind_property(
         face->property_u(),
         _u_value.property_vector(),
         Glib::BindingFlags::BINDING_SYNC_CREATE
-        | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
+            | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
 
     _bind_v = Glib::Binding::bind_property(
         face->property_v(),
         _v_value.property_vector(),
         Glib::BindingFlags::BINDING_SYNC_CREATE
-        | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
+            | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
 
     _bind_shift = Glib::Binding::bind_property(
         face->property_shift(),
         _shift_value.property_vector(),
         Glib::BindingFlags::BINDING_SYNC_CREATE
-        | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
+            | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
 
     _bind_scale = Glib::Binding::bind_property(
         face->property_scale(),
         _scale_value.property_vector(),
         Glib::BindingFlags::BINDING_SYNC_CREATE
-        | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
+            | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
 
     _bind_rotation = Glib::Binding::bind_property(
         face->property_rotation(),
         _rotation_value.property_value(),
         Glib::BindingFlags::BINDING_SYNC_CREATE
-        | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
+            | Glib::BindingFlags::BINDING_BIDIRECTIONAL);
 }
-
 
 void FaceEditor::on_texture_selector_button_clicked(
     Gtk::EntryIconPosition const &icon_pos,
     GdkEventButton const *button)
 {
     if (icon_pos == Gtk::EntryIconPosition::ENTRY_ICON_SECONDARY
-            && button->button == 1)
+        && button->button == 1)
     {
         show_texture_select_window();
     }
 }
-
 
 void FaceEditor::show_texture_select_window()
 {

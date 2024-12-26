@@ -37,18 +37,17 @@ namespace Sickle
     public:
         friend class Componentable;
 
-        virtual ~Component()=default;
+        virtual ~Component() = default;
 
         /** Run whatever functionality this component supplies. */
-        virtual void execute()=0;
+        virtual void execute() = 0;
 
     protected:
         /** Called when the component is attached to an object. */
-        virtual void on_attach(Componentable &)=0;
+        virtual void on_attach(Componentable &) = 0;
         /** Called when the component is detached from an object. */
-        virtual void on_detach(Componentable &)=0;
+        virtual void on_detach(Componentable &) = 0;
     };
-
 
     /**
      * An object which can have components.
@@ -56,7 +55,7 @@ namespace Sickle
     class Componentable
     {
     public:
-        virtual ~Componentable()=default;
+        virtual ~Componentable() = default;
 
         /**
          * Get all the attached components.
@@ -93,6 +92,6 @@ namespace Sickle
     protected:
         std::vector<std::shared_ptr<Component>> components{};
     };
-}
+} // namespace Sickle
 
 #endif

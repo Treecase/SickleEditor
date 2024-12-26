@@ -18,13 +18,11 @@
 
 #include "Face.hpp"
 
-
 World3D::Vertex::Vertex(glm::vec3 pos, glm::vec2 uv)
-:   _position{pos}
-,   _uv{uv}
+: _position{pos}
+, _uv{uv}
 {
 }
-
 
 std::array<GLfloat, World3D::Vertex::ELEMENTS> World3D::Vertex::as_vbo() const
 {

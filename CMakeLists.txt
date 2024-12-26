@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Trevor Last
+# Copyright (C) 2022-2024 Trevor Last
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.31)
 
 file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
 if(EXISTS "${LOC_PATH}")
@@ -21,107 +21,66 @@ if(EXISTS "${LOC_PATH}")
 endif()
 
 project("Sickle Editor"
-    VERSION 0.12.0
+    VERSION 0.12.2
     DESCRIPTION "Open-Source GoldSrc Editor"
-    LANGUAGES CXX
-)
+    LANGUAGES CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
     message("CMAKE_BUILD_TYPE is unset, defaulting to Release")
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# MSYS2 only offers flex as a base package, but the compiler needs access to
+# the flex headers and libraries. Therefore we need to tell CMake to search for
+# flex in the MSYS2 /usr directory.
+if(WIN32)
+    set(MSYS_PREFIX "C:/msys64" CACHE FILEPATH "path to the MSYS installation")
+    set(FLEX_ROOT "${MSYS_PREFIX}/usr" CACHE FILEPATH "flex search root")
+endif()
 
+
+# --- Dependencies --- ###########################
+
+include(FetchContent)
+FetchContent_Declare(
+    glutils
+    GIT_REPOSITORY https://github.com/Treecase/glutils
+    GIT_TAG        59ad12bdfbd0f292fe56524ee72ece755b4771c5)
+FetchContent_MakeAvailable(glutils)
+
+find_package(BISON 3.2 REQUIRED)
+find_package(FLEX 2.6 REQUIRED)
+find_package(GLEW 2.1 REQUIRED)
+find_package(glm 0.9 REQUIRED)
+find_package(Lua 5.4 REQUIRED)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(glibmm REQUIRED IMPORTED_TARGET glibmm-2.4)
+pkg_check_modules(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
+pkg_check_modules(sigc++ REQUIRED IMPORTED_TARGET sigc++-2.0)
+
+
+# --- Variables --- ##############################
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
 # Application ID
-set(APPLICATION_ID com.github.treecase.sicklegtk)
+set(APPLICATION_ID com.github.Treecase.SickleEditor)
 # GResource prefix
-set(GRESOURCE_PREFIX /com/github/treecase/sicklegtk/)
+set(GRESOURCE_PREFIX /com/github/Treecase/SickleEditor/)
 # GSchema path
 set(SCHEMA_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
 
-# Dependencies
-# glutils
-add_subdirectory(extern/glutils)
-
-# GLEW
-find_package(GLEW REQUIRED)
-
-# gtkmm3
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
-pkg_check_modules(sigc++ REQUIRED IMPORTED_TARGET sigc++-2.0)
-
-# GL library depends on platform, so define an alias for it
-add_library(SickleGL INTERFACE)
-if(WIN32)
-    target_link_libraries(SickleGL INTERFACE OpenGL32)
-else()
-    target_link_libraries(SickleGL INTERFACE GL)
-endif()
-
-
-# Configure files
-# Desktop file
-configure_file(sicklegtk.desktop.in ${APPLICATION_ID}.desktop)
-# Settings schema
-configure_file(sicklegtk.gschema.xml.in sicklegtk.gschema.xml)
-
-include_directories(src)
-
-# Declare targets
+# --- Target --- #################################
 add_executable(sickle)
-target_compile_features(sickle PRIVATE cxx_std_17)
-
-# Compiles settings gschema
-add_custom_target(
-    gschemas.compiled
-    COMMAND
-        glib-compile-schemas
-        --strict
-        --targetdir=.
-        --schema-file=sicklegtk.gschema.xml
-)
-add_dependencies(sickle gschemas.compiled)
-
-# Add .exe icon on Windows
-if(WIN32)
-    add_subdirectory(windows)
-endif()
-
-# Project sources
-add_subdirectory(src)
-# GResource data
-add_subdirectory(gresource)
-
-
-# Linking
-if(MINGW)
-    target_link_libraries(sickle PRIVATE mingw32)
-endif()
 target_link_libraries(sickle PRIVATE ${CMAKE_DL_LIBS})
+
+include(GNUInstallDirs)
+
+add_subdirectory(data)
+include_directories(sickle PUBLIC src)
+add_subdirectory(src)
 
 
 install(TARGETS sickle)
-install(DIRECTORY sickle TYPE DATA)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_ID}.desktop"
-    DESTINATION share/applications
-)
-if(WIN32)
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gschemas.compiled"
-        DESTINATION share/glib-2.0/schemas
-    )
-else()
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sicklegtk.gschema.xml"
-        DESTINATION share/glib-2.0/schemas
-        RENAME ${APPLICATION_ID}.gschema.xml
-    )
-endif()
-install(FILES gresource/logo.svg
-    DESTINATION share/icons/hicolor/scalable/apps
-    RENAME ${APPLICATION_ID}.svg
-)

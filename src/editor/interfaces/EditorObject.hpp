@@ -28,13 +28,14 @@
 
 #include <functional>
 
-
 namespace Sickle::Editor
 {
     class EditorObject;
     using EditorObjectRef = Glib::RefPtr<EditorObject>;
 
-    class EditorObject : public Componentable, public Selectable
+    class EditorObject
+    : public Componentable
+    , public Selectable
     {
     public:
         using SlotForEach = std::function<void(EditorObjectRef)>;
@@ -46,26 +47,26 @@ namespace Sickle::Editor
          * Emitted when a child object is added. Implementing classes must
          * trigger this when appropriate.
          */
-        auto &signal_child_added() {return _sig_child_added;}
+        auto &signal_child_added() { return _sig_child_added; }
 
         /**
          * Emitted when a child object is removed. Implementing classes must
          * trigger this when appropriate.
          */
-        auto &signal_child_removed() {return _sig_child_removed;}
+        auto &signal_child_removed() { return _sig_child_removed; }
 
         /** Emitted when the object is added to the world. */
-        auto &signal_added() {return _sig_added;}
+        auto &signal_added() { return _sig_added; }
 
         /** Emitted when the object is removed from the world. */
-        auto &signal_removed() {return _sig_removed;}
+        auto &signal_removed() { return _sig_removed; }
 
         /**
          * Get this object's unique name.
          *
          * @return The object's name.
          */
-        virtual Glib::ustring name() const=0;
+        virtual Glib::ustring name() const = 0;
 
         /**
          * Get an icon representing this object's type. Note that this method
@@ -73,7 +74,7 @@ namespace Sickle::Editor
          *
          * @return The icon inside an Gdk::Pixbuf.
          */
-        virtual Glib::RefPtr<Gdk::Pixbuf> icon() const=0;
+        virtual Glib::RefPtr<Gdk::Pixbuf> icon() const = 0;
 
         /**
          * Get the parent object of this object.
@@ -88,7 +89,7 @@ namespace Sickle::Editor
          *
          * @return A list of this object's direct children.
          */
-        virtual std::vector<EditorObjectRef> children() const=0;
+        virtual std::vector<EditorObjectRef> children() const = 0;
 
         /**
          * Get all child objects recursively, in depth-first ordering.
@@ -142,6 +143,6 @@ namespace Sickle::Editor
         // Using a weak reference to avoid dependency cycles.
         EditorObject *_parent{nullptr};
     };
-}
+} // namespace Sickle::Editor
 
 #endif

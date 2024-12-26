@@ -18,16 +18,16 @@
 
 #include "BrushDraw.hpp"
 
-
 using namespace World2D;
-
 
 void BrushDraw::draw(
     Cairo::RefPtr<Cairo::Context> const &cr,
     Sickle::MapArea2D const &maparea) const
 {
     if (!cr || !_brush)
+    {
         return;
+    }
 
     auto const style = maparea.get_style_context();
     style->context_save();
@@ -40,15 +40,14 @@ void BrushDraw::draw(
     }
 
     auto const color = style->get_color(style->get_state());
-    cr->set_source_rgb(
-        color.get_red(),
-        color.get_green(),
-        color.get_blue());
+    cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
 
     for (auto const &face : _brush->faces())
     {
         if (face->get_vertices().empty())
+        {
             continue;
+        }
         auto const p0 = maparea.worldspace_to_drawspace(face->get_vertex(0));
         cr->move_to(p0.x, p0.y);
         for (auto const &vertex : face->get_vertices())
@@ -62,15 +61,14 @@ void BrushDraw::draw(
     style->context_restore();
 }
 
-
-
 void BrushDraw::on_attach(Sickle::Componentable &obj)
 {
     if (_brush)
+    {
         throw std::logic_error{"already attached"};
+    }
     _brush = &dynamic_cast<Sickle::Editor::Brush const &>(obj);
 }
-
 
 void BrushDraw::on_detach(Sickle::Componentable &obj)
 {

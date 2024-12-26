@@ -21,9 +21,8 @@
 #include <config/appid.hpp>
 #include <config/version.hpp>
 
-
 Sickle::About::About()
-:   Gtk::AboutDialog{}
+: Gtk::AboutDialog{}
 {
     set_program_name(SE_CANON_NAME);
     set_version(SE_VERSION);

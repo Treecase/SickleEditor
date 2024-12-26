@@ -25,13 +25,14 @@
 
 #include <cstring>
 
-
 static SPR::Header load_header(SPR::SpriteStream &stream)
 {
     SPR::Header header{};
     header.version = stream.read_uint32();
     if (header.version != 2)
+    {
         throw SPR::InvalidVersion{};
+    }
     header.type = static_cast<SPR::Type>(stream.read_uint32());
     header.format = static_cast<SPR::TextureFormat>(stream.read_uint32());
     header.bounding_radius = stream.read_float();
@@ -50,7 +51,9 @@ static SPR::Palette load_palette(
     SPR::Palette palette{};
     palette.size = stream.read_uint16();
     if (palette.size > 256)
+    {
         throw SPR::LoadError{"invalid palette size"};
+    }
     for (uint16_t i = 0; i < palette.size; ++i)
     {
         SPR::Color color{};
@@ -96,14 +99,17 @@ static std::vector<SPR::Frame> load_frames(
     return frames;
 }
 
-
 SPR::Sprite SPR::load_sprite(SpriteStream &stream)
 {
     char magic[4];
     for (size_t i = 0; i < 4; ++i)
+    {
         magic[i] = stream.read_byte();
+    }
     if (memcmp(magic, "IDSP", 4) != 0)
+    {
         throw InvalidMagicNumber{};
+    }
 
     Sprite sprite{};
     sprite.header = load_header(stream);

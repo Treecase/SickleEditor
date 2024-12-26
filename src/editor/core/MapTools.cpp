@@ -21,23 +21,20 @@
 
 using namespace Sickle::Editor;
 
-
 MapTool::MapTool(
     std::string const &name,
     std::vector<OpDef> const &opdefs,
     FunctionType const &fn)
-:   x{fn}
-,   _name{name}
-,   _opdefs{opdefs}
+: x{fn}
+, _name{name}
+, _opdefs{opdefs}
 {
 }
-
 
 std::string MapTool::name() const
 {
     return _name;
 }
-
 
 std::vector<MapTool::OpDef> MapTool::operations() const
 {

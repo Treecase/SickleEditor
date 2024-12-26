@@ -19,11 +19,10 @@
 #ifndef SE_SPR_HPP
 #define SE_SPR_HPP
 
+#include <array>
 #include <cstdint>
 #include <stdexcept>
-#include <array>
 #include <vector>
-
 
 namespace SPR
 {
@@ -154,25 +153,32 @@ namespace SPR
         std::vector<Frame> frames;
     };
 
-
     /** General sprite load error. */
     struct LoadError : public std::runtime_error
     {
-        LoadError(std::string const &what): std::runtime_error{what} {}
+        LoadError(std::string const &what)
+        : std::runtime_error{what}
+        {
+        }
     };
 
     /** File doesn't start with "IDSP". */
     struct InvalidMagicNumber : public LoadError
     {
-        InvalidMagicNumber(): LoadError{"sprite data must begin with IDSP"} {}
+        InvalidMagicNumber()
+        : LoadError{"sprite data must begin with IDSP"}
+        {
+        }
     };
 
     /** The sprite isn't using version 2. */
     struct InvalidVersion : public LoadError
     {
-        InvalidVersion(): LoadError{"sprite must be version 2"} {}
+        InvalidVersion()
+        : LoadError{"sprite must be version 2"}
+        {
+        }
     };
-
 
     /**
      * Abstract interface for sprite data input.
@@ -191,34 +197,34 @@ namespace SPR
          *
          * @return The byte read.
          */
-        virtual uint8_t read_byte()=0;
+        virtual uint8_t read_byte() = 0;
         /**
          * Read an unsigned 16-bit integer from the input.
          * @note .spr format is little-endian.
          *
          * @return The value read.
          */
-        virtual uint16_t read_uint16()=0;
+        virtual uint16_t read_uint16() = 0;
         /**
          * Read a signed 32-bit integer from the input.
          * @note .spr format is little-endian.
          *
          * @return The value read.
          */
-        virtual int32_t read_int32()=0;
+        virtual int32_t read_int32() = 0;
         /**
          * Read an unsigned 32-bit integer from the input.
          * @note .spr format is little-endian.
          *
          * @return The value read.
          */
-        virtual uint32_t read_uint32()=0;
+        virtual uint32_t read_uint32() = 0;
         /**
          * Read a 32-bit floating-point number from the input.
          *
          * @return The value read.
          */
-        virtual float read_float()=0;
+        virtual float read_float() = 0;
         /**
          * Read COUNT bytes from the input, storing them in a newly-allocated
          * buffer. Caller takes ownership of the buffer.
@@ -226,9 +232,8 @@ namespace SPR
          * @param count Number of bytes to be read.
          * @return Newly allocated buffer containing the COUNT bytes read.
          */
-        virtual uint8_t *read_bytes(size_t count)=0;
+        virtual uint8_t *read_bytes(size_t count) = 0;
     };
-
 
     /**
      * Read sprite data from an input stream.
@@ -238,6 +243,6 @@ namespace SPR
      * @throw SPR::LoadError if the data is invalid.
      */
     Sprite load_sprite(SpriteStream &stream);
-}
+} // namespace SPR
 
 #endif

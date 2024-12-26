@@ -26,7 +26,6 @@
 
 #include <memory>
 
-
 namespace World3D
 {
     /**
@@ -35,7 +34,7 @@ namespace World3D
     class RenderComponentFactory final
     {
     public:
-        RenderComponentFactory()=default;
+        RenderComponentFactory() = default;
 
         /**
          * Construct an appropriate RenderComponent for an object. Note that
@@ -47,6 +46,6 @@ namespace World3D
         std::shared_ptr<RenderComponent> construct(
             Sickle::Editor::EditorObjectRef const &object);
     };
-}
+} // namespace World3D
 
 #endif

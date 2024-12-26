@@ -23,7 +23,6 @@
 
 #include <editor/world/Brush.hpp>
 
-
 namespace World2D
 {
     /**
@@ -34,8 +33,8 @@ namespace World2D
     class BrushBBox : public BBoxComponent
     {
     public:
-        BrushBBox()=default;
-        virtual ~BrushBBox()=default;
+        BrushBBox() = default;
+        virtual ~BrushBBox() = default;
 
         virtual BBox2 bbox(Sickle::MapArea2D const &maparea) const override;
 
@@ -48,6 +47,6 @@ namespace World2D
     private:
         Sickle::Editor::Brush const *_brush{nullptr};
     };
-}
+} // namespace World2D
 
 #endif

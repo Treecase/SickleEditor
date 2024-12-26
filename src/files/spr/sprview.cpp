@@ -27,41 +27,27 @@
 
 #include <iostream>
 
-
 // Convert sprite data to gtk pixbufs.
-std::vector<Glib::RefPtr<Gdk::Pixbuf>>
-convert_sprite(SPR::Sprite const &sprite);
-
+std::vector<Glib::RefPtr<Gdk::Pixbuf>> convert_sprite(
+    SPR::Sprite const &sprite);
 
 class GioFileSpriteStream : public SPR::SpriteStream
 {
 public:
     GioFileSpriteStream(Glib::RefPtr<Gio::File> const &file)
-    :   _stream{Gio::DataInputStream::create(file->read())}
+    : _stream{Gio::DataInputStream::create(file->read())}
     {
         _stream->set_byte_order(
             Gio::DataStreamByteOrder::DATA_STREAM_BYTE_ORDER_LITTLE_ENDIAN);
     }
 
-    virtual uint8_t read_byte() override
-    {
-        return _stream->read_byte();
-    }
+    virtual uint8_t read_byte() override { return _stream->read_byte(); }
 
-    virtual uint16_t read_uint16() override
-    {
-        return _stream->read_uint16();
-    }
+    virtual uint16_t read_uint16() override { return _stream->read_uint16(); }
 
-    virtual int32_t read_int32() override
-    {
-        return _stream->read_int32();
-    }
+    virtual int32_t read_int32() override { return _stream->read_int32(); }
 
-    virtual uint32_t read_uint32() override
-    {
-        return _stream->read_uint32();
-    }
+    virtual uint32_t read_uint32() override { return _stream->read_uint32(); }
 
     virtual float read_float() override
     {
@@ -93,18 +79,18 @@ private:
     Glib::RefPtr<Gio::DataInputStream> _stream{nullptr};
 };
 
-
 class AppWin : public Gtk::ApplicationWindow
 {
 public:
     AppWin()
-    :   Glib::ObjectBase{typeid(AppWin)}
+    : Glib::ObjectBase{typeid(AppWin)}
     {
         set_title("sprview");
         add(_image);
         show_all_children();
     }
-    virtual ~AppWin()=default;
+
+    virtual ~AppWin() = default;
 
     void open(Glib::RefPtr<Gio::File> const &file)
     {
@@ -138,33 +124,24 @@ private:
     guint64 _prev_time{0};
 };
 
-
 class App : public Gtk::Application
 {
 public:
-    static Glib::RefPtr<App> create()
-    {
-        return Glib::RefPtr{new App{}};
-    }
+    static Glib::RefPtr<App> create() { return Glib::RefPtr{new App{}}; }
 
     App()
-    :   Glib::ObjectBase{typeid(App)}
-    ,   Gtk::Application{
-            "com.github.treecase.sickle.sprview",
-            Gio::APPLICATION_HANDLES_OPEN}
+    : Glib::ObjectBase{typeid(App)}
+    , Gtk::Application{
+          "com.github.treecase.sickle.sprview",
+          Gio::APPLICATION_HANDLES_OPEN}
     {
-    }
-    virtual ~App()=default;
-
-    virtual void on_startup() override
-    {
-        Gtk::Application::on_startup();
     }
 
-    virtual void on_activate() override
-    {
-        std::cout << "No files given.\n";
-    }
+    virtual ~App() = default;
+
+    virtual void on_startup() override { Gtk::Application::on_startup(); }
+
+    virtual void on_activate() override { std::cout << "No files given.\n"; }
 
     virtual void on_open(
         Gio::Application::type_vec_files const &files,
@@ -183,11 +160,10 @@ private:
     {
         auto appwin = new AppWin{};
         add_window(*appwin);
-        appwin->signal_hide().connect([appwin](){delete appwin;});
+        appwin->signal_hide().connect([appwin]() { delete appwin; });
         return appwin;
     }
 };
-
 
 std::vector<Glib::RefPtr<Gdk::Pixbuf>> convert_sprite(SPR::Sprite const &sprite)
 {
@@ -199,22 +175,23 @@ std::vector<Glib::RefPtr<Gdk::Pixbuf>> convert_sprite(SPR::Sprite const &sprite)
         {
             auto const color = frame.data[i];
             auto const &pixel = sprite.palette.colors[color];
-            pixel_data[j+0] = pixel.r;
-            pixel_data[j+1] = pixel.g;
-            pixel_data[j+2] = pixel.b;
-            pixel_data[j+3] = pixel.a;
+            pixel_data[j + 0] = pixel.r;
+            pixel_data[j + 1] = pixel.g;
+            pixel_data[j + 2] = pixel.b;
+            pixel_data[j + 3] = pixel.a;
         }
         auto pixbuf = Gdk::Pixbuf::create_from_data(
             pixel_data,
-            Gdk::Colorspace::COLORSPACE_RGB, true,
+            Gdk::Colorspace::COLORSPACE_RGB,
+            true,
             8,
-            frame.w, frame.h,
+            frame.w,
+            frame.h,
             frame.w * 4);
         output.push_back(pixbuf);
     }
     return output;
 }
-
 
 int main(int argc, char *argv[])
 {

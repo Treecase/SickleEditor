@@ -24,9 +24,7 @@
 
 #define METATABLE "Sickle.editor.brushbox"
 
-
 using namespace Sickle::Editor;
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -64,15 +62,14 @@ static int do_nothing(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
-    {"get_start", get_start},
-    {"set_start", set_start},
-    {"get_end", get_end},
-    {"set_end", set_end},
+    { "get_start",  get_start},
+    { "set_start",  set_start},
+    {   "get_end",    get_end},
+    {   "set_end",    set_end},
 
     {"on_updated", do_nothing},
-    {NULL, NULL}
+    {        NULL,       NULL}
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
@@ -81,7 +78,9 @@ void Lua::push(lua_State *L, BrushBox *bb)
 {
     Lua::RefBuilder builder{L, METATABLE, bb};
     if (builder.pushnew())
+    {
         return;
+    }
     builder.addSignalHandler(bb->signal_updated(), "on_updated");
     builder.finish();
 }

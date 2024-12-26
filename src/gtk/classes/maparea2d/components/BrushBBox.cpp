@@ -18,31 +18,36 @@
 
 #include "BrushBBox.hpp"
 
-
 using namespace World2D;
-
 
 BBox2 BrushBBox::bbox(Sickle::MapArea2D const &maparea) const
 {
     if (!_brush)
-        return BBox2{glm::vec2{0.0f, 0.0f}};
+    {
+        return BBox2{
+            glm::vec2{0.0f, 0.0f}
+        };
+    }
 
     BBox2 the_bbox{};
     for (auto const &face : _brush->faces())
+    {
         for (auto const &vertex : face->get_vertices())
+        {
             the_bbox.add(maparea.worldspace_to_drawspace(vertex));
+        }
+    }
     return the_bbox;
 }
-
-
 
 void BrushBBox::on_attach(Sickle::Componentable &obj)
 {
     if (_brush)
+    {
         throw std::logic_error{"already attached"};
+    }
     _brush = &dynamic_cast<Sickle::Editor::Brush const &>(obj);
 }
-
 
 void BrushBBox::on_detach(Sickle::Componentable &obj)
 {

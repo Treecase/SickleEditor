@@ -25,7 +25,6 @@
 
 #include <memory>
 
-
 namespace World3D
 {
     /**
@@ -35,7 +34,7 @@ namespace World3D
     class ColliderFactory final
     {
     public:
-        ColliderFactory()=default;
+        ColliderFactory() = default;
 
         /**
          * Construct an appropriate Collider for an object. Note that the
@@ -47,6 +46,6 @@ namespace World3D
         std::shared_ptr<Collider> construct(
             Sickle::Editor::EditorObjectRef const &object);
     };
-}
+} // namespace World3D
 
 #endif

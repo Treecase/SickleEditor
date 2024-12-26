@@ -27,26 +27,26 @@
 #include <array>
 #include <memory>
 
-
 namespace Sickle
 {
     class GrabbableBoxView
     {
         using Area = GrabbableBox::Area;
         std::array<std::shared_ptr<BBox2View>, Area::COUNT> _views{};
+
     public:
-        GrabbableBoxView()=default;
+        GrabbableBoxView() = default;
         GrabbableBoxView(
             std::shared_ptr<BBox2View> const &box,
             std::shared_ptr<BBox2View> const &handles);
 
-        virtual ~GrabbableBoxView()=default;
+        virtual ~GrabbableBoxView() = default;
 
         /** Draw a GrabbableBox. */
         virtual void draw(
             Cairo::RefPtr<Cairo::Context> const &cr,
             GrabbableBox const &gb);
     };
-}
+} // namespace Sickle
 
 #endif

@@ -20,29 +20,30 @@
 
 using namespace Sickle;
 
-
 static void line_hook(lua_State *L, lua_Debug *dbg)
 {
     if (!lua_checkstack(L, 1))
+    {
         return;
+    }
     lua_getfield(L, LUA_REGISTRYINDEX, "__debugger");
     auto debugger = static_cast<LuaWindow *>(lua_touserdata(L, -1));
     lua_pop(L, 1);
     if (debugger->is_paused())
+    {
         debugger->update();
+    }
 }
 
-
 LuaWindow::LuaWindow()
-:   Glib::ObjectBase{typeid(LuaWindow)}
-,   Gtk::Window{}
-,   _prop_lua_state{*this, "lua-state", nullptr}
-,   _prop_paused{*this, "paused", false}
-,   _bind_lua_state_debugger{
-        Glib::Binding::bind_property(
-            property_lua_state(),
-            _debugger.property_lua_state(),
-            Glib::BindingFlags::BINDING_SYNC_CREATE)}
+: Glib::ObjectBase{typeid(LuaWindow)}
+, Gtk::Window{}
+, _prop_lua_state{*this, "lua-state", nullptr}
+, _prop_paused{*this, "paused", false}
+, _bind_lua_state_debugger{Glib::Binding::bind_property(
+      property_lua_state(),
+      _debugger.property_lua_state(),
+      Glib::BindingFlags::BINDING_SYNC_CREATE)}
 {
     _pause_resume_button.set_icon_name("media-playback-pause");
     _pause_resume_button.signal_clicked().connect(
@@ -63,13 +64,10 @@ LuaWindow::LuaWindow()
         sigc::mem_fun(*this, &LuaWindow::on_paused_changed));
 }
 
-
 void LuaWindow::update()
 {
     _debugger.on_error();
 }
-
-
 
 void LuaWindow::on_lua_state_changed()
 {
@@ -77,24 +75,28 @@ void LuaWindow::on_lua_state_changed()
     if (L)
     {
         if (!lua_checkstack(L, 1))
+        {
             throw Lua::StackOverflow{};
+        }
         lua_pushlightuserdata(L, this);
         lua_setfield(L, LUA_REGISTRYINDEX, "__debugger");
         lua_sethook(L, line_hook, LUA_MASKLINE, 0);
     }
 }
 
-
 void LuaWindow::on_pause_resume_clicked()
 {
     set_pause(!is_paused());
 }
 
-
 void LuaWindow::on_paused_changed()
 {
     if (is_paused())
+    {
         _pause_resume_button.set_icon_name("media-playback-start");
+    }
     else
+    {
         _pause_resume_button.set_icon_name("media-playback-pause");
+    }
 }

@@ -25,7 +25,6 @@
 #include <string>
 #include <vector>
 
-
 namespace Sickle::Editor
 {
     class Editor;
@@ -35,18 +34,20 @@ namespace Sickle::Editor
     public:
         // temp
         using FunctionType = std::function<bool(Glib::RefPtr<Editor> const &)>;
+
         struct OpDef
         {
             std::string const label;
             std::string const operation_id;
         };
+
         FunctionType x;
 
         MapTool(
             std::string const &name,
             std::vector<OpDef> const &opdefs,
             FunctionType const &fn);
-        virtual ~MapTool()=default;
+        virtual ~MapTool() = default;
 
         std::string name() const;
         std::vector<OpDef> operations() const;
@@ -55,6 +56,6 @@ namespace Sickle::Editor
         std::string _name;
         std::vector<OpDef> _opdefs;
     };
-}
+} // namespace Sickle::Editor
 
 #endif

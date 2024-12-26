@@ -22,7 +22,6 @@
 #include <editor/core/Editor.hpp>
 #include <se-lua/se-lua.hpp>
 
-
 int luaopen_editor(lua_State *L);
 Sickle::Editor::EditorRef leditor_check(lua_State *L, int arg);
 
@@ -41,11 +40,17 @@ Sickle::Editor::BrushRef leditorbrush_check(lua_State *L, int arg);
 int luaopen_face(lua_State *L);
 Sickle::Editor::FaceRef lface_check(lua_State *L, int arg);
 
-template<> void Lua::push(lua_State *L, Sickle::Editor::EditorRef editor);
-template<> void Lua::push(lua_State *L, Sickle::Editor::Selection *selection);
-template<> void Lua::push(lua_State *L, Sickle::Editor::BrushBox *brushbox);
-template<> void Lua::push(lua_State *L, Sickle::Editor::EntityRef entity);
-template<> void Lua::push(lua_State *L, Sickle::Editor::BrushRef brush);
-template<> void Lua::push(lua_State *L, Sickle::Editor::FaceRef brush);
+template<>
+void Lua::push(lua_State *L, Sickle::Editor::EditorRef editor);
+template<>
+void Lua::push(lua_State *L, Sickle::Editor::Selection *selection);
+template<>
+void Lua::push(lua_State *L, Sickle::Editor::BrushBox *brushbox);
+template<>
+void Lua::push(lua_State *L, Sickle::Editor::EntityRef entity);
+template<>
+void Lua::push(lua_State *L, Sickle::Editor::BrushRef brush);
+template<>
+void Lua::push(lua_State *L, Sickle::Editor::FaceRef brush);
 
 #endif

@@ -33,7 +33,6 @@
 #include <memory>
 #include <vector>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -62,7 +61,7 @@ namespace Sickle::AppWin
         virtual ~OperationSearch();
 
         /** Emitted when an operation is chosen. */
-        auto &signal_operation_chosen() {return _sig_operation_chosen;}
+        auto &signal_operation_chosen() { return _sig_operation_chosen; }
 
     protected:
         virtual bool on_focus_out_event(GdkEventFocus *gdk_event) override;
@@ -72,9 +71,10 @@ namespace Sickle::AppWin
     private:
         struct Columns : public Gtk::TreeModelColumnRecord
         {
-            Gtk::TreeModelColumn<
-                std::shared_ptr<Editor::Operation>> operation{};
+            Gtk::TreeModelColumn<std::shared_ptr<Editor::Operation>>
+                operation{};
             Gtk::TreeModelColumn<Glib::ustring> name{};
+
             Columns()
             {
                 add(operation);
@@ -109,6 +109,6 @@ namespace Sickle::AppWin
             Gtk::TreeView::Column *column);
         void _on_search_changed();
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

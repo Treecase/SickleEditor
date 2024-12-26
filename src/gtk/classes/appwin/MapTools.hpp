@@ -31,7 +31,6 @@
 #include <memory>
 #include <unordered_map>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -61,6 +60,6 @@ namespace Sickle::AppWin
 
         void _add_tool(Editor::MapTool const &tool);
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

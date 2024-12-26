@@ -23,7 +23,6 @@
 
 #include <editor/world/Entity.hpp>
 
-
 namespace World2D
 {
     /**
@@ -34,8 +33,8 @@ namespace World2D
     class EntityBBox : public BBoxComponent
     {
     public:
-        EntityBBox()=default;
-        virtual ~EntityBBox()=default;
+        EntityBBox() = default;
+        virtual ~EntityBBox() = default;
 
         virtual BBox2 bbox(Sickle::MapArea2D const &maparea) const override;
 
@@ -48,6 +47,6 @@ namespace World2D
     private:
         Sickle::Editor::Entity const *_entity{nullptr};
     };
-}
+} // namespace World2D
 
 #endif

@@ -23,7 +23,6 @@
 #include <iostream>
 #include <sstream>
 
-
 /**
  * Intermediary function passed to Lua. Calls '_print_override' on the state's
  * "_console" registry entry.
@@ -35,7 +34,6 @@ static int print_override(lua_State *L)
     lua_pop(L, 1);
     return console->_print_override();
 }
-
 
 /**
  * Intermediary function passed to Lua. Calls '_debug_hook' on the state's
@@ -49,13 +47,11 @@ static void debug_hook(lua_State *L, lua_Debug *ar)
     console->_debug_hook(ar);
 }
 
-
-
 Sickle::LuaConsole::LuaConsole()
-:   Glib::ObjectBase{typeid(LuaConsole)}
-,   Gtk::Box{}
-,   _prop_lua_state{*this, "lua-state", nullptr}
-,   _css{Gtk::CssProvider::create()}
+: Glib::ObjectBase{typeid(LuaConsole)}
+, Gtk::Box{}
+, _prop_lua_state{*this, "lua-state", nullptr}
+, _css{Gtk::CssProvider::create()}
 {
     _css->load_from_resource(SE_GRESOURCE_PREFIX "LuaConsole.css");
 
@@ -92,12 +88,10 @@ Sickle::LuaConsole::LuaConsole()
     show_all_children();
 }
 
-
 Sickle::LuaConsole::~LuaConsole()
 {
     undo_hooks(get_L());
 }
-
 
 void Sickle::LuaConsole::write(std::string const &str)
 {
@@ -107,12 +101,10 @@ void Sickle::LuaConsole::write(std::string const &str)
     _output.scroll_to(it);
 }
 
-
 void Sickle::LuaConsole::writeline(std::string const &str)
 {
     write(str + "\n");
 }
-
 
 int Sickle::LuaConsole::_print_override()
 {
@@ -124,13 +116,14 @@ int Sickle::LuaConsole::_print_override()
         str << luaL_tolstring(L, i, nullptr);
         lua_pop(L, 1);
         if (i != nargs)
+        {
             str << ' ';
+        }
     }
     writeline(str.str());
     std::cout << str.str() << '\n';
     return 0;
 }
-
 
 void Sickle::LuaConsole::_debug_hook(lua_Debug *ar)
 {
@@ -139,8 +132,6 @@ void Sickle::LuaConsole::_debug_hook(lua_Debug *ar)
     _debug.where = ar->short_src;
 }
 
-
-
 void Sickle::LuaConsole::error_handler(lua_State *s)
 {
     auto *const L = get_L();
@@ -148,19 +139,24 @@ void Sickle::LuaConsole::error_handler(lua_State *s)
     lua_pop(L, 1);
     std::stringstream errstr{};
     errstr << "ERROR (" << _debug.where << ':' << _debug.line_number << ')'
-        << " -- " << error_string;
+           << " -- " << error_string;
     writeline(errstr.str());
     std::cerr << errstr.str() << '\n';
 }
 
-
 void Sickle::LuaConsole::do_hooks(lua_State *L)
 {
     if (L == nullptr)
+    {
         return;
+    }
 
-    Lua::set_error_handler(L, std::bind(
-        &Sickle::LuaConsole::error_handler, this, std::placeholders::_1));
+    Lua::set_error_handler(
+        L,
+        std::bind(
+            &Sickle::LuaConsole::error_handler,
+            this,
+            std::placeholders::_1));
 
     lua_sethook(L, debug_hook, LUA_MASKLINE, 0);
 
@@ -177,11 +173,12 @@ void Sickle::LuaConsole::do_hooks(lua_State *L)
     lua_pop(L, 1);
 }
 
-
 void Sickle::LuaConsole::undo_hooks(lua_State *L)
 {
     if (L == nullptr)
+    {
         return;
+    }
 
     Lua::clear_error_handler(L);
 
@@ -195,7 +192,6 @@ void Sickle::LuaConsole::undo_hooks(lua_State *L)
     lua_pop(L, 1);
 }
 
-
 void Sickle::LuaConsole::on_input_activated()
 {
     auto *const L = get_L();
@@ -204,8 +200,8 @@ void Sickle::LuaConsole::on_input_activated()
     int const status = luaL_dostring(L, _input.get_text().c_str());
     if (status != LUA_OK)
     {
-        int const status = luaL_dostring(L,
-            ("print(" + _input.get_text() + ")").c_str());
+        int const status
+            = luaL_dostring(L, ("print(" + _input.get_text() + ")").c_str());
         if (status != LUA_OK)
         {
             auto const error_string = lua_tostring(L, -1);
@@ -217,16 +213,15 @@ void Sickle::LuaConsole::on_input_activated()
     _input.set_text("");
 }
 
-
-
 void Sickle::LuaConsole::_on_lua_state_changed()
 {
     auto *const old = get_L();
     if (old != nullptr)
+    {
         undo_hooks(old);
+    }
     do_hooks(get_L());
 }
-
 
 lua_State *Sickle::LuaConsole::get_L() const
 {

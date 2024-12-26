@@ -20,20 +20,18 @@
 
 using namespace Sickle::Editor;
 
-
 EditorRef Editor::create(lua_State *L)
 {
     return EditorRef{new Editor{L}};
 }
 
-
 Editor::Editor(lua_State *L)
-:   Glib::ObjectBase{typeid(Editor)}
-,   Lua::Referenceable{}
-,   oploader{std::make_shared<OperationLoader>(L)}
-,   _prop_map{*this, "map", {}}
-,   _prop_maptool{*this, "maptool", ""}
-,   _prop_mode{*this, "mode", {}}
+: Glib::ObjectBase{typeid(Editor)}
+, Lua::Referenceable{}
+, oploader{std::make_shared<OperationLoader>(L)}
+, _prop_map{*this, "map", {}}
+, _prop_maptool{*this, "maptool", ""}
+, _prop_mode{*this, "mode", {}}
 {
     property_map().signal_changed().connect(
         sigc::mem_fun(*this, &Editor::_on_map_changed));
@@ -41,54 +39,54 @@ Editor::Editor(lua_State *L)
     set_map(World::create());
 }
 
-
 MapTool Editor::get_maptool() const
 {
-    try {
+    try
+    {
         return _maptools.at(property_maptool().get_value());
     }
-    catch (std::out_of_range const &e) {
-        return MapTool{"", {}, [](auto){return false;}};
+    catch (std::out_of_range const &e)
+    {
+        return MapTool{"", {}, [](auto) { return false; }};
     }
 }
-
 
 void Editor::add_maptool(MapTool const &maptool)
 {
     _maptools.insert({maptool.name(), maptool});
     signal_maptools_changed().emit();
     if (property_maptool().get_value().empty())
+    {
         set_maptool(maptool.name());
+    }
 }
-
-
 
 void Editor::on_object_selected_changed(EditorObjectRef const &obj)
 {
     if (obj->is_selected())
+    {
         selected.add(obj);
+    }
     else
+    {
         selected.remove(obj);
+    }
 }
-
 
 void Editor::on_object_added(EditorObjectRef const &obj)
 {
     // obj will be automatically added/removed from Selection.
-    obj->property_selected().signal_changed().connect(
-        sigc::bind(
-            sigc::mem_fun(*this, &Editor::on_object_selected_changed),
-            obj));
+    obj->property_selected().signal_changed().connect(sigc::bind(
+        sigc::mem_fun(*this, &Editor::on_object_selected_changed),
+        obj));
 
     // Existing children will act the same as obj.
-    obj->foreach([this](auto child){on_object_added(child);});
+    obj->foreach([this](auto child) { on_object_added(child); });
 
     // New children will act the same as obj.
     obj->signal_child_added().connect(
         sigc::mem_fun(*this, &Editor::on_object_added));
 }
-
-
 
 void Editor::_on_map_changed()
 {

@@ -18,19 +18,15 @@
 
 #include "CellRendererColor.hpp"
 
-
 using namespace Sickle::AppWin;
 
-
 CellRendererColor::CellRendererColor()
-:   Glib::ObjectBase{typeid(CellRendererColor)}
-,   _prop_rgba{*this, "color"}
+: Glib::ObjectBase{typeid(CellRendererColor)}
+, _prop_rgba{*this, "color"}
 {
     property_mode() = Gtk::CellRendererMode::CELL_RENDERER_MODE_ACTIVATABLE;
     _ccd.set_use_alpha(true);
 }
-
-
 
 void CellRendererColor::render_vfunc(
     Cairo::RefPtr<Cairo::Context> const &cr,
@@ -42,7 +38,6 @@ void CellRendererColor::render_vfunc(
     auto context = widget.get_style_context();
 
     auto const swatch_rect = _get_swatch_rect(cell_area);
-
 
     auto state = get_state(widget, flags);
 
@@ -79,16 +74,10 @@ void CellRendererColor::render_vfunc(
     cr->rectangle(
         swatch_rect.get_x() + border.get_left() + padding.get_left(),
         swatch_rect.get_y() + border.get_top() + padding.get_top(),
-        (   swatch_rect.get_width()
-            - border.get_left()
-            - border.get_right()
-            - padding.get_left()
-            - padding.get_right()),
-        (   swatch_rect.get_height()
-            - border.get_top()
-            - border.get_bottom()
-            - padding.get_top()
-            - padding.get_bottom()));
+        (swatch_rect.get_width() - border.get_left() - border.get_right()
+         - padding.get_left() - padding.get_right()),
+        (swatch_rect.get_height() - border.get_top() - border.get_bottom()
+         - padding.get_top() - padding.get_bottom()));
     cr->fill();
     cr->restore();
 
@@ -102,7 +91,6 @@ void CellRendererColor::render_vfunc(
     context->context_restore();
     cr->restore();
 }
-
 
 bool CellRendererColor::activate_vfunc(
     GdkEvent *event,
@@ -123,17 +111,20 @@ bool CellRendererColor::activate_vfunc(
             1};
 
         if (!swatch_rect.intersects(click_rect))
+        {
             return false;
+        }
     }
 
     _ccd.property_rgba().set_value(property_rgba().get_value());
     auto const response = _ccd.run();
     if (response == Gtk::ResponseType::RESPONSE_OK)
+    {
         signal_rgba_edited().emit(path, _ccd.property_rgba().get_value());
+    }
     _ccd.hide();
     return true;
 }
-
 
 void CellRendererColor::get_preferred_width_vfunc(
     Gtk::Widget &widget,
@@ -144,7 +135,6 @@ void CellRendererColor::get_preferred_width_vfunc(
     natural_width = 1;
 }
 
-
 void CellRendererColor::get_preferred_height_vfunc(
     Gtk::Widget &widget,
     int &minimum_height,
@@ -154,13 +144,10 @@ void CellRendererColor::get_preferred_height_vfunc(
     natural_height = 1;
 }
 
-
 Gtk::SizeRequestMode CellRendererColor::get_request_mode_vfunc() const
 {
     return Gtk::SizeRequestMode::SIZE_REQUEST_CONSTANT_SIZE;
 }
-
-
 
 Gdk::Rectangle CellRendererColor::_get_swatch_rect(
     Gdk::Rectangle const &cell_area) const
@@ -169,13 +156,12 @@ Gdk::Rectangle CellRendererColor::_get_swatch_rect(
     int const ypad = property_ypad().get_value();
 
     int const height = cell_area.get_height() - ypad * 2;
-    int const width = std::min(
-        cell_area.get_width() - xpad * 2,
-        height * SWATCH_ASPECT);
+    int const width
+        = std::min(cell_area.get_width() - xpad * 2, height * SWATCH_ASPECT);
 
     return Gdk::Rectangle{
         cell_area.get_x() + xpad,
         cell_area.get_y() + ypad,
-        width < 0? 0 : width,
-        height < 0? 0 : height};
+        width < 0 ? 0 : width,
+        height < 0 ? 0 : height};
 }

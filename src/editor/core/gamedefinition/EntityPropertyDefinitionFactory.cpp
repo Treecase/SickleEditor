@@ -21,21 +21,18 @@
 
 #include <cmath>
 
-
 using namespace Sickle::Editor;
 
-
-std::shared_ptr<EntityPropertyDefinition>
-EntityPropertyDefinitionFactory::construct(
-    std::shared_ptr<FGD::Property> const &prop)
+std::shared_ptr<EntityPropertyDefinition> EntityPropertyDefinitionFactory::
+    construct(std::shared_ptr<FGD::Property> const &prop)
 {
     std::string const &name = prop->name;
     std::string default_value = "";
     std::string description = "";
     PropertyType type = PropertyType::STRING;
 
-    if (auto const descprop =\
-        std::dynamic_pointer_cast<FGD::DescriptionProperty>(prop))
+    if (auto const descprop
+        = std::dynamic_pointer_cast<FGD::DescriptionProperty>(prop))
     {
         description = descprop->description.value_or("");
     }
@@ -43,25 +40,29 @@ EntityPropertyDefinitionFactory::construct(
     if (typeid(*prop.get()) == typeid(FGD::IntegerProperty))
     {
         type = PropertyType::INTEGER;
-        auto const intprop =\
-            std::dynamic_pointer_cast<FGD::IntegerProperty>(prop);
+        auto const intprop
+            = std::dynamic_pointer_cast<FGD::IntegerProperty>(prop);
         if (intprop->defaultvalue.has_value())
+        {
             default_value = std::to_string(intprop->defaultvalue.value());
+        }
     }
     else if (typeid(*prop.get()) == typeid(FGD::StringProperty))
     {
         type = PropertyType::STRING;
-        auto const strprop =\
-            std::dynamic_pointer_cast<FGD::StringProperty>(prop);
+        auto const strprop
+            = std::dynamic_pointer_cast<FGD::StringProperty>(prop);
         if (strprop->defaultvalue.has_value())
+        {
             default_value = strprop->defaultvalue.value();
+        }
     }
     else if (typeid(*prop.get()) == typeid(FGD::ChoiceProperty))
     {
-        auto const choiceprop =\
-            std::dynamic_pointer_cast<FGD::ChoiceProperty>(prop);
-        std::string const default_value =\
-            std::to_string(choiceprop->defaultvalue.value_or(0));
+        auto const choiceprop
+            = std::dynamic_pointer_cast<FGD::ChoiceProperty>(prop);
+        std::string const default_value
+            = std::to_string(choiceprop->defaultvalue.value_or(0));
         return std::make_shared<EntityPropertyDefinitionChoices>(
             prop->name,
             default_value,
@@ -70,15 +71,16 @@ EntityPropertyDefinitionFactory::construct(
     }
     else if (typeid(*prop.get()) == typeid(FGD::FlagProperty))
     {
-        auto const flagprop =\
-            std::dynamic_pointer_cast<FGD::FlagProperty>(prop);
+        auto const flagprop
+            = std::dynamic_pointer_cast<FGD::FlagProperty>(prop);
 
         std::map<int, std::pair<std::string, bool>> flagdefs{};
         for (auto const &kv : flagprop->flags)
         {
             flagdefs.insert({
                 static_cast<int>(std::log2(kv.first)),
-                {kv.second.description, kv.second.start_value}});
+                {kv.second.description, kv.second.start_value}
+            });
         }
 
         return std::make_shared<EntityPropertyDefinitionFlags>(
@@ -87,18 +89,18 @@ EntityPropertyDefinitionFactory::construct(
     }
     else if (typeid(*prop.get()) == typeid(FGD::TargetSourceProperty))
     {
-        auto const targetsourceprop =\
-            std::dynamic_pointer_cast<FGD::TargetSourceProperty>(prop);
+        auto const targetsourceprop
+            = std::dynamic_pointer_cast<FGD::TargetSourceProperty>(prop);
     }
     else if (typeid(*prop.get()) == typeid(FGD::TargetDestinationProperty))
     {
-        auto const targetdestinationprop =\
-            std::dynamic_pointer_cast<FGD::TargetDestinationProperty>(prop);
+        auto const targetdestinationprop
+            = std::dynamic_pointer_cast<FGD::TargetDestinationProperty>(prop);
     }
     else if (typeid(*prop.get()) == typeid(FGD::Color255Property))
     {
-        auto const colorprop =\
-            std::dynamic_pointer_cast<FGD::Color255Property>(prop);
+        auto const colorprop
+            = std::dynamic_pointer_cast<FGD::Color255Property>(prop);
         return std::make_shared<EntityPropertyDefinitionColor255>(
             name,
             colorprop->value,
@@ -106,29 +108,29 @@ EntityPropertyDefinitionFactory::construct(
     }
     else if (typeid(*prop.get()) == typeid(FGD::StudioProperty))
     {
-        auto const studioprop =\
-            std::dynamic_pointer_cast<FGD::StudioProperty>(prop);
+        auto const studioprop
+            = std::dynamic_pointer_cast<FGD::StudioProperty>(prop);
         default_value = studioprop->defaultvalue.value_or(default_value);
         type = PropertyType::STUDIO;
     }
     else if (typeid(*prop.get()) == typeid(FGD::SpriteProperty))
     {
-        auto const spriteprop =\
-            std::dynamic_pointer_cast<FGD::SpriteProperty>(prop);
+        auto const spriteprop
+            = std::dynamic_pointer_cast<FGD::SpriteProperty>(prop);
         default_value = spriteprop->defaultvalue.value_or(default_value);
         type = PropertyType::SPRITE;
     }
     else if (typeid(*prop.get()) == typeid(FGD::SoundProperty))
     {
-        auto const soundprop =\
-            std::dynamic_pointer_cast<FGD::SoundProperty>(prop);
+        auto const soundprop
+            = std::dynamic_pointer_cast<FGD::SoundProperty>(prop);
         default_value = soundprop->defaultvalue.value_or(default_value);
         type = PropertyType::SOUND;
     }
     else if (typeid(*prop.get()) == typeid(FGD::DecalProperty))
     {
-        auto const decalprop =\
-            std::dynamic_pointer_cast<FGD::DecalProperty>(prop);
+        auto const decalprop
+            = std::dynamic_pointer_cast<FGD::DecalProperty>(prop);
         type = PropertyType::DECAL;
     }
 

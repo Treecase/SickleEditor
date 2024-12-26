@@ -21,7 +21,6 @@
 
 #include <gtkmm/aboutdialog.h>
 
-
 namespace Sickle
 {
     class About : public Gtk::AboutDialog
@@ -29,6 +28,6 @@ namespace Sickle
     public:
         About();
     };
-}
+} // namespace Sickle
 
 #endif

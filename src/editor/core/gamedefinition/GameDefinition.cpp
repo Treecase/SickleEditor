@@ -18,9 +18,7 @@
 
 #include "GameDefinition.hpp"
 
-
 using namespace Sickle::Editor;
-
 
 // Get a class from an fgd by name.
 static std::shared_ptr<FGD::Class> get_class_by_name(
@@ -30,19 +28,13 @@ static std::shared_ptr<FGD::Class> get_class_by_name(
 // Get the base classes from an fgd class.
 static std::vector<std::string> get_bases(FGD::Class const &cls);
 
-
-
 GameDefinition &GameDefinition::instance()
 {
     static GameDefinition singleton{};
     return singleton;
 }
 
-
-GameDefinition::GameDefinition()
-{
-}
-
+GameDefinition::GameDefinition() {}
 
 void GameDefinition::add_game(FGD::GameDef const &game)
 {
@@ -50,28 +42,28 @@ void GameDefinition::add_game(FGD::GameDef const &game)
     {
         // BaseClasses cannot be instantiated.
         if (cls->type() == "BaseClass")
+        {
             continue;
+        }
         auto const ec = _instantiate_class(*cls, game);
         _classes.insert({cls->name, ec});
     }
 }
-
 
 EntityClass GameDefinition::lookup(std::string const &classname) const
 {
     return _classes.at(classname);
 }
 
-
 std::unordered_set<std::string> GameDefinition::get_all_classnames() const
 {
     std::unordered_set<std::string> classnames{};
     for (auto const &kv : _classes)
+    {
         classnames.insert(kv.first);
+    }
     return classnames;
 }
-
-
 
 EntityClass GameDefinition::_instantiate_class(
     FGD::Class const &cls,
@@ -89,18 +81,19 @@ EntityClass GameDefinition::_instantiate_class(
     return ec;
 }
 
-
-
 static std::shared_ptr<FGD::Class> get_class_by_name(
     FGD::GameDef const &game,
     std::string const &name)
 {
     for (auto const &cls : game.classes)
+    {
         if (cls->name == name)
+        {
             return cls;
+        }
+    }
     return nullptr;
 }
-
 
 static std::vector<std::string> get_bases(FGD::Class const &cls)
 {
@@ -108,7 +101,9 @@ static std::vector<std::string> get_bases(FGD::Class const &cls)
     {
         auto const bcp = std::dynamic_pointer_cast<FGD::BaseAttribute>(cp);
         if (bcp)
+        {
             return bcp->baseclasses;
+        }
     }
     return {};
 }

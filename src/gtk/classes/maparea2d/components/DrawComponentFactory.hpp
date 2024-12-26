@@ -24,7 +24,6 @@
 
 #include <editor/interfaces/EditorObject.hpp>
 
-
 namespace World2D
 {
     /**
@@ -43,6 +42,6 @@ namespace World2D
         std::shared_ptr<DrawComponent> construct(
             Sickle::Editor::EditorObjectRef const &obj);
     };
-}
+} // namespace World2D
 
 #endif

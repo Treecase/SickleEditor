@@ -65,11 +65,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install bison flex libfl-dev libglew-dev libgtkmm-3.0-dev liblua5.4-dev
 
-    - name: Workaround for flex bug.
-      # See https://github.com/msys2/MSYS2-packages/issues/1911#issuecomment-832199076
-      if: ${{ matrix.os == 'windows-latest' }}
-      run: cp /usr/include/FlexLexer.h /mingw64/include/FlexLexer.h
-
     # Disable autocrlf for MSYS2 compatibility.
     - run: git config --global core.autocrlf input
     - uses: actions/checkout@v4
@@ -84,9 +79,6 @@ jobs:
       id: strings
       run: |
         echo "build-output-dir=$workspace/build" >> "$GITHUB_OUTPUT"
-
-    - name: Initialize and update submodules
-      run: git submodule update --init --recursive
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.

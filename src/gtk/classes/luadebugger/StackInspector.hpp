@@ -26,7 +26,6 @@
 #include <gtkmm/liststore.h>
 #include <gtkmm/treeview.h>
 
-
 namespace Sickle
 {
     /**
@@ -39,11 +38,16 @@ namespace Sickle
     public:
         StackInspector();
 
-        auto property_lua_state() {return _prop_lua_state.get_proxy();}
-        auto property_lua_state() const {return _prop_lua_state.get_proxy();}
-        void set_lua_state(lua_State *L) {property_lua_state().set_value(L);}
-        lua_State *get_lua_state() const {
-            return static_cast<lua_State *>(property_lua_state().get_value());}
+        auto property_lua_state() { return _prop_lua_state.get_proxy(); }
+
+        auto property_lua_state() const { return _prop_lua_state.get_proxy(); }
+
+        void set_lua_state(lua_State *L) { property_lua_state().set_value(L); }
+
+        lua_State *get_lua_state() const
+        {
+            return static_cast<lua_State *>(property_lua_state().get_value());
+        }
 
         /**
          * Update the inspector's stack view with the current stack state.
@@ -79,10 +83,8 @@ namespace Sickle
 
         struct ComboColumns : public Gtk::TreeModelColumnRecord
         {
-            ComboColumns()
-            {
-                add(types);
-            }
+            ComboColumns() { add(types); }
+
             Gtk::TreeModelColumn<Glib::ustring> types{};
         };
 
@@ -97,6 +99,6 @@ namespace Sickle
             Glib::ustring const &value);
         void _update_store();
     };
-}
+} // namespace Sickle
 
 #endif

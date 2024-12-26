@@ -43,29 +43,29 @@
 
 using namespace Sickle::Editor;
 
-
 static char _REGISTRY_KEY_BASE = 'k';
 static void *const REGISTRY_KEY = static_cast<void *>(&_REGISTRY_KEY_BASE);
-
 
 void OperationLoader::_push_module_table(lua_State *L)
 {
     lua_pushlightuserdata(L, REGISTRY_KEY);
     auto const type = lua_gettable(L, LUA_REGISTRYINDEX);
     if (type != LUA_TTABLE)
+    {
         throw Lua::Error{"ModuleTable is not a table"};
+    }
 }
-
 
 void OperationLoader::_push_module(lua_State *L, std::string const &module)
 {
     _push_module_table(L);
     int const type = lua_getfield(L, -1, module.c_str());
     if (type != LUA_TTABLE)
+    {
         throw Lua::Error{"Module '" + module + "' is not a table"};
+    }
     lua_remove(L, -2);
 }
-
 
 void OperationLoader::_push_operation(
     lua_State *L,
@@ -77,13 +77,11 @@ void OperationLoader::_push_operation(
     if (type != LUA_TTABLE)
     {
         throw Lua::Error{
-            "Operation '"
-            + Operation::id(module, operation)
+            "Operation '" + Operation::id(module, operation)
             + "' is not a table"};
     }
     lua_remove(L, -2);
 }
-
 
 /**
  * add_operation(module: String, operation: String, mode: String,
@@ -106,12 +104,16 @@ static int fn_add_operation(lua_State *L)
     luaL_argexpected(L, lua_istable(L, 4), 4, "table");
     bool const has_defaults = (lua_gettop(L) >= 6);
     if (has_defaults)
+    {
         luaL_argexpected(L, lua_istable(L, 6), 6, "table");
+    }
 
     auto const ptr = static_cast<OperationLoader *>(
         lua_touserdata(L, lua_upvalueindex(1)));
     if (!ptr)
+    {
         return luaL_error(L, "bad upvalue");
+    }
 
     OperationLoader::_push_module_table(L);
 
@@ -156,12 +158,13 @@ static int fn_add_operation(lua_State *L)
     return 0;
 }
 
-
 OperationLoader::OperationLoader(lua_State *L)
-:   L{L}
+: L{L}
 {
     if (!L)
+    {
         throw std::invalid_argument{"null Lua state"};
+    }
     luaL_checkversion(L);
     luaL_openlibs(L);
 
@@ -174,18 +177,15 @@ OperationLoader::OperationLoader(lua_State *L)
     lua_settable(L, LUA_REGISTRYINDEX);
 }
 
-
 void OperationLoader::add_source(std::string const &source)
 {
     Lua::checkerror(L, luaL_dostring(L, source.c_str()));
 }
 
-
 void OperationLoader::add_source_from_file(std::string const &path)
 {
     Lua::checkerror(L, luaL_dofile(L, path.c_str()));
 }
-
 
 std::vector<Operation> OperationLoader::get_operations() const
 {
@@ -202,7 +202,9 @@ std::vector<Operation> OperationLoader::get_operations() const
 
         auto const mod_ops = L_get_module_operations(module_name);
         for (auto const &op : mod_ops)
+        {
             ops.emplace_back(op);
+        }
 
         lua_pop(L, 1);
     }
@@ -210,7 +212,6 @@ std::vector<Operation> OperationLoader::get_operations() const
     assert(lua_gettop(L) == pre);
     return ops;
 }
-
 
 Operation OperationLoader::get_operation(
     std::string const &module,
@@ -221,7 +222,6 @@ Operation OperationLoader::get_operation(
     return op;
 }
 
-
 Operation OperationLoader::get_operation(std::string const &id)
 {
     auto const module_and_operation = Operation::unid(id);
@@ -230,9 +230,8 @@ Operation OperationLoader::get_operation(std::string const &id)
         module_and_operation.second);
 }
 
-
-std::vector<Operation>
-OperationLoader::get_module(std::string const &module_name) const
+std::vector<Operation> OperationLoader::get_module(
+    std::string const &module_name) const
 {
     auto const pre = lua_gettop(L);
     _push_module(L, module_name);
@@ -242,10 +241,8 @@ OperationLoader::get_module(std::string const &module_name) const
     return ops;
 }
 
-
-
-std::vector<Operation>
-OperationLoader::L_get_module_operations(std::string const &module_name) const
+std::vector<Operation> OperationLoader::L_get_module_operations(
+    std::string const &module_name) const
 {
     std::vector<Operation> ops{};
     lua_pushnil(L);

@@ -20,25 +20,24 @@
 
 #include <config/appid.hpp>
 
-
 using namespace Sickle::TextureSelector;
-
 
 TextureImage::TextureImage(
     std::shared_ptr<Editor::Textures::TextureInfo> const &texinfo,
     std::shared_ptr<uint8_t[]> const &pixels)
-:   Glib::ObjectBase{typeid(TextureImage)}
-,   Gtk::Box{Gtk::Orientation::ORIENTATION_VERTICAL}
-,   _texinfo{texinfo}
-,   _pixels{pixels}
-,   _label{_texinfo->get_name()}
+: Glib::ObjectBase{typeid(TextureImage)}
+, Gtk::Box{Gtk::Orientation::ORIENTATION_VERTICAL}
+, _texinfo{texinfo}
+, _pixels{pixels}
+, _label{_texinfo->get_name()}
 {
     auto const pixbuf = Gdk::Pixbuf::create_from_data(
         _pixels.get(),
         Gdk::Colorspace::COLORSPACE_RGB,
         false,
         8,
-        _texinfo->get_width(), _texinfo->get_height(),
+        _texinfo->get_width(),
+        _texinfo->get_height(),
         _texinfo->get_width() * 3);
     _image = Gtk::Image{pixbuf};
 
@@ -46,9 +45,8 @@ TextureImage::TextureImage(
     add(_label);
 }
 
-
-std::shared_ptr<Sickle::Editor::Textures::TextureInfo> const &
-TextureImage::get_info() const
+std::shared_ptr<Sickle::Editor::Textures::TextureInfo> const &TextureImage::
+    get_info() const
 {
     return _texinfo;
 }

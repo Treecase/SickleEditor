@@ -18,7 +18,6 @@
 
 #include "LuaGeo.hpp"
 
-
 int luaopen_geo(lua_State *L)
 {
     lua_newtable(L);

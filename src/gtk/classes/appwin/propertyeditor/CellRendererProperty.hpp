@@ -37,7 +37,6 @@
 #include <functional>
 #include <memory>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -53,29 +52,30 @@ namespace Sickle::AppWin
         {
             std::string value;
             std::shared_ptr<Editor::EntityPropertyDefinition> type;
+
             ValueType()
-            :   value{"<value>"}
-            ,   type{nullptr}
+            : value{"<value>"}
+            , type{nullptr}
             {
             }
+
             ValueType(
                 std::string const &value,
                 std::shared_ptr<Editor::EntityPropertyDefinition> const &type)
-            :   value{value}
-            ,   type{type}
+            : value{value}
+            , type{type}
             {
             }
         };
 
         struct Renderer
         {
-            virtual ~Renderer()=default;
-            virtual void set_value(ValueType const &value)=0;
-            virtual Gtk::CellRenderer *renderer()=0;
-            virtual Gtk::CellRendererMode mode()=0;
-            sigc::signal<void(
-                Glib::ustring const &,
-                Glib::ustring const &)> signal_changed{};
+            virtual ~Renderer() = default;
+            virtual void set_value(ValueType const &value) = 0;
+            virtual Gtk::CellRenderer *renderer() = 0;
+            virtual Gtk::CellRendererMode mode() = 0;
+            sigc::signal<void(Glib::ustring const &, Glib::ustring const &)>
+                signal_changed{};
         };
 
         struct ChoicesRenderer : public Renderer
@@ -87,21 +87,24 @@ namespace Sickle::AppWin
                     add(idx);
                     add(desc);
                 }
+
                 Gtk::TreeModelColumn<int> idx{};
                 Gtk::TreeModelColumn<Glib::ustring> desc{};
             };
+
             /// Column definition for the choices menu.
             static ChoicesColumnDefs const &columns();
             /// Remaps the editing result from the value's description to the
             // value's integer value.
-            std::function<Glib::ustring(
-                Glib::ustring const &,
-                Glib::ustring const &)> filter_edit{};
+            std::function<
+                Glib::ustring(Glib::ustring const &, Glib::ustring const &)>
+                filter_edit{};
             ChoicesRenderer();
-            virtual ~ChoicesRenderer()=default;
+            virtual ~ChoicesRenderer() = default;
             virtual void set_value(ValueType const &value) override;
             virtual Gtk::CellRenderer *renderer() override;
             virtual Gtk::CellRendererMode mode();
+
         private:
             Gtk::CellRendererCombo _renderer{};
             void on_edited(Glib::ustring const &, Glib::ustring const &);
@@ -110,10 +113,11 @@ namespace Sickle::AppWin
         struct Color255Renderer : Renderer
         {
             Color255Renderer();
-            virtual ~Color255Renderer()=default;
+            virtual ~Color255Renderer() = default;
             virtual void set_value(ValueType const &value);
             virtual Gtk::CellRenderer *renderer();
             virtual Gtk::CellRendererMode mode();
+
         private:
             CellRendererColor _renderer{};
             void on_rgba_edited(
@@ -124,10 +128,11 @@ namespace Sickle::AppWin
         struct FileRenderer : public Renderer
         {
             FileRenderer();
-            virtual ~FileRenderer()=default;
+            virtual ~FileRenderer() = default;
             virtual void set_value(ValueType const &value);
             virtual Gtk::CellRenderer *renderer();
             virtual Gtk::CellRendererMode mode();
+
         private:
             CellRendererFile _renderer{};
             void on_renderer_path_edited(
@@ -138,10 +143,11 @@ namespace Sickle::AppWin
         struct FlagsRenderer : public Renderer
         {
             FlagsRenderer();
-            virtual ~FlagsRenderer()=default;
+            virtual ~FlagsRenderer() = default;
             virtual void set_value(ValueType const &value);
             virtual Gtk::CellRenderer *renderer();
             virtual Gtk::CellRendererMode mode();
+
         private:
             CellRendererFlags _renderer{};
             void on_renderer_flag_changed(Glib::ustring const &);
@@ -150,10 +156,11 @@ namespace Sickle::AppWin
         struct IntegerRenderer : public Renderer
         {
             IntegerRenderer();
-            virtual ~IntegerRenderer()=default;
+            virtual ~IntegerRenderer() = default;
             virtual void set_value(ValueType const &value) override;
             virtual Gtk::CellRenderer *renderer() override;
             virtual Gtk::CellRendererMode mode();
+
         private:
             Gtk::CellRendererSpin _renderer{};
         };
@@ -161,10 +168,11 @@ namespace Sickle::AppWin
         struct StringRenderer : public Renderer
         {
             StringRenderer();
-            virtual ~StringRenderer()=default;
+            virtual ~StringRenderer() = default;
             virtual void set_value(ValueType const &value) override;
             virtual Gtk::CellRenderer *renderer() override;
             virtual Gtk::CellRendererMode mode();
+
         private:
             Gtk::CellRendererText _renderer{};
         };
@@ -172,28 +180,31 @@ namespace Sickle::AppWin
         struct TextureRenderer : public Renderer
         {
             TextureRenderer();
-            virtual ~TextureRenderer()=default;
+            virtual ~TextureRenderer() = default;
             virtual void set_value(ValueType const &value) override;
             virtual Gtk::CellRenderer *renderer() override;
             virtual Gtk::CellRendererMode mode();
+
         private:
             CellRendererTexture _renderer{};
         };
 
-
         CellRendererProperty();
-        virtual ~CellRendererProperty()=default;
+        virtual ~CellRendererProperty() = default;
 
         /** TreeModel for the Choices renderer to use. */
-        auto property_choices_model() {return _prop_choices_model.get_proxy();}
+        auto property_choices_model()
+        {
+            return _prop_choices_model.get_proxy();
+        }
 
         /** The actual value of the displayed property. */
-        auto property_value() {return _prop_value.get_proxy();}
-        auto property_value() const {return _prop_value.get_proxy();}
+        auto property_value() { return _prop_value.get_proxy(); }
+
+        auto property_value() const { return _prop_value.get_proxy(); }
 
         /** Emitted when the value of the property changes. */
-        auto &signal_changed() {return _sig_changed;}
-
+        auto &signal_changed() { return _sig_changed; }
 
         // FIXME: Temporary cruft to let PropertyEditor access the choices
         // renderer to set up the 'filter_edit' function. Probably the filter
@@ -203,8 +214,7 @@ namespace Sickle::AppWin
         // Perhaps change how setting entity properties works to let choice
         // properties be set to the choice text rather than the integer value.
         // Seems like it would be the cleanest option.
-        ChoicesRenderer &choices_renderer() {return _choices_renderer;}
-
+        ChoicesRenderer &choices_renderer() { return _choices_renderer; }
 
     protected:
         virtual void render_vfunc(
@@ -252,7 +262,6 @@ namespace Sickle::AppWin
             int &minimum_height,
             int &natural_height) const override;
 
-
     private:
         ChoicesRenderer _choices_renderer{};
         Color255Renderer _color_renderer{};
@@ -268,12 +277,11 @@ namespace Sickle::AppWin
 
         Glib::RefPtr<Glib::Binding> _bind_choices_model{nullptr};
 
-        sigc::signal<void(
-            Glib::ustring const &,
-            Glib::ustring const &)> _sig_changed{};
+        sigc::signal<void(Glib::ustring const &, Glib::ustring const &)>
+            _sig_changed{};
 
         void on_value_changed();
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

@@ -23,7 +23,6 @@
 
 #include <se-lua/se-lua.hpp>
 
-
 static int _refbuilder_dunder_newindex(lua_State *L)
 {
     lua_getiuservalue(L, -3, 1);
@@ -43,13 +42,14 @@ static int _refbuilder_dunder_index(lua_State *L)
     {
         lua_pop(L, 2);
         if (lua_getmetatable(L, 1) == 0)
+        {
             return 0;
+        }
         lua_pushvalue(L, 2);
         lua_gettable(L, -2);
     }
     return 1;
 }
-
 
 namespace Lua
 {
@@ -68,7 +68,9 @@ namespace Lua
         {
             luaL_getmetatable(L, metatable.c_str());
             if (lua_isnil(L, -1))
+            {
                 throw std::runtime_error{"no metatable '" + metatable + "'"};
+            }
 
             lua_pushcfunction(L, _refbuilder_dunder_newindex);
             lua_setfield(L, -2, "__newindex");
@@ -83,9 +85,9 @@ namespace Lua
             lua_State *L,
             std::string const &library,
             PointerType pointer)
-        :   _library{library}
-        ,   L{L}
-        ,   _pointer{pointer}
+        : _library{library}
+        , L{L}
+        , _pointer{pointer}
         {
         }
 
@@ -102,9 +104,11 @@ namespace Lua
         {
             _addSignalHandler_low<Signal<R(A...)>, R, A...>(sig, fn_name);
         }
+
         template<
             template<typename, typename...> class Signal,
-            typename R, typename... A>
+            typename R,
+            typename... A>
         void addSignalHandler(Signal<R, A...> sig, char const *fn_name)
         {
             _addSignalHandler_low<Signal<R, A...>, R, A...>(sig, fn_name);
@@ -116,6 +120,7 @@ namespace Lua
         {
             _addSignalHandler_low_noret<Signal<void(A...)>, A...>(sig, fn_name);
         }
+
         template<template<typename, typename...> class Signal, typename... A>
         void addSignalHandler(Signal<void, A...> sig, char const *fn_name)
         {
@@ -150,7 +155,7 @@ namespace Lua
             }
 
             void *userdata_ptr = lua_newuserdatauv(L, sizeof(PointerType), 1);
-            new(userdata_ptr) PointerType{_pointer};
+            new (userdata_ptr) PointerType{_pointer};
             luaL_setmetatable(L, _library.c_str());
 
             lua_newtable(L);
@@ -160,10 +165,7 @@ namespace Lua
         }
 
         /** Finish building the object. */
-        void finish()
-        {
-            _refman.set(L, _pointer, -1);
-        }
+        void finish() { _refman.set(L, _pointer, -1); }
 
     private:
         template<class Signal, typename R, typename... A>
@@ -172,13 +174,13 @@ namespace Lua
             auto cL = L;
             auto cP = _pointer;
             auto conn = sig.connect(
-                [cL, cP, fn_name](A... args){
+                [cL, cP, fn_name](A... args)
+                {
                     ReferenceManager refman{};
                     refman.get(cL, cP);
                     Lua::call_method_r(cL, 1, fn_name, args...);
                     return Lua::get_as<R>(cL, -1);
-                }
-            );
+                });
         }
 
         template<class Signal, typename... A>
@@ -187,14 +189,14 @@ namespace Lua
             auto cL = L;
             auto cP = _pointer;
             sig.connect(
-                [cL, cP, fn_name](A... args){
+                [cL, cP, fn_name](A... args)
+                {
                     ReferenceManager refman{};
                     refman.get(cL, cP);
                     Lua::call_method(cL, fn_name, args...);
-                }
-            );
+                });
         }
     };
-}
+} // namespace Lua
 
 #endif

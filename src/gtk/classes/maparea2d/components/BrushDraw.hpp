@@ -23,7 +23,6 @@
 
 #include <editor/world/Brush.hpp>
 
-
 namespace World2D
 {
     /**
@@ -34,8 +33,8 @@ namespace World2D
     class BrushDraw : public DrawComponent
     {
     public:
-        BrushDraw()=default;
-        virtual ~BrushDraw()=default;
+        BrushDraw() = default;
+        virtual ~BrushDraw() = default;
 
         virtual void draw(
             Cairo::RefPtr<Cairo::Context> const &cr,
@@ -50,6 +49,6 @@ namespace World2D
     private:
         Sickle::Editor::Brush const *_brush{nullptr};
     };
-}
+} // namespace World2D
 
 #endif

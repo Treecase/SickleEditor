@@ -33,7 +33,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 namespace Sickle::Editor
 {
     class Entity;
@@ -48,7 +47,9 @@ namespace Sickle::Editor
      * All entities have a class. This defines the overall in-game behaviour of
      * the entity, for example 'func_door' or 'func_trigger'.
      */
-    class Entity : public EditorObject, public Lua::Referenceable
+    class Entity
+    : public EditorObject
+    , public Lua::Referenceable
     {
     public:
         static EntityRef create(std::string const &classname);
@@ -60,7 +61,7 @@ namespace Sickle::Editor
         operator MAP::Entity() const;
 
         /** Emitted when a property is added, deleted, or changes value. */
-        auto &signal_properties_changed() {return _signal_properties_changed;}
+        auto &signal_properties_changed() { return _signal_properties_changed; }
 
         /**
          * Get the entity's class information.
@@ -143,6 +144,7 @@ namespace Sickle::Editor
             std::shared_ptr<EntityPropertyDefinition> type;
             /// The value of the property.
             std::string value;
+
             /**
              * Default construct the value using type->default_value().
              *
@@ -150,10 +152,11 @@ namespace Sickle::Editor
              */
             explicit Property(
                 std::shared_ptr<EntityPropertyDefinition> const &type)
-            :   type{type}
-            ,   value{type->default_value()}
+            : type{type}
+            , value{type->default_value()}
             {
             }
+
             /**
              * Construct the value.
              *
@@ -163,8 +166,8 @@ namespace Sickle::Editor
             explicit Property(
                 std::shared_ptr<EntityPropertyDefinition> const &type,
                 std::string const &value)
-            :   type{type}
-            ,   value{value}
+            : type{type}
+            , value{value}
             {
             }
         };
@@ -180,6 +183,6 @@ namespace Sickle::Editor
 
         void _on_classname_changed();
     };
-}
+} // namespace Sickle::Editor
 
 #endif

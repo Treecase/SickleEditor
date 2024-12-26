@@ -7,6 +7,5 @@ target_link_libraries(map
         convexhull
         map_parsing
 )
-target_compile_features(map PUBLIC cxx_std_17)
 
 add_subdirectory(parsing)

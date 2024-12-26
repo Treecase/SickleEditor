@@ -26,7 +26,6 @@
 
 #include <memory>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -36,15 +35,15 @@ namespace Sickle::AppWin
     {
     public:
         CellRendererColor();
-        virtual ~CellRendererColor()=default;
+        virtual ~CellRendererColor() = default;
 
         /** The color value being displayed. */
-        auto property_rgba() {return _prop_rgba.get_proxy();}
-        auto property_rgba() const {return _prop_rgba.get_proxy();}
+        auto property_rgba() { return _prop_rgba.get_proxy(); }
+
+        auto property_rgba() const { return _prop_rgba.get_proxy(); }
 
         /** Emitted when the color is edited. */
-        auto &signal_rgba_edited() {return _sig_rgba_edited;}
-
+        auto &signal_rgba_edited() { return _sig_rgba_edited; }
 
     protected:
         virtual bool activate_vfunc(
@@ -74,20 +73,18 @@ namespace Sickle::AppWin
             Gdk::Rectangle const &cell_area,
             Gtk::CellRendererState flags) override;
 
-
     private:
         /* Width of the swatch area is SWATCH_ASPECT * swatch_height */
         static constexpr int SWATCH_ASPECT = 3;
 
         Glib::Property<Gdk::RGBA> _prop_rgba;
-        sigc::signal<void(
-            Glib::ustring const &,
-            Gdk::RGBA const &)> _sig_rgba_edited{};
+        sigc::signal<void(Glib::ustring const &, Gdk::RGBA const &)>
+            _sig_rgba_edited{};
 
         Gtk::ColorChooserDialog _ccd{};
 
         Gdk::Rectangle _get_swatch_rect(Gdk::Rectangle const &cell_area) const;
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

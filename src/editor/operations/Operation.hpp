@@ -31,12 +31,11 @@
 #include <variant>
 #include <vector>
 
-
 namespace Lua
 {
-    template<> Sickle::Editor::Operation get_as(lua_State *L, int idx);
+    template<>
+    Sickle::Editor::Operation get_as(lua_State *L, int idx);
 }
-
 
 namespace Sickle::Editor
 {
@@ -60,9 +59,9 @@ namespace Sickle::Editor
                 std::string const &type,
                 std::string const &name,
                 Arg const &default_value)
-            :   type{type}
-            ,   name{name}
-            ,   default_value{default_value}
+            : type{type}
+            , name{name}
+            , default_value{default_value}
             {
             }
         };
@@ -139,7 +138,7 @@ namespace Sickle::Editor
          *
          * @return The ID for the operation.
          */
-        auto id() const {return id(module_name, name);};
+        auto id() const { return id(module_name, name); };
 
         /**
          * Get the default value of the `argument`-th argument.
@@ -217,6 +216,6 @@ namespace Sickle::Editor
         // Operations can only be constructed through this function.
         friend Operation Lua::get_as<Operation>(lua_State *L, int idx);
     };
-}
+} // namespace Sickle::Editor
 
 #endif

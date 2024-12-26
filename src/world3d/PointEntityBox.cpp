@@ -27,7 +27,6 @@
 
 using namespace World3D;
 
-
 /**
  * Extract a vector from a string.
  *
@@ -37,38 +36,32 @@ using namespace World3D;
  */
 static bool extract_vector(std::stringstream &input, glm::vec3 &output);
 
-
-PointEntityBox::PreDrawFunc PointEntityBox::predraw = [](auto, auto){};
-
+PointEntityBox::PreDrawFunc PointEntityBox::predraw = [](auto, auto) {};
 
 GLUtil::Program &PointEntityBox::shader()
 {
     static GLUtil::Program the_shader{
         std::vector{
-            GLUtil::shader_from_resource(
-                "shaders/map.vert",
-                GL_VERTEX_SHADER),
-            GLUtil::shader_from_resource(
-                "shaders/PointEntityBox.frag",
-                GL_FRAGMENT_SHADER),
-        },
+                    GLUtil::shader_from_resource("shaders/map.vert", GL_VERTEX_SHADER),
+                    GLUtil::shader_from_resource(
+                "shaders/PointEntityBox.frag", GL_FRAGMENT_SHADER),
+                    },
         "PointEntityBoxShader"
     };
     return the_shader;
 }
 
-
-
 PointEntityBox::PointEntityBox()
 {
-    push_queue([this](){_init_construct();});
+    push_queue([this]() { _init_construct(); });
 }
-
 
 void PointEntityBox::render() const
 {
     if (!_src || !_vao)
+    {
         return;
+    }
 
     std::stringstream origin_str{_src->get_property("origin")};
     glm::vec3 origin{0.0f, 0.0f, 0.0f};
@@ -86,10 +79,10 @@ void PointEntityBox::render() const
     shader().setUniformS("view", params.view);
     shader().setUniformS("projection", params.projection);
     shader().setUniformS("color", _color);
-    shader().setUniformS("modulate",
-        _src->is_selected()
-            ? glm::vec3{1.0f, 0.0f, 0.0f}
-            : glm::vec3{1.0f, 1.0f, 1.0f});
+    shader().setUniformS(
+        "modulate",
+        _src->is_selected() ? glm::vec3{1.0f, 0.0f, 0.0f}
+                            : glm::vec3{1.0f, 1.0f, 1.0f});
 
     _vao->bind();
     glEnable(GL_PRIMITIVE_RESTART);
@@ -100,26 +93,26 @@ void PointEntityBox::render() const
     _vao->unbind();
 }
 
-
 void PointEntityBox::execute()
 {
-    push_queue([this](){render();});
+    push_queue([this]() { render(); });
 }
-
-
 
 void PointEntityBox::on_attach(Sickle::Componentable &obj)
 {
     if (_src)
+    {
         throw std::logic_error{"already attached"};
+    }
 
     _src = &dynamic_cast<Sickle::Editor::Entity const &>(obj);
     if (_src->classinfo().type() != "PointClass")
+    {
         throw std::invalid_argument{"must be PointClass"};
+    }
 
-    push_queue([this](){_init();});
+    push_queue([this]() { _init(); });
 }
-
 
 void PointEntityBox::on_detach(Sickle::Componentable &)
 {
@@ -130,12 +123,7 @@ void PointEntityBox::on_detach(Sickle::Componentable &)
     clear_queue();
 }
 
-
-
-void PointEntityBox::_init_construct()
-{
-}
-
+void PointEntityBox::_init_construct() {}
 
 void PointEntityBox::_init()
 {
@@ -143,15 +131,15 @@ void PointEntityBox::_init()
     auto B = DEFAULT_BOX_SIZE * glm::vec3{+0.5f, +0.5f, +0.5f};
 
     auto const classinfo = _src->classinfo();
-    if (auto const size =\
-        classinfo.get_class_property<Sickle::Editor::ClassPropertySize>())
+    if (auto const size
+        = classinfo.get_class_property<Sickle::Editor::ClassPropertySize>())
     {
         auto const points = size->get_points();
         A = points.first;
         B = points.second;
     }
-    if (auto const color =\
-        classinfo.get_class_property<Sickle::Editor::ClassPropertyColor>())
+    if (auto const color
+        = classinfo.get_class_property<Sickle::Editor::ClassPropertyColor>())
     {
         _color = color->get_color();
     }
@@ -169,14 +157,12 @@ void PointEntityBox::_init()
 
     // Rendered as triangle strips using primitive restart index 255.
     std::vector<GLubyte> const ebo_data{
-        4,0,6, 1, // front face
-        7, 3,     // right face
-        5, 2,     // back face
-        4, 0,     // left face
-        255,
-        5,4,7,6,  // top face
-        255,
-        0,2,1, 3  // bottom face
+        4,   0, 6, 1,    // front face
+        7,   3,          // right face
+        5,   2,          // back face
+        4,   0,          // left face
+        255, 5, 4, 7, 6, // top face
+        255, 0, 2, 1, 3  // bottom face
     };
 
     // TODO: PointClasses without a size() class property should share GPU data.
@@ -198,14 +184,14 @@ void PointEntityBox::_init()
     _vao->unbind();
 }
 
-
-
 static bool extract_vector(std::stringstream &input, glm::vec3 &output)
 {
     glm::vec3 v{};
     input >> v.x >> v.y >> v.z;
     if (input.fail())
+    {
         return false;
+    }
     else
     {
         output = v;

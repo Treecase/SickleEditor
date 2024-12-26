@@ -21,15 +21,14 @@
 
 #include <se-lua/se-lua.hpp>
 
+#include <glibmm/property.h>
 #include <gtkmm/box.h>
 #include <gtkmm/cssprovider.h>
 #include <gtkmm/entry.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/textview.h>
-#include <glibmm/property.h>
 
 #include <string>
-
 
 namespace Sickle
 {
@@ -43,11 +42,12 @@ namespace Sickle
         };
 
         LuaConsole();
-        LuaConsole(LuaConsole &other)=delete;
+        LuaConsole(LuaConsole &other) = delete;
         ~LuaConsole();
 
-        auto property_lua_state() {return _prop_lua_state.get_proxy();}
-        auto property_lua_state() const {return _prop_lua_state.get_proxy();}
+        auto property_lua_state() { return _prop_lua_state.get_proxy(); }
+
+        auto property_lua_state() const { return _prop_lua_state.get_proxy(); }
 
         /** Write some text to the console output widget without a newline. */
         void write(std::string const &str);
@@ -92,6 +92,6 @@ namespace Sickle
         /** Shorthand for accessing the "lua_state" property. */
         lua_State *get_L() const;
     };
-}
+} // namespace Sickle
 
 #endif

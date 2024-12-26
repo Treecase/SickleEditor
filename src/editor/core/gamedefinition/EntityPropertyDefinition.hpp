@@ -27,7 +27,6 @@
 #include <optional>
 #include <string>
 
-
 namespace Sickle::Editor
 {
     // TODO: Probably temporary. Encode this info implicitly by polymorphism.
@@ -57,7 +56,7 @@ namespace Sickle::Editor
             std::string const &default_value,
             std::string const &description,
             PropertyType type);
-        virtual ~EntityPropertyDefinition()=default;
+        virtual ~EntityPropertyDefinition() = default;
 
         /**
          * Get the property's name.
@@ -105,14 +104,14 @@ namespace Sickle::Editor
             std::string const &default_value,
             std::string const &description,
             std::map<int, std::string> const &choices);
-        virtual ~EntityPropertyDefinitionChoices()=default;
+        virtual ~EntityPropertyDefinitionChoices() = default;
 
         /**
          * Get the mapping of valid integer values and their descriptions.
          *
          * @return A map of integer keys and description strings.
          */
-        auto &choices() const {return _choices;}
+        auto &choices() const { return _choices; }
 
     private:
         std::map<int, std::string> _choices{};
@@ -127,7 +126,7 @@ namespace Sickle::Editor
             std::string const &name,
             std::string const &default_value,
             std::string const &description);
-        virtual ~EntityPropertyDefinitionColor255()=default;
+        virtual ~EntityPropertyDefinitionColor255() = default;
     };
 
     /**
@@ -139,7 +138,7 @@ namespace Sickle::Editor
         EntityPropertyDefinitionFlags(
             std::string const &name,
             std::map<int, std::pair<std::string, bool>> const &flags);
-        virtual ~EntityPropertyDefinitionFlags()=default;
+        virtual ~EntityPropertyDefinitionFlags() = default;
 
         /**
          * Check if a bit is defined.
@@ -171,13 +170,12 @@ namespace Sickle::Editor
         {
             std::string description{""};
             bool enabled_by_default{false};
-            FlagDef()=default;
+            FlagDef() = default;
             FlagDef(std::pair<std::string, bool> const &flagdef);
         };
+
         std::array<std::optional<FlagDef>, 32> _flags{};
     };
-
-
 
     /**
      * Factory to construct EntityProperties.
@@ -193,6 +191,6 @@ namespace Sickle::Editor
         static std::shared_ptr<EntityPropertyDefinition> construct(
             std::shared_ptr<FGD::Property> const &prop);
     };
-}
+} // namespace Sickle::Editor
 
 #endif

@@ -23,14 +23,12 @@
 #include <glibmm/convert.h>
 #include <gtkmm/filechoosernative.h>
 
-
 using namespace Sickle;
 
-
 PreferencesDialog::PreferencesDialog(Gtk::Window &parent)
-:   Glib::ObjectBase{typeid(PreferencesDialog)}
-,   Gtk::Dialog{"Preferences", parent, false}
-,   _settings{Gio::Settings::create(SE_APPLICATION_ID)}
+: Glib::ObjectBase{typeid(PreferencesDialog)}
+, Gtk::Dialog{"Preferences", parent, false}
+, _settings{Gio::Settings::create(SE_APPLICATION_ID)}
 {
     _gamedef_entry.set_text(_settings->get_string("fgd-path"));
     _gamedef_entry.property_secondary_icon_name() = "folder";
@@ -64,33 +62,28 @@ PreferencesDialog::PreferencesDialog(Gtk::Window &parent)
 
     get_content_area()->add(_grid);
 
-    _gamedef_entry.signal_icon_press().connect(
-        sigc::mem_fun(
-            *this,
-            &PreferencesDialog::on_gamedef_entry_icon_pressed));
-    _game_path_entry.signal_icon_press().connect(
-        sigc::mem_fun(
-            *this,
-            &PreferencesDialog::on_game_path_entry_icon_pressed));
-    _sprite_path_entry.signal_icon_press().connect(
-        sigc::mem_fun(
-            *this,
-            &PreferencesDialog::on_sprite_path_entry_icon_pressed));
+    _gamedef_entry.signal_icon_press().connect(sigc::mem_fun(
+        *this,
+        &PreferencesDialog::on_gamedef_entry_icon_pressed));
+    _game_path_entry.signal_icon_press().connect(sigc::mem_fun(
+        *this,
+        &PreferencesDialog::on_game_path_entry_icon_pressed));
+    _sprite_path_entry.signal_icon_press().connect(sigc::mem_fun(
+        *this,
+        &PreferencesDialog::on_sprite_path_entry_icon_pressed));
 
     show_all_children();
 }
-
-
 
 void PreferencesDialog::on_response(int response_id)
 {
     Gtk::Dialog::on_response(response_id);
     if (response_id == Gtk::ResponseType::RESPONSE_ACCEPT)
+    {
         _apply_preferences();
+    }
     hide();
 }
-
-
 
 void PreferencesDialog::_apply_preferences()
 {
@@ -101,7 +94,6 @@ void PreferencesDialog::_apply_preferences()
         "wad-paths",
         _wads.property_wad_paths().get_value());
 }
-
 
 void PreferencesDialog::on_gamedef_entry_icon_pressed(
     Gtk::EntryIconPosition icon_pos,
@@ -131,7 +123,6 @@ void PreferencesDialog::on_gamedef_entry_icon_pressed(
     }
 }
 
-
 void PreferencesDialog::on_game_path_entry_icon_pressed(
     Gtk::EntryIconPosition icon_pos,
     GdkEventButton const *event)
@@ -150,7 +141,6 @@ void PreferencesDialog::on_game_path_entry_icon_pressed(
             Glib::filename_to_utf8(chooser->get_filename()));
     }
 }
-
 
 void PreferencesDialog::on_sprite_path_entry_icon_pressed(
     Gtk::EntryIconPosition icon_pos,

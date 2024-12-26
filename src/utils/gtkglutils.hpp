@@ -23,7 +23,6 @@
 
 #include <string>
 
-
 namespace GLUtil
 {
     Shader shader_from_resource(std::string const &path, GLenum type);

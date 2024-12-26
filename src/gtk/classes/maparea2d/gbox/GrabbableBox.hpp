@@ -27,7 +27,6 @@
 #include <array>
 #include <vector>
 
-
 namespace Sickle
 {
     /**
@@ -42,7 +41,14 @@ namespace Sickle
         {
             NONE,
             CENTER,
-            N, NE, E, SE, S, SW, W, NW,
+            N,
+            NE,
+            E,
+            SE,
+            S,
+            SW,
+            W,
+            NW,
             COUNT
         };
 
@@ -80,6 +86,6 @@ namespace Sickle
         // Grab Handles.
         std::array<Handle, Area::COUNT> _handles{};
     };
-}
+} // namespace Sickle
 
 #endif

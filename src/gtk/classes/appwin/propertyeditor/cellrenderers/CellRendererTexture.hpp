@@ -23,7 +23,6 @@
 #include <gtkmm/cellrenderer.h>
 #include <gtkmm/filechoosernative.h>
 
-
 namespace Sickle::AppWin
 {
     /**
@@ -33,20 +32,23 @@ namespace Sickle::AppWin
     {
     public:
         CellRendererTexture();
-        virtual ~CellRendererTexture()=default;
+        virtual ~CellRendererTexture() = default;
 
         /** Name of the texture being displayed. */
-        auto property_texture_name() {return _prop_texture_name.get_proxy();}
+        auto property_texture_name() { return _prop_texture_name.get_proxy(); }
+
         auto property_texture_name() const
-        {return _prop_texture_name.get_proxy();}
+        {
+            return _prop_texture_name.get_proxy();
+        }
 
         /** WAD to start in when selecting a texture. */
-        auto property_wad_name() {return _prop_wad_name.get_proxy();}
-        auto property_wad_name() const {return _prop_wad_name.get_proxy();}
+        auto property_wad_name() { return _prop_wad_name.get_proxy(); }
+
+        auto property_wad_name() const { return _prop_wad_name.get_proxy(); }
 
         /** Emitted when the texture is changed. */
-        auto signal_texture_edited() {return _sig_texture_edited;}
-
+        auto signal_texture_edited() { return _sig_texture_edited; }
 
     protected:
         virtual void render_vfunc(
@@ -76,16 +78,14 @@ namespace Sickle::AppWin
 
         virtual Gtk::SizeRequestMode get_request_mode_vfunc() const override;
 
-
     private:
         static constexpr int icon_padding = 3;
 
         Glib::Property<std::string> _prop_texture_name;
         Glib::Property<std::string> _prop_wad_name;
 
-        sigc::signal<void(
-            Glib::ustring const &,
-            std::string const &)> _sig_texture_edited{};
+        sigc::signal<void(Glib::ustring const &, std::string const &)>
+            _sig_texture_edited{};
 
         Glib::RefPtr<Gdk::Pixbuf> _get_icon(Gtk::Widget &widget) const;
         Gdk::Rectangle _get_icon_area(
@@ -94,6 +94,6 @@ namespace Sickle::AppWin
 
         Glib::RefPtr<Pango::Layout> _get_layout(Gtk::Widget &widget) const;
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

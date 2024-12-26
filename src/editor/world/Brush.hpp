@@ -33,7 +33,6 @@
 #include <memory>
 #include <vector>
 
-
 namespace Sickle::Editor
 {
     class Brush;
@@ -47,9 +46,9 @@ namespace Sickle::Editor
      * example, the worldspawn entity treats them as solid world geometry,
      * whereas a func_trigger treats it as a hitbox.
      */
-    class Brush :
-        public EditorObject,
-        public Lua::Referenceable
+    class Brush
+    : public EditorObject
+    , public Lua::Referenceable
     {
     public:
         /**
@@ -115,6 +114,6 @@ namespace Sickle::Editor
         // - color
         // ^ these are only used by worldspawn brushes?
     };
-}
+} // namespace Sickle::Editor
 
 #endif

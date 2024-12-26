@@ -26,7 +26,6 @@
 
 #include <sigc++/connection.h>
 
-
 namespace World3D
 {
     /**
@@ -40,8 +39,8 @@ namespace World3D
     public:
         static constexpr float DEFAULT_SIZE = 32.0f;
 
-        BoxColliderPointEntity()=default;
-        virtual ~BoxColliderPointEntity()=default;
+        BoxColliderPointEntity() = default;
+        virtual ~BoxColliderPointEntity() = default;
 
     protected:
         virtual void on_attach(Sickle::Componentable &obj) override;
@@ -53,6 +52,6 @@ namespace World3D
 
         void update_bbox();
     };
-}
+} // namespace World3D
 
 #endif

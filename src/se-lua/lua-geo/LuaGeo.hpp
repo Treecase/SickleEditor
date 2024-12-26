@@ -25,7 +25,6 @@
 
 #include <glm/glm.hpp>
 
-
 int luaopen_geo(lua_State *L);
 
 int luaopen_geo_matrix(lua_State *L);
@@ -33,7 +32,9 @@ int lgeo_matrix_new(lua_State *L);
 glm::mat4 lgeo_checkmatrix(lua_State *L, int arg);
 glm::mat4 lgeo_tomatrix(lua_State *L, int i);
 
-template<> void Lua::push(lua_State *L, glm::mat4 mat);
-template<> glm::mat4 Lua::get_as(lua_State *L, int idx);
+template<>
+void Lua::push(lua_State *L, glm::mat4 mat);
+template<>
+glm::mat4 Lua::get_as(lua_State *L, int idx);
 
 #endif

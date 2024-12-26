@@ -20,9 +20,7 @@
 
 #include <limits>
 
-
 using namespace Sickle::AppWin;
-
 
 CellRendererProperty::IntegerRenderer::IntegerRenderer()
 {
@@ -36,18 +34,15 @@ CellRendererProperty::IntegerRenderer::IntegerRenderer()
     _renderer.signal_edited().connect(signal_changed.make_slot());
 }
 
-
 void CellRendererProperty::IntegerRenderer::set_value(ValueType const &value)
 {
     _renderer.property_text() = value.value;
 }
 
-
 Gtk::CellRenderer *CellRendererProperty::IntegerRenderer::renderer()
 {
     return &_renderer;
 }
-
 
 Gtk::CellRendererMode CellRendererProperty::IntegerRenderer::mode()
 {

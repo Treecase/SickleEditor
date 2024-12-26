@@ -20,14 +20,12 @@
 
 using namespace Sickle;
 
-
-
 CallStackInspector::CallStackInspector()
-:   Glib::ObjectBase{typeid(CallStackInspector)}
-,   _prop_lua_state{*this, "lua-state", nullptr}
-,   _prop_level{*this, "level", 0}
-,   _store{Gtk::ListStore::create(_columns)}
-,   _view{_store}
+: Glib::ObjectBase{typeid(CallStackInspector)}
+, _prop_lua_state{*this, "lua-state", nullptr}
+, _prop_level{*this, "level", 0}
+, _store{Gtk::ListStore::create(_columns)}
+, _view{_store}
 {
     set_hexpand(true);
     set_vexpand(true);
@@ -39,12 +37,13 @@ CallStackInspector::CallStackInspector()
         sigc::mem_fun(*this, &CallStackInspector::on_selection_changed));
 }
 
-
 void CallStackInspector::update()
 {
     auto const L = get_lua_state();
     if (!L)
+    {
         return;
+    }
 
     _store->clear();
 
@@ -55,23 +54,22 @@ void CallStackInspector::update()
 
         auto row = *_store->append();
         row[_columns.level] = level;
-        row[_columns.name] = (
-            "[" + std::string{dbg.what} + "] "
-            + std::string{dbg.name? dbg.name : "?"});
+        row[_columns.name]
+            = ("[" + std::string{dbg.what} + "] "
+               + std::string{dbg.name ? dbg.name : "?"});
     }
 }
-
 
 void CallStackInspector::clear()
 {
     _store->clear();
 }
 
-
-
 void CallStackInspector::on_selection_changed()
 {
     auto it = _view.get_selection()->get_selected();
     if (it)
+    {
         property_level().set_value(it->get_value(_columns.level));
+    }
 }

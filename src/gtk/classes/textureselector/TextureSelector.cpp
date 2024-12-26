@@ -23,18 +23,15 @@
 
 #include <gtkmm/builder.h>
 
-
 using namespace Sickle::TextureSelector;
-
 
 Glib::RefPtr<TextureSelector> TextureSelector::create()
 {
     return Glib::RefPtr{new TextureSelector{}};
 }
 
-
 TextureSelector::TextureSelector()
-:   Glib::ObjectBase{typeid(TextureSelector)}
+: Glib::ObjectBase{typeid(TextureSelector)}
 {
     auto const builder = Gtk::Builder::create_from_resource(
         SE_GRESOURCE_PREFIX "gtk/TextureSelector.glade");
@@ -45,7 +42,7 @@ TextureSelector::TextureSelector()
     builder->get_widget("cancel", _cancel);
     builder->get_widget("confirm", _confirm);
 
-    _dialog->signal_response().connect([this](int){_dialog->hide();});
+    _dialog->signal_response().connect([this](int) { _dialog->hide(); });
 
     _search->signal_search_changed().connect(
         sigc::mem_fun(*this, &TextureSelector::on_search_changed));
@@ -53,15 +50,13 @@ TextureSelector::TextureSelector()
     _wad_filter->property_active().signal_changed().connect(
         sigc::mem_fun(*this, &TextureSelector::on_wad_filter_changed));
 
-    _flow->set_filter_func(
-        sigc::mem_fun(*this, &TextureSelector::filter_func));
-    _flow->set_sort_func(
-        sigc::mem_fun(*this, &TextureSelector::sort_func));
+    _flow->set_filter_func(sigc::mem_fun(*this, &TextureSelector::filter_func));
+    _flow->set_sort_func(sigc::mem_fun(*this, &TextureSelector::sort_func));
 
     _cancel->signal_clicked().connect(
-        [this](){_dialog->response(Gtk::ResponseType::RESPONSE_CANCEL);});
+        [this]() { _dialog->response(Gtk::ResponseType::RESPONSE_CANCEL); });
     _confirm->signal_clicked().connect(
-        [this](){_dialog->response(Gtk::ResponseType::RESPONSE_ACCEPT);});
+        [this]() { _dialog->response(Gtk::ResponseType::RESPONSE_ACCEPT); });
 
     auto &texman = Editor::Textures::TextureManager::get_reference();
     texman.signal_wads_changed().connect(
@@ -73,7 +68,6 @@ TextureSelector::TextureSelector()
     _refresh_textures();
 }
 
-
 TextureSelector::~TextureSelector()
 {
     _dialog->hide();
@@ -81,27 +75,26 @@ TextureSelector::~TextureSelector()
     {
         _worker.cancel();
         if (_worker_thread->joinable())
+        {
             _worker_thread->join();
+        }
     }
     _clear_textures();
 }
 
-
 std::string TextureSelector::get_selected_texture() const
 {
     auto const selected = _flow->get_selected_children();
-    auto const child = dynamic_cast<TextureImage *>(
-        selected.at(0)->get_child());
+    auto const child
+        = dynamic_cast<TextureImage *>(selected.at(0)->get_child());
     auto const &info = child->get_info();
     return info->get_name();
 }
-
 
 void TextureSelector::set_wad_filter(std::string const &filter)
 {
     _wad_filter->set_active_text(filter);
 }
-
 
 int TextureSelector::run()
 {
@@ -109,31 +102,25 @@ int TextureSelector::run()
     return _dialog->run();
 }
 
-
-
 void TextureSelector::on_wads_changed()
 {
     _refresh_textures();
 }
-
 
 void TextureSelector::on_search_changed()
 {
     _flow->invalidate_filter();
 }
 
-
 void TextureSelector::on_wad_filter_changed()
 {
     _flow->invalidate_filter();
 }
 
-
 void TextureSelector::on_TextureManager_wads_changed()
 {
     _refresh_textures();
 }
-
 
 bool TextureSelector::filter_func(Gtk::FlowBoxChild const *child) const
 {
@@ -144,7 +131,9 @@ bool TextureSelector::filter_func(Gtk::FlowBoxChild const *child) const
     auto const filter_wad = _wad_filter->get_active_text();
     Glib::ustring const source_wad{texinfo->get_source_wad()};
     if (filter_wad != "*" && filter_wad != source_wad)
+    {
         return false;
+    }
 
     auto const search = _search->get_text();
     Glib::ustring const name{texinfo->get_name()};
@@ -157,7 +146,6 @@ bool TextureSelector::filter_func(Gtk::FlowBoxChild const *child) const
     auto const it = name_cmp.find(search_cmp);
     return it != Glib::ustring::npos;
 }
-
 
 int TextureSelector::sort_func(
     Gtk::FlowBoxChild const *a,
@@ -175,8 +163,6 @@ int TextureSelector::sort_func(
     return a_texture_name.compare(b_texture_name);
 }
 
-
-
 void TextureSelector::_refresh_textures()
 {
     _clear_textures();
@@ -184,25 +170,26 @@ void TextureSelector::_refresh_textures()
     _wad_filter->append("*");
     auto &texman = Editor::Textures::TextureManager::get_reference();
     for (auto const &wad_name : texman.get_wads())
+    {
         _wad_filter->append(wad_name);
+    }
     _add_textures();
 }
-
 
 void TextureSelector::_clear_textures()
 {
     for (auto &img : _images)
+    {
         _flow->remove(*img);
+    }
     _images.clear();
 }
-
 
 void TextureSelector::_add_textures()
 {
     _worker_thread = std::make_unique<std::thread>(
-        [this](){_worker.do_work(&_dispatcher);});
+        [this]() { _worker.do_work(&_dispatcher); });
 }
-
 
 void TextureSelector::_on_worker_notify()
 {
@@ -219,7 +206,9 @@ void TextureSelector::_on_worker_notify()
     if (_worker_thread && _worker.is_done())
     {
         if (_worker_thread->joinable())
+        {
             _worker_thread->join();
+        }
         _worker_thread.reset();
     }
 }

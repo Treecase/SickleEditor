@@ -28,7 +28,6 @@
 #include <initializer_list>
 #include <unordered_map>
 
-
 namespace Sickle::AppWin
 {
     class ModeSelector : public Gtk::Box
@@ -36,7 +35,7 @@ namespace Sickle::AppWin
     public:
         ModeSelector();
 
-        auto property_mode() {return _prop_mode.get_proxy();}
+        auto property_mode() { return _prop_mode.get_proxy(); }
 
         /** Add a Mode to the selector. */
         void add_mode(Editor::Mode const &mode, Glib::ustring const &label);
@@ -59,8 +58,9 @@ namespace Sickle::AppWin
             Gtk::RadioButton btn;
             sigc::connection conn;
         };
+
         std::unordered_map<Editor::Mode, ModeData> _buttons{};
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

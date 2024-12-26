@@ -21,27 +21,25 @@
 
 #include <stdexcept>
 
-
 using namespace World3D;
-
 
 void BoxColliderBrush::on_attach(Sickle::Componentable &obj)
 {
     if (_src)
+    {
         throw std::logic_error{"already attached"};
+    }
     auto &brush = dynamic_cast<Sickle::Editor::Brush &>(obj);
     _src = &brush;
     _signals = std::make_unique<Signals>();
 
     for (auto const &face : _src->faces())
     {
-        _signals->conns.push_back(
-            face->signal_vertices_changed().connect(
-                sigc::mem_fun(*this, &BoxColliderBrush::update_bbox)));
+        _signals->conns.push_back(face->signal_vertices_changed().connect(
+            sigc::mem_fun(*this, &BoxColliderBrush::update_bbox)));
     }
     update_bbox();
 }
-
 
 void BoxColliderBrush::on_detach(Sickle::Componentable &obj)
 {
@@ -50,12 +48,15 @@ void BoxColliderBrush::on_detach(Sickle::Componentable &obj)
     set_box(BBox3{});
 }
 
-
 void BoxColliderBrush::update_bbox()
 {
     BBox3 bbox{};
     for (auto const &face : _src->faces())
+    {
         for (auto const vertex : face->get_vertices())
+        {
             bbox.add(vertex);
+        }
+    }
     set_box(bbox);
 }

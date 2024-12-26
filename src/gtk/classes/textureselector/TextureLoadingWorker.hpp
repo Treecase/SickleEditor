@@ -29,7 +29,6 @@
 #include <thread>
 #include <vector>
 
-
 namespace Sickle::TextureSelector
 {
     /**
@@ -78,6 +77,6 @@ namespace Sickle::TextureSelector
         bool _is_done{false};
         std::vector<Result> _results{};
     };
-}
+} // namespace Sickle::TextureSelector
 
 #endif

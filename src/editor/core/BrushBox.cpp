@@ -20,13 +20,11 @@
 
 using namespace Sickle::Editor;
 
-
 void BrushBox::p1(glm::vec3 const &v)
 {
     _p1 = v;
     signal_updated().emit();
 }
-
 
 void BrushBox::p2(glm::vec3 const &v)
 {
@@ -34,12 +32,10 @@ void BrushBox::p2(glm::vec3 const &v)
     signal_updated().emit();
 }
 
-
 glm::vec3 BrushBox::p1() const
 {
     return _p1;
 }
-
 
 glm::vec3 BrushBox::p2() const
 {

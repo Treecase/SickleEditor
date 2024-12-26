@@ -1,7 +1,3 @@
-
-find_package(FLEX 2.6 REQUIRED)
-find_package(BISON 3.2 REQUIRED)
-
 flex_target(fgdlexer
     lexer.lpp
     "${CMAKE_CURRENT_BINARY_DIR}/FGDScanner.cpp"
@@ -19,11 +15,8 @@ add_library(fgd_parsing OBJECT
     "${BISON_fgdparser_OUTPUTS}"
     FGDDriver.cpp
 )
-target_include_directories(fgd_parsing PRIVATE
-    "${FLEX_INCLUDE_DIRS}"
-    ..
-    .
+target_include_directories(fgd_parsing
+    PRIVATE .. .
+    PUBLIC "${FLEX_INCLUDE_DIRS}" "${CMAKE_CURRENT_BINARY_DIR}"
 )
-target_include_directories(fgd_parsing PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-# target_link_libraries(fgd_parsing PRIVATE "${FLEX_LIBRARIES}")
-target_compile_features(fgd_parsing PUBLIC cxx_std_17)
+target_link_libraries(fgd_parsing PRIVATE "${FLEX_LIBRARIES}")

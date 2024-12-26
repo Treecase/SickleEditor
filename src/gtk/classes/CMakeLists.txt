@@ -25,7 +25,6 @@ target_link_libraries(sickle PRIVATE
     maparea3d
     preferences
     rmf
-    SickleGL
 )
 add_subdirectory(appwin)
 add_subdirectory(luaconsole)

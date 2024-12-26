@@ -20,21 +20,21 @@
 
 using namespace Sickle;
 
-
 FunctionInspector::FunctionInspector()
-:   Glib::ObjectBase{typeid(FunctionInspector)}
-,   Gtk::Box{Gtk::Orientation::ORIENTATION_VERTICAL}
-,   _prop_lua_state{*this, "lua-state", nullptr}
-,   _prop_level{*this, "level", 0}
-,   _store{Gtk::TreeStore::create(_columns)}
-,   _filtered{Gtk::TreeModelFilter::create(_store)}
-,   _view{_filtered}
+: Glib::ObjectBase{typeid(FunctionInspector)}
+, Gtk::Box{Gtk::Orientation::ORIENTATION_VERTICAL}
+, _prop_lua_state{*this, "lua-state", nullptr}
+, _prop_level{*this, "level", 0}
+, _store{Gtk::TreeStore::create(_columns)}
+, _filtered{Gtk::TreeModelFilter::create(_store)}
+, _view{_filtered}
 {
     set_hexpand(true);
     set_vexpand(true);
 
     _filtered->set_visible_func(
-        [this](Gtk::TreeModel::iterator const it) -> bool {
+        [this](Gtk::TreeModel::iterator const it) -> bool
+        {
             auto const level = it->get_value(_columns.level);
             return level == property_level().get_value();
         });
@@ -46,12 +46,13 @@ FunctionInspector::FunctionInspector()
         sigc::mem_fun(*this, &FunctionInspector::on_level_changed));
 }
 
-
 void FunctionInspector::update()
 {
     auto const L = get_lua_state();
     if (!L)
+    {
         return;
+    }
 
     _store->clear();
 
@@ -67,22 +68,18 @@ void FunctionInspector::update()
         {
             auto row2 = *_store->append(row.children());
             row2[_columns.level] = level;
-            row2[_columns.display] = (
-                std::string{name}
-                + ": "
-                + std::string{luaL_tolstring(L, -1, nullptr)});
+            row2[_columns.display]
+                = (std::string{name} + ": "
+                   + std::string{luaL_tolstring(L, -1, nullptr)});
             lua_pop(L, 2);
         }
     }
 }
 
-
 void FunctionInspector::clear()
 {
     _store->clear();
 }
-
-
 
 void FunctionInspector::on_level_changed()
 {

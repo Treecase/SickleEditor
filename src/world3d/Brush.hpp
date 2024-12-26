@@ -30,9 +30,8 @@
 #include <sigc++/trackable.h>
 
 #include <functional>
-#include <vector>
 #include <memory>
-
+#include <vector>
 
 namespace World3D
 {
@@ -41,17 +40,18 @@ namespace World3D
      *
      * Renders a 3D view of the Brush using OpenGL.
      */
-    class Brush : public DeferredExec, public RenderComponent
+    class Brush
+    : public DeferredExec
+    , public RenderComponent
     {
     public:
-        using PreDrawFunc = std::function<void(
-            GLUtil::Program &,
-            Sickle::Editor::Brush const *)>;
+        using PreDrawFunc = std::function<
+            void(GLUtil::Program &, Sickle::Editor::Brush const *)>;
 
         static PreDrawFunc predraw;
 
-        Brush()=default;
-        virtual ~Brush()=default;
+        Brush() = default;
+        virtual ~Brush() = default;
 
         /**
          * Render the view.
@@ -86,8 +86,8 @@ namespace World3D
         std::shared_ptr<GLUtil::VertexArray> _vao{nullptr};
         std::shared_ptr<GLUtil::Buffer> _vbo{nullptr};
 
-        Brush(Brush const &)=delete;
-        Brush &operator=(Brush const &)=delete;
+        Brush(Brush const &) = delete;
+        Brush &operator=(Brush const &) = delete;
 
         /** @warning Requires an active OpenGL context. */
         void _init();
@@ -96,6 +96,6 @@ namespace World3D
 
         void _on_face_changed(std::shared_ptr<Face> const &face);
     };
-}
+} // namespace World3D
 
 #endif

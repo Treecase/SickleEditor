@@ -28,7 +28,6 @@
 #include <string>
 #include <vector>
 
-
 namespace Sickle::Editor
 {
     /**
@@ -50,8 +49,8 @@ namespace Sickle::Editor
             std::string const &module_name) const;
 
         // Copying not allowed
-        OperationLoader(OperationLoader const &)=delete;
-        OperationLoader &operator=(OperationLoader const &)=delete;
+        OperationLoader(OperationLoader const &) = delete;
+        OperationLoader &operator=(OperationLoader const &) = delete;
 
     public:
         static void _push_module_table(lua_State *L);
@@ -67,7 +66,7 @@ namespace Sickle::Editor
          * Emitted when a new operation is added. The operation's ID is passed
          * as the parameter.
          */
-        auto &signal_operation_added() {return _sig_operation_added;};
+        auto &signal_operation_added() { return _sig_operation_added; };
 
         /** Execute Lua code from the string. */
         void add_source(std::string const &source);
@@ -87,6 +86,6 @@ namespace Sickle::Editor
         /** Get a list of operations in the module. */
         std::vector<Operation> get_module(std::string const &module_name) const;
     };
-}
+} // namespace Sickle::Editor
 
 #endif

@@ -25,7 +25,6 @@
 
 #include <memory>
 
-
 namespace Lua
 {
     class Referenceable
@@ -34,11 +33,12 @@ namespace Lua
         sigc::signal<void()> _signal_destroy{};
 
     public:
-        auto get_id() const {return _unique_id.get();}
-        auto signal_destroy() {return _signal_destroy;}
+        auto get_id() const { return _unique_id.get(); }
 
-        virtual ~Referenceable() {signal_destroy().emit();}
+        auto signal_destroy() { return _signal_destroy; }
+
+        virtual ~Referenceable() { signal_destroy().emit(); }
     };
-}
+} // namespace Lua
 
 #endif

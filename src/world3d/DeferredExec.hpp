@@ -26,7 +26,6 @@
 #include <functional>
 #include <queue>
 
-
 /**
  * DeferredExec objects allow objects to delay function calls to a later time.
  * Currently that time is 'when an OpenGL context is ready'.

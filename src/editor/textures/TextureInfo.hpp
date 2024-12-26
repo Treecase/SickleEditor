@@ -27,7 +27,6 @@
 #include <typeinfo>
 #include <unordered_map>
 
-
 namespace Sickle::Editor::Textures
 {
     /**
@@ -44,7 +43,6 @@ namespace Sickle::Editor::Textures
         /// 1/8 size texture.
         MIPMAP_EIGHTH = 3
     };
-
 
     /**
      * Holds information about a texture.
@@ -77,7 +75,7 @@ namespace Sickle::Editor::Textures
          * @return The width of the texture.
          */
         unsigned int get_width(
-            MipmapLevel mipmap=MipmapLevel::MIPMAP_FULL) const;
+            MipmapLevel mipmap = MipmapLevel::MIPMAP_FULL) const;
 
         /**
          * Get the height of the texture.
@@ -86,7 +84,7 @@ namespace Sickle::Editor::Textures
          * @return The height of the texture.
          */
         unsigned int get_height(
-            MipmapLevel mipmap=MipmapLevel::MIPMAP_FULL) const;
+            MipmapLevel mipmap = MipmapLevel::MIPMAP_FULL) const;
 
         /**
          * Load the texture into a buffer. Caller takes ownership of the
@@ -96,7 +94,7 @@ namespace Sickle::Editor::Textures
          * @return A pointer to the loaded buffer.
          */
         std::shared_ptr<uint8_t[]> load_rgba(
-            MipmapLevel mipmap=MipmapLevel::MIPMAP_FULL) const;
+            MipmapLevel mipmap = MipmapLevel::MIPMAP_FULL) const;
 
         /**
          * Load the texture into a buffer. Caller takes ownership of the
@@ -106,8 +104,7 @@ namespace Sickle::Editor::Textures
          * @return A pointer to the loaded buffer.
          */
         std::shared_ptr<uint8_t[]> load_rgb(
-            MipmapLevel mipmap=MipmapLevel::MIPMAP_FULL) const;
-
+            MipmapLevel mipmap = MipmapLevel::MIPMAP_FULL) const;
 
         /**
          * Cache an object of type T. If an object is already cached, it will
@@ -163,6 +160,6 @@ namespace Sickle::Editor::Textures
 
         std::unordered_map<std::type_index, std::shared_ptr<void>> _cache{};
     };
-}
+} // namespace Sickle::Editor::Textures
 
 #endif

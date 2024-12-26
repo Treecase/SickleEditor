@@ -22,8 +22,8 @@
 #include "../maparea2d/MapArea2D.hpp"
 #include "../MapArea3D.hpp"
 #include "FaceEditor.hpp"
-#include "LuaWindow.hpp"
 #include "LuaConsole.hpp"
+#include "LuaWindow.hpp"
 #include "MapTools.hpp"
 #include "ModeSelector.hpp"
 #include "OperationParameterEditor.hpp"
@@ -37,8 +37,8 @@
 #include <editor/operations/Operation.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
-#include <glibmm/property.h>
 #include <glibmm/binding.h>
+#include <glibmm/property.h>
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/hvbox.h>
@@ -52,17 +52,18 @@
 
 #include <functional>
 
-
 namespace Sickle::AppWin
 {
-    class AppWin : public Gtk::ApplicationWindow, public Lua::Referenceable
+    class AppWin
+    : public Gtk::ApplicationWindow
+    , public Lua::Referenceable
     {
     public:
         lua_State *const L;
         Editor::EditorRef editor;
 
         AppWin();
-        virtual ~AppWin()=default;
+        virtual ~AppWin() = default;
 
         /** Open a file. */
         void open(Glib::RefPtr<Gio::File> const &file);
@@ -83,8 +84,9 @@ namespace Sickle::AppWin
         void set_grid_size(guint grid_size);
         guint get_grid_size();
 
-        auto property_grid_size() {return _prop_grid_size.get_proxy();}
-        auto signal_lua_reloaded() {return _sig_lua_reloaded;}
+        auto property_grid_size() { return _prop_grid_size.get_proxy(); }
+
+        auto signal_lua_reloaded() { return _sig_lua_reloaded; }
 
         // Lua constructor needs access to private members.
         friend void Lua::push<AppWin *>(lua_State *, AppWin *);
@@ -149,8 +151,7 @@ namespace Sickle::AppWin
 
         Glib::Property<guint> _prop_grid_size;
         Glib::RefPtr<Glib::Binding> _binding_grid_size_top,
-            _binding_grid_size_front,
-            _binding_grid_size_right;
+            _binding_grid_size_front, _binding_grid_size_right;
         Glib::RefPtr<Glib::Binding> _binding_left_right_views_position;
         Glib::RefPtr<Glib::Binding> _binding_editor_modeselector_mode;
         Glib::RefPtr<Glib::Binding> _binding_editor_outliner_world;
@@ -158,14 +159,6 @@ namespace Sickle::AppWin
         Glib::RefPtr<Glib::Binding> _binding_views_vertical_half_position;
         sigc::signal<void()> _sig_lua_reloaded{};
 
-        std::vector<std::string> _lua_script_dirs{
-            SE_DATA_DIR "sickle/lua-runtime",
-            "../share/sickle/lua-runtime",
-        };
-        std::vector<std::string> _operation_script_dirs{
-            SE_DATA_DIR "sickle/operations",
-            "../share/sickle/operations",
-        };
         std::vector<std::string> const _internal_scripts{
             "lua/gdkevents.lua",
             "lua/gdkkeysyms.lua",
@@ -183,6 +176,6 @@ namespace Sickle::AppWin
         void _run_runtime_scripts();
         void _run_operations_scripts();
     };
-}
+} // namespace Sickle::AppWin
 
 #endif

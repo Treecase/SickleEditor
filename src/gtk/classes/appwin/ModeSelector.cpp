@@ -22,44 +22,43 @@
 using namespace Sickle::AppWin;
 using namespace Sickle::Editor;
 
-
 ModeSelector::ModeSelector()
-:   Glib::ObjectBase{typeid(ModeSelector)}
-,   Gtk::Box{Gtk::Orientation::ORIENTATION_VERTICAL}
-,   _prop_mode{*this, "mode", "__invalid_mode__"}
+: Glib::ObjectBase{typeid(ModeSelector)}
+, Gtk::Box{Gtk::Orientation::ORIENTATION_VERTICAL}
+, _prop_mode{*this, "mode", "__invalid_mode__"}
 {
     set_halign(Gtk::Align::ALIGN_START);
     set_valign(Gtk::Align::ALIGN_START);
 }
-
 
 void ModeSelector::add_mode(Mode const &mode, Glib::ustring const &label)
 {
     auto const &p = _buttons.emplace(mode, ModeData{});
     auto &data = p.first->second;
     data.btn = Gtk::RadioButton{_group, label};
-    data.conn = data.btn.signal_clicked().connect(
-        sigc::bind(
-            sigc::mem_fun(*this, &ModeSelector::on_button_clicked), mode));
+    data.conn = data.btn.signal_clicked().connect(sigc::bind(
+        sigc::mem_fun(*this, &ModeSelector::on_button_clicked),
+        mode));
     add(data.btn);
 }
-
 
 void ModeSelector::remove_mode(Mode const &mode)
 {
     if (_buttons.count(mode) == 0)
+    {
         return;
+    }
     auto &data = _buttons.at(mode);
     remove(data.btn);
     data.conn.disconnect();
     _buttons.erase(mode);
 }
 
-
-
 void ModeSelector::on_button_clicked(Mode const &mode)
 {
     if (!_buttons.at(mode).btn.property_active().get_value())
+    {
         return;
+    }
     property_mode().set_value(mode);
 }

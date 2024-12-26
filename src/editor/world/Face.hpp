@@ -25,15 +25,14 @@
 #include <files/rmf/rmf.hpp>
 #include <se-lua/utils/Referenceable.hpp>
 
+#include <glibmm/object.h>
 #include <glibmm/property.h>
 #include <glibmm/refptr.h>
-#include <glibmm/object.h>
 #include <glm/glm.hpp>
 
 #include <array>
 #include <string>
 #include <vector>
-
 
 namespace Sickle::Editor
 {
@@ -46,9 +45,9 @@ namespace Sickle::Editor
      * Brushes are made up of several faces. Each face has texture information
      * associated with it, used for rendering the face in-game.
      */
-    class Face :
-        public EditorObject,
-        public Lua::Referenceable
+    class Face
+    : public EditorObject
+    , public Lua::Referenceable
     {
     public:
         static FaceRef create(
@@ -61,47 +60,75 @@ namespace Sickle::Editor
 
         static FaceRef create(RMF::Face const &face);
 
-        virtual ~Face()=default;
+        virtual ~Face() = default;
 
         operator MAP::Plane() const;
 
-        auto property_texture() {return _prop_texture.get_proxy();};
-        auto property_texture() const {return _prop_texture.get_proxy();};
-        auto property_u() {return _prop_u.get_proxy();};
-        auto property_u() const {return _prop_u.get_proxy();};
-        auto property_v() {return _prop_v.get_proxy();};
-        auto property_v() const {return _prop_v.get_proxy();};
-        auto property_shift() {return _prop_shift.get_proxy();};
-        auto property_shift() const {return _prop_shift.get_proxy();};
-        auto property_scale() {return _prop_scale.get_proxy();};
-        auto property_scale() const {return _prop_scale.get_proxy();};
-        auto property_rotation() {return _prop_rotation.get_proxy();};
-        auto property_rotation() const {return _prop_rotation.get_proxy();};
+        auto property_texture() { return _prop_texture.get_proxy(); };
 
-        auto get_texture() const {return _prop_texture.get_value();};
-        auto get_u() const {return _prop_u.get_value();};
-        auto get_v() const {return _prop_v.get_value();};
-        auto get_shift() const {return _prop_shift.get_value();};
-        auto get_scale() const {return _prop_scale.get_value();};
-        auto get_rotation() const {return _prop_rotation.get_value();};
+        auto property_texture() const { return _prop_texture.get_proxy(); };
 
-        void set_texture(std::string const &value) {
-            return _prop_texture.set_value(value);};
-        void set_u(glm::vec3 const &value) {
-            return _prop_u.set_value(value);};
-        void set_v(glm::vec3 const &value) {
-            return _prop_v.set_value(value);};
-        void set_shift(glm::vec2 const &value) {
-            return _prop_shift.set_value(value);};
-        void set_scale(glm::vec2 const &value) {
-            return _prop_scale.set_value(value);};
-        void set_rotation(float value) {
-            return _prop_rotation.set_value(value);};
+        auto property_u() { return _prop_u.get_proxy(); };
 
-        auto &signal_vertices_changed() {return _vertices_changed;}
+        auto property_u() const { return _prop_u.get_proxy(); };
+
+        auto property_v() { return _prop_v.get_proxy(); };
+
+        auto property_v() const { return _prop_v.get_proxy(); };
+
+        auto property_shift() { return _prop_shift.get_proxy(); };
+
+        auto property_shift() const { return _prop_shift.get_proxy(); };
+
+        auto property_scale() { return _prop_scale.get_proxy(); };
+
+        auto property_scale() const { return _prop_scale.get_proxy(); };
+
+        auto property_rotation() { return _prop_rotation.get_proxy(); };
+
+        auto property_rotation() const { return _prop_rotation.get_proxy(); };
+
+        auto get_texture() const { return _prop_texture.get_value(); };
+
+        auto get_u() const { return _prop_u.get_value(); };
+
+        auto get_v() const { return _prop_v.get_value(); };
+
+        auto get_shift() const { return _prop_shift.get_value(); };
+
+        auto get_scale() const { return _prop_scale.get_value(); };
+
+        auto get_rotation() const { return _prop_rotation.get_value(); };
+
+        void set_texture(std::string const &value)
+        {
+            return _prop_texture.set_value(value);
+        };
+
+        void set_u(glm::vec3 const &value) { return _prop_u.set_value(value); };
+
+        void set_v(glm::vec3 const &value) { return _prop_v.set_value(value); };
+
+        void set_shift(glm::vec2 const &value)
+        {
+            return _prop_shift.set_value(value);
+        };
+
+        void set_scale(glm::vec2 const &value)
+        {
+            return _prop_scale.set_value(value);
+        };
+
+        void set_rotation(float value)
+        {
+            return _prop_rotation.set_value(value);
+        };
+
+        auto &signal_vertices_changed() { return _vertices_changed; }
 
         /** List of Face vertices. Sorted counterclockwise. */
-        auto get_vertices() const {return _vertices;}
+        auto get_vertices() const { return _vertices; }
+
         /**
          * 3 points which define the plane of the Face. Sorted counterclockwise.
          */
@@ -129,6 +156,6 @@ namespace Sickle::Editor
 
         std::vector<glm::vec3> _vertices{};
     };
-}
+} // namespace Sickle::Editor
 
 #endif

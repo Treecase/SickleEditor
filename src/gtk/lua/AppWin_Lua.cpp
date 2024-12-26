@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../classes/appwin/AppWin.hpp"
 #include "AppWin_Lua.hpp"
+#include "../classes/appwin/AppWin.hpp"
 #include "LuaGdkEvent.hpp"
 #include "MapArea2D_Lua.hpp"
 #include "MapArea3D_Lua.hpp"
@@ -28,9 +28,7 @@
 
 #define METATABLE "Sickle.gtk.appwin"
 
-
 using namespace Sickle::AppWin;
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
@@ -72,11 +70,13 @@ static int add_maptool(lua_State *L)
 
     // Argument 3 is an array of opdefs.
     std::vector<Sickle::Editor::MapTool::OpDef> opdefs{};
-    for (lua_Integer i = 1; ; ++i)
+    for (lua_Integer i = 1;; ++i)
     {
         int const type = lua_geti(L, 3, i); // opdef
         if (type == LUA_TNIL)
+        {
             break;
+        }
         lua_geti(L, -1, 1); // operation label
         lua_geti(L, -2, 2); // operation id
         auto const label = lua_tostring(L, -2);
@@ -88,13 +88,13 @@ static int add_maptool(lua_State *L)
     // Argument 4 is the "Should Popup?" function.
     auto const ref = luaL_ref(L, LUA_REGISTRYINDEX);
     auto const fn = [L, ref](Sickle::Editor::EditorRef const &editor)
-        {
-            lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-            Lua::push(L, editor);
-            Lua::checkerror(L, Lua::pcall(L, 1, 1));
-            bool const result = lua_toboolean(L, -1);
-            return result;
-        };
+    {
+        lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+        Lua::push(L, editor);
+        Lua::checkerror(L, Lua::pcall(L, 1, 1));
+        bool const result = lua_toboolean(L, -1);
+        return result;
+    };
 
     aw->add_maptool(Sickle::Editor::MapTool{name, opdefs, fn});
     return 0;
@@ -106,18 +106,17 @@ static int do_nothing(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
-    {"set_grid_size", set_grid_size},
-    {"get_grid_size", get_grid_size},
-    {"get_maptool", get_maptool},
+    {       "set_grid_size", set_grid_size},
+    {       "get_grid_size", get_grid_size},
+    {         "get_maptool",   get_maptool},
 
-    {"add_maptool", add_maptool},
+    {         "add_maptool",   add_maptool},
 
-    {"on_grid_size_changed", do_nothing},
-    {"on_maptool_changed", do_nothing},
-    {"on_key_press_event", do_nothing},
-    {NULL, NULL}
+    {"on_grid_size_changed",    do_nothing},
+    {  "on_maptool_changed",    do_nothing},
+    {  "on_key_press_event",    do_nothing},
+    {                  NULL,          NULL}
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
@@ -126,7 +125,9 @@ void Lua::push(lua_State *L, AppWin *appwin)
 {
     Lua::RefBuilder builder{L, METATABLE, appwin};
     if (builder.pushnew())
+    {
         return;
+    }
 
     builder.addField("mapArea3D", &appwin->_view3d);
     builder.addField("topMapArea", &appwin->_view2d_top);
@@ -134,12 +135,14 @@ void Lua::push(lua_State *L, AppWin *appwin)
     builder.addField("rightMapArea", &appwin->_view2d_right);
 
     builder.addSignalHandler(
-        appwin->property_grid_size().signal_changed(), "on_grid_size_changed");
+        appwin->property_grid_size().signal_changed(),
+        "on_grid_size_changed");
     builder.addSignalHandler(
         appwin->editor->property_maptool().signal_changed(),
         "on_maptool_changed");
     builder.addSignalHandler(
-        appwin->signal_key_press_event(), "on_key_press_event");
+        appwin->signal_key_press_event(),
+        "on_key_press_event");
 
     builder.finish();
 }

@@ -22,7 +22,6 @@
 
 #define METATABLE "Sickle.gtk.freecam"
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
 static int rotate(lua_State *L)
@@ -68,24 +67,22 @@ static int set_fov(lua_State *L)
 }
 
 static luaL_Reg methods[] = {
-    {"rotate", rotate},
+    {   "rotate",    rotate},
     {"translate", translate},
 
     {"get_angle", get_angle},
-    {"get_fov", get_fov},
+    {  "get_fov",   get_fov},
 
     {"set_angle", set_angle},
-    {"set_fov", set_fov},
-    {NULL, NULL}
+    {  "set_fov",   set_fov},
+    {       NULL,      NULL}
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
 void Lua::push(lua_State *L, FreeCam camera)
 {
-    auto ptr = static_cast<FreeCam *>(
-        lua_newuserdatauv(L, sizeof(FreeCam), 0));
+    auto ptr = static_cast<FreeCam *>(lua_newuserdatauv(L, sizeof(FreeCam), 0));
     *ptr = camera;
     luaL_setmetatable(L, METATABLE);
 }

@@ -21,21 +21,22 @@
 
 #include <editor/core/Editor.hpp>
 #include <se-lua/utils/Referenceable.hpp>
-#include <utils/Transform.hpp>
-#include <utils/FreeCam.hpp>
 #include <utils/DebugDrawer3D.hpp>
+#include <utils/FreeCam.hpp>
 #include <utils/gtkglutils.hpp>
+#include <utils/Transform.hpp>
 #include <world3d/world3d.hpp>
 
 #include <gdkmm/frameclock.h>
 #include <glibmm/property.h>
 #include <gtkmm/glarea.h>
 
-
 namespace Sickle
 {
     /** Displays .map files. */
-    class MapArea3D : public Gtk::GLArea, public Lua::Referenceable
+    class MapArea3D
+    : public Gtk::GLArea
+    , public Lua::Referenceable
     {
     public:
         using ScreenSpacePoint = glm::vec2;
@@ -58,16 +59,25 @@ namespace Sickle
         Editor::EditorObjectRef pick_object(ScreenSpacePoint const &P);
         GLSpacePoint screenspace_to_glspace(ScreenSpacePoint const &) const;
 
-        auto get_editor() {return _editor;}
+        auto get_editor() { return _editor; }
 
-        auto property_camera() {return _prop_camera.get_proxy();}
+        auto property_camera() { return _prop_camera.get_proxy(); }
+
         auto property_mouse_sensitivity()
-        {return _prop_mouse_sensitivity.get_proxy();}
+        {
+            return _prop_mouse_sensitivity.get_proxy();
+        }
+
         auto property_shift_multiplier()
-        {return _prop_shift_multiplier.get_proxy();}
-        auto property_state() {return _prop_state.get_proxy();}
-        auto property_transform() {return _prop_transform.get_proxy();}
-        auto property_wireframe() {return _prop_wireframe.get_proxy();}
+        {
+            return _prop_shift_multiplier.get_proxy();
+        }
+
+        auto property_state() { return _prop_state.get_proxy(); }
+
+        auto property_transform() { return _prop_transform.get_proxy(); }
+
+        auto property_wireframe() { return _prop_wireframe.get_proxy(); }
 
         // Signal handlers
         /** Where GL initialization should be done. */
@@ -92,10 +102,7 @@ namespace Sickle
         {
             std::unordered_set<std::string> missing_textures{};
 
-            bool error_occurred() const
-            {
-                return !missing_textures.empty();
-            }
+            bool error_occurred() const { return !missing_textures.empty(); }
         };
 
         Editor::EditorRef _editor{nullptr};
@@ -112,6 +119,6 @@ namespace Sickle
         void _check_errors();
         void _synchronize_glmap();
     };
-}
+} // namespace Sickle
 
 #endif

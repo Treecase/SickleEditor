@@ -21,12 +21,13 @@
 
 #include <fstream>
 
-
 MAP::Map MAP::load(std::string const &path)
 {
     std::ifstream f{path, std::ios::in | std::ios::binary};
     if (!f.is_open())
+    {
         throw MAP::LoadError{"Failed to open '" + path + "'"};
+    }
     MAPDriver driver{};
     driver.parse(f);
     return driver.get_result();

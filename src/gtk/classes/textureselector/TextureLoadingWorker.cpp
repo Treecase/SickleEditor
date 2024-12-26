@@ -21,9 +21,7 @@
 
 #include <editor/textures/TextureManager.hpp>
 
-
 using namespace Sickle::TextureSelector;
-
 
 void TextureLoadingWorker::do_work(Glib::Dispatcher *dispatcher)
 {
@@ -32,21 +30,22 @@ void TextureLoadingWorker::do_work(Glib::Dispatcher *dispatcher)
     {
         auto const pixels = texinfo->load_rgb();
         {
-        std::lock_guard lock{_mutex};
-        _results.push_back(std::make_pair(texinfo, pixels));
-        if (_cancelled)
-            break;
+            std::lock_guard lock{_mutex};
+            _results.push_back(std::make_pair(texinfo, pixels));
+            if (_cancelled)
+            {
+                break;
+            }
         }
         dispatcher->emit();
     }
 
     {
-    std::lock_guard lock{_mutex};
-    _is_done = true;
+        std::lock_guard lock{_mutex};
+        _is_done = true;
     }
     dispatcher->emit();
 }
-
 
 void TextureLoadingWorker::cancel()
 {
@@ -54,13 +53,11 @@ void TextureLoadingWorker::cancel()
     _cancelled = true;
 }
 
-
 bool TextureLoadingWorker::is_done() const
 {
     std::lock_guard lock{_mutex};
     return _is_done;
 }
-
 
 std::vector<TextureLoadingWorker::Result> TextureLoadingWorker::get_results()
 {

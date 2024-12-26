@@ -1,5 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=@PROJECT_NAME@
-Icon=@APPLICATION_ID@
-Exec=sickle

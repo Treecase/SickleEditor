@@ -39,7 +39,6 @@
 
 #include <memory>
 
-
 namespace Sickle
 {
     namespace MapArea2Dx
@@ -49,10 +48,12 @@ namespace Sickle
             double x{0}, y{0};
             double zoom{1};
         };
-    }
+    } // namespace MapArea2Dx
 
     /** Displays .map files. */
-    class MapArea2D : public Gtk::DrawingArea, public Lua::Referenceable
+    class MapArea2D
+    : public Gtk::DrawingArea
+    , public Lua::Referenceable
     {
     public:
         using ScreenSpacePoint = glm::vec2;
@@ -60,10 +61,20 @@ namespace Sickle
         using WorldSpacePoint = glm::vec3;
 
         /** Which angle the world is drawn from. */
-        enum DrawAngle {TOP, FRONT, RIGHT};
+        enum DrawAngle
+        {
+            TOP,
+            FRONT,
+            RIGHT
+        };
 
         /** Worldspace axes. */
-        enum Axis {X, Y, Z};
+        enum Axis
+        {
+            X,
+            Y,
+            Z
+        };
 
         MapArea2D(Editor::EditorRef ed);
 
@@ -139,28 +150,49 @@ namespace Sickle
          */
         Axis get_vertical_axis_name() const;
 
-        auto property_draw_angle() {return _prop_draw_angle.get_proxy();}
-        auto property_draw_angle() const {return _prop_draw_angle.get_proxy();}
-        auto property_grid_size() {return _prop_grid_size.get_proxy();}
-        auto property_grid_size() const {return _prop_grid_size.get_proxy();}
-        auto property_transform() {return _prop_transform.get_proxy();}
-        auto property_transform() const {return _prop_transform.get_proxy();}
+        auto property_draw_angle() { return _prop_draw_angle.get_proxy(); }
+
+        auto property_draw_angle() const
+        {
+            return _prop_draw_angle.get_proxy();
+        }
+
+        auto property_grid_size() { return _prop_grid_size.get_proxy(); }
+
+        auto property_grid_size() const { return _prop_grid_size.get_proxy(); }
+
+        auto property_transform() { return _prop_transform.get_proxy(); }
+
+        auto property_transform() const { return _prop_transform.get_proxy(); }
 
         void set_draw_angle(DrawAngle angle)
-        {property_draw_angle().set_value(angle);}
-        auto get_draw_angle() const {return property_draw_angle().get_value();}
+        {
+            property_draw_angle().set_value(angle);
+        }
+
+        auto get_draw_angle() const
+        {
+            return property_draw_angle().get_value();
+        }
 
         void set_grid_size(int grid_size)
-        {property_grid_size().set_value(grid_size);}
-        auto get_grid_size() const {return property_grid_size().get_value();}
+        {
+            property_grid_size().set_value(grid_size);
+        }
 
-        auto get_transform() const {return property_transform().get_value();}
+        auto get_grid_size() const { return property_grid_size().get_value(); }
 
-        auto get_editor() const {return _editor;}
-        auto &get_selected_box() {return _selected_box;}
-        auto const &get_selected_box() const {return _selected_box;}
-        auto &get_brushbox() {return _brushbox;}
-        auto const &get_brushbox() const {return _brushbox;}
+        auto get_transform() const { return property_transform().get_value(); }
+
+        auto get_editor() const { return _editor; }
+
+        auto &get_selected_box() { return _selected_box; }
+
+        auto const &get_selected_box() const { return _selected_box; }
+
+        auto &get_brushbox() { return _brushbox; }
+
+        auto const &get_brushbox() const { return _brushbox; }
 
     protected:
         // Signal handlers
@@ -197,6 +229,6 @@ namespace Sickle
         void _draw_transform_overlay(
             Cairo::RefPtr<Cairo::Context> const &cr) const;
     };
-}
+} // namespace Sickle
 
 #endif

@@ -26,7 +26,6 @@
 
 using namespace Sickle::Editor;
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Methods
 static int is_selected(lua_State *L)
@@ -43,14 +42,12 @@ static int get_texture(lua_State *L)
     return 1;
 }
 
-
 static int get_u(lua_State *L)
 {
     auto const f = lface_check(L, 1);
     Lua::push(L, f->get_u());
     return 1;
 }
-
 
 static int get_v(lua_State *L)
 {
@@ -59,14 +56,12 @@ static int get_v(lua_State *L)
     return 1;
 }
 
-
 static int get_shift(lua_State *L)
 {
     auto const f = lface_check(L, 1);
     Lua::push(L, f->get_shift());
     return 1;
 }
-
 
 static int get_scale(lua_State *L)
 {
@@ -75,14 +70,12 @@ static int get_scale(lua_State *L)
     return 1;
 }
 
-
 static int get_rotation(lua_State *L)
 {
     auto const f = lface_check(L, 1);
     Lua::push(L, static_cast<lua_Number>(f->get_rotation()));
     return 1;
 }
-
 
 static int get_vertices(lua_State *L)
 {
@@ -98,7 +91,6 @@ static int get_vertices(lua_State *L)
     return 1;
 }
 
-
 static int set_texture(lua_State *L)
 {
     auto const f = lface_check(L, 1);
@@ -106,7 +98,6 @@ static int set_texture(lua_State *L)
     f->set_texture(t);
     return 0;
 }
-
 
 static int set_u(lua_State *L)
 {
@@ -116,7 +107,6 @@ static int set_u(lua_State *L)
     return 0;
 }
 
-
 static int set_v(lua_State *L)
 {
     auto const f = lface_check(L, 1);
@@ -124,7 +114,6 @@ static int set_v(lua_State *L)
     f->set_v(v);
     return 0;
 }
-
 
 static int set_shift(lua_State *L)
 {
@@ -134,7 +123,6 @@ static int set_shift(lua_State *L)
     return 0;
 }
 
-
 static int set_scale(lua_State *L)
 {
     auto const f = lface_check(L, 1);
@@ -142,7 +130,6 @@ static int set_scale(lua_State *L)
     f->set_scale(scale);
     return 0;
 }
-
 
 static int set_rotation(lua_State *L)
 {
@@ -152,34 +139,30 @@ static int set_rotation(lua_State *L)
     return 0;
 }
 
-
 static int do_nothing(lua_State *L)
 {
     return 0;
 }
 
-
 static luaL_Reg methods[] = {
-    {"is_selected", is_selected},
-    {"get_texture", get_texture},
-    {"get_u", get_u},
-    {"get_v", get_v},
-    {"get_shift", get_shift},
-    {"get_scale", get_scale},
-    {"get_rotation", get_rotation},
-    {"get_vertices", get_vertices},
-    {"set_texture", set_texture},
-    {"set_u", set_u},
-    {"set_v", set_v},
-    {"set_shift", set_shift},
-    {"set_scale", set_scale},
-    {"set_rotation", set_rotation},
+    {        "is_selected",  is_selected},
+    {        "get_texture",  get_texture},
+    {              "get_u",        get_u},
+    {              "get_v",        get_v},
+    {          "get_shift",    get_shift},
+    {          "get_scale",    get_scale},
+    {       "get_rotation", get_rotation},
+    {       "get_vertices", get_vertices},
+    {        "set_texture",  set_texture},
+    {              "set_u",        set_u},
+    {              "set_v",        set_v},
+    {          "set_shift",    set_shift},
+    {          "set_scale",    set_scale},
+    {       "set_rotation", set_rotation},
 
-    {"on_vertices_changed", do_nothing},
-    {NULL, NULL}
+    {"on_vertices_changed",   do_nothing},
+    {                 NULL,         NULL}
 };
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // C++ facing
@@ -195,12 +178,12 @@ void Lua::push(lua_State *L, FaceRef face)
         return;
     }
     builder.addSignalHandler(
-        face->signal_vertices_changed(), "on_vertices_changed");
+        face->signal_vertices_changed(),
+        "on_vertices_changed");
     builder.finish();
     int const t3 = lua_gettop(L);
     assert(t3 == t1 + 1);
 }
-
 
 FaceRef lface_check(lua_State *L, int arg)
 {
@@ -208,7 +191,6 @@ FaceRef lface_check(lua_State *L, int arg)
     luaL_argcheck(L, ud != NULL, arg, "`" METATABLE "' expected");
     return *static_cast<FaceRef *>(ud);
 }
-
 
 int luaopen_face(lua_State *L)
 {

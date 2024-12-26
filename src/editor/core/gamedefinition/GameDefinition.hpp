@@ -27,7 +27,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-
 namespace Sickle::Editor
 {
     /**
@@ -74,9 +73,9 @@ namespace Sickle::Editor
             FGD::GameDef const &game);
 
         GameDefinition();
-        GameDefinition(GameDefinition const &)=delete;
-        GameDefinition &operator=(GameDefinition const &)=delete;
+        GameDefinition(GameDefinition const &) = delete;
+        GameDefinition &operator=(GameDefinition const &) = delete;
     };
-}
+} // namespace Sickle::Editor
 
 #endif

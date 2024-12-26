@@ -20,12 +20,9 @@
 
 #include <sstream>
 
-
 using namespace Sickle::AppWin;
 
-
 static Gdk::RGBA extract_color(std::string const &value);
-
 
 CellRendererProperty::Color255Renderer::Color255Renderer()
 {
@@ -33,39 +30,32 @@ CellRendererProperty::Color255Renderer::Color255Renderer()
         sigc::mem_fun(*this, &Color255Renderer::on_rgba_edited));
 }
 
-
 void CellRendererProperty::Color255Renderer::set_value(ValueType const &value)
 {
     _renderer.property_rgba() = extract_color(value.value);
 }
-
 
 Gtk::CellRenderer *CellRendererProperty::Color255Renderer::renderer()
 {
     return &_renderer;
 }
 
-
 Gtk::CellRendererMode CellRendererProperty::Color255Renderer::mode()
 {
     return Gtk::CellRendererMode::CELL_RENDERER_MODE_ACTIVATABLE;
 }
-
-
 
 void CellRendererProperty::Color255Renderer::on_rgba_edited(
     Glib::ustring const &path,
     Gdk::RGBA const &rgba)
 {
     Glib::ustring const str{
-        std::to_string(static_cast<int>(rgba.get_red() * 255))
-        + " " + std::to_string(static_cast<int>(rgba.get_green() * 255))
-        + " " + std::to_string(static_cast<int>(rgba.get_blue() * 255))
-        + " " + std::to_string(static_cast<int>(rgba.get_alpha() * 255))};
+        std::to_string(static_cast<int>(rgba.get_red() * 255)) + " "
+        + std::to_string(static_cast<int>(rgba.get_green() * 255)) + " "
+        + std::to_string(static_cast<int>(rgba.get_blue() * 255)) + " "
+        + std::to_string(static_cast<int>(rgba.get_alpha() * 255))};
     signal_changed.emit(path, str);
 }
-
-
 
 static Gdk::RGBA extract_color(std::string const &value)
 {
