@@ -45,7 +45,7 @@ include(FetchContent)
 FetchContent_Declare(
     glutils
     GIT_REPOSITORY https://github.com/Treecase/glutils
-    GIT_TAG        59ad12bdfbd0f292fe56524ee72ece755b4771c5)
+    GIT_TAG        4901def3f8bd14d1cf5c352b0b471a291adbebea)
 FetchContent_MakeAvailable(glutils)
 
 find_package(BISON 3.2 REQUIRED)
